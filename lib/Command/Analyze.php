@@ -179,11 +179,15 @@ class Analyze extends Command {
 			return;
 		}
 
-		$fileList = '';
-		$faces = $this->faceMapper->findNew($userId);
-		if ($faces == NULL)
-			return;
+		$this->output->writeln($userId.': Looking for images to analyze.');
 
+		$faces = $this->faceMapper->findNew($userId);
+		if ($faces == NULL) {
+			$this->output->writeln('No new images to analyze. Skipping.');
+			return;
+		}
+
+		$fileList = '';
 		foreach ($faces as $face) {
 			$file = $userRoot->getById($face->getFile());
 			$fullPath = escapeshellarg($this->dataDir.$file[0]->getPath());
@@ -193,15 +197,17 @@ class Analyze extends Command {
 		$knownFolder = $this->getUserKnownFolder($user);
 		$facesPath = $this->dataDir.$knownFolder->getPath();
 
+		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
 		$cmd = 'nextcloud-face-detect analyze --search '.$fileList. ' --known '. $facesPath;
 		$result = shell_exec ($cmd);
-		$this->output->writeln('Result: '.$result);
 
 		$newFaces = json_decode ($result);
 		$facesFound = $newFaces->{'faces-locations'};
 		foreach ($facesFound as $newFace) {
 			$this->appendNewFaces($newFace);
 		}
+
+		$this->output->writeln(count($newFaces).' faces(s) faces found.');
 	}
 
 }

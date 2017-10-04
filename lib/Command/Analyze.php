@@ -198,7 +198,7 @@ class Analyze extends Command {
 		$facesPath = $this->dataDir.$knownFolder->getPath();
 
 		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
-		$cmd = 'nextcloud-face-detect analyze --search '.$fileList. ' --known '. $facesPath;
+		$cmd = 'nextcloud-face-recognition-cmd analyze --search '.$fileList. ' --known '. $facesPath;
 		$result = shell_exec ($cmd);
 
 		$newFaces = json_decode ($result);
@@ -207,7 +207,7 @@ class Analyze extends Command {
 			$this->appendNewFaces($newFace);
 		}
 
-		$this->output->writeln(count($newFaces).' faces(s) faces found.');
+		$this->output->writeln(count($facesFound).' faces(s) faces found.');
 	}
 
 }

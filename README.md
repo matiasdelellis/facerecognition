@@ -23,7 +23,7 @@ them later.
 
 The identification is made using these utility written in python:
 
- * https://github.com/matiasdelellis/face_recognition_cmd
+ * https://github.com/matiasdelellis/nextcloud_face_recognition_cmd
 
 That depends on these libraries:
 

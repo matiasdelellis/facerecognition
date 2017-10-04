@@ -46,7 +46,7 @@ class FaceMapper extends Mapper {
 		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE file = ?';
 		try {
 			$faces = $this->findEntities($sql, [$fileId]);
-			return ($facess != NULL);
+			return ($faces != NULL);
 		} catch (Exception $e) {
 			return false;
 		}

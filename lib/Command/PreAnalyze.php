@@ -147,7 +147,7 @@ class PreAnalyze extends Command {
 		foreach ($nodes as $node) {
 			//if ($node->isHidden())
 			//	continue;
-			if ($node instanceof Folder) {
+			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			} else if ($node instanceof File and $node->getMimeType() === 'image/jpeg') {
 				$results[] = $node;

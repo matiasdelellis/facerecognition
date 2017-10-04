@@ -3,11 +3,9 @@
 	<id>facerecognition</id>
 	<name>Face Recognition</name>
 	<summary>A face recognition app</summary>
-	<description><![CDATA[The Preview Generator app allows admins to pre-generate previews. The app listens to edit events and stores this information. Once a cron job is triggered it will generate start preview generation. This means that you can better utilize your system by pre-generating previews when your system is normally idle and thus putting less load on your machine when the requests are actually served.
+	<description><![CDATA[Face Recognition implement a basic facial recognition system for Nextcloud.
 
-The app does not replace on demand preview generation so if a preview is requested before it is pre-generated it will still be shown.
-
-**Important**: To enable pre-generation of previews you must add **./occ face:analyze** to a system cron job that runs at times of your choosing.]]>
+The application listens to the creation of new image files, and queues them for later analysis. A scheduled task (Or admin on demand) take this queue, and analyze the images for looking faces and if possible identify them by comparing them with those found in 'user-folder/.faces'.]>
 	</description>
 	<licence>AGPL</licence>
 	<author>Matias De lellis</author>

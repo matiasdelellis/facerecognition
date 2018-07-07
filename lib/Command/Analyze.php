@@ -122,7 +122,9 @@ class Analyze extends Command {
 			});
 		} else {
 			$user = $this->userManager->get($userId);
-			$this->appendNewUserPictures($user);
+			if ($user !== null) {
+			    $this->appendNewUserPictures($user);
+			}
 		}
 
 		return 0;
@@ -138,7 +140,7 @@ class Analyze extends Command {
 		$fileId = $this->rootFolder->get($path)->getId();
 
 		$dbFace = $this->faceMapper->findNewFile($uid, $fileId);
-		if ($dbFace != NULL) {
+		if ($dbFace != null) {
 			$dbFace[0]->setName($face_location->{'name'});
 			$dbFace[0]->setDistance($face_location->{'distance'});
 			$dbFace[0]->setTop($face_location->{'top'});
@@ -182,7 +184,7 @@ class Analyze extends Command {
 		$this->output->writeln($userId.': Looking for images to analyze.');
 
 		$faces = $this->faceMapper->findNew($userId);
-		if ($faces == NULL) {
+		if ($faces == null) {
 			$this->output->writeln('No new images to analyze. Skipping.');
 			return;
 		}

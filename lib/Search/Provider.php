@@ -38,8 +38,9 @@ class Provider extends \OCP\Search\Provider {
 		$userId = \OCP\User::getUser();
 		$ownerView = new \OC\Files\View('/'. $userId . '/files');
 
-		$results = $this->faceMapper->findFaces($userId, $query);
 		$searchresults = array();
+
+		$results = $this->faceMapper->findFaces($userId, $query);
 		foreach($results as $result) {
 			$fileId = $result->getFile();
 			try {
@@ -48,10 +49,10 @@ class Provider extends \OCP\Search\Provider {
 				continue;
 			}
 			$fileInfo = $ownerView->getFileInfo($path);
-
 			//$searchresults[] = new \OCA\FaceRecognition\Search\Result($returnData);
 			$searchresults[] = new \OC\Search\Result\Image($fileInfo);
 		}
+
 		return $searchresults;
 
 	}

@@ -23,3 +23,16 @@
  *
  */
 $app = new \OCA\FaceRecognition\AppInfo\Application('facerecognition');
+
+\OCA\Files\App::getNavigationManager()->add(function () {
+	$l = \OC::$server->getL10N('facerecognition');
+	return [
+		'id' => 'facerecognition',
+		'appname' => 'facerecognition',
+		'icon' => 'facerecognition',
+		'script' => 'templates/main.php',
+		'order' => 1,
+		'name' => $l->t('Face recognition'),
+		'classes' => 'pinned',
+	];
+});

@@ -15,6 +15,7 @@ class Face extends Entity implements JsonSerializable {
 	protected $right;
 	protected $bottom;
 	protected $left;
+	protected $encoding;
 
 	public function jsonSerialize() {
 		return [
@@ -26,7 +27,8 @@ class Face extends Entity implements JsonSerializable {
 			'top' => $this->top,
 			'right' => $this->right,
 			'bottom' => $this->bottom,
-			'left' => $this->left
+			'left' => $this->left,
+			'enconding' => $this->encoding
 		];
 	}
 

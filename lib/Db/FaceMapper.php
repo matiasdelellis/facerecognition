@@ -21,19 +21,34 @@ class FaceMapper extends Mapper {
 		return $this->findEntities($sql, [$userId]);
 	}
 
-	public function findNew($userId) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = -1';
+	public function findAllNew($userId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = -1 AND encoding IS NULL';
 		return $this->findEntities($sql, [$userId]);
 	}
 
-	public function findFaces($userId, $query) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND LOWER(name) LIKE LOWER(?)';
+	public function findAllKnown($userId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 0 AND encoding IS NOT NULL';
+		return $this->findEntities($sql, [$userId]);
+	}
+
+	public function findAllUnknown($userId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 1 AND encoding IS NOT NULL';
+		return $this->findEntities($sql, [$userId]);
+	}
+
+	public function findAllEmpty($userId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 0 AND encoding IS NULL';
+		return $this->findEntities($sql, [$userId]);
+	}
+
+	public function findAllNamed($userId, $query) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 0 AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
 		$params = ('%' . $query . '%');
 		return $this->findEntities($sql, [$userId, $params]);
 	}
 
 	public function findNewFile($userId, $fileId) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND file = ? AND distance = -1';
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND file = ? AND distance = -1 AND encoding IS NULL';
 		return $this->findEntities($sql, [$userId, $fileId]);
 	}
 

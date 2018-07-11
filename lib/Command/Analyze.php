@@ -147,8 +147,10 @@ class Analyze extends Command {
 			$dbFace[0]->setRight($face_location->{'right'});
 			$dbFace[0]->setBottom($face_location->{'bottom'});
 			$dbFace[0]->setLeft($face_location->{'left'});
+			if ($face_location->{'encoding'} !== null)
+				$dbFace[0]->setEncoding(serialize($face_location->{'encoding'}));
 			$this->faceMapper->update($dbFace[0]);
-		}else {
+		} else {
 			$dbFace = new Face();
 			$dbFace->setUid($uid);
 			$dbFace->setFile($fileId);
@@ -158,6 +160,8 @@ class Analyze extends Command {
 			$dbFace->setRight($face_location->{'right'});
 			$dbFace->setBottom($face_location->{'bottom'});
 			$dbFace->setLeft($face_location->{'left'});
+			if ($face_location->{'encoding'} !== null)
+				$dbFace->setEncoding(serialize($face_location->{'encoding'}));
 			$this->faceMapper->insert($dbFace);
 		}
 	}
@@ -181,9 +185,10 @@ class Analyze extends Command {
 			return;
 		}
 
+		$this->output->writeln('');
 		$this->output->writeln($userId.': Looking for images to analyze.');
 
-		$faces = $this->faceMapper->findNew($userId);
+		$faces = $this->faceMapper->findAllNew($userId);
 		if ($faces == null) {
 			$this->output->writeln('No new images to analyze. Skipping.');
 			return;

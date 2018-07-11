@@ -40,7 +40,7 @@ class Provider extends \OCP\Search\Provider {
 
 		$searchresults = array();
 
-		$results = $this->faceMapper->findFaces($userId, $query);
+		$results = $this->faceMapper->findAllNamed($userId, $query);
 		foreach($results as $result) {
 			$fileId = $result->getFile();
 			try {

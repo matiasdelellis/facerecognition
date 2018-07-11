@@ -9,7 +9,7 @@ The application listens to the creation of new image files, and queues them for 
 	</description>
 	<licence>AGPL</licence>
 	<author>Matias De lellis</author>
-	<version>0.5.4</version>
+	<version>0.5.6.2</version>
 	<namespace>FaceRecognition</namespace>
 	<category>multimedia</category>
 	<website>https://github.com/matiasdelellis/facerecognition</website>
@@ -25,5 +25,6 @@ The application listens to the creation of new image files, and queues them for 
 	<commands>
 		<command>OCA\FaceRecognition\Command\Analyze</command>
 		<command>OCA\FaceRecognition\Command\PreAnalyze</command>
+		<command>OCA\FaceRecognition\Command\Clustering</command>
 	</commands>
 </info>

@@ -9,6 +9,11 @@ source_dir=$(build_dir)/source
 package_name=$(app_name)
 cert_dir=$(HOME)/.nextcloud/certificates
 
+deps:
+	rm -f js/handlebars.js
+	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js
+	mv handlebars-v4.0.5.js js/handlebars.js
+
 appstore:
 	mkdir -p $(sign_dir)
 	rsync -a \

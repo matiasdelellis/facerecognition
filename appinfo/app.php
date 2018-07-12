@@ -22,17 +22,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-$app = new \OCA\FaceRecognition\AppInfo\Application('facerecognition');
 
-\OCA\Files\App::getNavigationManager()->add(function () {
+use OCA\FaceRecognition\AppInfo\Application;
+
+$app = new Application();
+
+\OC::$server->getNavigationManager()->add(function () {
 	$l = \OC::$server->getL10N('facerecognition');
 	return [
 		'id' => 'facerecognition',
 		'appname' => 'facerecognition',
-		'icon' => 'facerecognition',
-		'script' => 'templates/main.php',
-		'order' => 1,
+		'order' => 100,
 		'name' => $l->t('Face recognition'),
-		'classes' => 'pinned',
+		'href' => \OC::$server->getURLGenerator()->linkToRoute('facerecognition.page.index'),
+		'icon' => \OC::$server->getURLGenerator()->imagePath('facerecognition', 'app.svg'),
 	];
 });

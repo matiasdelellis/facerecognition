@@ -1,0 +1,23 @@
+#app-content-wrapper {
+    height: 100%;
+}
+
+#div-content {
+    width: 100%;
+}
+
+#new-button {
+    width: 100%;
+    padding: 10px;
+    padding-left: 34px;
+    background-position: 10px center;
+    text-align: left;
+    margin: 0;
+}
+
+#new-button-fixed {
+    z-index: 111; /* navigation menu is 110 ;-) */
+    background-color: rgba(255, 255, 255, .75);
+    padding: 10px;
+    position: relative;
+}

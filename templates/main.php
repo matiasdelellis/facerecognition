@@ -1,9 +1,18 @@
 <?php
+script('facerecognition', 'handlebars');
+script('facerecognition', 'facerecognition');
+style('facerecognition', 'facerecognition');
+?>
 
-// Check if we are a user
-OCP\User::checkLoggedIn();
+<div id="app">
+	<div id="app-navigation">
+		<?php print_unescaped($this->inc('fragments/navigation')); ?>
+		<?php print_unescaped($this->inc('fragments/settings')); ?>
+	</div>
 
-$tmpl = new OCP\Template('facerecognition', 'facerecognition', '');
-\OCP\Util::addScript('facerecognition', 'facerecognition');
-\OCP\Util::addStyle('facerecognition', 'facerecognition');
-$tmpl->printPage();
+	<div id="app-content">
+		<div id="app-content-wrapper">
+			<?php print_unescaped($this->inc('fragments/content')); ?>
+		</div>
+	</div>
+</div>

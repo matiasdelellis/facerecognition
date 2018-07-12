@@ -38,8 +38,8 @@ class Application extends App {
 	 * @param string $appName
 	 * @param array $urlParams
 	 */
-	public function __construct($appName, array $urlParams = []) {
-		parent::__construct($appName, $urlParams);
+	public function __construct(array $urlParams = []) {
+		parent::__construct('facerecognition', $urlParams);
 
 		$container = $this->getContainer();
 

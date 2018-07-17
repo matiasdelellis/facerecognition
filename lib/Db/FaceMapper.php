@@ -17,7 +17,7 @@ class FaceMapper extends Mapper {
 	}
 
 	public function findAll($userId) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ?';
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? and encoding IS NOT NULL';
 		return $this->findEntities($sql, [$userId]);
 	}
 
@@ -41,10 +41,27 @@ class FaceMapper extends Mapper {
 		return $this->findEntities($sql, [$userId]);
 	}
 
-	public function findAllNamed($userId, $query) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 0 AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
+	public function findAllNamed($userId, $query, $limit = 0) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
 		$params = ('%' . $query . '%');
-		return $this->findEntities($sql, [$userId, $params]);
+
+		if ($limit > 0) {
+			$sql = $sql.' LIMIT ?';
+			return $this->findEntities($sql, [$userId, $params, $limit]);
+		}
+		else {
+			return $this->findEntities($sql, [$userId, $params]);
+		}
+	}
+
+	public function findRandom($userId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 1 AND encoding IS NOT NULL ORDER BY RAND() LIMIT 8';
+		return $this->findEntities($sql, [$userId]);
+	}
+
+	public function getGroups($userId) {
+		$sql = 'SELECT DISTINCT name FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL';
+		return $this->findEntities($sql, [$userId]);
 	}
 
 	public function findNewFile($userId, $fileId) {
@@ -52,9 +69,9 @@ class FaceMapper extends Mapper {
 		return $this->findEntities($sql, [$userId, $fileId]);
 	}
 
-	public function findFile($fileId) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE file = ?';
-		return $this->findEntities($sql, [$fileId]);
+	public function findFile($userId, $fileId) {
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND file = ?';
+		return $this->findEntities($sql, [$userId, $fileId]);
 	}
 
 	public function fileExists($fileId) {

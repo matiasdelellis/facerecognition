@@ -42,7 +42,7 @@ use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Helper\Euclidean;
 
-class Clustering extends Command {
+class Update extends Command {
 
 	/** @var IUserManager */
 	protected $userManager;
@@ -88,8 +88,8 @@ class Clustering extends Command {
 
 	protected function configure() {
 		$this
-			->setName('face:clustering')
-			->setDescription('Clustering images from user')
+			->setName('face:update')
+			->setDescription('Update clustering images from user')
 			->addArgument(
 				'user_id',
 				InputArgument::OPTIONAL,
@@ -113,12 +113,12 @@ class Clustering extends Command {
 		$userId = $input->getArgument('user_id');
 		if ($userId === null) {
 			$this->userManager->callForSeenUsers(function (IUser $user) {
-				$this->clusteringUserFaces($user);
+				$this->updateUserClusters($user);
 			});
 		} else {
 			$user = $this->userManager->get($userId);
 			if ($user !== null) {
-				$this->clusteringUserFaces($user);
+				$this->updateUserClusters($user);
 			}
 		}
 
@@ -128,34 +128,20 @@ class Clustering extends Command {
 	/**
 	 * @param IUser $user
 	 */
-	private function clusteringUserFaces(IUser $user) {
+	private function updateUserClusters(IUser $user) {
 		\OC_Util::tearDownFS();
 		\OC_Util::setupFS($user->getUID());
 
 		$euclidean = new Euclidean();
 
 		$userId = $user->getUID();
-		$unknownFaces = $this->faceMapper->findAll($userId);
-		$knownFaces = [];
+		$unknownFaces = $this->faceMapper->findAllUnknown($userId);
+		$knownFaces = $this->faceMapper->findAllKnown($userId);
 
 		$this->output->writeln('');
-		$this->output->writeln($userId.' have '.count($unknownFaces).' to clustering..');
+		$this->output->writeln($userId.' have '.count($knownFaces).' known faces and '.count($unknownFaces).' to clustering');
 
-		$clusters = 0;
-		$i = 0;
-
-		/* All nodes are assigned to a random class.
-		 * The number of initial classes equals the number of nodes.
-		 */
-		foreach ($unknownFaces as $unknownFace) {
-			$unknownFace->setName('Person-'.$i++);
-			$unknownFace->setDistance(1);
-		}
-
-		/* Nodes are selected one by one in a random order 
-		 * Every node moves to the class which the given node connects with the less distance.
-		 */
-		shuffle($unknownFaces);
+		$clustered = 0;
 		foreach ($unknownFaces as $unknownFace) {
 			$distance = 1;
 			$bestDistance = 1;
@@ -169,29 +155,14 @@ class Clustering extends Command {
 					$bestDistance = $distance;
 				}
 			}
-
 			if ($bestDistance < 0.6) {
-				// Set to existing class..
 				$unknownFace->setName($bestFace->getName());
-				$unknownFace->setDistance($bestDistance);
-				array_unshift($knownFaces, $unknownFace);
-			}
-			else {
-				//Just use as new class..
-				$unknownFace->setDistance(0.5);
-				array_unshift($knownFaces, $unknownFace);
-				$clusters++;
+				$unknownFace->setDistance(0);
+				$this->faceMapper->update($unknownFace);
+				$clustered++;
 			}
 		}
-
-		/* TODO: Update untion converge? */
-
-		/* Save changes.. */
-		foreach ($unknownFaces as $unknownFace) {
-			$this->faceMapper->update($unknownFace);
-		}
-
-		$this->output->writeln($clusters.' clusters.');
+		$this->output->writeln($clustered.' new faces were recognized');
 
 	}
 

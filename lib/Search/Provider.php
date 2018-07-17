@@ -20,7 +20,7 @@ class Provider extends \OCP\Search\Provider {
 	//private $l10N;
 
 	public function __construct() {
-		$app = new Application('facerecognition');
+		$app = new Application();
 		$container = $app->getContainer();
 
 		$this->app = $app;

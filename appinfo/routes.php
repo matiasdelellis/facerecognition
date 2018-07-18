@@ -13,10 +13,16 @@ return ['routes' =>
 		'url'  => '/faces',
 		'verb' => 'GET'
 	],
-	// Get groups
+	// Get groups of faces.
 	[
 		'name' => 'face#getGroups',
 		'url'  => '/groups',
+		'verb' => 'GET'
+	],
+	// Get faces of a person.
+	[
+		'name' => 'face#getPerson',
+		'url'  => '/person/{name}',
 		'verb' => 'GET'
 	],
 	// Get random unknown.

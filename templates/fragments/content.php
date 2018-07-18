@@ -1,14 +1,35 @@
 <script id="content-tpl" type="text/x-handlebars-template">
 
-{{#if groups}}
+{{#if person}}
+<div id="group-navigation">
+	<div class="with-icon">
+		<div class="group-title">
+			<div><h1 class="edit-group icon-user">{{name}}</h1></div>
+		</div>
+		{{#each person}}
+			{{#unless distance}}
+				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
+			{{/unless}}
+		{{/each}}
+		<div class="group-title">
+			<div><h1 class="edit-group icon-user">Suggested</h1></div>
+		</div>
+		{{#each person}}
+			{{#if distance }}
+				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
+			{{/if}}
+		{{/each}}
+	</div>
+</div>
+{{else if groups}}
 <div id="group-navigation">
 	<div class="with-icon">
 	{{#each groups}}
 		<div class="group-title">
-			<div><a class="edit-group icon-user">{{@key}}</a></div>
+			<div><h1 class="edit-group icon-user">{{@key}}</h1></div>
 		</div>
 		{{#each this}}
-			<img src="/apps/facerecognition/thumb/{{id}}"></img>
+			<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
 		{{/each}}
 	{{/each}}
 	</div>

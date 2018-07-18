@@ -6,7 +6,7 @@
     width: 100%;
 }
 
-#new-button,
+#all-button,
 .edit-group {
     width: 100%;
     padding: 10px;
@@ -16,10 +16,19 @@
     margin: 0;
 }
 
-#new-button-fixed,
+#button-fixed,
 .group-title {
     z-index: 111; /* navigation menu is 110 ;-) */
     background-color: rgba(255, 255, 255, .75);
     padding: 10px;
     position: relative;
+}
+
+.lozad {
+    background-color: rgba(210, 210, 210, .75);
+    border-radius: 3px;
+}
+
+.selected {
+    border: 3px #4285f4 solid
 }

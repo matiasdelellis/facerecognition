@@ -47,6 +47,14 @@ class FaceController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 */
+	 public function getPerson($name) {
+		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
+		return new DataResponse($faces);
+	}
+
+	/**
+	 * @NoAdminRequired
 	 *
 	 * @param int $id
 	 */

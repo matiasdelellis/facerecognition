@@ -1,5 +1,6 @@
 <?php
 script('facerecognition', 'handlebars');
+script('facerecognition', 'lozad');
 script('facerecognition', 'facerecognition');
 style('facerecognition', 'facerecognition');
 ?>

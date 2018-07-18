@@ -139,9 +139,8 @@ class Clustering extends Command {
 		$knownFaces = [];
 
 		$this->output->writeln('');
-		$this->output->writeln($userId.' have '.count($unknownFaces).' to clustering..');
+		$this->output->writeln($userId.' have '.count($unknownFaces).' faces to clustering..');
 
-		$clusters = 0;
 		$i = 0;
 
 		/* All nodes are assigned to a random class.
@@ -155,32 +154,44 @@ class Clustering extends Command {
 		/* Nodes are selected one by one in a random order 
 		 * Every node moves to the class which the given node connects with the less distance.
 		 */
+		$clusters = [];
 		shuffle($unknownFaces);
 		foreach ($unknownFaces as $unknownFace) {
-			$distance = 1;
-			$bestDistance = 1;
-			$bestFace = NULL;
+			$distance = 0.0;
+			$bestDistance = 1.0;
+			$bestCluster = NULL;
 			$unknownEncoding = unserialize ($unknownFace->getEncoding());
-			foreach ($knownFaces as $knownFace) {
-				$knownEncoding = unserialize ($knownFace->getEncoding());
-				$distance = $euclidean->distance($unknownEncoding, $knownEncoding);
-				if ($distance < $bestDistance) {
-					$bestFace = $knownFace;
-					$bestDistance = $distance;
+			foreach ($clusters as $cluster) {
+				foreach ($cluster as $knownFace) {
+					$knownEncoding = unserialize ($knownFace->getEncoding());
+					$distance = $euclidean->distance($unknownEncoding, $knownEncoding);
+					if ($distance < $bestDistance) {
+						$bestCluster = $cluster;
+						$bestDistance = $distance;
+					}
 				}
 			}
 
 			if ($bestDistance < 0.6) {
 				// Set to existing class..
-				$unknownFace->setName($bestFace->getName());
+				$unknownFace->setName(current($bestCluster)->getName());
 				$unknownFace->setDistance($bestDistance);
-				array_unshift($knownFaces, $unknownFace);
+				array_unshift($bestCluster, $unknownFace);
 			}
 			else {
 				//Just use as new class..
+				$newCluster = [];
 				$unknownFace->setDistance(0.5);
-				array_unshift($knownFaces, $unknownFace);
-				$clusters++;
+				array_unshift($newCluster, $unknownFace);
+				array_unshift($clusters, $newCluster);
+			}
+		}
+
+		$i = 0;
+		foreach ($clusters as $cluster) {
+			$i++;
+			foreach ($cluster as $knownFace) {
+				$unknownFace->setName('Person-'.$i);
 			}
 		}
 
@@ -191,7 +202,7 @@ class Clustering extends Command {
 			$this->faceMapper->update($unknownFace);
 		}
 
-		$this->output->writeln($clusters.' clusters.');
+		$this->output->writeln('Result on '.count($clusters).' clusters.');
 
 	}
 

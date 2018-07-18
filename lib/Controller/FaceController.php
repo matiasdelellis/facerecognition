@@ -40,7 +40,7 @@ class FaceController extends Controller {
 		$resp = array();
 		$groups = $this->faceMapper->getGroups($this->userId);
 		foreach ($groups as $group) {
-			$resp[$group->getName()] = $this->faceMapper->findAllNamed($this->userId, $group->getName(), 10);
+			$resp[$group->getName()] = $this->faceMapper->findAllNamed($this->userId, $group->getName(), 12);
 		}
 		return new DataResponse($resp);
 	}
@@ -76,16 +76,24 @@ class FaceController extends Controller {
 		$img = new \OC_Image();
 		$fileName = $ownerView->getLocalFile($path);
 		$img->loadFromFile($fileName);
+
 		$x = $face->getLeft ();
 		$y = $face->getTop ();
 		$w = $face->getRight () - $x;
 		$h = $face->getBottom () - $y;
+
+		$padding = $h*0.25;
+		$x -= $padding;
+		$y -= $padding;
+		$w += $padding*2;
+		$h += $padding*2;
+
 		$img->crop($x, $y, $w, $h);
 		$img->scaleDownToFit(64, 64);
 
 		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
 		$resp->setETag((string)crc32($img->data()));
-		$resp->cacheFor(0);
+		$resp->cacheFor(7 * 24 * 60 * 60);
 		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
 
 		return $resp;

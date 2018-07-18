@@ -7,17 +7,17 @@
 			<div><h1 class="edit-group icon-user">{{name}}</h1></div>
 		</div>
 		{{#each person}}
-			{{#unless distance}}
+			{{#ifCond distance "==" 0}}
 				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
-			{{/unless}}
+			{{/ifCond}}
 		{{/each}}
 		<div class="group-title">
 			<div><h1 class="edit-group icon-user">Suggested</h1></div>
 		</div>
 		{{#each person}}
-			{{#if distance }}
+			{{#ifCond distance ">" 0}}
 				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
-			{{/if}}
+			{{/ifCond}}
 		{{/each}}
 	</div>
 </div>

@@ -35,6 +35,17 @@ Groups.prototype = {
         });
         return deferred.promise();
     },
+    selectPerson: function (name) {
+        var self = this;
+        Object.keys(this._groups).forEach(function(key) {
+            if (key === name) {
+                self._groups[key].active = true;
+            }
+            else {
+                self._groups[key].active = false;
+            }
+        });
+    },
     getAll: function () {
         return this._groups;
     },
@@ -42,6 +53,10 @@ Groups.prototype = {
         return this._activePerson;
     },
     unsetActive: function () {
+        var self = this;
+        Object.keys(this._groups).forEach(function(key) {
+            self._groups[key].active = false;
+        });
         this._activePerson = undefined;
     }
 };
@@ -58,8 +73,9 @@ View.prototype = {
     renderContent: function () {
         var source = $('#content-tpl').html();
         var template = Handlebars.compile(source);
+
         if (this._groups.getActive() !== undefined)
-            var html = template({person: this._groups.getActive(), name: this._active});
+            var html = template({person: this._groups.getActive()});
         else
             var html = template({groups: this._groups.getAll()});
 
@@ -87,7 +103,7 @@ View.prototype = {
         $('#app-navigation .group > a').click(function () {
             var name = $(this).parent().data('id');
             self._groups.loadPerson(name).done(function () {
-                view._active = name;
+                self._groups.selectPerson(name);
                 view.render();
             }).fail(function () {
                 alert('D\'Oh!. Could not load faces from person..');

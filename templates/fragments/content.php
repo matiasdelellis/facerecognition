@@ -4,7 +4,7 @@
 <div id="group-navigation">
 	<div class="with-icon">
 		<div class="group-title">
-			<div><h1 class="edit-group icon-user">{{name}}</h1></div>
+			<div><h1 class="edit-group icon-user">{{person.1.name}}</h1></div>
 		</div>
 		{{#each person}}
 			{{#ifCond distance "==" 0}}

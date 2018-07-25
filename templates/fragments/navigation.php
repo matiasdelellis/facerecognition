@@ -5,8 +5,9 @@
 		<div><button type="button" id="all-button" class="icon-user"><?php p($l->t('Show all groups'));?></button></div>
 	</div>
 	{{#each groups}}
-		<li class="group {{#if active}}active{{/if}}" data-id="{{ @key }}">
+		<li class="group {{#if this.active}}active{{/if}}" data-id="{{ @key }}">
 		<a href="#" class="icon-user">{{@key}}</a>
+		{{#if this.active}}
 		<div class="app-navigation-entry-utils">
 			<ul>
 				<li class="app-navigation-entry-utils-menu-button">
@@ -15,12 +16,13 @@
 			</ul>
 		</div>
 		<div class="app-navigation-entry-edit">
-			<form>
+			<div>
 				<input type="text" value='{{@key}}'>
 				<input type="submit" value="" class="icon-close">
 				<input type="submit" value="" class="icon-checkmark">
-			</form>
+			</div>
 		</div>
+		{{/if}}
 	{{/each}}
 
 </script>

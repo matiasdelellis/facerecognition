@@ -17,9 +17,9 @@
 		</div>
 		<div class="app-navigation-entry-edit">
 			<div>
-				<input type="text" value='{{@key}}'>
-				<input type="submit" value="" class="icon-close">
-				<input type="submit" value="" class="icon-checkmark">
+				<input id="input-name" type="text" value='{{@key}}'>
+				<input id="rename-cancel" type="submit" value="" class="icon-close">
+				<input id="rename-accept" type="submit" value="" class="icon-checkmark">
 			</div>
 		</div>
 		{{/if}}

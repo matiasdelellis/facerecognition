@@ -4,21 +4,25 @@
 <div id="group-navigation">
 	<div class="with-icon">
 		<div class="group-title">
-			<div><h1 class="edit-group icon-user">{{person.1.name}}</h1></div>
+			<div><h2 class="edit-group icon-user">{{person.1.name}}</h2></div>
 		</div>
-		{{#each person}}
-			{{#ifCond distance "==" 0}}
-				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
-			{{/ifCond}}
-		{{/each}}
+		<div class="group-previews">
+			{{#each person}}
+				{{#ifCond distance "==" 0}}
+					<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
+				{{/ifCond}}
+			{{/each}}
+		</div>
 		<div class="group-title">
 			<div><h1 class="edit-group icon-user">Suggested</h1></div>
 		</div>
-		{{#each person}}
-			{{#ifCond distance ">" 0}}
-				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
-			{{/ifCond}}
-		{{/each}}
+		<div class="group-previews">
+			{{#each person}}
+				{{#ifCond distance ">" 0}}
+					<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
+				{{/ifCond}}
+			{{/each}}
+		</div>
 	</div>
 </div>
 {{else if groups}}
@@ -26,11 +30,13 @@
 	<div class="with-icon">
 	{{#each groups}}
 		<div class="group-title">
-			<div><h1 class="edit-group icon-user">{{@key}}</h1></div>
+			<div><h2 class="edit-group icon-user">{{@key}}</h2></div>
 		</div>
-		{{#each this}}
-			<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
-		{{/each}}
+		<div class="group-previews">
+			{{#each this}}
+				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
+			{{/each}}
+		</div>
 	{{/each}}
 	</div>
 </div>
@@ -41,7 +47,6 @@
 	<p><?php p($l->t('Please, be pacient')); ?></p>
 </div>
 {{/if}}
-
 
 </script>
 <div id="div-content"></div>

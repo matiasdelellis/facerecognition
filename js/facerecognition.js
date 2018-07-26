@@ -99,7 +99,7 @@ View.prototype = {
             view._active = undefined;
             view.render();
         });
-        // load a comlete group.
+        // load a complete group.
         $('#app-navigation .group > a').click(function () {
             var name = $(this).parent().data('id');
             self._groups.loadPerson(name).done(function () {
@@ -109,6 +109,18 @@ View.prototype = {
                 alert('D\'Oh!. Could not load faces from person..');
             });
         });
+        // edit a group.
+        $('#app-navigation .icon-rename').click(function () {
+            $('#app-navigation .active').addClass('editing');
+        });
+        $('#app-navigation #rename-cancel').click(function () {
+            $('#app-navigation .active').removeClass('editing');
+        });
+        $('#app-navigation #rename-accept').click(function () {
+            console.log("Value: " + $('#app-navigation #input-name').val());
+            $('#app-navigation .active').removeClass('editing');
+        });
+
     },
     render: function () {
         this.renderNavigation();

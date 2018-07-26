@@ -35,26 +35,6 @@ class FaceController extends Controller {
 
 	/**
 	 * @NoAdminRequired
-	 */
-	 public function getGroups() {
-		$resp = array();
-		$groups = $this->faceMapper->getGroups($this->userId);
-		foreach ($groups as $group) {
-			$resp[$group->getName()] = $this->faceMapper->findAllNamed($this->userId, $group->getName(), 12);
-		}
-		return new DataResponse($resp);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 */
-	 public function getPerson($name) {
-		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
 	 *
 	 * @param int $id
 	 */

@@ -13,17 +13,23 @@ return ['routes' =>
 		'url'  => '/faces',
 		'verb' => 'GET'
 	],
-	// Get groups of faces.
+	// Get persons with some faces.
 	[
-		'name' => 'face#getGroups',
+		'name' => 'person#index',
 		'url'  => '/groups',
 		'verb' => 'GET'
 	],
-	// Get faces of a person.
+	// Get all faces of a person.
 	[
-		'name' => 'face#getPerson',
+		'name' => 'person#getFaces',
 		'url'  => '/person/{name}',
 		'verb' => 'GET'
+	],
+	// Change name to a person.
+	[
+		'name' => 'person#updateName',
+		'url'  => '/update/{oldName}/{newName}',
+		'verb' => 'PUT'
 	],
 	// Get random unknown.
 	[

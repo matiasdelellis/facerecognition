@@ -42,7 +42,7 @@ class FaceMapper extends Mapper {
 	}
 
 	public function findAllNamed($userId, $query, $limit = null, $offset = null) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
+		$sql = 'SELECT id, name, distance FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
 		return $this->findEntities($sql, [$userId, $query], $limit, $offset);
 	}
 

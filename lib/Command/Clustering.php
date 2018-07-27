@@ -137,6 +137,7 @@ class Clustering extends Command {
 		$userId = $user->getUID();
 		$unknownFaces = $this->faceMapper->findAll($userId);
 		$knownFaces = [];
+		$personCount = 0;
 
 		$this->output->writeln('');
 		$this->output->writeln($userId.' have '.count($unknownFaces).' faces to clustering..');
@@ -147,62 +148,52 @@ class Clustering extends Command {
 		 * The number of initial classes equals the number of nodes.
 		 */
 		foreach ($unknownFaces as $unknownFace) {
-			$unknownFace->setName('Person-'.$i++);
-			$unknownFace->setDistance(1);
+			$unknownFace->setName('Unknown-'.$i++);
+			$unknownFace->setDistance(1.0);
 		}
 
-		/* Nodes are selected one by one in a random order 
+		/* Nodes are selected one by one in a random order
 		 * Every node moves to the class which the given node connects with the less distance.
 		 */
-		$clusters = [];
+
 		shuffle($unknownFaces);
 		foreach ($unknownFaces as $unknownFace) {
-			$distance = 0.0;
 			$bestDistance = 1.0;
-			$bestCluster = NULL;
+			$bestFace = NULL;
 			$unknownEncoding = unserialize ($unknownFace->getEncoding());
-			foreach ($clusters as $cluster) {
-				foreach ($cluster as $knownFace) {
-					$knownEncoding = unserialize ($knownFace->getEncoding());
-					$distance = $euclidean->distance($unknownEncoding, $knownEncoding);
-					if ($distance < $bestDistance) {
-						$bestCluster = $cluster;
-						$bestDistance = $distance;
-					}
+			foreach ($knownFaces as $knownFace) {
+				$knownEncoding = unserialize ($knownFace->getEncoding());
+				$distance = $euclidean->distance($unknownEncoding, $knownEncoding);
+				if ($distance < $bestDistance) {
+					$bestFace = $knownFace;
+					$bestDistance = $distance;
 				}
 			}
 
-			if ($bestDistance < 0.6) {
+			if ($bestDistance < 0.5) {
 				// Set to existing class..
-				$unknownFace->setName(current($bestCluster)->getName());
+				$unknownFace->setName($bestFace->getName());
 				$unknownFace->setDistance($bestDistance);
-				array_unshift($bestCluster, $unknownFace);
 			}
 			else {
 				//Just use as new class..
-				$newCluster = [];
-				$unknownFace->setDistance(0.5);
-				array_unshift($newCluster, $unknownFace);
-				array_unshift($clusters, $newCluster);
+				$personCount++;
+				$unknownFace->setName('Person '.$personCount);
+				$unknownFace->setDistance(0.0);
 			}
+
+			// Put as 'known' face..
+			array_unshift($knownFaces, $unknownFace);
 		}
 
-		$i = 0;
-		foreach ($clusters as $cluster) {
-			$i++;
-			foreach ($cluster as $knownFace) {
-				$unknownFace->setName('Person-'.$i);
-			}
-		}
-
-		/* TODO: Update untion converge? */
+		/* TODO: Update until converge? */
 
 		/* Save changes.. */
-		foreach ($unknownFaces as $unknownFace) {
-			$this->faceMapper->update($unknownFace);
+		foreach ($knownFaces as $knownFace) {
+			$this->faceMapper->update($knownFace);
 		}
 
-		$this->output->writeln('Result on '.count($clusters).' clusters.');
+		$this->output->writeln('Result on '.$personCount.' clusters.');
 
 	}
 

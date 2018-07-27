@@ -58,7 +58,7 @@ class FaceMapper extends Mapper {
 	}
 
 	public function getGroups($userId) {
-		$sql = 'SELECT DISTINCT name FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL';
+		$sql = 'SELECT name FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL GROUP BY name ORDER BY COUNT(name) DESC';
 		return $this->findEntities($sql, [$userId]);
 	}
 

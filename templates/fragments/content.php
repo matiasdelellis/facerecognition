@@ -1,22 +1,22 @@
 <script id="content-tpl" type="text/x-handlebars-template">
 
 {{#if person}}
-<div id="group-navigation">
+<div id="persons-navigation">
 	<div class="with-icon">
-		<div class="group-title">
-			<div><h2 class="edit-group icon-user">{{person.1.name}}</h2></div>
+		<div class="person-title">
+			<div><h2 class="edit-person icon-user">{{person.1.name}}</h2></div>
 		</div>
-		<div class="group-previews">
+		<div class="persons-previews">
 			{{#each person}}
 				{{#ifCond distance "==" 0}}
 					<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
 				{{/ifCond}}
 			{{/each}}
 		</div>
-		<div class="group-title">
-			<div><h1 class="edit-group icon-user">Suggested</h1></div>
+		<div class="person-title">
+			<div><h1 class="edit-person icon-user">Suggested</h1></div>
 		</div>
-		<div class="group-previews">
+		<div class="persons-previews">
 			{{#each person}}
 				{{#ifCond distance ">" 0}}
 					<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
@@ -25,14 +25,14 @@
 		</div>
 	</div>
 </div>
-{{else if groups}}
-<div id="group-navigation">
+{{else if persons}}
+<div id="persons-navigation">
 	<div class="with-icon">
-	{{#each groups}}
-		<div class="group-title">
-			<div><h2 class="edit-group icon-user">{{@key}}</h2></div>
+	{{#each persons}}
+		<div class="person-title">
+			<div><h2 class="edit-person icon-user">{{@key}}</h2></div>
 		</div>
-		<div class="group-previews">
+		<div class="persons-previews">
 			{{#each this}}
 				<img class="lozad" data-src="/apps/facerecognition/thumb/{{id}}" width="64" height="64"></img>
 			{{/each}}

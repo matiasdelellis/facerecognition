@@ -6,18 +6,18 @@ $(document).ready(function () {
 /*
  * Faces in memory handlers.
  */
-var Groups = function (baseUrl) {
+var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
-    this._groups = [];
+    this._persons = [];
     this._activePerson = undefined;
 };
 
-Groups.prototype = {
-    loadGroups: function () {
+Persons.prototype = {
+    loadPersons: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/groups').done(function (groups) {
-            self._groups = groups;
+        $.get(this._baseUrl+'/persons').done(function (persons) {
+            self._persons = persons;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -37,25 +37,25 @@ Groups.prototype = {
     },
     selectPerson: function (name) {
         var self = this;
-        Object.keys(this._groups).forEach(function(key) {
+        Object.keys(this._persons).forEach(function(key) {
             if (key === name) {
-                self._groups[key].active = true;
+                self._persons[key].active = true;
             }
             else {
-                self._groups[key].active = false;
+                self._persons[key].active = false;
             }
         });
     },
     getAll: function () {
-        return this._groups;
+        return this._persons;
     },
     getActive: function () {
         return this._activePerson;
     },
     unsetActive: function () {
         var self = this;
-        Object.keys(this._groups).forEach(function(key) {
-            self._groups[key].active = false;
+        Object.keys(this._persons).forEach(function(key) {
+            self._persons[key].active = false;
         });
         this._activePerson = undefined;
     }
@@ -64,8 +64,8 @@ Groups.prototype = {
 /*
  * View.
  */
-var View = function (groups) {
-    this._groups = groups;
+var View = function (persons) {
+    this._persons = persons;
     this._active = undefined;
 };
 
@@ -74,10 +74,10 @@ View.prototype = {
         var source = $('#content-tpl').html();
         var template = Handlebars.compile(source);
 
-        if (this._groups.getActive() !== undefined)
-            var html = template({person: this._groups.getActive()});
+        if (this._persons.getActive() !== undefined)
+            var html = template({person: this._persons.getActive()});
         else
-            var html = template({groups: this._groups.getAll()});
+            var html = template({persons: this._persons.getAll()});
 
         $('#div-content').html(html);
 
@@ -87,7 +87,7 @@ View.prototype = {
     renderNavigation: function () {
         var source = $('#navigation-tpl').html();
         var template = Handlebars.compile(source);
-        var html = template({groups: this._groups.getAll(), person: this._groups.getActive()});
+        var html = template({persons: this._persons.getAll(), person: this._persons.getActive()});
 
         $('#app-navigation ul').html(html);
 
@@ -95,21 +95,21 @@ View.prototype = {
 
         // Show all.
         $('#all-button').click(function () {
-            view._groups.unsetActive();
+            view._persons.unsetActive();
             view._active = undefined;
             view.render();
         });
-        // load a complete group.
-        $('#app-navigation .group > a').click(function () {
+        // load a complete person.
+        $('#app-navigation .person > a').click(function () {
             var name = $(this).parent().data('id');
-            self._groups.loadPerson(name).done(function () {
-                self._groups.selectPerson(name);
+            self._persons.loadPerson(name).done(function () {
+                self._persons.selectPerson(name);
                 view.render();
             }).fail(function () {
                 alert('D\'Oh!. Could not load faces from person..');
             });
         });
-        // edit a group.
+        // edit a person.
         $('#app-navigation .icon-rename').click(function () {
             $('#app-navigation .active').addClass('editing');
         });
@@ -117,7 +117,11 @@ View.prototype = {
             $('#app-navigation .active').removeClass('editing');
         });
         $('#app-navigation #rename-accept').click(function () {
-            console.log("Value: " + $('#app-navigation #input-name').val());
+            var oldName = self._persons.getActive()[0].name;
+            console.log("Old Value: " + oldName);
+            console.log("New Value: " + $('#app-navigation #input-name').val());
+            //var json = { name: oldName};
+            //$.post(OC.generateUrl('/apps/facerecognition/rename/')+name, );
             $('#app-navigation .active').removeClass('editing');
         });
 
@@ -131,13 +135,13 @@ View.prototype = {
 /*
  * Main app.
  */
-var groups = new Groups(OC.generateUrl('/apps/facerecognition'));
-var view = new View(groups);
+var persons = new Persons(OC.generateUrl('/apps/facerecognition'));
+var view = new View(persons);
 
-groups.loadGroups().done(function () {
+persons.loadPersons().done(function () {
     view.render();
 }).fail(function () {
-    alert('D\'Oh!. Could not load faces groups..');
+    alert('D\'Oh!. Could not load faces..');
 });
 
 

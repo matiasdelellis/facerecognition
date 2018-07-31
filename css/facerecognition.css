@@ -7,7 +7,7 @@
 }
 
 #all-button,
-.edit-group {
+.edit-person {
     width: 100%;
     padding: 10px;
     padding-left: 34px;
@@ -17,7 +17,7 @@
 }
 
 #button-fixed,
-.group-title {
+.person-title {
     z-index: 111; /* navigation menu is 110 ;-) */
     background-color: rgba(255, 255, 255, .75);
     color: #545454;
@@ -30,7 +30,7 @@
     border-radius: 3px;
 }
 
-.group-previews {
+.person-previews {
     margin-left: 24px;
 }
 

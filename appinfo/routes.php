@@ -16,7 +16,7 @@ return ['routes' =>
 	// Get persons with some faces.
 	[
 		'name' => 'person#index',
-		'url'  => '/groups',
+		'url'  => '/persons',
 		'verb' => 'GET'
 	],
 	// Get all faces of a person.

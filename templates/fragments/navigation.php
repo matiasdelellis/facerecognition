@@ -2,10 +2,10 @@
 <script id="navigation-tpl" type="text/x-handlebars-template">
 
 	<div id="button-fixed">
-		<div><button type="button" id="all-button" class="icon-user"><?php p($l->t('Show all groups'));?></button></div>
+		<div><button type="button" id="all-button" class="icon-user"><?php p($l->t('Show all persons'));?></button></div>
 	</div>
-	{{#each groups}}
-		<li class="group {{#if this.active}}active{{/if}}" data-id="{{ @key }}">
+	{{#each persons}}
+		<li class="person {{#if this.active}}active{{/if}}" data-id="{{ @key }}">
 		<a href="#" class="icon-user">{{@key}}</a>
 		{{#if this.active}}
 		<div class="app-navigation-entry-utils">

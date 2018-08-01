@@ -143,8 +143,8 @@ class Update extends Command {
 
 		$clustered = 0;
 		foreach ($unknownFaces as $unknownFace) {
-			$distance = 1;
-			$bestDistance = 1;
+			$distance = 1.0;
+			$bestDistance = 1.0;
 			$bestFace = NULL;
 			$unknownEncoding = unserialize ($unknownFace->getEncoding());
 			foreach ($knownFaces as $knownFace) {
@@ -155,9 +155,9 @@ class Update extends Command {
 					$bestDistance = $distance;
 				}
 			}
-			if ($bestDistance < 0.6) {
+			if ($bestDistance < 0.5) {
 				$unknownFace->setName($bestFace->getName());
-				$unknownFace->setDistance(0);
+				$unknownFace->setDistance($bestDistance);
 				$this->faceMapper->update($unknownFace);
 				$clustered++;
 			}

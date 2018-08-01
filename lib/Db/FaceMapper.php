@@ -32,7 +32,7 @@ class FaceMapper extends Mapper {
 	}
 
 	public function findAllUnknown($userId) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 1 AND encoding IS NOT NULL';
+		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance > 0 AND encoding IS NOT NULL';
 		return $this->findEntities($sql, [$userId]);
 	}
 

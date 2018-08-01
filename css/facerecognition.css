@@ -25,13 +25,30 @@
     position: relative;
 }
 
+.persons-previews {
+    margin-left: 24px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.person-container {
+    position: relative;
+    margin: 2px;
+}
+
 .lozad {
     background-color: rgba(210, 210, 210, .75);
     border-radius: 3px;
+    height: 64px;
+    width: 64px;
 }
 
-.person-previews {
-    margin-left: 24px;
+.icon-checkmark {
+    float: right;
+    background-color: white;
+    border-radius: 8px;
+    margin: 2px;
+    opacity: 0.5;
 }
 
 .selected {

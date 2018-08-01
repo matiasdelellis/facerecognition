@@ -10,6 +10,7 @@ var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._persons = [];
     this._activePerson = undefined;
+    this._selectedFaces = [];
 };
 
 Persons.prototype = {
@@ -46,6 +47,19 @@ Persons.prototype = {
             }
         });
     },
+    selectFace: function (id) {
+        if (!this._selectedFaces.includes(id))
+            this._selectedFaces.push (id);
+        console.log ("Selection ids: " + this._selectedFaces);
+    },
+    unselectFace: function (id) {
+        if (this._selectedFaces.includes(id))
+            this._selectedFaces = this._selectedFaces.filter(iid => iid != id);
+        console.log ("unSelection ids: " + this._selectedFaces);
+    },
+    selectedFace: function (id) {
+        return this._selectedFaces.includes(id);
+    },
     getAll: function () {
         return this._persons;
     },
@@ -66,6 +80,7 @@ Persons.prototype = {
             self._persons[key].active = false;
         });
         this._activePerson = undefined;
+        this._selectedFaces = [];
     }
 };
 
@@ -91,6 +106,20 @@ View.prototype = {
 
         const observer = lozad();
         observer.observe();
+
+        var self = this;
+        $('#app-content .icon-checkmark').click(function () {
+            var img = $(this).parent();
+            var id = parseInt($(this).parent().data('id'), 10);
+            if (!self._persons.selectedFace(id)) {
+                self._persons.selectFace (id);
+                img.addClass('selected');
+            } else {
+                self._persons.unselectFace (id);
+                img.removeClass('selected');
+            }
+        });
+
     },
     renderNavigation: function () {
         var source = $('#navigation-tpl').html();

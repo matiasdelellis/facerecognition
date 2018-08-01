@@ -125,8 +125,10 @@ View.prototype = {
             $('#app-navigation .active').removeClass('editing');
         });
         $('#app-navigation #rename-accept').click(function () {
-            var newName = $('#app-navigation #input-name').val();
-            self._persons.renameActive(newName);
+            var newName = $('#app-navigation #input-name').val().trim();
+            self._persons.renameActive(newName).done(function (data) {
+                location.reload();
+            });
             $('#app-navigation .active').removeClass('editing');
         });
 

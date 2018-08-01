@@ -53,8 +53,8 @@ class PersonController extends Controller {
 	 * @param string $oldName
 	 * @param string $newName
 	 */
-	public function updateName($oldName, $newName) {
-		$faces = $this->faceMapper->findAllNamed($this->userId, $oldName);
+	public function updateName($name, $newName) {
+		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
 		foreach ($faces as $face) {
 			$face->setName($newName);
 			$this->faceMapper->update($face);

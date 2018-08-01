@@ -28,7 +28,7 @@ return ['routes' =>
 	// Change name to a person.
 	[
 		'name' => 'person#updateName',
-		'url'  => '/update/{oldName}/{newName}',
+		'url'  => '/person/{name}',
 		'verb' => 'PUT'
 	],
 	// Get random unknown.

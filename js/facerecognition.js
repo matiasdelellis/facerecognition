@@ -52,6 +52,14 @@ Persons.prototype = {
     getActive: function () {
         return this._activePerson;
     },
+    renameActive: function (newName) {
+        var oldName = this._activePerson[0].name;
+        var opt = {newName: newName};
+        return $.ajax({url: this._baseUrl+'/person/'+oldName,
+                       method: 'PUT',
+                       contentType: 'application/json',
+                       data: JSON.stringify(opt)});
+    },
     unsetActive: function () {
         var self = this;
         Object.keys(this._persons).forEach(function(key) {
@@ -117,11 +125,8 @@ View.prototype = {
             $('#app-navigation .active').removeClass('editing');
         });
         $('#app-navigation #rename-accept').click(function () {
-            var oldName = self._persons.getActive()[0].name;
-            console.log("Old Value: " + oldName);
-            console.log("New Value: " + $('#app-navigation #input-name').val());
-            //var json = { name: oldName};
-            //$.post(OC.generateUrl('/apps/facerecognition/rename/')+name, );
+            var newName = $('#app-navigation #input-name').val();
+            self._persons.renameActive(newName);
             $('#app-navigation .active').removeClass('editing');
         });
 

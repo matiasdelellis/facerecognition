@@ -13,7 +13,7 @@
 				{{#ifCond distance "==" 0}}
 					<div class="person-container">
 						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
-							<div class="icon-checkmark" title="Select face"></div>
+							<div class="icon-checkmark icon-checkmark-select" title="Select face"></div>
 						</div>
 					</div>
 				{{/ifCond}}
@@ -27,7 +27,7 @@
 				{{#ifCond distance ">" 0}}
 					<div class="person-container">
 						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
-							<div class="icon-checkmark" title="Select face"></div>
+							<div class="icon-checkmark icon-checkmark-select" title="Select face"></div>
 						</div>
 					</div>
 				{{/ifCond}}
@@ -40,7 +40,7 @@
 	<div class="with-icon">
 	{{#each persons}}
 		<div class="person-title">
-			<div><h2 class="edit-person icon-user">{{@key}}</h2></div>
+			<a><h2 class="edit-person icon-user" data-id="{{@key}}">{{@key}}</h2></a>
 		</div>
 		<div class="persons-previews">
 			{{#each this}}

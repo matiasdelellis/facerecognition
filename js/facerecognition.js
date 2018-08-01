@@ -109,15 +109,25 @@ View.prototype = {
         observer.observe();
 
         var self = this;
+        $('#app-content .person-title > a').click(function () {
+            var name = $(this).children().data('id');
+            self._persons.loadPerson(name).done(function () {
+                self._persons.selectPerson(name);
+                view.render();
+            }).fail(function () {
+                alert('D\'Oh!. Could not load faces from person..');
+            });
+        });
         $('#app-content .icon-checkmark').click(function () {
-            var img = $(this).parent();
             var id = parseInt($(this).parent().data('id'), 10);
             if (!self._persons.selectedFace(id)) {
                 self._persons.selectFace (id);
-                img.addClass('selected');
+                $(this).addClass('icon-checkmark-selected');
+                $(this).parent().addClass('face-selected');
             } else {
                 self._persons.unselectFace (id);
-                img.removeClass('selected');
+                $(this).removeClass('icon-checkmark-selected');
+                $(this).parent().removeClass('face-selected');
             }
         });
 
@@ -150,6 +160,9 @@ View.prototype = {
         // edit a person.
         $('#app-navigation .icon-rename').click(function () {
             $('#app-navigation .active').addClass('editing');
+            var input = $('#app-navigation #input-name')
+            input.focus();
+            input.select();
         });
         $('#app-navigation #rename-cancel').click(function () {
             $('#app-navigation .active').removeClass('editing');

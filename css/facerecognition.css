@@ -43,7 +43,7 @@
     width: 64px;
 }
 
-.icon-checkmark {
+.icon-checkmark-select {
     float: right;
     background-color: white;
     border-radius: 8px;
@@ -51,6 +51,12 @@
     opacity: 0.5;
 }
 
-.selected {
+.icon-checkmark-selected,
+.icon-checkmark-select:hover {
+    background-color: #4285f4;
+    opacity: 1.0;
+}
+
+.face-selected {
     border: 3px #4285f4 solid
 }

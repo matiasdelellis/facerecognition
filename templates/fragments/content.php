@@ -4,13 +4,15 @@
 <div id="persons-navigation">
 	<div class="with-icon">
 		<div class="person-title">
-			<div><h2 class="edit-person icon-user">{{person.0.name}}</h2></div>
+			<div>
+				<h2 class="edit-person icon-user">{{person.0.name}}</h2>
+			</div>
 		</div>
 		<div class="persons-previews">
 			{{#each person}}
 				{{#ifCond distance "==" 0}}
 					<div class="person-container">
-						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}">
+						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
 							<div class="icon-checkmark" title="Select face"></div>
 						</div>
 					</div>
@@ -24,7 +26,7 @@
 			{{#each person}}
 				{{#ifCond distance ">" 0}}
 					<div class="person-container">
-						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}">
+						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
 							<div class="icon-checkmark" title="Select face"></div>
 						</div>
 					</div>

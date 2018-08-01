@@ -30,6 +30,7 @@ Persons.prototype = {
         var self = this;
         $.get(this._baseUrl+'/person/'+name).done(function (person) {
             self._activePerson = person;
+            self._selectedFaces = [];
             deferred.resolve();
         }).fail(function () {
             deferred.reject();

@@ -14,6 +14,7 @@
 					<div class="person-container">
 						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
 							<div class="icon-checkmark icon-checkmark-select" title="Select face"></div>
+							<div class="icon-rename icon-rename-select" title="Rename"></div>
 						</div>
 					</div>
 				{{/ifCond}}
@@ -28,6 +29,7 @@
 					<div class="person-container">
 						<div class="lozad" data-background-image="/apps/facerecognition/thumb/{{id}}" data-id="{{id}}" width="64" height="64">
 							<div class="icon-checkmark icon-checkmark-select" title="Select face"></div>
+							<div class="icon-rename icon-rename-select" title="Rename"></div>
 						</div>
 					</div>
 				{{/ifCond}}

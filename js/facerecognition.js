@@ -109,6 +109,7 @@ View.prototype = {
         observer.observe();
 
         var self = this;
+
         $('#app-content .person-title > a').click(function () {
             var name = $(this).children().data('id');
             self._persons.loadPerson(name).done(function () {
@@ -118,6 +119,34 @@ View.prototype = {
                 alert('D\'Oh!. Could not load faces from person..');
             });
         });
+
+        $('#app-content .icon-rename').click(function () {
+            var id = parseInt($(this).parent().data('id'), 10);
+            if (!self._persons.selectedFace(id)) {
+                self._persons.selectFace (id);
+                $(this).parent().children('.icon-checkmark').addClass('icon-checkmark-selected');
+                $(this).parent().addClass('face-selected');
+            }
+
+            OC.dialogs.prompt(
+                t('facerecognition', 'Please enter a name to rename the person'),
+                t('facerecognition', 'Rename'),
+                    function(result, value) {
+                        if (result === true && value) {
+                            console.log ("Rename to " + value);
+                        }
+                    },
+                    true,
+                    t('facerecognition', 'Rename Person'),
+                    false
+            ).then(function() {
+                var $dialog = $('.oc-dialog:visible');
+                var $buttons = $dialog.find('button');
+                $buttons.eq(0).text(t('facerecognition', 'Cancel'));
+                $buttons.eq(1).text(t('facerecognition', 'Rename'));
+            });
+        });
+
         $('#app-content .icon-checkmark').click(function () {
             var id = parseInt($(this).parent().data('id'), 10);
             if (!self._persons.selectedFace(id)) {

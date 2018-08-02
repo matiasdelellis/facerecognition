@@ -43,6 +43,14 @@
     width: 64px;
 }
 
+.icon-rename-select {
+    float: left;
+    background-color: white;
+    border-radius: 8px;
+    margin: 2px;
+    opacity: 0.5;
+}
+
 .icon-checkmark-select {
     float: right;
     background-color: white;
@@ -52,7 +60,8 @@
 }
 
 .icon-checkmark-selected,
-.icon-checkmark-select:hover {
+.icon-checkmark-select:hover,
+.icon-rename-select:hover {
     background-color: #4285f4;
     opacity: 1.0;
 }

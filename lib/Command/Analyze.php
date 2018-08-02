@@ -30,6 +30,7 @@ use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
+use OCP\App\IAppManager;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IUser;
@@ -56,6 +57,9 @@ class Analyze extends Command {
 	/** @var String */
 	protected $dataDir;
 
+	/** @var String */
+	protected $command;
+
 	/** @var OutputInterface */
 	protected $output;
 
@@ -64,6 +68,9 @@ class Analyze extends Command {
 
 	/** @var IManager */
 	protected $encryptionManager;
+
+	/** @var \OCP\App\IAppManager **/
+	protected $appManager;
 
 	/** @var FaceMapper */
 	protected $faceMapper;
@@ -79,6 +86,7 @@ class Analyze extends Command {
 		                    IUserManager $userManager,
 		                    IConfig $config,
 		                    IManager $encryptionManager,
+		                    IAppManager $appManager,
 		                    FaceMapper $faceMapper) {
 		parent::__construct();
 
@@ -86,6 +94,7 @@ class Analyze extends Command {
 		$this->rootFolder = $rootFolder;
 		$this->config = $config;
 		$this->encryptionManager = $encryptionManager;
+		$this->appManager = $appManager;
 		$this->faceMapper = $faceMapper;
 
 		$this->dataDir = rtrim($this->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
@@ -112,6 +121,17 @@ class Analyze extends Command {
 
 		if ($this->encryptionManager->isEnabled()) {
 			$this->output->writeln('Encryption is enabled. Aborted.');
+			return 1;
+		}
+
+		if ($this->command_exist('nextcloud-face-recognition-cmd')) {
+			$this->command = 'nextcloud-face-recognition-cmd';
+		}
+		else if (file_exists($this->appManager->getAppPath('facerecognition').'/opt/bin/nextcloud-face-recognition-cmd')) {
+			$this->command = $this->appManager->getAppPath('facerecognition').'/opt/bin/nextcloud-face-recognition-cmd';
+		}
+		else {
+			$this->output->writeln('nextcloud-face-recognition-cmd not found. Aborted.');
 			return 1;
 		}
 
@@ -205,7 +225,7 @@ class Analyze extends Command {
 		$facesPath = $this->dataDir.$knownFolder->getPath();
 
 		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
-		$cmd = 'nextcloud-face-recognition-cmd analyze --search '.$fileList. ' --known '. $facesPath;
+		$cmd = $this->command.' analyze --search '.$fileList. ' --known '. $facesPath;
 		$result = shell_exec ($cmd);
 
 		$newFaces = json_decode ($result);
@@ -215,6 +235,11 @@ class Analyze extends Command {
 		}
 
 		$this->output->writeln(count($facesFound).' faces(s) faces found.');
+	}
+
+	protected function command_exist ($cmd) {
+		$return = shell_exec(sprintf("which %s", escapeshellarg($cmd)));
+		return !empty($return);
 	}
 
 }

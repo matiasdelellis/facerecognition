@@ -14,9 +14,12 @@ function make_virtual_env () {
     echo "Download nextcloud_face_recognition_cmd.."
     wget https://raw.githubusercontent.com/matiasdelellis/nextcloud_face_recognition_cmd/master/nextcloud_face_recognition_cmd/nextcloud_face_recognition_cmd.py -P bin/
 
-    echo "Set nextcloud_face_recognition_cmd as executable.."
-    ln bin/nextcloud_face_recognition_cmd.py bin/nextcloud_face_recognition_cmd
-    chmod +x bin/nextcloud_face_recognition_cmd
+    echo "Write nextcloud-face-recognition-cmd wrapper to launch virtual env."
+    echo '#!/bin/bash' > bin/nextcloud-face-recognition-cmd
+    echo 'source '$PWD'/bin/activate' >> bin/nextcloud-face-recognition-cmd
+    echo 'python3 '$PWD'/bin/nextcloud_face_recognition_cmd.py $@' >> bin/nextcloud-face-recognition-cmd
+    echo 'deactivate' >> bin/nextcloud-face-recognition-cmd
+    chmod +x bin/nextcloud-face-recognition-cmd
 
     echo
     echo "Make virtual env done.."
@@ -27,11 +30,7 @@ function make_virtual_env () {
 
 function install_tool () {
     rm -f /usr/bin/nextcloud-face-recognition-cmd
-    echo '#!/bin/bash' > /usr/bin/nextcloud-face-recognition-cmd
-    echo 'source '$PWD'/opt/bin/activate' >> /usr/bin/nextcloud-face-recognition-cmd
-    echo 'python3 '$PWD'/opt/bin/nextcloud_face_recognition_cmd $@' >> /usr/bin/nextcloud-face-recognition-cmd
-    echo 'deactivate' >> /usr/bin/nextcloud-face-recognition-cmd
-    chmod +x /usr/bin/nextcloud-face-recognition-cmd
+    ln -s bin/nextcloud-face-recognition-cmd /usr/bin/nextcloud-face-recognition-cmd
 
     echo
     echo "Everything finished. You could use the application in nextcloud!"

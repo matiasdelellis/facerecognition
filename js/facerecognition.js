@@ -145,11 +145,20 @@ View.prototype = {
             });
         });
 
+        $("#app-content").on("mouseenter", ".lozad", function() {
+            $(this).children(".icon-checkmark").addClass("show-overlay-icon");
+            $(this).children(".icon-rename").addClass("show-overlay-icon");
+        });
+        $("#app-content").on("mouseleave", ".lozad", function() {
+            $(this).children(".icon-checkmark").removeClass("show-overlay-icon");
+            $(this).children(".icon-rename").removeClass("show-overlay-icon");
+        });
         $('#app-content .icon-rename').click(function () {
             var id = parseInt($(this).parent().data('id'), 10);
             if (!self._persons.selectedFace(id)) {
                 self._persons.selectFace (id);
                 $(this).parent().children('.icon-checkmark').addClass('icon-checkmark-selected');
+                $(this).parent().children('.icon-rename').addClass('icon-checkmark-selected');
                 $(this).parent().addClass('face-selected');
             }
 
@@ -179,10 +188,12 @@ View.prototype = {
                 self._persons.selectFace (id);
                 $(this).addClass('icon-checkmark-selected');
                 $(this).parent().addClass('face-selected');
+                $(this).parent().children('.icon-rename').addClass('icon-checkmark-selected');
             } else {
                 self._persons.unselectFace (id);
                 $(this).removeClass('icon-checkmark-selected');
                 $(this).parent().removeClass('face-selected');
+                $(this).parent().children('.icon-rename').removeClass('icon-checkmark-selected');
             }
         });
 

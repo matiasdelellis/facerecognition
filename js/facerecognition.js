@@ -98,10 +98,27 @@ Persons.prototype = {
  */
 var View = function (persons) {
     this._persons = persons;
-    this._active = undefined;
 };
 
 View.prototype = {
+    reload: function (name) {
+        var self = this;
+        this._persons.loadPersons().done(function () {
+            if (name) {
+                self._persons.loadPerson(name).done(function () {
+                    self._persons.selectPerson(name);
+                    self.render();
+                }).fail(function () {
+                    alert('D\'Oh!. Could not load faces from person..');
+                });
+            } else {
+                self._persons.unsetActive();
+                self.render();
+            }
+        }).fail(function () {
+            alert('D\'Oh!. Could not reload faces..');
+        });
+    },
     renderContent: function () {
         var source = $('#content-tpl').html();
         var template = Handlebars.compile(source);
@@ -182,7 +199,6 @@ View.prototype = {
         // Show all.
         $('#all-button').click(function () {
             view._persons.unsetActive();
-            view._active = undefined;
             view.render();
         });
         // load a complete person.
@@ -208,7 +224,7 @@ View.prototype = {
         $('#app-navigation #rename-accept').click(function () {
             var newName = $('#app-navigation #input-name').val().trim();
             self._persons.renameActive(newName).done(function (data) {
-                location.reload();
+                self.reload(newName);
             });
             $('#app-navigation .active').removeClass('editing');
         });

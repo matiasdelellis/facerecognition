@@ -124,7 +124,8 @@ class Analyze extends Command {
 			return 1;
 		}
 
-		if ($this->command_exist('nextcloud-face-recognition-cmd')) {
+		if (file_exists('/bin/nextcloud-face-recognition-cmd') ||
+		    file_exists('/usr/bin/nextcloud-face-recognition-cmd')) {
 			$this->command = 'nextcloud-face-recognition-cmd';
 		}
 		else if (file_exists($this->appManager->getAppPath('facerecognition').'/opt/bin/nextcloud-face-recognition-cmd')) {
@@ -186,16 +187,6 @@ class Analyze extends Command {
 		}
 	}
 
-	protected function getUserKnownFolder(IUser $user) {
-		$userFolder = $this->rootFolder->getUserFolder($user->getUID());
-		try {
-			$knownFolder = $userFolder->get('.faces');
-		} catch (NotFoundException $e) {
-			$knownFolder = $userFolder->newFolder('.faces');
-		}
-		return $knownFolder;
-	}
-
 	protected function appendNewUserPictures (IUser $user) {
 		$userId = $user->getUID();
 		try {
@@ -221,11 +212,8 @@ class Analyze extends Command {
 			$fileList .= " ".$fullPath;
 		}
 
-		$knownFolder = $this->getUserKnownFolder($user);
-		$facesPath = $this->dataDir.$knownFolder->getPath();
-
 		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
-		$cmd = $this->command.' analyze --search '.$fileList. ' --known '. $facesPath;
+		$cmd = $this->command.' analyze --search '.$fileList;
 		$result = shell_exec ($cmd);
 
 		$newFaces = json_decode ($result);

@@ -30,7 +30,7 @@ function make_virtual_env () {
 
 function install_tool () {
     rm -f /usr/bin/nextcloud-face-recognition-cmd
-    ln -s bin/nextcloud-face-recognition-cmd /usr/bin/nextcloud-face-recognition-cmd
+    ln -s $PWD/opt/bin/nextcloud-face-recognition-cmd /usr/bin/nextcloud-face-recognition-cmd
 
     echo
     echo "Everything finished. You could use the application in nextcloud!"

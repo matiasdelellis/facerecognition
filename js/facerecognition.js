@@ -75,13 +75,20 @@ Persons.prototype = {
     },
     renameSelection: function (newName) {
         var self = this;
+        var deferred = $.Deferred();
         var opt = {newName: newName};
+        var requests = [];
         self._selectedFaces.forEach (function(id) {
-            $.ajax({url: self._baseUrl+'/face/'+id,
-                     method: 'PUT',
-                     contentType: 'application/json',
-                     data: JSON.stringify(opt)});
+            requests.push($.ajax({url: self._baseUrl+'/face/'+id,
+                                  method: 'PUT',
+                                  contentType: 'application/json',
+                                  data: JSON.stringify(opt)})
+            );
         });
+        $.when.apply($,requests).done(function() {
+            deferred.resolve(arguments);
+        });
+        return deferred.promise();
     },
     unsetActive: function () {
         var self = this;
@@ -167,8 +174,9 @@ View.prototype = {
                 t('facerecognition', 'Rename'),
                     function(result, value) {
                         if (result === true && value) {
-                            self._persons.renameSelection(value);
-                            //location.reload();
+                            self._persons.renameSelection(value).done (function(person) {
+                                self.reload(value);
+                            });
                         }
                     },
                     true,

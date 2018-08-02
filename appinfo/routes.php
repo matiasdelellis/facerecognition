@@ -49,6 +49,12 @@ return ['routes' =>
 		'url'  => '/face/{id}',
 		'verb' => 'GET'
 	],
+	// Update a single face
+	[
+		'name' => 'face#updateName',
+		'url'  => '/face/{id}',
+		'verb' => 'PUT'
+	],
 	// Get a face Thumb
 	[
 		'name' => 'face#getThumb',

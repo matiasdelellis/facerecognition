@@ -112,10 +112,10 @@ class FaceController extends Controller {
 	 * @param int $id
 	 * @param string $name
 	 */
-	public function setName ($id, $name) {
+	public function updateName ($id, $newName) {
 		$face = $this->faceMapper->find($id, $this->userId);
-		$face->setName($name);
-		$note->setDistance(0.0);
+		$face->setName($newName);
+		$face->setDistance(0.0);
 		$newFace = $this->faceMapper->update($face);
 		return new DataResponse($newFace);
 	}

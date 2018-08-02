@@ -51,12 +51,10 @@ Persons.prototype = {
     selectFace: function (id) {
         if (!this._selectedFaces.includes(id))
             this._selectedFaces.push (id);
-        console.log ("Selection ids: " + this._selectedFaces);
     },
     unselectFace: function (id) {
         if (this._selectedFaces.includes(id))
             this._selectedFaces = this._selectedFaces.filter(iid => iid != id);
-        console.log ("unSelection ids: " + this._selectedFaces);
     },
     selectedFace: function (id) {
         return this._selectedFaces.includes(id);
@@ -74,6 +72,16 @@ Persons.prototype = {
                        method: 'PUT',
                        contentType: 'application/json',
                        data: JSON.stringify(opt)});
+    },
+    renameSelection: function (newName) {
+        var self = this;
+        var opt = {newName: newName};
+        self._selectedFaces.forEach (function(id) {
+            $.ajax({url: self._baseUrl+'/face/'+id,
+                     method: 'PUT',
+                     contentType: 'application/json',
+                     data: JSON.stringify(opt)});
+        });
     },
     unsetActive: function () {
         var self = this;
@@ -133,7 +141,8 @@ View.prototype = {
                 t('facerecognition', 'Rename'),
                     function(result, value) {
                         if (result === true && value) {
-                            console.log ("Rename to " + value);
+                            self._persons.renameSelection(value);
+                            //location.reload();
                         }
                     },
                     true,

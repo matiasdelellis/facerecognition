@@ -11,6 +11,8 @@ The app saves the name of the person identified and the position of the face in
 the image. If unknown people are found, they also leave them stored, to identify
 them later.
 
+![App screenshots](/doc/face-recognition-screenshot.png "App screenshots")
+
 ## How do use it?
 
  1. If it is an old installation with photos included the administrator runs the

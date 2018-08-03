@@ -45,6 +45,7 @@ class Application extends App {
 
 		$this->connectWatcher($container);
 		$this->connectSearch($container);
+		$this->registerAdminPage();
 	}
 
 	/**
@@ -70,6 +71,13 @@ class Application extends App {
 	 */
 	private function connectSearch(IAppContainer $container) {
 		$container->getServer()->getSearch()->registerProvider('OCA\FaceRecognition\Search\Provider', array('app'=>'facerecognition', 'apps' => array('files')));
+	}
+
+	/**
+	 * Register admin settings
+	 */
+	public function registerAdminPage() {
+		\OCP\App::registerAdmin($this->getContainer()->getAppName(), 'templates/settings');
 	}
 
 }

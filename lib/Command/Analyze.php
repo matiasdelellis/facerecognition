@@ -124,6 +124,13 @@ class Analyze extends Command {
 			return 1;
 		}
 
+		if ($this->checkAlreadyRunning()) {
+			$output->writeln('Command is already running.');
+			return 2;
+		}
+
+		$this->setPID();
+
 		if (file_exists('/bin/nextcloud-face-recognition-cmd') ||
 		    file_exists('/usr/bin/nextcloud-face-recognition-cmd')) {
 			$this->command = 'nextcloud-face-recognition-cmd';
@@ -147,6 +154,8 @@ class Analyze extends Command {
 			    $this->appendNewUserPictures($user);
 			}
 		}
+
+		$this->clearPID();
 
 		return 0;
 	}
@@ -225,9 +234,30 @@ class Analyze extends Command {
 		$this->output->writeln(count($facesFound).' faces(s) faces found.');
 	}
 
-	protected function command_exist ($cmd) {
-		$return = shell_exec(sprintf("which %s", escapeshellarg($cmd)));
-		return !empty($return);
+	private function setPID() {
+		$this->config->setAppValue('facerecognition', 'pid', posix_getpid());
+	}
+
+	private function clearPID() {
+		$this->config->deleteAppValue('facerecognition', 'pid');
+	}
+
+	private function getPID() {
+		return (int)$this->config->getAppValue('facerecognition', 'pid', -1);
+	}
+
+	private function checkAlreadyRunning() {
+		$pid = $this->getPID();
+		// No PID set so just continue
+		if ($pid === -1) {
+			return false;
+		}
+		// Get get the gid of non running processes so continue
+		if (posix_getpgid($pid) === false) {
+			return false;
+		}
+		// Seems there is already a running process generating previews
+		return true;
 	}
 
 }

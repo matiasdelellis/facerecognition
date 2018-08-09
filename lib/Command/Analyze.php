@@ -42,6 +42,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Helper\Requirements;
 
 class Analyze extends Command {
 
@@ -60,6 +61,12 @@ class Analyze extends Command {
 	/** @var String */
 	protected $command;
 
+	/** @var String */
+	protected $landmarksModel;
+
+	/** @var String */
+	protected $recognitionModel;
+
 	/** @var OutputInterface */
 	protected $output;
 
@@ -71,6 +78,8 @@ class Analyze extends Command {
 
 	/** @var \OCP\App\IAppManager **/
 	protected $appManager;
+
+
 
 	/** @var FaceMapper */
 	protected $faceMapper;
@@ -124,24 +133,35 @@ class Analyze extends Command {
 			return 1;
 		}
 
+		$req = new Requirements($this->appManager);
+
+		if (!$req->pdlibLoaded())
+			$this->output->writeln('pdlib extension is not loaded. Try to use python helper.');
+
+		$this->command = $req->getPythonHelper();
+		if (!$this->command) {
+			$this->output->writeln('nextcloud-face-recognition-cmd not found. Aborted.');
+			return 1;
+		}
+
+		$this->recognitionModel = $req->getRecognitionModel();
+		if (!$this->recognitionModel) {
+			$this->output->writeln('Recognition Model not found. Aborted.');
+			return 1;
+		}
+
+		$this->landmarksModel = $req->getLandmarksModel();
+		if (!$this->landmarksModel) {
+			$this->output->writeln('Landmarks Model not found. Aborted.');
+			return 1;
+		}
+
 		if ($this->checkAlreadyRunning()) {
 			$output->writeln('Command is already running.');
 			return 2;
 		}
 
 		$this->setPID();
-
-		if (file_exists('/bin/nextcloud-face-recognition-cmd') ||
-		    file_exists('/usr/bin/nextcloud-face-recognition-cmd')) {
-			$this->command = 'nextcloud-face-recognition-cmd';
-		}
-		else if (file_exists($this->appManager->getAppPath('facerecognition').'/opt/bin/nextcloud-face-recognition-cmd')) {
-			$this->command = $this->appManager->getAppPath('facerecognition').'/opt/bin/nextcloud-face-recognition-cmd';
-		}
-		else {
-			$this->output->writeln('nextcloud-face-recognition-cmd not found. Aborted.');
-			return 1;
-		}
 
 		$userId = $input->getArgument('user_id');
 		if ($userId === null) {
@@ -218,11 +238,11 @@ class Analyze extends Command {
 		foreach ($faces as $face) {
 			$file = $userRoot->getById($face->getFile());
 			$fullPath = escapeshellarg($this->dataDir.$file[0]->getPath());
-			$fileList .= " ".$fullPath;
+			$fileList .= ' '.$fullPath;
 		}
 
 		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
-		$cmd = $this->command.' analyze --search '.$fileList;
+		$cmd = $this->command.' analyze --predictor '.$this->landmarksModel.' --model '.$this->recognitionModel.' --search '.$fileList;
 		$result = shell_exec ($cmd);
 
 		$newFaces = json_decode ($result);

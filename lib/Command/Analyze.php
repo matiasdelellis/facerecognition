@@ -43,6 +43,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Helper\PythonAnalyzer;
 
 class Analyze extends Command {
 
@@ -78,8 +79,6 @@ class Analyze extends Command {
 
 	/** @var \OCP\App\IAppManager **/
 	protected $appManager;
-
-
 
 	/** @var FaceMapper */
 	protected $faceMapper;
@@ -234,19 +233,19 @@ class Analyze extends Command {
 			return;
 		}
 
-		$fileList = '';
+		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
+
+		//if (!$req->pdlibLoaded())
+			$analyzer = new PythonAnalyzer ($this->command, $this->landmarksModel, $this->recognitionModel);
+		// else
+		//	$analyzer = new php-face ($this->landmarksModel, $this->recognitionModel);
 		foreach ($faces as $face) {
 			$file = $userRoot->getById($face->getFile());
 			$fullPath = escapeshellarg($this->dataDir.$file[0]->getPath());
-			$fileList .= ' '.$fullPath;
+			$analyzer->appendFile ($fullPath);
 		}
+		$facesFound = $analyzer->analyze();
 
-		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
-		$cmd = $this->command.' analyze --predictor '.$this->landmarksModel.' --model '.$this->recognitionModel.' --search '.$fileList;
-		$result = shell_exec ($cmd);
-
-		$newFaces = json_decode ($result);
-		$facesFound = $newFaces->{'faces-locations'};
 		foreach ($facesFound as $newFace) {
 			$this->appendNewFaces($newFace);
 		}

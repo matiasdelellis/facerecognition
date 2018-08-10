@@ -21,9 +21,9 @@ class FaceMapper extends Mapper {
 		return $this->findEntities($sql, [$userId]);
 	}
 
-	public function findAllNew($userId) {
+	public function findAllQueued($userId, $limit = null, $offset = null) {
 		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = -1 AND encoding IS NULL';
-		return $this->findEntities($sql, [$userId]);
+		return $this->findEntities($sql, [$userId], $limit, $offset);
 	}
 
 	public function findAllKnown($userId) {
@@ -81,6 +81,26 @@ class FaceMapper extends Mapper {
 			return false;
 		}
 		return true;
+	}
+
+	public function countUserQueue($userId) {
+		$sql = 'SELECT count(*) AS ct FROM *PREFIX*face_recognition WHERE uid = ? AND distance = -1 AND encoding IS NULL';
+		$query = \OCP\DB::prepare($sql);
+		$result = $query->execute([$userId]);
+		if ($row = $result->fetchRow()) {
+			return $row['ct'];
+		}
+		return 0;
+	}
+
+	public function countQueue() {
+		$sql = 'SELECT count(*) AS ct FROM *PREFIX*face_recognition WHERE distance = -1 AND encoding IS NULL';
+		$query = \OCP\DB::prepare($sql);
+		$result = $query->execute();
+		if ($row = $result->fetchRow()) {
+			return $row['ct'];
+		}
+		return 0;
 	}
 
 }

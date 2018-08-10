@@ -61,5 +61,11 @@ return ['routes' =>
 		'url'  => '/thumb/{id}',
 		'verb' => 'GET'
 	],
+	// Get process status.
+	[
+		'name' => 'process#index',
+		'url'  => '/process',
+		'verb' => 'GET'
+	],
 
 ]];

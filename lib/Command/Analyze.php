@@ -83,6 +83,9 @@ class Analyze extends Command {
 	/** @var FaceMapper */
 	protected $faceMapper;
 
+	/** @var int */
+	protected $globalCount;
+
 	/**
 	 * @param IRootFolder $rootFolder
 	 * @param IUserManager $userManager
@@ -175,6 +178,7 @@ class Analyze extends Command {
 		}
 
 		$this->clearPID();
+		$this->updateProgress(0);
 
 		return 0;
 	}
@@ -227,30 +231,48 @@ class Analyze extends Command {
 		$this->output->writeln('');
 		$this->output->writeln($userId.': Looking for images to analyze.');
 
-		$faces = $this->faceMapper->findAllNew($userId);
-		if ($faces == null) {
+		$queueSize = $this->faceMapper->countUserQueue($userId);
+		if ($queueSize == 0) {
 			$this->output->writeln('No new images to analyze. Skipping.');
 			return;
 		}
 
-		$this->output->writeln(count($faces).' image(s) will be analyzed, please be patient..');
+		$this->output->writeln($queueSize.' image(s) will be analyzed, please be patient..');
 
 		//if (!$req->pdlibLoaded())
 			$analyzer = new PythonAnalyzer ($this->command, $this->landmarksModel, $this->recognitionModel);
 		// else
 		//	$analyzer = new php-face ($this->landmarksModel, $this->recognitionModel);
-		foreach ($faces as $face) {
-			$file = $userRoot->getById($face->getFile());
-			$fullPath = escapeshellarg($this->dataDir.$file[0]->getPath());
-			$analyzer->appendFile ($fullPath);
+
+		$facesFound = [];
+
+		$chunks_size = 10;
+		$offsets = $queueSize / $chunks_size;
+		for ($offset = 0 ; $offset < $offsets ; $offset++) {
+			$chunk_queue = $this->faceMapper->findAllQueued($userId, $chunks_size, $offset);
+			foreach ($chunk_queue as $face) {
+				$file = $userRoot->getById($face->getFile());
+				$analyzer->appendFile ($this->dataDir.$file[0]->getPath());
+			}
+			$chuck_result = $analyzer->analyze();
+
+			foreach ($chuck_result as $newFace) {
+				$facesFound[] = $newFace;
+			}
+
+			$this->globalCount += count($chunk_queue);
+			$this->updateProgress($this->globalCount);
 		}
-		$facesFound = $analyzer->analyze();
 
 		foreach ($facesFound as $newFace) {
 			$this->appendNewFaces($newFace);
 		}
 
-		$this->output->writeln(count($facesFound).' faces(s) faces found.');
+		$this->output->writeln(count($facesFound).' faces(s) found.');
+	}
+
+	private function updateProgress($progress) {
+		$this->config->setAppValue('facerecognition', 'queue-done', $progress);
 	}
 
 	private function setPID() {

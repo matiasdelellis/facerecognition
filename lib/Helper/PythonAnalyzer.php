@@ -20,7 +20,7 @@ class PythonAnalyzer
 
 	public function appendFile ($filename)
 	{
-		$this->fileList .= " ".$filename;
+		$this->fileList .= " ".escapeshellarg($filename);
 	}
 
 	public function analyze ()

@@ -2,7 +2,7 @@
 
 OCP\User::checkAdminUser();
 
-//OCP\Util::addScript("facerecognition", "admin");
+OCP\Util::addScript("facerecognition", "admin");
 
 $tmpl = new OCP\Template('facerecognition', 'fragments/admin');
 
@@ -19,7 +19,7 @@ if (file_exists('/bin/nextcloud-face-recognition-cmd') ||
 
 	$result = shell_exec ('nextcloud-face-recognition-cmd status');
 	$status = json_decode ($result);
-	if ($staus) {
+	if ($status) {
 		$tmpl->assign('dlib-version', $status['dlib-version']);
 		$tmpl->assign('cuda-support', $status->{'cuda-support'} ? "Is compiled" : "Was not compiled");
 		$tmpl->assign('avx-support', $status->{'avx-support'} ? "Is compiled" : "Was not compiled");

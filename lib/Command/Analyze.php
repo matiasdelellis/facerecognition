@@ -249,7 +249,7 @@ class Analyze extends Command {
 		$chunks_size = 10;
 		$offsets = $queueSize / $chunks_size;
 		for ($offset = 0 ; $offset < $offsets ; $offset++) {
-			$chunk_queue = $this->faceMapper->findAllQueued($userId, $chunks_size, $offset);
+			$chunk_queue = $this->faceMapper->findAllQueued($userId, $chunks_size, $offset*$chunks_size);
 			foreach ($chunk_queue as $face) {
 				$file = $userRoot->getById($face->getFile());
 				$analyzer->appendFile ($this->dataDir.$file[0]->getPath());

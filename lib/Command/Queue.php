@@ -41,7 +41,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
-class PreAnalyze extends Command {
+class Queue extends Command {
 
 	/** @var IUserManager */
 	protected $userManager;
@@ -87,12 +87,12 @@ class PreAnalyze extends Command {
 
 	protected function configure() {
 		$this
-			->setName('face:pre-analyze')
-			->setDescription('Get new pictures to find faces later')
+			->setName('face:queue')
+			->setDescription('Get new image files and queue to the next analysis')
 			->addArgument(
 				'user_id',
 				InputArgument::OPTIONAL,
-				'Analyze faces for the given user'
+				'Queue image files for the given user'
 			);
 	}
 

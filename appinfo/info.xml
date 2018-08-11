@@ -23,6 +23,7 @@ The application listens to the creation of new image files, and queues them for 
 		<nextcloud min-version="11" max-version="13" />
 	</dependencies>
 	<commands>
+		<command>OCA\FaceRecognition\Command\Check</command>
 		<command>OCA\FaceRecognition\Command\Analyze</command>
 		<command>OCA\FaceRecognition\Command\PreAnalyze</command>
 		<command>OCA\FaceRecognition\Command\Clustering</command>

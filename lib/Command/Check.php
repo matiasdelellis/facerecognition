@@ -100,9 +100,10 @@ class Check extends Command {
 				$this->output->writeln('There was an error. Please execute \'nextcloud-face-recognition-cmd status\' and check the errors');
 				$checkStatus = FALSE;
 			}
-
-		} else {
+		}
+		else {
 			$this->output->writeln('nextcloud-face-recognition-cmd not found.');
+			$checkStatus = FALSE;
 		}
 
 		$this->output->writeln('');

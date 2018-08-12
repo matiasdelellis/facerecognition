@@ -5,7 +5,7 @@
 	<summary>A face recognition app</summary>
 	<description><![CDATA[Face Recognition implement a basic facial recognition system for Nextcloud.
 
-The application listens to the creation of new image files, and queues them for later analysis. A scheduled task (Or admin on demand) take this queue, and analyze the images for looking faces and if possible identify them by comparing them with those found in user-folder/.faces.]]>
+		The application listens to the creation of new image files, and queues them for later analysis. A scheduled task (Or admin on demand) take this queue, and analyze the images for looking faces and if possible identify them by comparing them with those found in user-folder/.faces.]]>
 	</description>
 	<licence>AGPL</licence>
 	<author>Matias De lellis</author>
@@ -22,6 +22,15 @@ The application listens to the creation of new image files, and queues them for 
 		<php min-version="5.6"/>
 		<nextcloud min-version="11" max-version="14" />
 	</dependencies>
+	<repair-steps>
+		<!-- TODO: do we really need post-migration here, or I am just overparanoid? -->
+		<post-migration>
+			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
+		</post-migration>
+		<install>
+			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
+		</install>
+	</repair-steps>
 	<commands>
 		<command>OCA\FaceRecognition\Command\Check</command>
 		<command>OCA\FaceRecognition\Command\Queue</command>

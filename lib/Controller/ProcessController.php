@@ -3,6 +3,7 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
 use OCP\IConfig;
+use OCP\IDateTimeFormatter;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -16,12 +17,19 @@ class ProcessController extends Controller {
 
 	private $config;
 	private $faceMapper;
+	private $dateTimeFormatter;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IConfig $config, FaceMapper $facemapper, $UserId) {
+	public function __construct($AppName,
+		                    IRequest $request,
+		                    IConfig $config,
+		                    FaceMapper $facemapper,
+		                    IDateTimeFormatter $dateTimeFormatter,
+		                    $UserId) {
 		parent::__construct($AppName, $request);
 		$this->config = $config;
 		$this->faceMapper = $facemapper;
+		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->userId = $UserId;
 	}
 
@@ -31,7 +39,15 @@ class ProcessController extends Controller {
 		$status = ($this->config->getAppValue('facerecognition', 'pid', -1) > 0);
 		$queueTotal = $this->faceMapper->countQueue();
 		$queueDone = $this->config->getAppValue('facerecognition', 'queue-done', 0);
-		$params = array('status' => $status, 'queuetotal' => $queueTotal, 'queuedone' => $queueDone);
+
+		$endTime = 'Unknown';
+		if ($queueDone > 0) {
+			$startTime = $this->config->getAppValue('facerecognition', 'starttime', -1);
+			$elapsedTime = time() - $startTime;
+			$calcTime = time() + ($queueTotal - $queueDone)*$elapsedTime/$queueDone;
+			$endTime = $this->dateTimeFormatter->formatTimeSpan($calcTime);
+		}
+		$params = array('status' => $status, 'endtime' => $endTime, 'queuetotal' => $queueTotal, 'queuedone' => $queueDone);
 
 		return new JSONResponse($params);
 	}

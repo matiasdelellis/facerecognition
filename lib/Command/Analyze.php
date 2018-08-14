@@ -33,6 +33,7 @@ use OCP\Files\IRootFolder;
 use OCP\App\IAppManager;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
+use OCP\IDateTimeFormatter;
 use OCP\IUser;
 use OCP\IUserManager;
 use Symfony\Component\Console\Command\Command;
@@ -164,6 +165,7 @@ class Analyze extends Command {
 		}
 
 		$this->setPID();
+		$this->setStartTime(time());
 
 		$userId = $input->getArgument('user_id');
 		if ($userId === null) {
@@ -179,6 +181,7 @@ class Analyze extends Command {
 
 		$this->clearPID();
 		$this->updateProgress(0);
+		$this->setStartTime(0);
 
 		return 0;
 	}
@@ -273,6 +276,10 @@ class Analyze extends Command {
 
 	private function updateProgress($progress) {
 		$this->config->setAppValue('facerecognition', 'queue-done', $progress);
+	}
+
+	private function setStartTime($time) {
+		$this->config->setAppValue('facerecognition', 'starttime', $time);
 	}
 
 	private function setPID() {

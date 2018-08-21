@@ -94,9 +94,10 @@ class BackgroundService {
 			UnlockTask::class
 		];
 
-		// todo: implement yield, timeout, bailing with exceptions
+		// todo: implement bailing with exceptions
 		// Main logic to iterate over all tasks and executes them.
 		//
+		$startTime = time();
 		for ($i=0; $i < count($task_classes); $i++) {
 			$task_class = $task_classes[$i];
 			$task = $this->application->getContainer()->query($task_class);
@@ -105,7 +106,12 @@ class BackgroundService {
 
 			$generator = $task->do($this->context);
 			foreach ($generator as $_) {
-				// todo: check for timeout here
+				$currentTime = time();
+				if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
+					$this->context->logger->logInfo("Time out. Quitting...");
+					return;
+				}
+
 				$this->context->logger->logInfo('yielding');
 			}
 		}

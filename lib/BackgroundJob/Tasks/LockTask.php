@@ -33,10 +33,16 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 class LockTask extends FaceRecognitionBackgroundTask {
 	const LOCK_FILENAME = 'nextcloud_face_recognition_lock.pid';
 
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Acquire lock so that only one background task can run";
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function do(FaceRecognitionContext $context) {
 		$lock_file = sys_get_temp_dir() . '/' . LOCK_FILENAME;
 		$fp = fopen($lock_file, 'w');

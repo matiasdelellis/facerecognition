@@ -23,6 +23,7 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob;
 
+use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\App\IAppManager;
@@ -44,6 +45,9 @@ class FaceRecognitionContext {
 	/** @var IRootFolder */
 	public $rootFolder;
 
+	/** @var IConfig */
+	public $config;
+
 	/** @var FaceRecognitionLogger */
 	public $logger;
 
@@ -56,9 +60,10 @@ class FaceRecognitionContext {
 	/** @var array Associative array that can hold various data from tasks */
 	public $propertyBag = [];
 
-	public function __construct(IAppManager $appManager, IUserManager $userManager, IRootFolder $rootFolder) {
+	public function __construct(IAppManager $appManager, IUserManager $userManager, IRootFolder $rootFolder, IConfig $config) {
 		$this->appManager = $appManager;
 		$this->userManager = $userManager;
 		$this->rootFolder = $rootFolder;
+		$this->config = $config;
 	}
 }

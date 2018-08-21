@@ -54,10 +54,16 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 		$this->imageMapper = $imageMapper;
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Find all images which don't have faces generated for them";
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
 

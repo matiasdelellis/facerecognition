@@ -49,6 +49,15 @@ class FaceRecognitionLogger {
 		}
 	}
 
+	/**
+	 * Returns logger, if it is set
+	 *
+	 * @return ILogger|null Logger, if it is set.
+	 */
+	public function getLogger() {
+		return $this->logger;
+	}
+
 	public function logInfo(string $message) {
 		if (!is_null($this->logger)) {
 			$this->logger->info($message);

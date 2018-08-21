@@ -31,14 +31,15 @@ use OCA\FaceRecognition\Helper\Requirements;
  * Check all requirements before we start engaging in lengthy background task.
  */
 class CheckPdlibTask extends FaceRecognitionBackgroundTask {
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Check Pdlib installed";
 	}
 
 	/**
-	 * Executes task.
-	 *
-	 * @param FaceRecognitionContext $context Face recognition context
+	 * @inheritdoc
 	 */
 	public function do(FaceRecognitionContext $context) {
 		// todo: good chunk of Requirements class is good candidate to be part of this checks

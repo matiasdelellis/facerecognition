@@ -37,14 +37,15 @@ class Image extends Entity implements JsonSerializable {
 	 *
 	 * @var string
 	 * */
-	protected $user;
+	public $user;
 
 	/**
 	 * File that this image refer to.
+	 * todo: add proper getters in whole class
 	 *
 	 * @var integer
 	 */
-	protected $file;
+	public $file;
 
 	/**
 	 * Face model that processed this image.

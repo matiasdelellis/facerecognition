@@ -30,10 +30,16 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
  * Task to unlock flock-ed file (and release mutex this way, so another background job can start).
  */
 class UnlockTask extends FaceRecognitionBackgroundTask {
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Release obtained lock";
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function do(FaceRecognitionContext $context) {
 		flock($context->propertyBag['lock'], LOCK_UN);
 		unlink($context->propertyBag['lock_filename']);

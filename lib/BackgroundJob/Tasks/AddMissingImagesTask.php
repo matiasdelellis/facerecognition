@@ -53,10 +53,16 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$this->imageMapper = $imageMapper;
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Crawl for missing images for each user and insert them in DB";
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
 

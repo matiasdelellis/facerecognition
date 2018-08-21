@@ -32,10 +32,16 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
  * Taks that, for each user, creates person clusters for each.
  */
 class CreateClustersTask extends FaceRecognitionBackgroundTask {
+	/**
+	 * @inheritdoc
+	 */
 	public function description() {
 		return "Create new persons or update existing persons";
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
 

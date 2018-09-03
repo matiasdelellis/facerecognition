@@ -38,3 +38,8 @@ $app = new Application();
 		'icon' => \OC::$server->getURLGenerator()->imagePath('facerecognition', 'app.svg'),
 	];
 });
+
+\OC::$server->getEventDispatcher()->addListener('OCA\Files::loadAdditionalScripts', function(){
+	\OCP\Util::addScript('facerecognition', 'files-tabview');
+	\OCP\Util::addScript('facerecognition', 'files-plugin');
+});

@@ -37,10 +37,10 @@ return ['routes' =>
 		'url'  => '/random',
 		'verb' => 'GET'
 	],
-	// Get faces on a fileId
+	// Get faces on a file path.
 	[
 		'name' => 'face#findFile',
-		'url'  => '/faces/{fileId}',
+		'url'  => '/filefaces',
 		'verb' => 'GET'
 	],
 	// Get a single face

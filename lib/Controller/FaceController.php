@@ -99,9 +99,11 @@ class FaceController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $fileId
+	 * @param string $fullpath
 	 */
-	public function findFile ($fileId) {
+	public function findFile ($fullpath) {
+		$userFolder = $this->rootFolder->getUserFolder($this->userId);
+		$fileId = $userFolder->get($fullpath)->getId();
 		$faces = $this->faceMapper->findFile($this->userId, $fileId);
 		return new DataResponse($faces);
 	}

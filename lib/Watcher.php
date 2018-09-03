@@ -112,7 +112,7 @@ class Watcher {
 		}
 
 		try {
-			$faces = $this->faceMapper->findFile($node->getId());
+			$faces = $this->faceMapper->findFile($owner, $node->getId());
 		} catch(Exception $e) {
 			return;
 		}

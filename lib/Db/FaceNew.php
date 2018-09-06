@@ -2,7 +2,7 @@
 /**
  * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
- * 
+ *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
  * @license GNU AGPL version 3 or any later version
@@ -39,14 +39,14 @@ class FaceNew extends Entity implements JsonSerializable {
 	 *
 	 * @var integer
 	 * */
-	protected $image_id;
+	protected $image;
 
 	/**
 	 * Person (cluster) that this face belongs to
 	 *
 	 * @var integer|null
 	 * */
-	protected $person_id;
+	public $person;
 
 	/**
 	 * Left border of bounding rectangle for this face
@@ -81,7 +81,7 @@ class FaceNew extends Entity implements JsonSerializable {
 	 *
 	 * @var json_array
 	 * */
-	protected $descriptor;
+	public $descriptor;
 
 	/**
 	 * Time when this face was found
@@ -93,8 +93,8 @@ class FaceNew extends Entity implements JsonSerializable {
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,
-			'image_id' => $this->image_id,
-			'person_id' => $this->person_id,
+			'image' => $this->image,
+			'person' => $this->person,
 			'left' => $this->left,
 			'right' => $this->right,
 			'top' => $this->top,
@@ -104,4 +104,7 @@ class FaceNew extends Entity implements JsonSerializable {
 		];
 	}
 
+	public function setDescriptor($descriptor) {
+		$this->descriptor = json_decode($descriptor);
+	}
 }

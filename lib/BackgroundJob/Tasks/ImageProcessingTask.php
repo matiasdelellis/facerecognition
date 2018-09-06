@@ -27,7 +27,6 @@ use OC_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\IDBConnection;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -41,16 +40,15 @@ use OCA\FaceRecognition\Db\ImageMapper;
  * and for each found face - face descriptor is extracted.
  */
 class ImageProcessingTask extends FaceRecognitionBackgroundTask {
-	/** @var IDBConnection DB connection */
-	protected $connection;
+	/** @var ImageMapper Image mapper*/
+	protected $imageMapper;
 
 	/**
-	 * @param IDBConnection $connection DB connection
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
-	public function __construct(IDBConnection $connection) {
+	public function __construct(ImageMapper $imageMapper) {
 		parent::__construct();
-		$this->connection = $connection;
+		$this->imageMapper = $imageMapper;
 	}
 
 	/**
@@ -68,26 +66,45 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];
 		// todo: move to Requirements class?
-		$cfd = new \CnnFaceDetection('mmod_human_face_detector.dat');
+		$cfd = new \CnnFaceDetection("mmod_human_face_detector.dat");
+		$fld = new \FaceLandmarkDetection("shape_predictor_5_face_landmarks.dat");
+		$fr = new \FaceRecognition("dlib_face_recognition_resnet_model_v1.dat");
 
 		// number of things that can go wrong below is too damn high:) be more defensive
 		foreach($images as $image) {
+			$startMillis = round(microtime(true) * 1000);
 			// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 			$userFolder = $context->rootFolder->getUserFolder($image->user);
 			$userRoot = $userFolder->getParent();
 			$file = $userRoot->getById($image->file);
 			$imagePath = $dataDir . $file[0]->getPath();
-			$this->logDebug('Processing image ' . $imagePath);
+			$this->logInfo('Processing image ' . $imagePath);
 			list($tempfilePath, $ratio) = $this->prepareImage($imagePath);
 
 			$facesFound = $cfd->detect($tempfilePath);
 			$this->logInfo('Faces found ' . count($facesFound));
 			unlink($tempfilePath); // todo: make sure this is deleted, in finally block
 
-			foreach($facesFound as $faceFound) {
-				// todo: extract face to new image
-				// todo: run face descriptor on newly obtained image
+			foreach($facesFound as &$faceFound) {
+				// Normalize face back to original dimensions
+				foreach(array("left", "right", "top", "bottom") as $side) {
+					$faceFound[$side] = intval(round($faceFound[$side] * $ratio));
+				}
+				$tempfilePath = $this->cropFace($imagePath, $faceFound);
+				// Usually, second argument to detect should be just $faceFound. However, since we are doing image acrobatics
+				// and are cropping image now, bounding box for landmark detection is now complete (cropped) image!
+				$landmarks = $fld->detect($tempfilePath, array(
+					"left" => 0, "top" => 0,
+					"bottom" => $faceFound["bottom"] - $faceFound["top"], "right" => $faceFound["right"] - $faceFound["left"]));
+				$descriptor = $fr->computeDescriptor($tempfilePath, $landmarks);
+				$faceFound["descriptor"] = $descriptor;
+				unlink($tempfilePath); // todo: make sure this is deleted, in finally block
 			}
+
+			$endMillis = round(microtime(true) * 1000);
+			$duration = max($endMillis - $startMillis, 0);
+			// todo: insert in DB whether there is error or not, whatever we got up to that point
+			$this->imageMapper->imageProcessed($image, $facesFound, $duration);
 			yield;
 		}
 	}
@@ -100,17 +117,35 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @return array Tuple of 2 value. First is temporary location where prepared image is saved.
 	 * Caller should delete this temp file. Second is ratio of scaled image in this process.
 	 */
-	private function prepareImage($imagePath) {
+	private function prepareImage(string $imagePath):array {
 		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
 		// todo: be smarter with this 1024 constant. Depending on GPU/memory of the host, this can be larger.
 		$ratio = $this->resizeImage($image, 1024);
+		// todo: Although I worry more in terms of security. Copy all images in a public temporary directory - this could not even work,
+		// since it is common that you do not have writing permissions in shared environments.
+		// You can take ideas here:
+		// https://github.com/nextcloud/server/blob/da6c2c9da1721de7aa05b15af1356e3511069980/lib/private/TempManager.php
 		$tempfilePath = tempnam(sys_get_temp_dir(), "facerec_");
 		$tempfilePathWithExtension = $tempfilePath . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
 		rename($tempfilePath, $tempfilePathWithExtension);
 		$image->save($tempfilePathWithExtension);
 		return array($tempfilePathWithExtension, $ratio);
+	}
+
+	private function cropFace(string $imagePath, array $face): string {
+		// todo: we are loading same image two times, fix this
+		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
+		$image->loadFromFile($imagePath);
+		$image->fixOrientation();
+		$image->crop($face["left"], $face["top"], $face["right"] - $face["left"], $face["bottom"] - $face["top"]);
+		// todo: same worry about using public temp names as above
+		$tempfilePath = tempnam(sys_get_temp_dir(), "facerec_");
+		$tempfilePathWithExtension = $tempfilePath . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
+		rename($tempfilePath, $tempfilePathWithExtension);
+		$image->save($tempfilePathWithExtension);
+		return $tempfilePathWithExtension;
 	}
 
 	/**
@@ -146,6 +181,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		$image->preciseResize((int)round($newWidth), (int)round($newHeight));
-		return $ratioOrig;
+		return $widthOrig / $newWidth;
 	}
 }

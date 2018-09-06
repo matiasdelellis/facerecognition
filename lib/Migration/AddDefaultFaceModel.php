@@ -22,6 +22,7 @@
  */
 namespace OCA\FaceRecognition\Migration;
 
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -39,13 +40,18 @@ class AddDefaultFaceModel implements IRepairStep {
 	/** @var IDBConnection */
 	private $connection;
 
+	/** @var IConfig Config */
+	private $config;
+
 	/**
 	 * AddDefaultFaceModel constructor.
 	 *
-	 * @param IDBConnection $connection
+	 * @param IDBConnection $connection DB connection
+	 * @param IConfig $config Config
 	 */
-	public function __construct(IDBConnection $connection) {
+	public function __construct(IDBConnection $connection, IConfig $config) {
 		$this->connection = $connection;
+		$this->config = $config;
 	}
 
 	/**
@@ -57,10 +63,10 @@ class AddDefaultFaceModel implements IRepairStep {
 
 	/**
 	 * @inheritdoc
-     * 
+     *
      * Upserts first row in Face Model, so that after installation there is always at least one row.
      * If row with ID 1 already exists, it does not touch it.
-	 * 
+	 *
      * @todo See if we really can just accept anything with ID 1 and don't care, because we never
      * afterwards check if ID=1 has changes name/description?
 	 */
@@ -86,6 +92,13 @@ class AddDefaultFaceModel implements IRepairStep {
 			$output->info("Inserted missing default face model.");
 		} else {
 			$output->info("Default face model already existed, no need to add it again.");
+
+		}
+
+		// Use default model, if it is not set already
+		//
+		if ($this->config->getAppValue('facerecognition', 'model', '-1') == '-1') {
+			$this->config->setAppValue('facerecognition', 'model', self::DEFAULT_FACE_MODEL_ID);
 		}
 	}
 }

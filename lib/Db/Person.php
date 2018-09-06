@@ -2,7 +2,7 @@
 /**
  * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
- * 
+ *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
  * @license GNU AGPL version 3 or any later version
@@ -31,9 +31,9 @@ use OCP\AppFramework\Db\Entity;
  * Person represent one cluster, set of faces. It belongs to $user_id.
  */
 class Person extends Entity implements JsonSerializable {
-	/** 
+	/**
 	 * User this person belongs to
-	 * 
+	 *
 	 * @var string
 	 * */
 	protected $user_id;
@@ -51,7 +51,7 @@ class Person extends Entity implements JsonSerializable {
 	 * @var bool
 	 */
 	protected $is_valid;
-	
+
 	/**
 	 * Last timestamp when this person/cluster was created, or when it was refreshed
 	 *
@@ -70,11 +70,11 @@ class Person extends Entity implements JsonSerializable {
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,
-			'user_id' => $this->user_id,
+			'user' => $this->user_id,
 			'name' => $this->name,
 			'is_valid' => $this->is_valid,
 			'last_generation_time' => $this->last_generation_time,
-			'linked_user_id' => $this->linked_user_id
+			'linked_user' => $this->linked_user_id
 		];
 	}
 }

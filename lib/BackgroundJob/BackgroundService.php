@@ -112,7 +112,7 @@ class BackgroundService {
 					return;
 				}
 
-				$this->context->logger->logInfo('yielding');
+				$this->context->logger->logDebug('yielding');
 			}
 		}
 	}

@@ -28,6 +28,7 @@ use OCP\IUser;
 
 use OCP\AppFramework\Db\Mapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class ImageMapper extends Mapper {
 
@@ -72,5 +73,55 @@ class ImageMapper extends Mapper {
 
 		$images = $this->findEntities($qb->getSQL(), $params);
 		return $images;
+	}
+
+	public function imageProcessed(Image $image, array $faces, int $duration) {
+		$this->db->beginTransaction();
+		$currentDateTime = new \DateTime();
+		try {
+			// Update image itself
+			//
+			$qb = $this->db->getQueryBuilder();
+			$qb->update('face_recognition_images')
+				->set("is_processed", $qb->createNamedParameter(true))
+				->set("error", $qb->createNamedParameter(null))
+				->set("last_processed_time", $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE))
+				->set("processing_duration", $qb->createNamedParameter($duration))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
+				->execute();
+
+			// Delete all previous faces
+			//
+			$qb = $this->db->getQueryBuilder();
+			$qb->delete('face_recognition_faces')
+				->where($qb->expr()->eq('image_id', $qb->createNamedParameter($image->id)))
+				->execute();
+
+			// Insert all faces
+			//
+			foreach ($faces as $face) {
+				$json_descriptor = json_encode($face["descriptor"]);
+				// Simple INSERT will close cursor and we want to be in transaction, so use hard way
+				// todo: should we move this to FaceNewMapper (don't forget to hand over connection though)
+				$qb = $this->db->getQueryBuilder();
+				$qb->insert('face_recognition_faces')
+					->values([
+						'image_id' => $qb->createNamedParameter($image->id),
+						'person_id' => $qb->createNamedParameter(null),
+						'left' => $qb->createNamedParameter($face["left"]),
+						'right' => $qb->createNamedParameter($face["right"]),
+						'top' => $qb->createNamedParameter($face["top"]),
+						'bottom' => $qb->createNamedParameter($face["bottom"]),
+						'descriptor' => $qb->createNamedParameter($json_descriptor),
+						'creation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
+					])
+					->execute();
+			}
+
+			$this->db->commit();
+		} catch (\Exception $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 	}
 }

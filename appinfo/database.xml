@@ -44,16 +44,16 @@
 			</field>
 			<!-- foreign key: users.uid -->
 			<field>
-				<name>user_id</name>
+				<name>user</name>
 				<type>text</type>
 				<notnull>true</notnull>
 				<length>64</length>
 			</field>
 			<index>
-				<name>persons_user_id_idx</name>
+				<name>persons_user_idx</name>
 				<unique>false</unique>
 				<field>
-					<name>user_id</name>
+					<name>user</name>
 				</field>
 			</index>
 			<field>
@@ -78,7 +78,7 @@
 			</field>
 			<!-- foreign key: users.uid -->
 			<field>
-				<name>linked_user_id</name>
+				<name>linked_user</name>
 				<type>text</type>
 				<notnull>false</notnull>
 				<length>64</length>
@@ -187,31 +187,31 @@
 			</field>
 			<field>
 				<!-- foreign key: face_recognition_images.id -->
-				<name>image_id</name>
+				<name>image</name>
 				<type>integer</type>
 				<notnull>true</notnull>
 				<length>4</length>
 			</field>
 			<index>
-				<name>faces_image_id_idx</name>
+				<name>faces_image_idx</name>
 				<unique>false</unique>
 				<field>
-					<name>image_id</name>
+					<name>image</name>
 				</field>
 			</index>
 			<field>
 				<!-- foreign key: face_recognition_persons.id -->
-				<name>person_id</name>
+				<name>person</name>
 				<type>integer</type>
 				<!-- todo: can face exists without an associated person? -->
 				<notnull>false</notnull>
 				<length>4</length>
 			</field>
 			<index>
-				<name>faces_person_id_idx</name>
+				<name>faces_person_idx</name>
 				<unique>false</unique>
 				<field>
-					<name>person_id</name>
+					<name>person</name>
 				</field>
 			</index>
 			<field>

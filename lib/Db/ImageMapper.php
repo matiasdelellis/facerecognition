@@ -36,7 +36,7 @@ class ImageMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
 	}
 
-	public function imageExists(IUser $user, $file, $model) {
+	public function imageExists(string $userId, $file, $model) {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
@@ -44,7 +44,7 @@ class ImageMapper extends Mapper {
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('file', $qb->createParameter('file')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->setParameter('user', $user->getUID())
+			->setParameter('user', $userId)
 			->setParameter('file', $file->getId())
 			->setParameter('model', $model);
 		$resultStatement = $query->execute();

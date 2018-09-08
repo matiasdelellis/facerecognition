@@ -23,8 +23,9 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IDBConnection;
+use OCP\IConfig;
 use OCP\IUser;
+
 use OCP\Files\File;
 use OCP\Files\Folder;
 
@@ -32,24 +33,29 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 /**
  * Task that, for each user, crawls for all images in filesystem and insert them in database.
+ * This is job that normally does file watcher, but this should be done at least once,
+ * after app is installed (or re-enabled).
  */
 class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
-	/** @var IDBConnection DB connection */
-	protected $connection;
+	const FULL_IMAGE_SCAN_DONE_KEY = "full_image_scan_done";
 
-	/** @var ImageMapper Image mapper*/
-	protected $imageMapper;
+	/** @var IConfig Config */
+	private $config;
+
+	/** @var ImageMapper Image mapper */
+	private $imageMapper;
 
 	/**
-	 * @param IDBConnection $connection DB connection
+	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
-	public function __construct(IDBConnection $connection, ImageMapper $imageMapper) {
+	public function __construct(IConfig $config, ImageMapper $imageMapper) {
 		parent::__construct();
-		$this->connection = $connection;
+		$this->config = $config;
 		$this->imageMapper = $imageMapper;
 	}
 
@@ -66,14 +72,32 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
+		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		if ($fullImageScanDone == 'true') {
+			// Completely skip this task, seems that we already did full scan
+			return;
+		}
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
 		// Check if we are called for one user only, or for all user in instance.
-		// todo: how to yield here?
+		$eligable_users = array();
 		if (is_null($this->context->user)) {
-			$this->context->userManager->callForSeenUsers(function (IUser $user) {
-				$this->addMissingImagesForUser($user);
+			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
+				$eligable_users[] = $user->getUID();
 			});
 		} else {
-			$this->addMissingImagesForUser($this->context->user);
+			$eligable_users[] = $this->context->user->getUID();
+
+		}
+
+		foreach($eligable_users as $user) {
+			$this->addMissingImagesForUser($user, $model);
+			yield;
+		}
+
+		if (is_null($this->context->user)) {
+			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
 		}
 	}
 
@@ -82,32 +106,32 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * TODO: duplicated from Queue.php, figure out how to merge
 	 * (or delete this Queue.php when not needed)
 	 *
-	 * @param IUser $user User for which to crawl images for
+	 * @param string $userId ID of the user for which to crawl images for
+	 * @param int $model Used model
 	 */
-	private function addMissingImagesForUser(IUser $user) {
-		$this->logInfo(sprintf('Finding missing images for user %s', $user->getUID()));
+	private function addMissingImagesForUser(string $userId, int $model) {
+		$this->logInfo(sprintf('Finding missing images for user %s', $userId));
 		\OC_Util::tearDownFS();
-		\OC_Util::setupFS($user->getUID());
+		\OC_Util::setupFS($userId);
 
-		$userFolder = $this->context->rootFolder->getUserFolder($user->getUID());
-		$this->parseUserFolder($user, $userFolder);
+		$userFolder = $this->context->rootFolder->getUserFolder($userId);
+		$this->parseUserFolder($userId, $model, $userFolder);
 	}
 
 	/**
 	 * Recursively crawls given folder for a given user
 	 *
-	 * @param IUser $user User for which we are crawling this folder for
+	 * @param string $userId ID of the user for which we are crawling this folder for
+	 * @param int $model Used model
 	 * @param Folder $folder Folder to recursively search images in
 	 */
-	private function parseUserFolder(IUser $user, Folder $folder) {
+	private function parseUserFolder(string $userId, int $model, Folder $folder) {
 		$nodes = $this->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
-			// todo: replace 1 with model
-			$dfgfd = $this->imageMapper->imageExists($user, $file);
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
-			if ($this->imageMapper->imageExists($user, $file, 1) == False) {
-				$this->putImage($user, $file);
+			if ($this->imageMapper->imageExists($userId, $file, $model) == False) {
+				$this->putImage($userId, $model, $file);
 			}
 		}
 	}
@@ -145,17 +169,18 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * Adds found image to database.
 	 * It doesn't check that this image already exists in database.
 	 *
-	 * @param IUser $user User for which to add this image to database
+	 * @param string $userId Id of the user for which to add this image to database
+	 * @param int $model Used model
 	 * @param File $file File (image) that should be added to database
 	 */
-	private function putImage(IUser $user, File $file) {
+	private function putImage(string $userId, int $model, File $file) {
 		$absPath = ltrim($file->getPath(), '/');
 		$owner = explode('/', $absPath)[0];
 
 		$image = new Image();
-		$image->setUser($user->getUID());
+		$image->setUser($userId);
 		$image->setFile($file->getId());
-		$image->setModel(1);
+		$image->setModel($model);
 		// todo: can we have larger transaction with bulk insert?
 		$this->imageMapper->insert($image);
 	}

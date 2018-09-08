@@ -30,6 +30,9 @@
 		<install>
 			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
 		</install>
+		<uninstall>
+			<step>OCA\FaceRecognition\Migration\RemoveFullImageScanDoneFlag</step>
+		</uninstall>
 	</repair-steps>
 	<commands>
 		<command>OCA\FaceRecognition\Command\Check</command>

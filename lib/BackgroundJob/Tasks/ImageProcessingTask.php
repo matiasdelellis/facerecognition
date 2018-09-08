@@ -77,6 +77,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$userFolder = $context->rootFolder->getUserFolder($image->user);
 			$userRoot = $userFolder->getParent();
 			$file = $userRoot->getById($image->file);
+			// todo: handle case where file do not exists anymore
 			$imagePath = $dataDir . $file[0]->getPath();
 			$this->logInfo('Processing image ' . $imagePath);
 			list($tempfilePath, $ratio) = $this->prepareImage($imagePath);

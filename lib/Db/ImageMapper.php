@@ -54,6 +54,40 @@ class ImageMapper extends Mapper {
 		return ((int)$data[0] > 0);
 	}
 
+	public function countUserImages(string $userId, $model): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('face_recognition_images')
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->setParameter('user', $userId)
+			->setParameter('model', $model);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
+	public function countUserProcessedImages(string $userId, $model): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('face_recognition_images')
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			->setParameter('user', $userId)
+			->setParameter('model', $model)
+			->setParameter('is_processed', True);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
 	/**
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
 	 */
@@ -94,7 +128,7 @@ class ImageMapper extends Mapper {
 			//
 			$qb = $this->db->getQueryBuilder();
 			$qb->delete('face_recognition_faces')
-				->where($qb->expr()->eq('image_id', $qb->createNamedParameter($image->id)))
+				->where($qb->expr()->eq('image', $qb->createNamedParameter($image->id)))
 				->execute();
 
 			// Insert all faces
@@ -106,8 +140,8 @@ class ImageMapper extends Mapper {
 				$qb = $this->db->getQueryBuilder();
 				$qb->insert('face_recognition_faces')
 					->values([
-						'image_id' => $qb->createNamedParameter($image->id),
-						'person_id' => $qb->createNamedParameter(null),
+						'image' => $qb->createNamedParameter($image->id),
+						'person' => $qb->createNamedParameter(null),
 						'left' => $qb->createNamedParameter($face["left"]),
 						'right' => $qb->createNamedParameter($face["right"]),
 						'top' => $qb->createNamedParameter($face["top"]),

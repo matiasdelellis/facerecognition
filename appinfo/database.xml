@@ -6,6 +6,259 @@
 	<charset>utf8</charset>
 
 	<table>
+		<name>*dbprefix*face_recognition_face_models</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+			</field>
+			<field>
+				<name>name</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>256</length>
+			</field>
+			<field>
+				<name>description</name>
+				<type>text</type>
+				<notnull>false</notnull>
+				<length>1024</length>
+			</field>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*face_recognition_persons</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<unsigned>true</unsigned>
+				<primary>true</primary>
+			</field>
+			<!-- foreign key: users.uid -->
+			<field>
+				<name>user</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>64</length>
+			</field>
+			<index>
+				<name>persons_user_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>user</name>
+				</field>
+			</index>
+			<field>
+				<name>name</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>256</length>
+				<comments>Name that user gave for this person/cluster</comments>
+			</field>
+			<field>
+				<name>is_valid</name>
+				<type>boolean</type>
+				<notnull>true</notnull>
+				<default>false</default>
+				<comments>Whether this person is up-to-date</comments>
+			</field>
+			<field>
+				<name>last_generation_time</name>
+				<type>timestamp</type>
+				<notnull>false</notnull>
+				<comments>Time when this person was last put to cluster/last time cluster was refreshed</comments>
+			</field>
+			<!-- foreign key: users.uid -->
+			<field>
+				<name>linked_user</name>
+				<type>text</type>
+				<notnull>false</notnull>
+				<length>64</length>
+				<!-- todo: how to deal with federated users from here? -->
+				<comments>If user linked this person to another user in same NC instance, this will be here.</comments>
+			</field>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*face_recognition_images</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+			</field>
+			<field>
+				<!-- foreign key: users.uid -->
+				<name>user</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>64</length>
+			</field>
+			<index>
+				<name>images_user_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>user</name>
+				</field>
+			</index>
+			<!-- todo: can we rely on filecache, or we should keep this as @var string path? -->
+			<!--
+			todo: we should not block background job for removing file caches to fail just because we have foreign key here.
+			FK should be set to CASCADE.
+			Good thing is that Nextcloud doesn't offer foreign keys, so there might not be problem at all.
+			-->
+			<!-- foreign key: filecache.fileid -->
+			<field>
+				<name>file</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+			</field>
+			<index>
+				<name>images_file_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>file</name>
+				</field>
+			</index>
+			<!-- foreign key: face_recognition_face_models.id -->
+			<field>
+				<name>model</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+			</field>
+			<index>
+				<name>images_model_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>model</name>
+				</field>
+			</index>
+			<field>
+				<name>is_processed</name>
+				<type>boolean</type>
+				<notnull>true</notnull>
+				<default>false</default>
+				<comments>Whether we processed this image. Needs to exist, so we know if there is no faces found</comments>
+			</field>
+			<field>
+				<name>error</name>
+				<type>text</type>
+				<notnull>false</notnull>
+				<length>1024</length>
+				<default></default>
+				<comments>Last error during processing of this image. If null, there is no error.</comments>
+			</field>
+			<field>
+				<name>last_processed_time</name>
+				<type>timestamp</type>
+				<notnull>false</notnull>
+				<comments>Last time when this image was processed.</comments>
+			</field>
+			<field>
+				<name>processing_duration</name>
+				<type>integer</type>
+				<notnull>false</notnull>
+				<length>8</length>
+				<comments>Duration of processing of this image, in milliseconds</comments>
+			</field>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*face_recognition_faces</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+			</field>
+			<field>
+				<!-- foreign key: face_recognition_images.id -->
+				<name>image</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+			</field>
+			<index>
+				<name>faces_image_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>image</name>
+				</field>
+			</index>
+			<field>
+				<!-- foreign key: face_recognition_persons.id -->
+				<name>person</name>
+				<type>integer</type>
+				<!-- todo: can face exists without an associated person? -->
+				<notnull>false</notnull>
+				<length>4</length>
+			</field>
+			<index>
+				<name>faces_person_idx</name>
+				<unique>false</unique>
+				<field>
+					<name>person</name>
+				</field>
+			</index>
+			<field>
+				<name>left</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Left border of bounding rectangle for this face</comments>
+			</field>
+			<field>
+				<name>right</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Right border of bounding rectangle for this face</comments>
+			</field>
+			<field>
+				<name>top</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Top border of bounding rectangle for this face</comments>
+			</field>
+			<field>
+				<name>bottom</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Bottom border of bounding rectangle for this face</comments>
+			</field>
+			<field>
+				<name>descriptor</name>
+				<!-- todo: Doctrine obviusly allows json type, but I tested with PG only, need to test with SQLite and MySQL too -->
+				<type>json_array</type>
+				<notnull>true</notnull>
+				<!-- todo: compress this once we don't need to debug this that much -->
+				<comments>JSON array of 128 value that comprise face descriptor obtained from used model</comments>
+			</field>
+			<field>
+				<name>creation_time</name>
+				<type>timestamp</type>
+				<notnull>true</notnull>
+				<comments>Time when this face was found</comments>
+			</field>
+		</declaration>
+	</table>
+	<table>
 		<name>*dbprefix*face_recognition</name>
 		<declaration>
 			<field>

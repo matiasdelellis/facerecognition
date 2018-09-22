@@ -4,6 +4,7 @@ namespace OCA\FaceRecognition\Db;
 use OCP\IDBConnection;
 use OCP\AppFramework\Db\Mapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class FaceMapper extends Mapper {
 

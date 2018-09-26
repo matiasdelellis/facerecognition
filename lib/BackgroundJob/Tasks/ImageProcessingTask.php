@@ -78,9 +78,15 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$userRoot = $userFolder->getParent();
 			$file = $userRoot->getById($image->file);
 			// todo: handle case where file do not exists anymore
+			// todo: this concat is wrong with shared files.
 			$imagePath = $dataDir . $file[0]->getPath();
 			$this->logInfo('Processing image ' . $imagePath);
 			list($tempfilePath, $ratio) = $this->prepareImage($imagePath);
+
+			if ($tempfilePath == null || $ratio <= 0.0) {
+				$this->logInfo('There was some error with the file, continue with the next one');
+				continue;
+			}
 
 			$facesFound = $cfd->detect($tempfilePath);
 			$this->logInfo('Faces found ' . count($facesFound));
@@ -122,8 +128,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
+		if (!$image->valid()) {
+			return array(null, -1.0);
+		}
+
 		// todo: be smarter with this 1024 constant. Depending on GPU/memory of the host, this can be larger.
 		$ratio = $this->resizeImage($image, 1024);
+
 		// todo: Although I worry more in terms of security. Copy all images in a public temporary directory - this could not even work,
 		// since it is common that you do not have writing permissions in shared environments.
 		// You can take ideas here:
@@ -141,6 +152,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
 		$image->crop($face["left"], $face["top"], $face["right"] - $face["left"], $face["bottom"] - $face["top"]);
+
 		// todo: same worry about using public temp names as above
 		$tempfilePath = tempnam(sys_get_temp_dir(), "facerec_");
 		$tempfilePathWithExtension = $tempfilePath . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
@@ -162,7 +174,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		if (!$image->valid()) {
 			$this->logInfo(__METHOD__ . '(): No image loaded', array('app' => 'core'));
 			// todo: throw exception here
-			return 1.0;
+			return -1.0;
 		}
 
 		$widthOrig = imagesx($image->resource());

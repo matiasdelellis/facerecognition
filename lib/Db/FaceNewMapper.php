@@ -8,7 +8,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class FaceNewMapper extends Mapper {
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'face_recognition', '\OCA\FaceRecognition\Db\FaceNew');
+		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\FaceNew');
 	}
 
 	public function countFaces(string $userId, $model): int {
@@ -40,6 +40,16 @@ class FaceNewMapper extends Mapper {
 			->setParameter('model', $model);
 		$faces = $this->frFindEntities($qb);
 		return $faces;
+	}
+
+	/**
+	 * @param int $imageId Image for which to delete faces for
+	 */
+	public function removeFaces(int $imageId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
+			->execute();
 	}
 
 	/**

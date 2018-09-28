@@ -43,34 +43,37 @@ class Application extends App {
 
 		$container = $this->getContainer();
 
-		$this->connectWatcher($container);
+		$this->connectWatcher();
 		$this->connectSearch($container);
 		$this->registerAdminPage();
 	}
 
-	/**
-	 * @param IAppContainer $container
-	 */
-	private function connectWatcher(IAppContainer $container) {
+	private function connectWatcher() {
 		/** @var IRootFolder $root */
-		$root = $container->query(IRootFolder::class);
-		$root->listen('\OC\Files', 'postWrite', function (Node $node) use ($container) {
+		$root = $this->getContainer()->query(IRootFolder::class);
+		$root->listen('\OC\Files', 'postWrite', function (Node $node) {
 			/** @var Watcher $watcher */
-			$watcher = $container->query(Watcher::class);
+			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->postWrite($node);
+			$watcher->postWritev2($node);
 		});
-		$root->listen('\OC\Files', 'preDelete', function (Node $node) use ($container) {
+		$root->listen('\OC\Files', 'preDelete', function (Node $node) {
 			/** @var Watcher $watcher */
-			$watcher = $container->query(Watcher::class);
+			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->preDelete($node);
+		});
+		// We want to react on postDelete and not preDelete as in preDelete we don't know if
+		// file actually got deleted (locked, other errors...)
+		$root->listen('\OC\Files', 'postDelete', function (Node $node) {
+			/** @var Watcher $watcher */
+			$watcher = \OC::$server->query(Watcher::class);
+			$watcher->postDeletev2($node);
 		});
 	}
 
-	/**
-	 * @param IAppContainer $container
-	 */
-	private function connectSearch(IAppContainer $container) {
-		$container->getServer()->getSearch()->registerProvider('OCA\FaceRecognition\Search\Provider', array('app'=>'facerecognition', 'apps' => array('files')));
+	private function connectSearch() {
+		$this->getContainer()->getServer()->getSearch()->registerProvider(
+			'OCA\FaceRecognition\Search\Provider', array('app'=>'facerecognition', 'apps' => array('files')));
 	}
 
 	/**

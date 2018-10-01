@@ -25,14 +25,25 @@
 namespace OCA\FaceRecognition;
 
 use OCP\Files\Folder;
+use OCP\Files\IHomeStorage;
 use OCP\Files\Node;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Db\PersonMapper;
+
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 class Watcher {
+
+	/** @var IConfig Config */
+	private $config;
 
 	/** @var IDBConnection */
 	private $connection;
@@ -43,19 +54,40 @@ class Watcher {
 	/** @var FaceMapper */
 	private $faceMapper;
 
+	/** @var FaceNewMapper */
+	private $faceNewMapper;
+
+	/** @var ImageMapper */
+	private $imageMapper;
+
+	/** @var PersonMapper */
+	private $personMapper;
+
 	/**
 	 * Watcher constructor.
 	 *
+	 * @param IConfig $config
 	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
+	 * @param FaceNewMapper $faceNewMapper
+	 * @param ImageMapper $imageMapper
+	 * @param PersonMapper $personMapper
 	 */
-	public function __construct(IDBConnection $connection,
-		                    IUserManager  $userManager,
-		                    FaceMapper    $faceMapper) {
+	public function __construct(IConfig       $config,
+								IDBConnection $connection,
+								IUserManager  $userManager,
+								FaceMapper    $faceMapper,
+								FaceNewMapper $faceNewMapper,
+								ImageMapper   $imageMapper,
+								PersonMapper  $personMapper) {
+		$this->config = $config;
 		$this->connection = $connection;
 		$this->userManager = $userManager;
 		$this->faceMapper = $faceMapper;
+		$this->faceNewMapper = $faceNewMapper;
+		$this->imageMapper = $imageMapper;
+		$this->personMapper = $personMapper;
 	}
 
 	/**
@@ -65,6 +97,7 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postWrite(Node $node) {
+		// v1 code
 		$absPath = ltrim($node->getPath(), '/');
 		$owner = explode('/', $absPath)[0];
 
@@ -94,6 +127,52 @@ class Watcher {
 	}
 
 	/**
+	 * @param Node $node
+	 */
+	public function postWritev2(Node $node) {
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
+		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
+		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) == false) {
+			return;
+		}
+
+		if ($node instanceof Folder) {
+			return;
+		}
+
+		// todo: which are filetypes we can work with
+		// todo: what if file was image and now its mimetype is changed?:) we should remove it
+		// todo: honor .nomedia here
+		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+			return;
+		}
+
+		$owner = $node->getOwner()->getUid();
+
+		if (!$this->userManager->userExists($owner)) {
+			return;
+		}
+
+		$image = new Image();
+		$image->setUser($owner);
+		$image->setFile($node->getId());
+		$image->setModel($model);
+
+		$imageId = $this->imageMapper->imageExists($image);
+		if ($imageId == null) {
+			// todo: can we have larger transaction with bulk insert?
+			$this->imageMapper->insert($image);
+		} else {
+			$this->imageMapper->resetImage($image);
+			// note that invalidatePersons depends on existence of faces for a given image,
+			// and we must invalidate before we delete faces!
+			$this->personMapper->invalidatePersons($imageId);
+			$this->faceNewMapper->removeFaces($imageId);
+		}
+	}
+
+	/**
 	 * A node has been delete. Remove faces with file id
 	 * with the current user in the DB
 	 *
@@ -120,8 +199,42 @@ class Watcher {
 		foreach ($faces as $face) {
 			$this->faceMapper->delete($face);
 		}
-
 	}
 
+	public function postDeletev2(Node $node) {
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
+		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
+		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) == false) {
+			return;
+		}
+
+		if ($node instanceof Folder) {
+			return;
+		}
+
+		// todo: which are filetypes we can work with
+		// todo: what if file was image and now its mimetype is changed?:) we should remove it
+		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+			return;
+		}
+
+		$owner = $node->getOwner()->getUid();
+
+		$image = new Image();
+		$image->setUser($owner);
+		$image->setFile($node->getId());
+		$image->setModel($model);
+
+		$imageId = $this->imageMapper->imageExists($image);
+		if ($imageId != null) {
+			// note that invalidatePersons depends on existence of faces for a given image,
+			// and we must invalidate before we delete faces!
+			$this->personMapper->invalidatePersons($imageId);
+			$this->faceNewMapper->removeFaces($imageId);
+
+			$image->setId($imageId);
+			$this->imageMapper->delete($image);
+		}
+	}
 }

@@ -133,7 +133,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					'For cluster creation, you need either one of the following:');
 				$this->logInfo(sprintf('* have 1000 faces already processed (you have %d),', $facesCount));
 				$this->logInfo(sprintf('* have 100 images (you have %d),', $imageCount));
-				$this->logInfo(sprintf('* or you need to have 95%% of you images processed (you have %f)', $percentImagesProcessed));
+				$this->logInfo(sprintf('* or you need to have 95%% of you images processed (you have %.2f%%)', $percentImagesProcessed));
 				return;
 			}
 		}

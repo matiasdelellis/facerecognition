@@ -36,22 +36,21 @@ class ImageMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
 	}
 
-	public function imageExists(string $userId, $file, $model) {
+	public function imageExists(Image $image) {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->select(['id'])
 			->from('face_recognition_images')
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('file', $qb->createParameter('file')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->setParameter('user', $userId)
-			->setParameter('file', $file->getId())
-			->setParameter('model', $model);
+			->setParameter('user', $image->getUser())
+			->setParameter('file', $image->getFile())
+			->setParameter('model', $image->getModel());
 		$resultStatement = $query->execute();
-		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$row = $resultStatement->fetch();
 		$resultStatement->closeCursor();
-
-		return ((int)$data[0] > 0);
+		return $row ? (int)$row['id'] : null;
 	}
 
 	public function countUserImages(string $userId, $model): int {
@@ -117,7 +116,7 @@ class ImageMapper extends Mapper {
 			//
 			$qb = $this->db->getQueryBuilder();
 			$qb->update('face_recognition_images')
-				->set("is_processed", $qb->createNamedParameter(true))
+				->set("is_processed", $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
 				->set("error", $qb->createNamedParameter(null))
 				->set("last_processed_time", $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
@@ -157,5 +156,22 @@ class ImageMapper extends Mapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+	}
+
+	/**
+	 * Resets image by deleting all associated faces and prepares it to be processed again
+	 *
+	 * @param Image $image Image to reset
+	 */
+	public function resetImage(Image $image) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+			->set("error", $qb->createNamedParameter(null))
+			->set("last_processed_time", $qb->createNamedParameter(null))
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($image->getUser())))
+			->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($image->getFile())))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($image->getModel())))
+			->execute();
 	}
 }

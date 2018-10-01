@@ -129,9 +129,15 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$nodes = $this->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
+
+			$image = new Image();
+			$image->setUser($file->getOwner()->getUid());
+			$image->setFile($file->getId());
+			$image->setModel($model);
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
-			if ($this->imageMapper->imageExists($userId, $file, $model) == False) {
-				$this->putImage($userId, $model, $file);
+			if ($this->imageMapper->imageExists($image) == null) {
+				// todo: can we have larger transaction with bulk insert?
+				$this->imageMapper->insert($image);
 			}
 		}
 	}
@@ -163,25 +169,5 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		return $results;
-	}
-
-	/**
-	 * Adds found image to database.
-	 * It doesn't check that this image already exists in database.
-	 *
-	 * @param string $userId Id of the user for which to add this image to database
-	 * @param int $model Used model
-	 * @param File $file File (image) that should be added to database
-	 */
-	private function putImage(string $userId, int $model, File $file) {
-		$absPath = ltrim($file->getPath(), '/');
-		$owner = explode('/', $absPath)[0];
-
-		$image = new Image();
-		$image->setUser($userId);
-		$image->setFile($file->getId());
-		$image->setModel($model);
-		// todo: can we have larger transaction with bulk insert?
-		$this->imageMapper->insert($image);
 	}
 }

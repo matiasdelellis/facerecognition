@@ -33,6 +33,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 /**
@@ -161,8 +162,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			} else if ($node instanceof File) {
-				// todo: which are filetypes we can work with
-				if ($node->getMimeType() === 'image/jpeg') {
+				if (Requirements::isImageTypeSupported($node->getMimeType())) {
 					$results[] = $node;
 				}
 			}

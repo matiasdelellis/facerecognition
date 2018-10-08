@@ -37,7 +37,7 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\FaceNewMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
-
+use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 class Watcher {
@@ -105,7 +105,8 @@ class Watcher {
 			return;
 		}
 
-		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
@@ -141,10 +142,9 @@ class Watcher {
 			return;
 		}
 
-		// todo: which are filetypes we can work with
 		// todo: what if file was image and now its mimetype is changed?:) we should remove it
 		// todo: honor .nomedia here
-		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
@@ -186,7 +186,7 @@ class Watcher {
 			return;
 		}
 
-		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
@@ -213,9 +213,8 @@ class Watcher {
 			return;
 		}
 
-		// todo: which are filetypes we can work with
 		// todo: what if file was image and now its mimetype is changed?:) we should remove it
-		if ($node->getMimeType() !== 'image/jpeg' && $node->getMimeType() !== 'image/png') {
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 

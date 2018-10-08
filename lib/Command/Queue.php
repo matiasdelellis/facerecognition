@@ -40,6 +40,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Helper\Requirements;
 
 class Queue extends Command {
 
@@ -149,7 +150,7 @@ class Queue extends Command {
 			//	continue;
 			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);
-			} else if ($node instanceof File and $node->getMimeType() === 'image/jpeg') {
+			} else if ($node instanceof File and Requirements::isImageTypeSupported($node->getMimeType())) {
 				$results[] = $node;
 			}
 		}
@@ -177,7 +178,7 @@ class Queue extends Command {
 		$absPath = ltrim($file->getPath(), '/');
 		$owner = explode('/', $absPath)[0];
 
-		if ($file->getMimeType() !== 'image/jpeg' && $file->getMimeType() !== 'image/png') {
+		if (!Requirements::isImageTypeSupported($file->getMimeType())) {
 			return;
 		}
 

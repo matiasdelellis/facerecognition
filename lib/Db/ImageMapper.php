@@ -108,16 +108,29 @@ class ImageMapper extends Mapper {
 		return $images;
 	}
 
-	public function imageProcessed(Image $image, array $faces, int $duration) {
+	/**
+	 * Writes to DB that image has been processed. Previously found faces are deleted and new ones are inserted.
+	 * If there is exception, its stack trace is also updated.
+	 *
+	 * @param Image $image Image to be updated
+	 * @param FaceNew[] $faces Faces to insert
+	 * @param int $duration Processing time, in milliseconds
+	 * @param \Exception|null $e Any exception that happened during image processing
+	 */
+	public function imageProcessed(Image $image, array $faces, int $duration, \Exception $e = null) {
 		$this->db->beginTransaction();
-		$currentDateTime = new \DateTime();
 		try {
 			// Update image itself
 			//
+			$error = null;
+			if ($e != null) {
+				$error = substr($e->getMessage() . "\n" . $e->getTraceAsString(), 0, 1024);
+			}
+
 			$qb = $this->db->getQueryBuilder();
 			$qb->update('face_recognition_images')
 				->set("is_processed", $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
-				->set("error", $qb->createNamedParameter(null))
+				->set("error", $qb->createNamedParameter($error))
 				->set("last_processed_time", $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
@@ -133,7 +146,6 @@ class ImageMapper extends Mapper {
 			// Insert all faces
 			//
 			foreach ($faces as $face) {
-				$json_descriptor = json_encode($face["descriptor"]);
 				// Simple INSERT will close cursor and we want to be in transaction, so use hard way
 				// todo: should we move this to FaceNewMapper (don't forget to hand over connection though)
 				$qb = $this->db->getQueryBuilder();
@@ -141,12 +153,12 @@ class ImageMapper extends Mapper {
 					->values([
 						'image' => $qb->createNamedParameter($image->id),
 						'person' => $qb->createNamedParameter(null),
-						'left' => $qb->createNamedParameter($face["left"]),
-						'right' => $qb->createNamedParameter($face["right"]),
-						'top' => $qb->createNamedParameter($face["top"]),
-						'bottom' => $qb->createNamedParameter($face["bottom"]),
-						'descriptor' => $qb->createNamedParameter($json_descriptor),
-						'creation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
+						'left' => $qb->createNamedParameter($face->left),
+						'right' => $qb->createNamedParameter($face->right),
+						'top' => $qb->createNamedParameter($face->top),
+						'bottom' => $qb->createNamedParameter($face->bottom),
+						'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
+						'creation_time' => $qb->createNamedParameter($face->creation_time, IQueryBuilder::PARAM_DATE),
 					])
 					->execute();
 			}

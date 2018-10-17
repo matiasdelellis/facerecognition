@@ -203,7 +203,6 @@
 				<!-- foreign key: face_recognition_persons.id -->
 				<name>person</name>
 				<type>integer</type>
-				<!-- todo: can face exists without an associated person? -->
 				<notnull>false</notnull>
 				<length>4</length>
 			</field>

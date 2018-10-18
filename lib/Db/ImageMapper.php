@@ -124,7 +124,7 @@ class ImageMapper extends Mapper {
 			//
 			$error = null;
 			if ($e != null) {
-				$error = substr($e->getMessage() . "\n" . $e->getTraceAsString(), 0, 1024);
+				$error = substr($e->getMessage(), 0, 1024);
 			}
 
 			$qb = $this->db->getQueryBuilder();

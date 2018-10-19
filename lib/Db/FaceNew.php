@@ -37,44 +37,44 @@ class FaceNew extends Entity implements JsonSerializable {
 	/**
 	 * Image from this face originated from.
 	 *
-	 * @var integer
+	 * @var int
 	 * */
-	protected $image;
+	public $image;
 
 	/**
 	 * Person (cluster) that this face belongs to
 	 *
-	 * @var integer|null
+	 * @var int|null
 	 * */
 	public $person;
 
 	/**
 	 * Left border of bounding rectangle for this face
 	 *
-	 * @var integer
+	 * @var int
 	 * */
-	protected $left;
+	public $left;
 
 	/**
 	 * Right border of bounding rectangle for this face
 	 *
-	 * @var integer
+	 * @var int
 	 * */
-	protected $right;
+	public $right;
 
 	/**
 	 * Top border of bounding rectangle for this face
 	 *
-	 * @var integer
+	 * @var int
 	 * */
-	protected $top;
+	public $top;
 
 	/**
 	 * Bottom border of bounding rectangle for this face
 	 *
-	 * @var integer
+	 * @var int
 	 * */
-	protected $bottom;
+	public $bottom;
 
 	/**
 	 * 128D face descriptor for this face.
@@ -88,7 +88,57 @@ class FaceNew extends Entity implements JsonSerializable {
 	 *
 	 * @var timestamp
 	 * */
-	protected $creation_time;
+	public $creation_time;
+
+	/**
+	 * Factory method to create Face from face structure that is returned as output of the model.
+	 *
+	 * @param int $image Image Id
+	 * @param dict $faceFromModel Face obtained from DNN model
+	 * @return FaceNew Created face
+	 */
+	public static function fromModel($image, $faceFromModel): FaceNew {
+		$face = new FaceNew();
+		$face->image = $image;
+		$face->person = null;
+		$face->left = max($faceFromModel["left"], 0);
+		$face->right = $faceFromModel["right"];
+		$face->top = max($faceFromModel["top"], 0);
+		$face->bottom = $faceFromModel["bottom"];
+		$face->descriptor = array();
+		$face->creation_time = new \DateTime();
+		return $face;
+	}
+
+	/**
+	 * Helper method, to normalize face sizes back to original dimensions, based on ratio
+	 *
+	 * @param float $ratio Ratio of image resize
+	 */
+	public function normalizeSize($ratio) {
+		$this->left =   intval(round($this->left * $ratio));
+		$this->right =  intval(round($this->right * $ratio));
+		$this->top =    intval(round($this->top * $ratio));
+		$this->bottom = intval(round($this->bottom * $ratio));
+	}
+
+	/**
+	 * Gets face width
+	 *
+	 * @return int Face width
+	 */
+	public function width(): int {
+		return $this->right - $this->left;
+	}
+
+	/**
+	 * Gets face height
+	 *
+	 * @return int Face height
+	 */
+	public function height(): int {
+		return $this->bottom - $this->top;
+	}
 
 	public function jsonSerialize() {
 		return [

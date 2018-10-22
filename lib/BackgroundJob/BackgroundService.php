@@ -27,6 +27,7 @@ use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckPdlibTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
@@ -79,12 +80,13 @@ class BackgroundService {
 		//
 		$this->context->user = $user;
 		$this->context->verbose = $verbose;
+		$this->context->setRunningThroughCommand();
 
 		// Here we are defining all the tasks that will get executed.
 		//
 		$task_classes = [
 			CheckPdlibTask::class,
-			// todo: check if we are started from cron job. If we are and cron job happens to be AJAX, bail out.
+			CheckCronTask::class,
 			LockTask::class,
 			CreateClustersTask::class,
 			AddMissingImagesTask::class,

@@ -25,17 +25,16 @@ namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\Helper\Requirements;
 
 /**
- * Check all requirements before we start engaging in lengthy background task.
+ * Check that we are started either through command, or from cron/webcron (but do not allow ajax mode)
  */
-class CheckPdlibTask extends FaceRecognitionBackgroundTask {
+class CheckCronTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
 	public function description() {
-		return "Check Pdlib installed";
+		return "Check that service is started from either cron or from command";
 	}
 
 	/**
@@ -43,12 +42,16 @@ class CheckPdlibTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
-		// todo: good chunk of Requirements class is good candidate to be part of this checks
-		$req = new Requirements($context->appManager);
-		if (!$req->pdlibLoaded()) {
-			$this->logInfo('PDLib is not loaded. Cannot continue');
-			// todo: convert to exception
-			return;
+
+		$isCommand = $context->isRunningThroughCommand();
+		$isBackgroundJobModeAjax = $context->config->getAppValue('core', 'backgroundjobs_mode', 'ajax') === 'ajax';
+		if ($isCommand === false && $isBackgroundJobModeAjax === false) {
+			$message =
+				"Face recognition background service can only run with cron/webcron.\n" .
+				"For details, take a look at " .
+				"https://docs.nextcloud.com/server/14/admin_manual/configuration_server/background_jobs_configuration.html";
+			$this->logInfo($message);
+			throw new \RuntimeException($message);
 		}
 	}
 }

@@ -64,6 +64,7 @@ class FaceRecognitionLogger {
 		} else if (!is_null($this->output)) {
 			$this->output->writeln($message);
 		} else {
+			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
 			// todo: handle somehow this black hole output
 		}
 	}
@@ -74,7 +75,7 @@ class FaceRecognitionLogger {
 		} else if (!is_null($this->output)) {
 			$this->output->writeln($message);
 		} else {
-			// todo: handle somehow this black hole output
+			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
 		}
 	}
 }

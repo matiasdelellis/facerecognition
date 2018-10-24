@@ -60,10 +60,22 @@ class FaceRecognitionContext {
 	/** @var array Associative array that can hold various data from tasks */
 	public $propertyBag = [];
 
+	/** @var bool True if we are running from command, false if we are running as background job */
+	private $isRunningThroughCommand;
+
 	public function __construct(IAppManager $appManager, IUserManager $userManager, IRootFolder $rootFolder, IConfig $config) {
 		$this->appManager = $appManager;
 		$this->userManager = $userManager;
 		$this->rootFolder = $rootFolder;
 		$this->config = $config;
+		$this->isRunningThroughCommand = false;
+	}
+
+	public function isRunningThroughCommand(): bool {
+		return $this->isRunningThroughCommand;
+	}
+
+	public function setRunningThroughCommand() {
+		$this->isRunningThroughCommand = true;
 	}
 }

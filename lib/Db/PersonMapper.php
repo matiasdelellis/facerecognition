@@ -110,7 +110,7 @@ class PersonMapper extends Mapper {
 	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters) {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
-		// todo: what about cluster that do not exist anymore (existed in $currentClusters, they are not in $newClusters)
+
 		try {
 			// Delete clusters that do not exist anymore
 			foreach($currentClusters as $oldPerson => $oldFaces) {

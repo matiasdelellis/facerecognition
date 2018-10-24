@@ -48,9 +48,9 @@ class LockTask extends FaceRecognitionBackgroundTask {
 		$fp = fopen($lock_file, 'w');
 
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
-			$this->logInfo('Seems that background job is already running. Quitting');
-			// todo: convert to exception
-			return;
+			$message = "Background job is already running. Quitting";
+			$this->logInfo($message);
+			throw new \RuntimeException($message);
 		}
 
 		$context->propertyBag['lock'] = $fp;

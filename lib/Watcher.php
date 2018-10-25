@@ -29,8 +29,10 @@ use OCP\Files\IHomeStorage;
 use OCP\Files\Node;
 use OCP\IConfig;
 use OCP\IDBConnection;
+use OCP\ILogger;
 use OCP\IUserManager;
 
+use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\FaceMapper;
@@ -44,6 +46,9 @@ class Watcher {
 
 	/** @var IConfig Config */
 	private $config;
+
+	/** @var ILogger Logger */
+	private $logger;
 
 	/** @var IDBConnection */
 	private $connection;
@@ -67,6 +72,7 @@ class Watcher {
 	 * Watcher constructor.
 	 *
 	 * @param IConfig $config
+	 * @param ILogger $logger
 	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
@@ -75,6 +81,7 @@ class Watcher {
 	 * @param PersonMapper $personMapper
 	 */
 	public function __construct(IConfig       $config,
+								ILogger       $logger,
 								IDBConnection $connection,
 								IUserManager  $userManager,
 								FaceMapper    $faceMapper,
@@ -82,6 +89,7 @@ class Watcher {
 								ImageMapper   $imageMapper,
 								PersonMapper  $personMapper) {
 		$this->config = $config;
+		$this->logger = $logger;
 		$this->connection = $connection;
 		$this->userManager = $userManager;
 		$this->faceMapper = $faceMapper;
@@ -142,16 +150,33 @@ class Watcher {
 			return;
 		}
 
-		// todo: honor .nomedia here
+		// todo: issue #37 - if we detect .nomedia written, reset some global flag such that RemoveMissingImagesTask is triggered.
+
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
+		}
+
+		// If we detect .nomedia file anywhere on the path to root folder (id==null), bail out
+		$parentNode = $node->getParent();
+		while (($parentNode instanceof Folder) && ($parentNode->getId() != null)) {
+			if ($parentNode->nodeExists('.nomedia')) {
+				$this->logger->debug(
+					"Skipping inserting image " . $node->getName() . " because directory " . $parentNode->getName() . " contains .nomedia file");
+				return;
+			}
+
+			$parentNode = $parentNode->getParent();
 		}
 
 		$owner = $node->getOwner()->getUid();
 
 		if (!$this->userManager->userExists($owner)) {
+			$this->logger->debug(
+				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
 			return;
 		}
+
+		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");
 
 		$image = new Image();
 		$image->setUser($owner);
@@ -212,11 +237,21 @@ class Watcher {
 			return;
 		}
 
+		if ($node->getName('.nomedia')) {
+			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
+			// But, instead of doing that here, better option seem to be to just reset global flag that image scan is not done.
+			// This will trigger another round of image crawling in AddMissingImagesTask and those images will be added.
+			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			return;
+		}
+
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
 		$owner = $node->getOwner()->getUid();
+
+		$this->logger->debug("Deleting image " . $node->getName() . " from face recognition");
 
 		$image = new Image();
 		$image->setUser($owner);

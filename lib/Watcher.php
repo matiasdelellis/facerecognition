@@ -142,7 +142,6 @@ class Watcher {
 			return;
 		}
 
-		// todo: what if file was image and now its mimetype is changed?:) we should remove it
 		// todo: honor .nomedia here
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
@@ -213,7 +212,6 @@ class Watcher {
 			return;
 		}
 
-		// todo: what if file was image and now its mimetype is changed?:) we should remove it
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}

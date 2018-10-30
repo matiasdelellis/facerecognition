@@ -89,7 +89,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			});
 		} else {
 			$eligable_users[] = $this->context->user->getUID();
-
 		}
 
 		foreach($eligable_users as $user) {

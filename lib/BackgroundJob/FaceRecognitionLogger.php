@@ -65,7 +65,6 @@ class FaceRecognitionLogger {
 			$this->output->writeln($message);
 		} else {
 			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
-			// todo: handle somehow this black hole output
 		}
 	}
 

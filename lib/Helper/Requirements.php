@@ -9,15 +9,36 @@ class Requirements
 	/** @var \OCP\App\IAppManager **/
 	protected $appManager;
 
-	function __construct(IAppManager $appManager) {
+	/** @var int ID of used model */
+	private $model;
+
+	function __construct(IAppManager $appManager, int $model) {
 		$this->appManager = $appManager;
+		$this->model = $model;
 	}
 
-	public function pdlibLoaded ()
-	{
-		return extension_loaded ('pdlib');
+	public function pdlibLoaded() {
+		return extension_loaded('pdlib');
 	}
 
+	public function modelFilesPresent(): bool {
+		// todo: convert to exceptions
+		if ($this->model === 1) {
+			$faceDetection = $this->getFaceDetectionModelv2();
+			$landmarkDetection = $this->getLandmarksDetectionModelv2();
+			$faceRecognition = $this->getFaceRecognitionModelv2();
+
+			if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
+				return false;
+			} else {
+				return true;
+			}
+		} else {
+			// Since current app version only can handle model with ID=1,
+			// we surely cannot check if files from other model exist
+			return false;
+		}
+	}
 	public function getPythonHelper ()
 	{
 		if (file_exists('/bin/nextcloud-face-recognition-cmd') ||
@@ -42,6 +63,18 @@ class Requirements
 		}
 	}
 
+	public function getFaceRecognitionModelv2() {
+		if ($this->model !== 1) {
+			return NULL;
+		}
+
+		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/dlib_face_recognition_resnet_model_v1.dat')) {
+			return $this->appManager->getAppPath('facerecognition').'/models/1/dlib_face_recognition_resnet_model_v1.dat';
+		} else {
+			return NULL;
+		}
+	}
+
 	public function getLandmarksModel ()
 	{
 		if (file_exists($this->appManager->getAppPath('facerecognition').'/vendor/models/shape_predictor_5_face_landmarks.dat')) {
@@ -51,6 +84,30 @@ class Requirements
 			return $this->appManager->getAppPath('facerecognition').'/vendor/models/shape_predictor_68_face_landmarks.dat';
 		}
 		else {
+			return NULL;
+		}
+	}
+
+	public function getLandmarksDetectionModelv2() {
+		if ($this->model !== 1) {
+			return NULL;
+		}
+
+		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/shape_predictor_5_face_landmarks.dat')) {
+			return $this->appManager->getAppPath('facerecognition').'/models/1/shape_predictor_5_face_landmarks.dat';
+		} else {
+			return NULL;
+		}
+	}
+
+	public function getFaceDetectionModelv2() {
+		if ($this->model !== 1) {
+			return NULL;
+		}
+
+		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/mmod_human_face_detector.dat')) {
+			return $this->appManager->getAppPath('facerecognition').'/models/1/mmod_human_face_detector.dat';
+		} else {
 			return NULL;
 		}
 	}

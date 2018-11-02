@@ -27,6 +27,7 @@ use OC_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\IConfig;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -34,6 +35,8 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\FaceNew;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 /**
  * Plain old PHP object holding all information
@@ -93,14 +96,18 @@ class ImageProcessingContext {
  * and for each found face - face descriptor is extracted.
  */
 class ImageProcessingTask extends FaceRecognitionBackgroundTask {
+	/** @var IConfig Config */
+	private $config;
+
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
-	public function __construct(ImageMapper $imageMapper) {
+	public function __construct(IConfig $config, ImageMapper $imageMapper) {
 		parent::__construct();
+		$this->config = $config;
 		$this->imageMapper = $imageMapper;
 	}
 
@@ -116,12 +123,16 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$requirements = new Requirements($context->appManager, $model);
+
 		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];
-		// todo: move to Requirements class?
-		$cfd = new \CnnFaceDetection("mmod_human_face_detector.dat");
-		$fld = new \FaceLandmarkDetection("shape_predictor_5_face_landmarks.dat");
-		$fr = new \FaceRecognition("dlib_face_recognition_resnet_model_v1.dat");
+
+		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModelv2());
+		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModelv2());
+		$fr = new \FaceRecognition($requirements->getFaceRecognitionModelv2());
 
 		foreach($images as $image) {
 			yield;

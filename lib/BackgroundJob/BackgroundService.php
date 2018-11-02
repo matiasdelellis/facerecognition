@@ -26,8 +26,8 @@ namespace OCA\FaceRecognition\BackgroundJob;
 use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
-use OCA\FaceRecognition\BackgroundJob\Tasks\CheckPdlibTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\CheckRequirementsTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
@@ -60,8 +60,8 @@ class BackgroundService {
 	}
 
 	public function setLogger($logger) {
-		// todo: relax this check, so that logger could be set, anytime, but before execute is called
 		if (!is_null($this->context->logger)) {
+			// If you get this exception, it means you already initialized context->logger. Double-check your flow.
 			throw new \LogicException('You cannot call setLogger after you set it once');
 		}
 
@@ -85,14 +85,13 @@ class BackgroundService {
 		// Here we are defining all the tasks that will get executed.
 		//
 		$task_classes = [
-			CheckPdlibTask::class,
+			CheckRequirementsTask::class,
 			CheckCronTask::class,
 			LockTask::class,
 			CreateClustersTask::class,
 			AddMissingImagesTask::class,
 			EnumerateImagesMissingFacesTask::class,
 			ImageProcessingTask::class,
-			// ...
 			UnlockTask::class
 		];
 

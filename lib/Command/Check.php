@@ -80,7 +80,7 @@ class Check extends Command {
 
 		$checkStatus = TRUE;
 
-		$req = new Requirements($this->appManager);
+		$req = new Requirements($this->appManager, -1);
 
 		if ($req->pdlibLoaded()) {
 			$this->output->writeln('');

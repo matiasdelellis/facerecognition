@@ -136,7 +136,7 @@ class Analyze extends Command {
 			return 1;
 		}
 
-		$req = new Requirements($this->appManager);
+		$req = new Requirements($this->appManager, -1);
 
 		if (!$req->pdlibLoaded())
 			$this->output->writeln('pdlib extension is not loaded. Try to use python helper.');

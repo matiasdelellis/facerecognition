@@ -23,19 +23,33 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
+use OCP\IConfig;
+
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 /**
  * Check all requirements before we start engaging in lengthy background task.
  */
-class CheckPdlibTask extends FaceRecognitionBackgroundTask {
+class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
+	/** @var IConfig Config */
+	private $config;
+
+	/**
+	 * @param IConfig $config Config
+	 */
+	public function __construct(IConfig $config) {
+		parent::__construct();
+		$this->config = $config;
+	}
+
 	/**
 	 * @inheritdoc
 	 */
 	public function description() {
-		return "Check Pdlib installed";
+		return "Check all requirements";
 	}
 
 	/**
@@ -43,10 +57,20 @@ class CheckPdlibTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function do(FaceRecognitionContext $context) {
 		$this->setContext($context);
-		// todo: good chunk of Requirements class is good candidate to be part of this checks
-		$req = new Requirements($context->appManager);
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
+		$req = new Requirements($context->appManager, $model);
+
 		if (!$req->pdlibLoaded()) {
 			$this->logInfo('PDLib is not loaded. Cannot continue');
+			// todo: convert to exception
+			return;
+		}
+
+		if (!$req->modelFilesPresent()) {
+			$this->logInfo('Files of model with ID ' . $model . ' are not present in models/ directory.');
+			$this->logInfo('Please contact administrator to change models you are using for face recognition');
+			$this->logInfo('or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues');
 			// todo: convert to exception
 			return;
 		}

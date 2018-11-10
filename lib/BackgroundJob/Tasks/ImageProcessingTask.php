@@ -28,6 +28,7 @@ use OC_Image;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\IConfig;
+use OCP\ITempManager;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -102,13 +103,17 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
+	/** @var ITempManager */
+	private $tempManager;
+
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
-	public function __construct(IConfig $config, ImageMapper $imageMapper) {
+	public function __construct(IConfig $config, ImageMapper $imageMapper, ITempManager $tempManager) {
 		parent::__construct();
 		$this->config = $config;
 		$this->imageMapper = $imageMapper;
+		$this->tempManager = $tempManager;
 	}
 
 	/**
@@ -154,9 +159,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			} catch (\Exception $e) {
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
-				if (($imageProcessingContext != null) and ($imageProcessingContext->getTempPath())) {
-					unlink($imageProcessingContext->getTempPath());
-				}
+				$this->tempManager->clean();
 			}
 		}
 	}
@@ -221,15 +224,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// todo: be smarter with this 1024 constant. Depending on GPU/memory of the host, this can be larger.
 		$ratio = $this->resizeImage($image, 1024);
 
-		// todo: Although I worry more in terms of security. Copy all images in a public temporary directory - this could not even work,
-		// since it is common that you do not have writing permissions in shared environments.
-		// You can take ideas here:
-		// https://github.com/nextcloud/server/blob/da6c2c9da1721de7aa05b15af1356e3511069980/lib/private/TempManager.php
-		$tempfilePath = tempnam(sys_get_temp_dir(), "facerec_");
-		$tempfilePathWithExtension = $tempfilePath . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
-		rename($tempfilePath, $tempfilePathWithExtension);
-		$image->save($tempfilePathWithExtension);
-		return new ImageProcessingContext($imagePath, $tempfilePathWithExtension, $ratio);
+		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
+		$image->save($tempfile);
+		return new ImageProcessingContext($imagePath, $tempfile, $ratio);
 	}
 
 	/**
@@ -283,16 +280,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		foreach($faces as &$face) {
 			$tempfilePath = $this->cropFace($imageProcessingContext->getImagePath(), $face);
-			try {
-				// Usually, second argument to detect should be just $face. However, since we are doing image acrobatics
-				// and already have cropped image, bounding box for landmark detection is now complete (cropped) image!
-				$landmarks = $fld->detect($tempfilePath, array(
-					"left" => 0, "top" => 0, "bottom" => $face->height(), "right" => $face->width()));
-				$descriptor = $fr->computeDescriptor($tempfilePath, $landmarks);
-				$face->descriptor = $descriptor;
-			} finally {
-				unlink($tempfilePath);
-			}
+
+			// Usually, second argument to detect should be just $face. However, since we are doing image acrobatics
+			// and already have cropped image, bounding box for landmark detection is now complete (cropped) image!
+			$landmarks = $fld->detect($tempfilePath, array(
+				"left" => 0, "top" => 0, "bottom" => $face->height(), "right" => $face->width()));
+			$descriptor = $fr->computeDescriptor($tempfilePath, $landmarks);
+			$face->descriptor = $descriptor;
 		}
 	}
 
@@ -306,11 +300,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			throw new \RuntimeException("Error during image cropping");
 		}
 
-		// todo: same worry about using public temp names as above
-		$tempfilePath = tempnam(sys_get_temp_dir(), "facerec_");
-		$tempfilePathWithExtension = $tempfilePath . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
-		rename($tempfilePath, $tempfilePathWithExtension);
-		$image->save($tempfilePathWithExtension);
-		return $tempfilePathWithExtension;
+		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
+		$image->save($tempfile);
+		return $tempfile;
 	}
 }

@@ -59,6 +59,9 @@ appstore:
 		-C $(sign_dir) $(app_name)
 	openssl dgst -sha512 -sign $(cert_dir)/$(app_name).key $(build_dir)/$(app_name).tar.gz | openssl base64
 
+test: deps
+	phpunit --coverage-clover clover.xml -c phpunit.xml
+
 clean:
 	rm -f models/1/mmod_human_face_detector.dat
 	rm -f models/1/dlib_face_recognition_resnet_model_v1.dat

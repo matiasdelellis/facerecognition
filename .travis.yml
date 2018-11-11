@@ -21,11 +21,6 @@ env:
     - DB=pgsql
     - DB=sqlite
 
-branches:
-  only:
-    - master
-    - /^stable\d+(\.\d+)?$/
-
 before_install:
   - make
   - wget https://raw.githubusercontent.com/nextcloud/travis_ci/master/before_install.sh;
@@ -34,11 +29,11 @@ before_install:
   - ./occ app:enable $APP_NAME
 
 before_script:
-  - ./occ app:check-code $APP_NAME
+  # until #42 is fixed - ./occ app:check-code $APP_NAME
   - cd apps/$APP_NAME
 
 script:
-  - make test-unit
+  - make test
 
   # Create coverage report
   - wget https://scrutinizer-ci.com/ocular.phar
@@ -46,3 +41,4 @@ script:
 
 after_failure:
   - cat ../../data/nextcloud.log
+

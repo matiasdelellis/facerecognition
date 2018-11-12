@@ -108,6 +108,26 @@ class ImageMapper extends Mapper {
 		return $images;
 	}
 
+
+	public function findImagesFromPerson(string $userId, string $name, $model): array {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select('i.id', 'i.file')
+			->from('face_recognition_images', 'i')
+			->innerJoin('i', 'face_recognition_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('i', 'face_recognition_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			->andWhere($qb->expr()->like('p.name', $qb->createParameter('query')));
+			$params['user'] = $userId;
+			$params['model'] = $model;
+			$params['is_processed'] = True;
+			$params['query'] = '%'.$name.'%';
+		$images = $this->findEntities($qb->getSQL(), $params);
+		return $images;
+	}
+
 	/**
 	 * Writes to DB that image has been processed. Previously found faces are deleted and new ones are inserted.
 	 * If there is exception, its stack trace is also updated.

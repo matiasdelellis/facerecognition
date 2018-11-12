@@ -16,7 +16,7 @@ use OCA\FaceRecognition\AppInfo\Application;
  */
 class Provider extends \OCP\Search\Provider {
 
-	private $faceMapper;
+	private $imageMapper;
 	//private $l10N;
 
 	public function __construct() {
@@ -24,7 +24,7 @@ class Provider extends \OCP\Search\Provider {
 		$container = $app->getContainer();
 
 		$this->app = $app;
-		$this->faceMapper = $container->query(\OCA\FaceRecognition\Db\FaceMapper::class);
+		$this->imageMapper = $container->query(\OCA\FaceRecognition\Db\ImageMapper::class);
 		//$this->l10n = $container->query('L10N');
 	}
 
@@ -40,7 +40,7 @@ class Provider extends \OCP\Search\Provider {
 
 		$searchresults = array();
 
-		$results = $this->faceMapper->findAllNamedLike($userId, $query);
+		$results = $this->imageMapper->findImagesFromPerson ($userId, $query, 1);
 		foreach($results as $result) {
 			$fileId = $result->getFile();
 			try {

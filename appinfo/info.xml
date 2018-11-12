@@ -42,4 +42,8 @@
 		<command>OCA\FaceRecognition\Command\Update</command>
 		<command>OCA\FaceRecognition\Command\BackgroundCommand</command>
 	</commands>
+	<settings>
+		<admin>OCA\FaceRecognition\Settings\Admin</admin>
+		<!--<personal>OCA\FaceRecognition\Settings\Personal</personal>-->
+	</settings>
 </info>

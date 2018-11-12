@@ -77,8 +77,8 @@ class Application extends App {
 	 * Register admin settings
 	 */
 	public function registerAdminPage() {
-		// TODO: this should be removed and rewriten, as per issue #42
-		\OCP\App::registerAdmin($this->getContainer()->getAppName(), 'templates/settings');
+		if (\OCP\Util::getVersion() < 14)
+			\OCP\App::registerAdmin($this->getContainer()->getAppName(), 'templates/settings');
 	}
 
 }

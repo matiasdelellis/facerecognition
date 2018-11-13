@@ -1,0 +1,44 @@
+sudo: false
+
+language: php
+
+services:
+  - mysql
+  - postgresql
+
+php:
+  - 7.0
+  - 7.1
+  - 7.2
+  - nightly
+
+env:
+  global:
+    - CORE_BRANCH=stable14
+    - APP_NAME=facerecognition
+  matrix:
+    - DB=mysql
+    - DB=pgsql
+    - DB=sqlite
+
+before_install:
+  - make
+  - wget https://raw.githubusercontent.com/nextcloud/travis_ci/master/before_install.sh;
+  - bash ./before_install.sh $APP_NAME $CORE_BRANCH $DB
+  - cd ../server;
+  - ./occ app:enable $APP_NAME
+
+before_script:
+  # until #42 is fixed - ./occ app:check-code $APP_NAME
+  - cd apps/$APP_NAME
+
+script:
+  - make test
+
+  # Create coverage report
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover clover.xml
+
+after_failure:
+  - cat ../../data/nextcloud.log
+

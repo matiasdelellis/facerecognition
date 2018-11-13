@@ -2,5 +2,5 @@ imports:
     - php
 
 tools:
-    external_code_coverage: true
-      timeout: 1000
+    external_code_coverage:
+        timeout: 7200 # Timeout in seconds: 2 hours

@@ -10,6 +10,7 @@
 
 namespace OCA\FaceRecognition\Search;
 use OCA\FaceRecognition\AppInfo\Application;
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 /**
  * Provide search results from the 'facerecognition' app
@@ -17,6 +18,9 @@ use OCA\FaceRecognition\AppInfo\Application;
 class Provider extends \OCP\Search\Provider {
 
 	private $imageMapper;
+
+	private $config;
+
 	//private $l10N;
 
 	public function __construct() {
@@ -24,6 +28,7 @@ class Provider extends \OCP\Search\Provider {
 		$container = $app->getContainer();
 
 		$this->app = $app;
+		$this->config = $container->query('OCP\IConfig');
 		$this->imageMapper = $container->query(\OCA\FaceRecognition\Db\ImageMapper::class);
 		//$this->l10n = $container->query('L10N');
 	}
@@ -38,9 +43,11 @@ class Provider extends \OCP\Search\Provider {
 		$userId = \OCP\User::getUser();
 		$ownerView = new \OC\Files\View('/'. $userId . '/files');
 
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
 		$searchresults = array();
 
-		$results = $this->imageMapper->findImagesFromPerson ($userId, $query, 1);
+		$results = $this->imageMapper->findImagesFromPerson ($userId, $query, $model);
 		foreach($results as $result) {
 			$fileId = $result->getFile();
 			try {

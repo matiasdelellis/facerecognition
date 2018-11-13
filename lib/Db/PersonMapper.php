@@ -35,7 +35,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 class PersonMapper extends Mapper {
 
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Image');
+		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
 	/**

@@ -47,12 +47,6 @@ class FaceMapper extends Mapper {
 		return $this->findEntities($sql, [$userId, $query], $limit, $offset);
 	}
 
-	public function findAllNamedLike($userId, $query, $limit = null, $offset = null) {
-		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND encoding IS NOT NULL AND LOWER(name) LIKE LOWER(?)';
-		$params = ('%' . $query . '%');
-		return $this->findEntities($sql, [$userId, $params], $limit, $offset);
-	}
-
 	public function findRandom($userId) {
 		$sql = 'SELECT * FROM *PREFIX*face_recognition WHERE uid = ? AND distance = 1 AND encoding IS NOT NULL ORDER BY RAND() LIMIT 8';
 		return $this->findEntities($sql, [$userId]);

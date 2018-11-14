@@ -1,3 +1,9 @@
+.persons-list .icon-more {
+    display: block;
+    padding: 14px;
+    opacity: 0.5;
+}
+
 .face-container {
     position: relative;
     margin: 2px;

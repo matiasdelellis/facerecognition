@@ -38,6 +38,19 @@ class PersonMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
+
+	public function find (string $userId, int $personId): Person {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name')
+			->from('face_recognition_persons', 'p')
+			->where($qb->expr()->eq('id', $qb->createParameter('person_id')))
+			->andWhere($qb->expr()->eq('user', $qb->createParameter('user_id')));
+		$params['person_id'] = $personId;
+		$params['user_id'] = $userId;
+		$person = $this->findEntity($qb->getSQL(), $params);
+		return $person;
+	}
+
 	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *

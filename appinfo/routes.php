@@ -31,6 +31,12 @@ return ['routes' =>
 		'url'  => '/person/{name}',
 		'verb' => 'PUT'
 	],
+	// Change name to a person.
+	[
+		'name' => 'person#updateNameV2',
+		'url'  => '/personV2/{id}',
+		'verb' => 'PUT'
+	],
 	// Get random unknown.
 	[
 		'name' => 'face#random',

@@ -77,7 +77,7 @@ class FaceController extends Controller {
 		\OC_Util::setupFS($this->userId);
 
 		$face = $this->faceNewMapper->find($id);
-		$image = $this->imageMapper->find($face->getImage());
+		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
 		return $this->getFaceThumb ($fileId, $face);
 	}

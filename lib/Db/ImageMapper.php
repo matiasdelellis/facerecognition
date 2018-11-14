@@ -36,12 +36,15 @@ class ImageMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
 	}
 
-	public function find (int $imageId): Image {
+	public function find (string $userId, int $imageId): Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file')
 			->from('face_recognition_images', 'i')
+			->where($qb->expr()->eq('user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('id', $qb->createParameter('image_id')));
-			$params['image_id'] = $imageId;
+		$params = array();
+		$params['user_id'] = $userId;
+		$params['image_id'] = $imageId;
 		$image = $this->findEntity($qb->getSQL(), $params);
 		return $image;
 	}
@@ -129,10 +132,12 @@ class ImageMapper extends Mapper {
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
-			$params['user'] = $userId;
-			$params['model'] = $model;
-			$params['is_processed'] = True;
-			$params['query'] = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
+
+		$params = array();
+		$params['user'] = $userId;
+		$params['model'] = $model;
+		$params['is_processed'] = True;
+		$params['query'] = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
 		$images = $this->findEntities($qb->getSQL(), $params);
 		return $images;
 	}

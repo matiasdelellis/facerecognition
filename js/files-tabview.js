@@ -42,31 +42,31 @@
         },
 
         updateDisplay: function(data) {
-            html = '<table class="persons-list">';
+            html = "<table class='persons-list'>";
             var arrayLength = data.length;
             for (var i = 0; i < arrayLength; i++) {
-                html += '<tr data-id="' + data[i].person_id + '">';
-                html += '    <td><div class="face-container">';
-                html += '        <div class="face-lozad" data-background-image="/apps/facerecognition/face/thumb/'+data[i].face.id+'" data-id="'+data[i].face.id+'" width="32" height="32">';
-                html += '    </div></td>';
-                html += '    <td>' + data[i].name + '</td>';
-                html += '    <td class="more">'
-                html += '        <div>';
-                html += '            <a class="icon icon-more"></a>';
-                html += '            <div class="popovermenu">';
-                html += '                <ul>';
-                html += '                    <li>';
-                html += '                        <a href="#" class="icon-edit">';
-                html += '                            <span>Rename</span>';
-                html += '                        </a>';
-                html += '                    </li>';
-                html += '                </ul>';
-                html += '            </div>';
-                html += '        </div>';
-                html += '    </td>';
-                html += '</tr>';
+                html += "<tr data-id='" + data[i].person_id + "'>";
+                html += "    <td><div class='face-container'>";
+                html += "        <div class='face-lozad' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb' data-id='" + data[i].face.id + "' width='32' height='32'>";
+                html += "    </div></td>";
+                html += "    <td>" + data[i].name + "</td>";
+                html += "    <td class='more'>";
+                html += "        <div>";
+                html += "            <a class='icon icon-more'></a>";
+                html += "            <div class='popovermenu'>";
+                html += "                <ul>";
+                html += "                    <li>";
+                html += "                        <a href='#' class='icon-edit'>";
+                html += "                            <span>Rename</span>";
+                html += "                        </a>";
+                html += "                    </li>";
+                html += "                </ul>";
+                html += "            </div>";
+                html += "        </div>";
+                html += "    </td>";
+                html += "</tr>";
             }
-            html += '</table>';
+            html += "</table>";
 
             this.$el.find('.get-faces').html(html);
 

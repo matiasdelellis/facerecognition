@@ -48,6 +48,7 @@ class FileController extends Controller {
 		$resp = array();
 		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
 		foreach ($persons as $person) {
+			$face = array();
 			$face['name'] = $person->getName();
 			$face['person_id'] = $person->getId();
 			$face['face'] = $this->faceNewMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, 1)[0];

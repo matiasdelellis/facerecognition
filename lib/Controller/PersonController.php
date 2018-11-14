@@ -71,7 +71,7 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $iD
+	 * @param int $id
 	 * @param string $name
 	 */
 	public function updateNameV2($id, $name) {

@@ -45,8 +45,11 @@ class PersonMapper extends Mapper {
 			->from('face_recognition_persons', 'p')
 			->where($qb->expr()->eq('id', $qb->createParameter('person_id')))
 			->andWhere($qb->expr()->eq('user', $qb->createParameter('user_id')));
+
+		$params = array();
 		$params['person_id'] = $personId;
 		$params['user_id'] = $userId;
+
 		$person = $this->findEntity($qb->getSQL(), $params);
 		return $person;
 	}
@@ -74,7 +77,7 @@ class PersonMapper extends Mapper {
 
 	/**
 	 * Based on a given fileId, takes all person that belong to that image
-	 * and return a array thit that.
+	 * and return an array with that.
 	 *
 	 * @param string $userId ID of the user that clusters belong to
 	 * @param int $fileId ID of file image for which to searh persons.
@@ -90,6 +93,7 @@ class PersonMapper extends Mapper {
 			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')));
 
+		$params = array();
 		$params['user'] = $userId;
 		$params['file_id'] = $fileId;
 

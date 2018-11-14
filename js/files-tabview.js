@@ -16,7 +16,7 @@
                     + '"><br><br></p><p>'
                     + t('facerecognition', 'Looking for faces in this image...')
                     + '</p></div>');
-                var url = OC.generateUrl('/apps/facerecognition/filefaces'),
+                var url = OC.generateUrl('/apps/facerecognition/file'),
                     data = {fullpath: fileInfo.getFullPath()},
                     _self = this;
                 $.ajax({
@@ -42,18 +42,22 @@
         },
 
         updateDisplay: function(data) {
-
-            var html = '<h2>Persons</h2>'
-            html += '<ul>';
+            html = '<table>';
             var arrayLength = data.length;
             for (var i = 0; i < arrayLength; i++) {
-                if (data[i].distance != -1) {
-                    html += '<li>'+data[i].name+'</li>';
-                }
+                html += '<tr>';
+                html += '    <td><div class="face-container">';
+                html += '        <div class="face-lozad" data-background-image="/apps/facerecognition/face/thumb/'+data[i].face.id+'" data-id="'+data[i].face.id+'" width="32" height="32">';
+                html += '    </div></td>';
+                html += '    <td>' + data[i].name + '</td>';
+                html += '</tr>';
             }
-            html += '</ul>';
+            html += '</table>';
 
             this.$el.find('.get-faces').html(html);
+
+            const observer = lozad('.face-lozad');
+            observer.observe();
         }
 
     });

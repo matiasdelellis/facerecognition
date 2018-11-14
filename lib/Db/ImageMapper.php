@@ -36,6 +36,16 @@ class ImageMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
 	}
 
+	public function find (int $imageId): Image {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'file')
+			->from('face_recognition_images', 'i')
+			->andWhere($qb->expr()->eq('id', $qb->createParameter('image_id')));
+			$params['image_id'] = $imageId;
+		$image = $this->findEntity($qb->getSQL(), $params);
+		return $image;
+	}
+
 	public function imageExists(Image $image) {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb

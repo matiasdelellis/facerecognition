@@ -60,6 +60,32 @@ class PersonMapper extends Mapper {
 	}
 
 	/**
+	 * Based on a given fileId, takes all person that belong to that image
+	 * and return a array thit that.
+	 *
+	 * @param string $userId ID of the user that clusters belong to
+	 * @param int $fileId ID of file image for which to searh persons.
+	 *
+	 * @return array of persons
+	 */
+	public function findFromFile(string $userId, int $fileId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('p.id', 'name');
+		$qb->from("face_recognition_persons", "p")
+			->innerJoin('p', 'face_recognition_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
+			->innerJoin('p', 'face_recognition_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')));
+
+		$params['user'] = $userId;
+		$params['file_id'] = $fileId;
+
+		$persons = $this->findEntities($qb->getSQL(), $params);
+
+		return $persons;
+	}
+
+	/**
 	 * Based on a given image, takes all faces that belong to that image
 	 * and invalidates all person that those faces belongs to.
 	 *

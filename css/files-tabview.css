@@ -1,0 +1,11 @@
+.face-container {
+    position: relative;
+    margin: 2px;
+}
+
+.face-lozad {
+    background-color: rgba(210, 210, 210, .75);
+    border-radius: 3px;
+    height: 32px;
+    width: 32px;
+}

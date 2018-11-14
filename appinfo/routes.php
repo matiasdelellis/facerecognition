@@ -61,6 +61,18 @@ return ['routes' =>
 		'url'  => '/thumb/{id}',
 		'verb' => 'GET'
 	],
+	// Get a face Thumb
+	[
+		'name' => 'face#getThumbV2',
+		'url'  => '/face/thumb/{id}',
+		'verb' => 'GET'
+	],
+	// Get persons from path
+	[
+		'name' => 'file#getPersonsFromPath',
+		'url'  => '/file',
+		'verb' => 'GET'
+	],
 	// Get process status.
 	[
 		'name' => 'process#index',

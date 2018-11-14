@@ -12,16 +12,26 @@ use OCP\AppFramework\Controller;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
+use OCA\FaceRecognition\Db\FaceNew;
+use OCA\FaceRecognition\Db\FaceNewMapper;
+
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
+
 class FaceController extends Controller {
 
 	private $rootFolder;
 	private $faceMapper;
+	private $faceNewMapper;
+	private $imageMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, $UserId) {
+	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, FaceNewMapper $facenewmapper, ImageMapper $imagemapper, $UserId) {
 		parent::__construct($AppName, $request);
 		$this->rootFolder = $rootFolder;
 		$this->faceMapper = $facemapper;
+		$this->faceNewMapper = $facenewmapper;
+		$this->imageMapper = $imagemapper;
 		$this->userId = $UserId;
 	}
 
@@ -52,8 +62,27 @@ class FaceController extends Controller {
 		\OC_Util::setupFS($this->userId);
 
 		$face = $this->faceMapper->find($id, $this->userId);
+
 		$fileId = $face->getFile();
 
+		return $this->getFaceThumb ($fileId, $face);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function getThumbV2 ($id) {
+		\OC_Util::tearDownFS();
+		\OC_Util::setupFS($this->userId);
+
+		$face = $this->faceNewMapper->find($id);
+		$image = $this->imageMapper->find($face->getImage());
+		$fileId = $image->getFile();
+		return $this->getFaceThumb ($fileId, $face);
+	}
+
+	private function getFaceThumb ($fileId, $face) {
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$nodes = $userFolder->getById($fileId);
 		$file = $nodes[0];
@@ -77,7 +106,7 @@ class FaceController extends Controller {
 		$h += $padding*2;
 
 		$img->crop($x, $y, $w, $h);
-		$img->scaleDownToFit(64, 64);
+		$img->scaleDownToFit(32, 32);
 
 		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
 		$resp->setETag((string)crc32($img->data()));

@@ -3,6 +3,11 @@
         id: 'facerecognitionTabView',
         className: 'tab facerecognitionTabView',
 
+        events: {
+            'click .icon-more': '_onPersonClickMore',
+            'click a.icon-rename': '_onRenamePerson'
+        },
+
         getLabel: function() {
             return t('facerecognition', 'Persons');
         },
@@ -70,9 +75,7 @@
 
             this.$el.find('.get-faces').html(html);
 
-            this.$el.on('click', '.icon-more', _.bind(this._onPersonClickMore, this));
-            this.$el.on('click', 'a.icon-rename', _.bind(this._onRenamePerson, this));
-
+            this.delegateEvents();
             const observer = lozad('.face-lozad');
             observer.observe();
         },

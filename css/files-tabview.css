@@ -1,7 +1,21 @@
 .persons-list .icon-more {
     display: block;
     padding: 14px;
+    width: 44px;
+    height: 44px;
     opacity: 0.5;
+}
+
+.persons-list .name {
+    width: 100%;
+}
+
+.persons-list div.more {
+    position: relative;
+}
+
+.persons-list td.more {
+    width: 16px;
 }
 
 .face-container {

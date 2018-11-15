@@ -49,14 +49,14 @@
                 html += "    <td><div class='face-container'>";
                 html += "        <div class='face-lozad' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb' data-id='" + data[i].face.id + "' width='32' height='32'>";
                 html += "    </div></td>";
-                html += "    <td>" + data[i].name + "</td>";
-                html += "    <td class='more'>";
-                html += "        <div>";
-                html += "            <a class='icon icon-more'></a>";
+                html += "    <td class='name'>" + data[i].name + "</td>";
+                html += "    <td>";
+                html += "        <div class='more'>";
+                html += "            <span class='icon-more'></span>";
                 html += "            <div class='popovermenu'>";
                 html += "                <ul>";
                 html += "                    <li>";
-                html += "                        <a href='#' class='icon-edit'>";
+                html += "                        <a href='#' class='icon-rename'>";
                 html += "                            <span>Rename</span>";
                 html += "                        </a>";
                 html += "                    </li>";
@@ -71,7 +71,7 @@
             this.$el.find('.get-faces').html(html);
 
             this.$el.on('click', '.icon-more', _.bind(this._onPersonClickMore, this));
-            this.$el.on('click', 'a.icon-edit', _.bind(this._onRenamePerson, this));
+            this.$el.on('click', 'a.icon-rename', _.bind(this._onRenamePerson, this));
 
             const observer = lozad('.face-lozad');
             observer.observe();

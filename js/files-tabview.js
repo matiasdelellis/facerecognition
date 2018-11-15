@@ -42,7 +42,7 @@
         },
 
         updateDisplay: function(data) {
-            html = "<table class='persons-list'>";
+            var html = "<table class='persons-list'>";
             var arrayLength = data.length;
             for (var i = 0; i < arrayLength; i++) {
                 html += "<tr data-id='" + data[i].person_id + "'>";

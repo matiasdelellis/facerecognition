@@ -95,25 +95,34 @@ class BackgroundService {
 			UnlockTask::class
 		];
 
-		// todo: implement bailing with exceptions
 		// Main logic to iterate over all tasks and executes them.
 		//
 		$startTime = time();
-		for ($i=0; $i < count($task_classes); $i++) {
+		for ($i=0, $task_classes_count = count($task_classes); $i < $task_classes_count; $i++) {
 			$task_class = $task_classes[$i];
 			$task = $this->application->getContainer()->query($task_class);
 			$this->context->logger->logInfo(sprintf("%d/%d - Executing task %s (%s)",
 				$i+1, count($task_classes), (new \ReflectionClass($task_class))->getShortName(), $task->description()));
 
-			$generator = $task->do($this->context);
-			foreach ($generator as $_) {
-				$currentTime = time();
-				if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
-					$this->context->logger->logInfo("Time out. Quitting...");
-					return;
-				}
+			try {
+				$generator = $task->do($this->context);
+				foreach ($generator as $_) {
+					$currentTime = time();
+					if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
+						$this->context->logger->logInfo("Time out. Quitting...");
+						return;
+					}
 
-				$this->context->logger->logDebug('yielding');
+					$this->context->logger->logDebug('yielding');
+				}
+			} catch (\Exception $e) {
+				// Any exception is fatal, and we should quit background job
+				//
+				$this->context->logger->logInfo("Error during background task execution");
+				$this->context->logger->logInfo("If error is not transient, this means that core component of face recognition is not working properly");
+				$this->context->logger->logInfo("and that quantity and quality of detected faces and person will be low or suboptimal.");
+				$this->context->logger->logInfo("You probably want to file an issue (please include exception below) to: https://github.com/matiasdelellis/facerecognition/issues");
+				throw $e;
 			}
 		}
 	}

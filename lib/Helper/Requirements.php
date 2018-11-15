@@ -12,7 +12,7 @@ class Requirements
 	/** @var int ID of used model */
 	private $model;
 
-	function __construct(IAppManager $appManager, int $model) {
+	public function __construct(IAppManager $appManager, int $model) {
 		$this->appManager = $appManager;
 		$this->model = $model;
 	}
@@ -22,7 +22,6 @@ class Requirements
 	}
 
 	public function modelFilesPresent(): bool {
-		// todo: convert to exceptions
 		if ($this->model === 1) {
 			$faceDetection = $this->getFaceDetectionModelv2();
 			$landmarkDetection = $this->getLandmarksDetectionModelv2();
@@ -64,15 +63,7 @@ class Requirements
 	}
 
 	public function getFaceRecognitionModelv2() {
-		if ($this->model !== 1) {
-			return NULL;
-		}
-
-		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/dlib_face_recognition_resnet_model_v1.dat')) {
-			return $this->appManager->getAppPath('facerecognition').'/models/1/dlib_face_recognition_resnet_model_v1.dat';
-		} else {
-			return NULL;
-		}
+		return $this->getModel1File('dlib_face_recognition_resnet_model_v1.dat');
 	}
 
 	public function getLandmarksModel ()
@@ -89,24 +80,27 @@ class Requirements
 	}
 
 	public function getLandmarksDetectionModelv2() {
-		if ($this->model !== 1) {
-			return NULL;
-		}
-
-		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/shape_predictor_5_face_landmarks.dat')) {
-			return $this->appManager->getAppPath('facerecognition').'/models/1/shape_predictor_5_face_landmarks.dat';
-		} else {
-			return NULL;
-		}
+		return $this->getModel1File('shape_predictor_5_face_landmarks.dat');
 	}
 
 	public function getFaceDetectionModelv2() {
+		return $this->getModel1File('mmod_human_face_detector.dat');
+	}
+
+	/**
+	 * Common getter to full path, for all files from model with ID = 1
+	 *
+	 * @param string $file File to check
+	 * @return string|null Full path to file, or NULL if file is not found
+	 */
+	private function getModel1File(string $file) {
 		if ($this->model !== 1) {
 			return NULL;
 		}
 
-		if (file_exists($this->appManager->getAppPath('facerecognition').'/models/1/mmod_human_face_detector.dat')) {
-			return $this->appManager->getAppPath('facerecognition').'/models/1/mmod_human_face_detector.dat';
+		$fullPath = $this->appManager->getAppPath('facerecognition') . '/models/1/' . $file;
+		if (file_exists($fullPath)) {
+			return $fullPath;
 		} else {
 			return NULL;
 		}

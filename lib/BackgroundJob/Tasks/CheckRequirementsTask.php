@@ -62,17 +62,18 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$req = new Requirements($context->appManager, $model);
 
 		if (!$req->pdlibLoaded()) {
-			$this->logInfo('PDLib is not loaded. Cannot continue');
-			// todo: convert to exception
-			return;
+			$error_message = "PDLib is not loaded. Cannot continue";
+			$this->logInfo($error_message);
+			throw new \RuntimeException($error_message);
 		}
 
 		if (!$req->modelFilesPresent()) {
-			$this->logInfo('Files of model with ID ' . $model . ' are not present in models/ directory.');
-			$this->logInfo('Please contact administrator to change models you are using for face recognition');
-			$this->logInfo('or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues');
-			// todo: convert to exception
-			return;
+			$error_message =
+				"Files of model with ID ' . $model . ' are not present in models/ directory.\n" .
+				"Please contact administrator to change models you are using for face recognition\n" .
+				"or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues";
+			$this->logInfo($error_message);
+			throw new \RuntimeException($error_message);
 		}
 	}
 }

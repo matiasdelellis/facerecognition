@@ -80,12 +80,13 @@
         _renamePerson: function (personId, personName) {
             var opt = { name: personName };
             var url  = OC.generateUrl('/apps/facerecognition') + '/personV2/' + personId;
+            var self = this;
             $.ajax({url: url,
                     method: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(opt)})
             .done(function (data) {
-                this.render();
+                self.render();
             });
         },
 

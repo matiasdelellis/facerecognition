@@ -11,6 +11,17 @@ class FaceNewMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\FaceNew');
 	}
 
+	public function find (int $faceId): FaceNew {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
+			->from('face_recognition_faces', 'f')
+			->andWhere($qb->expr()->eq('id', $qb->createParameter('face_id')));
+		$params = array();
+		$params['face_id'] = $faceId;
+		$faces = $this->findEntity($qb->getSQL(), $params);
+		return $faces;
+	}
+
 	public function countFaces(string $userId, $model): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
@@ -38,6 +49,26 @@ class FaceNewMapper extends Mapper {
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
+		$faces = $this->frFindEntities($qb);
+		return $faces;
+	}
+
+	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'left', 'right', 'top', 'bottom')
+			->from('face_recognition_faces', 'f')
+			->innerJoin('f', 'face_recognition_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('person', $qb->createParameter('person')))
+			->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
+			->setParameter('user', $userId)
+			->setParameter('person', $personId)
+			->setParameter('file_id', $fileId)
+			->setParameter('model', $model)
+			->setParameter('is_valid', true);
 		$faces = $this->frFindEntities($qb);
 		return $faces;
 	}
@@ -75,4 +106,5 @@ class FaceNewMapper extends Mapper {
 
 		return $entities;
 	}
+
 }

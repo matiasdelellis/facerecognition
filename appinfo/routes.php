@@ -31,6 +31,12 @@ return ['routes' =>
 		'url'  => '/person/{name}',
 		'verb' => 'PUT'
 	],
+	// Change name to a person.
+	[
+		'name' => 'person#updateNameV2',
+		'url'  => '/personV2/{id}',
+		'verb' => 'PUT'
+	],
 	// Get random unknown.
 	[
 		'name' => 'face#random',
@@ -59,6 +65,18 @@ return ['routes' =>
 	[
 		'name' => 'face#getThumb',
 		'url'  => '/thumb/{id}',
+		'verb' => 'GET'
+	],
+	// Get a face Thumb
+	[
+		'name' => 'face#getThumbV2',
+		'url'  => '/face/{id}/thumb',
+		'verb' => 'GET'
+	],
+	// Get persons from path
+	[
+		'name' => 'file#getPersonsFromPath',
+		'url'  => '/file',
 		'verb' => 'GET'
 	],
 	// Get process status.

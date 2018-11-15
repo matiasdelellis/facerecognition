@@ -12,16 +12,21 @@ use OCP\AppFramework\Controller;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
+use OCA\FaceRecognition\Db\Person;
+use OCA\FaceRecognition\Db\PersonMapper;
+
 class PersonController extends Controller {
 
 	private $rootFolder;
 	private $faceMapper;
+	private $personMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, $UserId) {
+	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, PersonMapper $personmapper, $UserId) {
 		parent::__construct($AppName, $request);
 		$this->rootFolder = $rootFolder;
 		$this->faceMapper = $facemapper;
+		$this->personMapper = $personmapper;
 		$this->userId = $UserId;
 	}
 
@@ -61,6 +66,20 @@ class PersonController extends Controller {
 		}
 		$newFaces = $this->faceMapper->findAllNamed($this->userId, $newName);
 		return new DataResponse($newFaces);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @param int $id
+	 * @param string $name
+	 */
+	public function updateNameV2($id, $name) {
+		$person = $this->personMapper->find ($this->userId, $id);
+		$person->setName($name);
+		$this->personMapper->update($person);
+		$newPerson = $this->personMapper->find($this->userId, $id);
+		return new DataResponse($newPerson);
 	}
 
 }

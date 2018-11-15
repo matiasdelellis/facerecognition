@@ -3,6 +3,11 @@
         id: 'facerecognitionTabView',
         className: 'tab facerecognitionTabView',
 
+        events: {
+            'click .icon-more': '_onPersonClickMore',
+            'click a.icon-rename': '_onRenamePerson'
+        },
+
         getLabel: function() {
             return t('facerecognition', 'Persons');
         },
@@ -16,7 +21,7 @@
                     + '"><br><br></p><p>'
                     + t('facerecognition', 'Looking for faces in this image...')
                     + '</p></div>');
-                var url = OC.generateUrl('/apps/facerecognition/filefaces'),
+                var url = OC.generateUrl('/apps/facerecognition/file'),
                     data = {fullpath: fileInfo.getFullPath()},
                     _self = this;
                 $.ajax({
@@ -42,18 +47,85 @@
         },
 
         updateDisplay: function(data) {
-
-            var html = '<h2>Persons</h2>'
-            html += '<ul>';
+            var html = "<table class='persons-list'>";
             var arrayLength = data.length;
             for (var i = 0; i < arrayLength; i++) {
-                if (data[i].distance != -1) {
-                    html += '<li>'+data[i].name+'</li>';
-                }
+                html += "<tr data-id='" + data[i].person_id + "'>";
+                html += "    <td><div class='face-container'>";
+                html += "        <div class='face-lozad' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb' data-id='" + data[i].face.id + "' width='32' height='32'>";
+                html += "    </div></td>";
+                html += "    <td class='name'>" + data[i].name + "</td>";
+                html += "    <td>";
+                html += "        <div class='more'>";
+                html += "            <span class='icon-more'></span>";
+                html += "            <div class='popovermenu'>";
+                html += "                <ul>";
+                html += "                    <li>";
+                html += "                        <a href='#' class='icon-rename'>";
+                html += "                            <span>Rename</span>";
+                html += "                        </a>";
+                html += "                    </li>";
+                html += "                </ul>";
+                html += "            </div>";
+                html += "        </div>";
+                html += "    </td>";
+                html += "</tr>";
             }
-            html += '</ul>';
+            html += "</table>";
 
             this.$el.find('.get-faces').html(html);
+
+            this.delegateEvents();
+            const observer = lozad('.face-lozad');
+            observer.observe();
+        },
+
+        _renamePerson: function (personId, personName) {
+            var opt = { name: personName };
+            var url  = OC.generateUrl('/apps/facerecognition') + '/personV2/' + personId;
+            var self = this;
+            $.ajax({url: url,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(opt)})
+            .done(function (data) {
+                self.render();
+            });
+        },
+
+        _onPersonClickMore: function (event) {
+            event.stopPropagation();
+            var $target = $(event.target);
+            var $row = $target.closest('tr');
+            $row.toggleClass('active');
+            $row.find('.popovermenu').toggleClass('open');
+        },
+
+        _onRenamePerson: function (event) {
+            var $target = $(event.target);
+            var $row = $target.closest('tr');
+            var id = $row.data('id');
+            $row.toggleClass('active');
+            $row.find('.popovermenu').toggleClass('open');
+
+            var self = this;
+            OC.dialogs.prompt(
+                t('facerecognition', 'Please enter a name to rename the person'),
+                t('facerecognition', 'Rename'),
+                function(result, value) {
+                    if (result === true && value) {
+                        self._renamePerson (id, value);
+                    }
+                },
+                true,
+                t('facerecognition', 'Rename Person'),
+                false
+            ).then(function() {
+                var $dialog = $('.oc-dialog:visible');
+                var $buttons = $dialog.find('button');
+                $buttons.eq(0).text(t('facerecognition', 'Cancel'));
+                $buttons.eq(1).text(t('facerecognition', 'Rename'));
+            });
         }
 
     });

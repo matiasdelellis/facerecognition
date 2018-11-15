@@ -38,6 +38,22 @@ class PersonMapper extends Mapper {
 		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
+
+	public function find (string $userId, int $personId): Person {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name')
+			->from('face_recognition_persons', 'p')
+			->where($qb->expr()->eq('id', $qb->createParameter('person_id')))
+			->andWhere($qb->expr()->eq('user', $qb->createParameter('user_id')));
+
+		$params = array();
+		$params['person_id'] = $personId;
+		$params['user_id'] = $userId;
+
+		$person = $this->findEntity($qb->getSQL(), $params);
+		return $person;
+	}
+
 	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *
@@ -57,6 +73,33 @@ class PersonMapper extends Mapper {
 		$resultStatement->closeCursor();
 
 		return (int)$data[0];
+	}
+
+	/**
+	 * Based on a given fileId, takes all person that belong to that image
+	 * and return an array with that.
+	 *
+	 * @param string $userId ID of the user that clusters belong to
+	 * @param int $fileId ID of file image for which to searh persons.
+	 *
+	 * @return array of persons
+	 */
+	public function findFromFile(string $userId, int $fileId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('p.id', 'name');
+		$qb->from("face_recognition_persons", "p")
+			->innerJoin('p', 'face_recognition_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
+			->innerJoin('p', 'face_recognition_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')));
+
+		$params = array();
+		$params['user'] = $userId;
+		$params['file_id'] = $fileId;
+
+		$persons = $this->findEntities($qb->getSQL(), $params);
+
+		return $persons;
 	}
 
 	/**

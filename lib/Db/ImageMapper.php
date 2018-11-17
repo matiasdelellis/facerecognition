@@ -165,7 +165,7 @@ class ImageMapper extends Mapper {
 			$qb->update('face_recognition_images')
 				->set("is_processed", $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
 				->set("error", $qb->createNamedParameter($error))
-				->set("last_processed_time", $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE))
+				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
 				->execute();

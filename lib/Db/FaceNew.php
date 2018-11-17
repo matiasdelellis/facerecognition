@@ -79,14 +79,14 @@ class FaceNew extends Entity implements JsonSerializable {
 	/**
 	 * 128D face descriptor for this face.
 	 *
-	 * @var json_array
+	 * @var array
 	 * */
 	public $descriptor;
 
 	/**
 	 * Time when this face was found
 	 *
-	 * @var timestamp
+	 * @var \DateTime
 	 * */
 	public $creation_time;
 

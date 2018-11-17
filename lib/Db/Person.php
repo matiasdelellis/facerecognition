@@ -29,6 +29,9 @@ use OCP\AppFramework\Db\Entity;
 
 /**
  * Person represent one cluster, set of faces. It belongs to $user_id.
+ *
+ * @method string getName()
+ * @method void setName(string $name)
  */
 class Person extends Entity implements JsonSerializable {
 	/**

@@ -1,0 +1,16 @@
+{
+    "name": "matiasdelellis/facerecognition",
+    "type": "project",
+    "license": "AGPLv3",
+    "authors": [
+        {
+            "name": "Matias De Lellis"
+        },
+        {
+            "name": "Branko Kokanovic"
+        }
+    ],
+    "require-dev": {
+        "christophwurst/nextcloud": "^12.0"
+    }
+}

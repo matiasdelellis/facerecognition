@@ -141,7 +141,7 @@ class FaceController extends Controller {
 	 * @NoAdminRequired
 	 *
 	 * @param int $id
-	 * @param string $name
+	 * @param string $newName
 	 */
 	public function updateName ($id, $newName) {
 		$face = $this->faceMapper->find($id, $this->userId);

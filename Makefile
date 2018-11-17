@@ -3,13 +3,28 @@
 app_name=facerecognition
 project_dir=$(CURDIR)/../$(app_name)
 build_dir=$(CURDIR)/build/artifacts
+build_tools_dir=$(CURDIR)/build/tools
 sign_dir=$(build_dir)/sign
 appstore_dir=$(build_dir)/appstore
 source_dir=$(build_dir)/source
 package_name=$(app_name)
 cert_dir=$(HOME)/.nextcloud/certificates
+composer=$(shell which composer 2> /dev/null)
 
 default: deps
+
+composer:
+ifeq (,$(composer))
+	@echo "No composer command available, downloading a copy from the web"
+	mkdir -p $(build_tools_dir)
+	curl -sS https://getcomposer.org/installer | php
+	mv composer.phar $(build_tools_dir)
+	php $(build_tools_dir)/composer.phar install --prefer-dist
+	php $(build_tools_dir)/composer.phar update --prefer-dist
+else
+	composer install --prefer-dist
+	composer update --prefer-dist
+endif
 
 models/1/mmod_human_face_detector.dat:
 	mkdir -p models/1
@@ -28,7 +43,7 @@ models/1/shape_predictor_5_face_landmarks.dat:
 
 download_models: models/1/mmod_human_face_detector.dat models/1/dlib_face_recognition_resnet_model_v1.dat models/1/shape_predictor_5_face_landmarks.dat
 
-deps: download_models
+deps: download_models composer
 	rm -f js/handlebars.js js/lozad.js
 	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js -O js/handlebars.js
 	wget https://raw.githubusercontent.com/ApoorvSaxena/lozad.js/master/dist/lozad.js -O js/lozad.js
@@ -44,7 +59,6 @@ appstore:
 	--exclude=CONTRIBUTING.md \
 	--exclude=composer.json \
 	--exclude=composer.lock \
-	--exclude=composer.phar \
 	--exclude=l10n/.tx \
 	--exclude=l10n/no-php \
 	--exclude=Makefile \
@@ -63,6 +77,7 @@ test: deps
 	phpunit --coverage-clover clover.xml -c phpunit.xml
 
 clean:
+	rm -rf ./build
 	rm -f models/1/mmod_human_face_detector.dat
 	rm -f models/1/dlib_face_recognition_resnet_model_v1.dat
 	rm -f models/1/shape_predictor_5_face_landmarks.dat

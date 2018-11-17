@@ -29,6 +29,15 @@ use OCP\AppFramework\Db\Entity;
 
 /**
  * Image represent one image file for one user.
+ *
+ * @method string getUser()
+ * @method void setUser(string $user)
+ *
+ * @method integer getFile()
+ * @method void setFile(integer $file)
+ *
+ * @method integer getModel()
+ * @method void setModel(integer $model)
  */
 class Image extends Entity implements JsonSerializable {
 

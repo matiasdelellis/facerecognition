@@ -240,8 +240,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function resizeImage(OC_Image $image, int $maxSize): float {
 		if (!$image->valid()) {
-			$this->logInfo(__METHOD__ . '(): No image loaded', array('app' => 'core'));
-			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+			$message = "Image is not valid, probably cannot be loaded";
+			$this->logInfo($message);
+			throw new \RuntimeException($message);
 		}
 
 		$widthOrig = imagesx($image->resource());

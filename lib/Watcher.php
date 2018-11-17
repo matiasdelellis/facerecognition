@@ -184,7 +184,7 @@ class Watcher {
 		$image->setModel($model);
 
 		$imageId = $this->imageMapper->imageExists($image);
-		if ($imageId == null) {
+		if ($imageId === null) {
 			// todo: can we have larger transaction with bulk insert?
 			$this->imageMapper->insert($image);
 		} else {
@@ -216,7 +216,7 @@ class Watcher {
 
 		try {
 			$faces = $this->faceMapper->findFile($owner, $node->getId());
-		} catch(Exception $e) {
+		} catch(\Exception $e) {
 			return;
 		}
 
@@ -237,7 +237,7 @@ class Watcher {
 			return;
 		}
 
-		if ($node->getName('.nomedia')) {
+		if ($node->getName() == '.nomedia') {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset global flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask and those images will be added.
@@ -259,7 +259,7 @@ class Watcher {
 		$image->setModel($model);
 
 		$imageId = $this->imageMapper->imageExists($image);
-		if ($imageId != null) {
+		if ($imageId !== null) {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);

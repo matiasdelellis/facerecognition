@@ -170,9 +170,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Create edges for chinese whispers
 		$euclidean = new Euclidean();
 		$edges = array();
-		for ($i = 0; $i < count($faces); $i++) {
+		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];
-			for ($j = $i; $j < count($faces); $j++) {
+			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
 				$face2 = $faces[$j];
 				// todo: can't this distance be a method in $face1->distance($face2)?
 				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
@@ -185,7 +185,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 		$newChineseClustersByIndex = dlib_chinese_whispers($edges);
 		$newClusters = array();
-		for ($i = 0; $i < count($newChineseClustersByIndex); $i++) {
+		for ($i = 0, $c = count($newChineseClustersByIndex); $i < $c; $i++) {
 			if (!isset($newClusters[$newChineseClustersByIndex[$i]])) {
 				$newClusters[$newChineseClustersByIndex[$i]] = array();
 			}

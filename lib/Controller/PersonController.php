@@ -55,7 +55,7 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param string $oldName
+	 * @param string $name
 	 * @param string $newName
 	 */
 	public function updateName($name, $newName) {

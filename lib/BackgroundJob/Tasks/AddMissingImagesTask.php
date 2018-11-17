@@ -115,17 +115,16 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		\OC_Util::setupFS($userId);
 
 		$userFolder = $this->context->rootFolder->getUserFolder($userId);
-		$this->parseUserFolder($userId, $model, $userFolder);
+		$this->parseUserFolder($model, $userFolder);
 	}
 
 	/**
 	 * Recursively crawls given folder for a given user
 	 *
-	 * @param string $userId ID of the user for which we are crawling this folder for
 	 * @param int $model Used model
 	 * @param Folder $folder Folder to recursively search images in
 	 */
-	private function parseUserFolder(string $userId, int $model, Folder $folder) {
+	private function parseUserFolder(int $model, Folder $folder) {
 		$nodes = $this->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());

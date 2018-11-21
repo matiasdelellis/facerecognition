@@ -40,8 +40,9 @@ class UnlockTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		flock($context->propertyBag['lock'], LOCK_UN);
 		unlink($context->propertyBag['lock_filename']);
+		return true;
 	}
 }

@@ -40,7 +40,7 @@ class CheckCronTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$isCommand = $context->isRunningThroughCommand();
@@ -51,7 +51,9 @@ class CheckCronTask extends FaceRecognitionBackgroundTask {
 				"For details, take a look at " .
 				"https://docs.nextcloud.com/server/14/admin_manual/configuration_server/background_jobs_configuration.html";
 			$this->logInfo($message);
-			throw new \RuntimeException($message);
+			return false;
 		}
+
+		return true;
 	}
 }

@@ -70,13 +70,13 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		if ($fullImageScanDone == 'true') {
 			// Completely skip this task, seems that we already did full scan
-			return;
+			return true;
 		}
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
@@ -99,6 +99,8 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		if (is_null($this->context->user)) {
 			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
 		}
+
+		return true;
 	}
 
 	/**

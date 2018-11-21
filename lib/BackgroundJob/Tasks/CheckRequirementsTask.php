@@ -55,7 +55,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
@@ -64,7 +64,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		if (!$req->pdlibLoaded()) {
 			$error_message = "PDLib is not loaded. Cannot continue";
 			$this->logInfo($error_message);
-			throw new \RuntimeException($error_message);
+			return false;
 		}
 
 		if (!$req->modelFilesPresent()) {
@@ -73,7 +73,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 				"Please contact administrator to change models you are using for face recognition\n" .
 				"or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
-			throw new \RuntimeException($error_message);
+			return false;
 		}
+
+		return true;
 	}
 }

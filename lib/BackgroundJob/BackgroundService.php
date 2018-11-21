@@ -105,15 +105,28 @@ class BackgroundService {
 				$i+1, count($task_classes), (new \ReflectionClass($task_class))->getShortName(), $task->description()));
 
 			try {
-				$generator = $task->do($this->context);
-				foreach ($generator as $_) {
-					$currentTime = time();
-					if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
-						$this->context->logger->logInfo("Time out. Quitting...");
-						return;
-					}
+				$generator = $task->execute($this->context);
+				// $generator can be either actual Generator or return value of boolean.
+				// If it is Generator object, that means execute() had some yields.
+				// Iterate through those yields and we will get end result through getReturn().
+				if ($generator instanceof \Generator) {
+					foreach ($generator as $_) {
+						$currentTime = time();
+						if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
+							$this->context->logger->logInfo("Time out. Quitting...");
+							return;
+						}
 
-					$this->context->logger->logDebug('yielding');
+						$this->context->logger->logDebug('yielding');
+					}
+				}
+
+				$shouldContinue = ($generator instanceof \Generator) ? $generator->getReturn() : $generator;
+				if (!$shouldContinue) {
+					$this->context->logger->logInfo(
+						sprintf("Task %s signalled we should not continue, bailing out",
+						(new \ReflectionClass($task_class))->getShortName()));
+					return;
 				}
 			} catch (\Exception $e) {
 				// Any exception is fatal, and we should quit background job

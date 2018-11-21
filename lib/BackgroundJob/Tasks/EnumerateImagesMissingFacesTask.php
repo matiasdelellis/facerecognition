@@ -64,7 +64,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user);
@@ -72,5 +72,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 
 		shuffle($images);
 		$this->context->propertyBag['images'] = $images;
+
+		return true;
 	}
 }

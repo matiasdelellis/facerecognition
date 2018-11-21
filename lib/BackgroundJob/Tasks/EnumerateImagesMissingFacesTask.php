@@ -23,10 +23,7 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\Files\File;
-use OCP\Files\Folder;
 use OCP\IDBConnection;
-use OCP\IUser;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;

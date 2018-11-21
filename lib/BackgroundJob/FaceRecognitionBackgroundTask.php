@@ -40,7 +40,7 @@ interface IFaceRecognitionBackgroundTask {
 	 * Executes task.
 	 *
 	 * @param FaceRecognitionContext $context Face recognition context
-	 * @return boolean|\Generator Since we are yielding, return type is either Generator, or boolean (actual return).
+	 * @return \Generator|bool Since we are yielding, return type is either Generator, or boolean (actual return).
 	 * Return value specifies should we continue execution. True if we should continue, false if we should bail out.
 	 */
 	public function execute(FaceRecognitionContext $context);

@@ -58,7 +58,7 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	}
 
 	/**
-	 * Sets context for a given task, so it can accessed in task (without a need to dragging it around from do() method).
+	 * Sets context for a given task, so it can accessed in task (without a need to dragging it around from execute() method).
 	 *
 	 * @param FaceRecognitionContext $context Context
 	 */

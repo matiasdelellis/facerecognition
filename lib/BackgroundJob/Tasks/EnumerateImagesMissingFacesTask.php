@@ -23,10 +23,7 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\Files\File;
-use OCP\Files\Folder;
 use OCP\IDBConnection;
-use OCP\IUser;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
@@ -64,7 +61,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user);
@@ -72,5 +69,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 
 		shuffle($images);
 		$this->context->propertyBag['images'] = $images;
+
+		return true;
 	}
 }

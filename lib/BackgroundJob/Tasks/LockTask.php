@@ -43,17 +43,18 @@ class LockTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$lock_file = sys_get_temp_dir() . '/' . LOCK_FILENAME;
 		$fp = fopen($lock_file, 'w');
 
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			$message = "Background job is already running. Quitting";
 			$this->logInfo($message);
-			throw new \RuntimeException($message);
+			return false;
 		}
 
 		$context->propertyBag['lock'] = $fp;
 		$context->propertyBag['lock_filename'] = $lock_file;
+		return true;
 	}
 }

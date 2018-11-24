@@ -126,7 +126,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function do(FaceRecognitionContext $context) {
+	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
@@ -162,6 +162,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->tempManager->clean();
 			}
 		}
+
+		return true;
 	}
 
 	/**

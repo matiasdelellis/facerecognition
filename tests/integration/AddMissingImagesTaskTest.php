@@ -99,7 +99,6 @@ class AddMissingImagesTaskTest extends TestCase {
 	 */
 	public function testNewScanIsEmpty() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper);
 
 		// Do it once, to make sure all images are inserted
 		$this->doMissingImageScan();

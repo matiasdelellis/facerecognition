@@ -28,6 +28,7 @@ use OCP\IUser;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\Files\IHomeStorage;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
@@ -82,6 +83,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// Check if we are called for one user only, or for all user in instance.
+		$insertedImages = 0;
 		$eligable_users = array();
 		if (is_null($this->context->user)) {
 			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
@@ -92,7 +94,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		foreach($eligable_users as $user) {
-			$this->addMissingImagesForUser($user, $model);
+			$insertedImages += $this->addMissingImagesForUser($user, $model);
 			yield;
 		}
 
@@ -100,6 +102,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
 		}
 
+		$this->context->propertyBag['AddMissingImagesTask_insertedImages'] = $insertedImages;
 		return true;
 	}
 
@@ -110,14 +113,15 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param string $userId ID of the user for which to crawl images for
 	 * @param int $model Used model
+	 * @return int Number of missing images found
 	 */
-	private function addMissingImagesForUser(string $userId, int $model) {
+	private function addMissingImagesForUser(string $userId, int $model): int {
 		$this->logInfo(sprintf('Finding missing images for user %s', $userId));
 		\OC_Util::tearDownFS();
 		\OC_Util::setupFS($userId);
 
 		$userFolder = $this->context->rootFolder->getUserFolder($userId);
-		$this->parseUserFolder($model, $userFolder);
+		return $this->parseUserFolder($model, $userFolder);
 	}
 
 	/**
@@ -125,8 +129,10 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param int $model Used model
 	 * @param Folder $folder Folder to recursively search images in
+	 * @return int Number of missing images found
 	 */
-	private function parseUserFolder(int $model, Folder $folder) {
+	private function parseUserFolder(int $model, Folder $folder): int {
+		$insertedImages = 0;
 		$nodes = $this->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
@@ -139,8 +145,11 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			if ($this->imageMapper->imageExists($image) == null) {
 				// todo: can we have larger transaction with bulk insert?
 				$this->imageMapper->insert($image);
+				$insertedImages++;
 			}
 		}
+
+		return $insertedImages;
 	}
 
 	/**
@@ -152,6 +161,11 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	private function getPicturesFromFolder(Folder $folder, $results = array()) {
+		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
+		if ($folder->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+			return $results;
+		}
+
 		$nodes = $folder->getDirectoryListing();
 
 		foreach ($nodes as $node) {

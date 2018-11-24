@@ -21,37 +21,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\BackgroundJob\Tasks;
+namespace OCA\FaceRecognition\Tests\Integration;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use OCP\AppFramework\App;
+use OCP\AppFramework\IAppContainer;
 
-/**
- * Task to unlock flock-ed file (and release mutex this way, so another background job can start).
- */
-class UnlockTask extends FaceRecognitionBackgroundTask {
-	/**
-	 * @inheritdoc
-	 */
-	public function description() {
-		return "Release obtained lock";
+use Test\TestCase;
+
+class AppTest extends TestCase {
+	/** @var IAppContainer */
+	private $container;
+
+	public function setUp() {
+		parent::setUp();
+		$app = new App('facerecognition');
+		$this->container = $app->getContainer();
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function execute(FaceRecognitionContext $context) {
-		if (!isset($context->propertyBag['lock'])) {
-			return false;
-		}
-
-		flock($context->propertyBag['lock'], LOCK_UN);
-
-		$lockFilename = $context->propertyBag['lock_filename'];
-		if (file_exists($lockFilename)) {
-			unlink($lockFilename);
-		}
-
-		return true;
+	public function testAppInstalled() {
+		$appManager = $this->container->query('OCP\App\IAppManager');
+		$this->assertTrue($appManager->isInstalled('facerecognition'));
 	}
 }

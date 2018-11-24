@@ -40,7 +40,7 @@ class FaceRecognitionLogger {
 	private $output;
 
 	public function __construct($logger) {
-		if ($logger instanceof ILogger) {
+		if (method_exists($logger, 'info') && method_exists($logger, 'debug')) {
 			$this->logger = $logger;
 		} else if ($logger instanceof OutputInterface) {
 			$this->output = $logger;

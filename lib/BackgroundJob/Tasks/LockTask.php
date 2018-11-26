@@ -44,7 +44,9 @@ class LockTask extends FaceRecognitionBackgroundTask {
 	 * @inheritdoc
 	 */
 	public function execute(FaceRecognitionContext $context) {
-		$lock_file = sys_get_temp_dir() . '/' . LOCK_FILENAME;
+		$this->setContext($context);
+
+		$lock_file = sys_get_temp_dir() . '/' . LockTask::LOCK_FILENAME;
 		$fp = fopen($lock_file, 'w');
 
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {

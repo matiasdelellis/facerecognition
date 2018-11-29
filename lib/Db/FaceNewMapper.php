@@ -22,14 +22,26 @@ class FaceNewMapper extends Mapper {
 		return $faces;
 	}
 
-	public function countFaces(string $userId, $model): int {
+	/**
+	 * Counts all the faces that belong to images of a given user, created using given model
+	 *
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $model Model ID
+	 * @param bool $onlyWithoutPersons True if we need to count only faces which are not having person associated for it.
+	 * If false, all faces are counted.
+	 */
+	public function countFaces(string $userId, int $model, bool $onlyWithoutPersons=false): int {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
+		$qb = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('f.id') . ')'))
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
+		if ($onlyWithoutPersons) {
+			$qb = $qb->andWhere($qb->expr()->isNull('person'));
+		}
+		$query = $qb
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
 		$resultStatement = $query->execute();
@@ -37,6 +49,29 @@ class FaceNewMapper extends Mapper {
 		$resultStatement->closeCursor();
 
 		return (int)$data[0];
+	}
+
+	/**
+	 * Gets oldest created face from database, for a given user and model, that is not associated with a person.
+	 *
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $model Model ID
+	 *
+	 * @return FaceNew Oldest face, if any is found
+	 * @throws DoesNotExistException If there is no faces in database without person for a given user and model.
+	 */
+	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): FaceNew {
+		$qb = $this->db->getQueryBuilder();
+		$qb
+			->select('f.id', 'f.creation_time')
+			->from('face_recognition_faces', 'f')
+			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->isNull('person'));
+		$params = array('user' => $userId, 'model' => $model);
+		$face = $this->findEntity($qb->getSQL(), $params, 1);
+		return $face;
 	}
 
 	public function getFaces(string $userId, $model): array {

@@ -88,7 +88,7 @@ class FaceNew extends Entity implements JsonSerializable {
 	 *
 	 * @var \DateTime
 	 * */
-	public $creation_time;
+	public $creationTime;
 
 	/**
 	 * Factory method to create Face from face structure that is returned as output of the model.
@@ -106,7 +106,7 @@ class FaceNew extends Entity implements JsonSerializable {
 		$face->top = max($faceFromModel["top"], 0);
 		$face->bottom = $faceFromModel["bottom"];
 		$face->descriptor = array();
-		$face->creation_time = new \DateTime();
+		$face->creationTime = new \DateTime();
 		return $face;
 	}
 
@@ -150,11 +150,15 @@ class FaceNew extends Entity implements JsonSerializable {
 			'top' => $this->top,
 			'bottom' => $this->bottom,
 			'descriptor' => $this->descriptor,
-			'creation_time' => $this->creation_time
+			'creation_time' => $this->creationTime
 		];
 	}
 
 	public function setDescriptor($descriptor) {
 		$this->descriptor = json_decode($descriptor);
+	}
+
+	public function setCreationTime($creationTime) {
+		$this->creationTime = new \DateTime($creationTime);
 	}
 }

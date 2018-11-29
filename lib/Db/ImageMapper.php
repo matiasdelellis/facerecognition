@@ -192,7 +192,7 @@ class ImageMapper extends Mapper {
 						'top' => $qb->createNamedParameter($face->top),
 						'bottom' => $qb->createNamedParameter($face->bottom),
 						'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
-						'creation_time' => $qb->createNamedParameter($face->creation_time, IQueryBuilder::PARAM_DATE),
+						'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 					])
 					->execute();
 			}

@@ -115,11 +115,45 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Depending on whether we already have clusters, decide if we should create/recreate them.
 		//
 		if ($hasPersons) {
-			// todo: find all faces that are in DB, but are not in user’s clusters.
-			// If we detect more than 10 faces like this,
-			// or if more than 2h since any of these is passed,
-			// or if “is_valid” (UserCluster table) is false,
-			// start new round of clustering for that user.
+			// OK, we already got some persons. We now need to evaluate whether we want to recreate clusters.
+			// We want to recreate clusters/persons if:
+			// * Some cluster/person is invalidated (is_valid is false for someone)
+			//     This means some image that belonged to this user is changed, deleted etc.
+			// * There are some new faces. Now, we don't want to jump the gun here. We want to either have:
+			// ** more than 10 new faces, or
+			// ** less than 10 new faces, but they are older than 2h
+			//  (basically, we want to avoid recreating cluster for each new face being uploaded,
+			//  however, we don't want to wait too much as clusters could be changed a lot)
+			//
+			$haveNewFaces = false;
+			$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
+			$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
+				$facesWithoutPersons, $userId, $modelId));
+			// todo: get rid of magic numbers (move to config)
+			if ($facesWithoutPersons >= 10) {
+				$haveNewFaces = true;
+			} else if ($facesWithoutPersons > 0) {
+				// We have some faces, but not that many, let's see when oldest one is generated.
+				$face = $this->faceMapper->getOldestCreatedFaceWithoutPerson($userId, $modelId);
+				$oldestFaceTimestamp = $face->creationTime->getTimestamp();
+				$currentTimestamp = (new \DateTime())->getTimestamp();
+				$this->logDebug(sprintf('Oldest face without persons for user %s and model %d is from %s',
+					$userId, $modelId, $face->creationTime->format('Y-m-d H:i:s')));
+				// todo: get rid of magic numbers (move to config)
+				if ($currentTimestamp - $oldestFaceTimestamp > 2 * 60 * 60) {
+					$haveNewFaces = true;
+				}
+			}
+
+			$stalePersonsCount = $this->personMapper->countPersons($userId, true);
+			$this->logDebug(sprintf('Found %d stale persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
+			$haveStalePersons = $stalePersonsCount > 0;
+
+			if ($haveStalePersons == false && $haveNewFaces == false) {
+				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
+				$this->logInfo('Clusters already exist, calculated there is no need to recreate them');
+				return;
+			}
 		} else {
 			// These are basic criteria without which we should not even consider creating clusters.
 			// These clusters will be small and not "stable" enough and we should better wait for more images to come.

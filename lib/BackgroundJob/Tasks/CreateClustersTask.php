@@ -149,7 +149,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$this->logDebug(sprintf('Found %d stale persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
 			$haveStalePersons = $stalePersonsCount > 0;
 
-			if ($haveStalePersons == false && $haveNewFaces == false) {
+			if ($haveStalePersons === false && $haveNewFaces === false) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, calculated there is no need to recreate them');
 				return;

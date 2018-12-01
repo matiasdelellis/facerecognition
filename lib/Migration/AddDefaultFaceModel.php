@@ -66,9 +66,6 @@ class AddDefaultFaceModel implements IRepairStep {
      *
      * Upserts first row in Face Model, so that after installation there is always at least one row.
      * If row with ID 1 already exists, it does not touch it.
-	 *
-     * @todo See if we really can just accept anything with ID 1 and don't care, because we never
-     * afterwards check if ID=1 has changes name/description?
 	 */
 	public function run(IOutput $output) {
 		$qb = $this->connection->getQueryBuilder();

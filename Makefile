@@ -43,10 +43,15 @@ models/1/shape_predictor_5_face_landmarks.dat:
 
 download_models: models/1/mmod_human_face_detector.dat models/1/dlib_face_recognition_resnet_model_v1.dat models/1/shape_predictor_5_face_landmarks.dat
 
-deps: download_models composer
-	rm -f js/handlebars.js js/lozad.js
+js/handlebars.js:
 	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js -O js/handlebars.js
+
+js/lozad.js:
 	wget https://raw.githubusercontent.com/ApoorvSaxena/lozad.js/master/dist/lozad.js -O js/lozad.js
+
+javascript_deps: js/handlebars.js js/lozad.js
+
+deps: download_models composer javascript_deps
 
 appstore:
 	mkdir -p $(sign_dir)
@@ -78,6 +83,7 @@ test: deps
 
 clean:
 	rm -rf ./build
+	rm -f js/handlebars.js js/lozad.js
 	rm -f models/1/mmod_human_face_detector.dat
 	rm -f models/1/dlib_face_recognition_resnet_model_v1.dat
 	rm -f models/1/shape_predictor_5_face_landmarks.dat

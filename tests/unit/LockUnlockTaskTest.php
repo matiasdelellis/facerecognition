@@ -59,6 +59,8 @@ class LockTaskTest extends TestCase {
 		$unlockTask = new UnlockTask();
 		$this->assertTrue($lockTask->execute($this->context));
 		$this->assertTrue($unlockTask->execute($this->context));
+		$this->assertNotEquals("", $lockTask->description());
+		$this->assertNotEquals("", $unlockTask->description());
 	}
 
 	public function testDoubleLock() {

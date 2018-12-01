@@ -111,12 +111,6 @@
 					<name>user</name>
 				</field>
 			</index>
-			<!-- todo: can we rely on filecache, or we should keep this as @var string path? -->
-			<!--
-			todo: we should not block background job for removing file caches to fail just because we have foreign key here.
-			FK should be set to CASCADE.
-			Good thing is that Nextcloud doesn't offer foreign keys, so there might not be problem at all.
-			-->
 			<!-- foreign key: filecache.fileid -->
 			<field>
 				<name>file</name>

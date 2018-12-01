@@ -58,16 +58,22 @@ class PersonMapper extends Mapper {
 	 * Returns count of persons (clusters) found for a given user.
 	 *
 	 * @param string $userId ID of the user
-	 *
+	 * @param bool $onlyInvalid True if client wants count of invalid persons only,
+	 *  false if client want count of all persons
 	 * @return int Count of persons
 	 */
-	public function countPersons(string $userId): int {
+	public function countPersons(string $userId, bool $onlyInvalid=false): int {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
+		$qb = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
 			->from($this->getTableName())
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->setParameter('user', $userId);
+			->where($qb->expr()->eq('user', $qb->createParameter('user')));
+		if ($onlyInvalid) {
+			$qb = $qb
+				->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
+				->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL);
+		}
+		$query = $qb->setParameter('user', $userId);
 		$resultStatement = $query->execute();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();

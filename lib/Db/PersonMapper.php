@@ -39,7 +39,7 @@ class PersonMapper extends Mapper {
 	}
 
 
-	public function find (string $userId, int $personId): Person {
+	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from('face_recognition_persons', 'p')

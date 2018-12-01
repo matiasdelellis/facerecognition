@@ -169,10 +169,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$nodes = $folder->getDirectoryListing();
 
 		foreach ($nodes as $node) {
-			//if ($node->isHidden())
-			//	continue;
-			// $previewImage = new \OC_Image();
-			// $previewImage->loadFromData($preview->getContent());
 			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			} else if ($node instanceof File) {

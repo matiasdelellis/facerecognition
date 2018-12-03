@@ -21,6 +21,12 @@ class Requirements
 		return extension_loaded('pdlib');
 	}
 
+	public function pdlibVersion() {
+		if (!$this->pdlibLoaded())
+			return '0.0';
+		return phpversion ('pdlib');
+	}
+
 	public function modelFilesPresent(): bool {
 		if ($this->model === 1) {
 			$faceDetection = $this->getFaceDetectionModelv2();

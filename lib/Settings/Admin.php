@@ -40,47 +40,35 @@ class Admin implements ISettings {
 
 	public function getForm() {
 
-		$requirements = TRUE;
-		$msg = "";
+		$pdlibLoaded = TRUE;
+		$pdlibVersion = '0.0';
+		$modelVersion = 0;
+		$modelPresent = TRUE;
+		$resume = "";
 
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$modelVersion = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		$req = new Requirements($this->appManager, $model);
+		$req = new Requirements($this->appManager, $modelVersion);
 
-		if (!$req->pdlibLoaded()) {
-			$requirements = FALSE;
-			$msg += 'PDLib is not loaded. Configure it';
-		}
-
-		if (!$req->getFaceRecognitionModelv2()) {
-			$recognitionModel = 'dlib_face_recognition_resnet_model_v1.dat not found';
-			$requirements = FALSE;
+		if ($req->pdlibLoaded()) {
+			$pdlibVersion = $req->pdlibVersion();
 		}
 		else {
-			$recognitionModel = 'dlib_face_recognition_resnet_model_v1.dat';
+			$resume .= 'The PHP extension PDlib is not loaded. Please configure this. ';
+			$pdlibLoaded = FALSE;
 		}
 
-		if (!$req->getLandmarksDetectionModelv2()) {
-			$landmarkingModel = 'shape_predictor_5_face_landmarks.dat not found';
-			$requirements = FALSE;
-		}
-		else {
-			$landmarkingModel = 'shape_predictor_5_face_landmarks.dat';
-		}
-		if (!$req->getFaceDetectionModelv2()) {
-			$detectionModel = 'mmod_human_face_detector.dat not found';
-			$requirements = FALSE;
-		}
-		else {
-			$detectionModel = 'mmod_human_face_detector.dat';
+		if (!$req->modelFilesPresent()) {
+			$resume .= 'The files of the models version ' . $modelVersion . ' were not found. ';
+			$modelPresent = FALSE;
 		}
 
 		$params = [
-			'recognition-model' => $recognitionModel,
-			'landmarking-model' => $landmarkingModel,
-			'detection-model' => $detectionModel,
-			'requirements' => $requirements,
-			'msg' => $msg,
+			'pdlib-loaded' => $pdlibLoaded,
+			'pdlib-version' => $pdlibVersion,
+			'model-version' => $modelVersion,
+			'model-present' => $modelPresent,
+			'resume' => $resume,
 		];
 
 		return new TemplateResponse('facerecognition', 'admin', $params, '');

@@ -8,12 +8,10 @@
 			<?php p($l->t('Face recognition'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki"></a>
 		</h2>
-		<h3>Configuration information</h3>
-		<p><strong>Requirements: </strong><?php p($_['msg']); ?><span class="status success<?php if(!$_['requirements']):?> error<?php endif;?>"></span></p>
-		<h3>Models</h3>
-		<p><strong>Recognition Model: </strong><?php p($_['recognition-model']); ?></p>
-		<p><strong>Landmarking Model: </strong><?php p($_['landmarking-model']); ?></p>
-		<p><strong>Detection Model: </strong><?php p($_['detection-model']); ?></p>
+		<h3>Configuration information <span class="status success<?php if(!($_['pdlib-loaded'] && $_['model-present'])):?> error<?php endif;?>"></span></h3>
+		<p><strong>Pdlib Version: </strong><?php p($_['pdlib-version']);?></p>
+		<p><strong>Models Version: </strong><?php p($_['model-version']);?></p>
+		<p><span><?php p($_['resume']); ?></span></p>
 		<h3>Current status</h3>
 		<div>
 			<p id="progress-text">Stopped</p>

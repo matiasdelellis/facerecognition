@@ -55,7 +55,7 @@ class PersonController extends Controller {
 		$resp = array();
 		$groups = $this->personMapper->findAll($this->userId);
 		foreach ($groups as $group) {
-			$resp[$group->getName()] = $this->faceNewMapper->findFacesFromPerson($this->userId, $group->getId(), $model, 12);
+			$resp[$group->getName()] = $this->faceNewMapper->findFacesFromPerson($this->userId, $group->getId(), $model);
 		}
 		return new DataResponse($resp);
 	}

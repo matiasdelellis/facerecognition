@@ -42,11 +42,11 @@ class Admin implements ISettings {
 
 		$pdlibLoaded = TRUE;
 		$pdlibVersion = '0.0';
-		$modelVersion = 0;
+		$modelVersion = AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID;
 		$modelPresent = TRUE;
 		$resume = "";
 
-		$modelVersion = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$modelVersion = intval($this->config->getAppValue('facerecognition', 'model', $modelVersion));
 
 		$req = new Requirements($this->appManager, $modelVersion);
 

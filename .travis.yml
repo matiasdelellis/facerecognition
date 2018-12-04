@@ -29,7 +29,7 @@ before_install:
   - ./occ app:enable $APP_NAME
 
 before_script:
-  # until #42 is fixed - ./occ app:check-code $APP_NAME
+  - ./occ app:check-code $APP_NAME
   - cd apps/$APP_NAME
 
 script:

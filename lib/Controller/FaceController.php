@@ -73,8 +73,8 @@ class FaceController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function getThumbV2 ($id) {
-		\OC_Util::tearDownFS();
-		\OC_Util::setupFS($this->userId);
+//		\OC_Util::tearDownFS();
+//		\OC_Util::setupFS($this->userId);
 
 		$face = $this->faceNewMapper->find($id);
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
@@ -106,7 +106,7 @@ class FaceController extends Controller {
 		$h += $padding*2;
 
 		$img->crop($x, $y, $w, $h);
-		$img->scaleDownToFit(32, 32);
+		$img->scaleDownToFit(64, 64);
 
 		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
 		$resp->setETag((string)crc32($img->data()));

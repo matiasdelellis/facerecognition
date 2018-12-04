@@ -25,10 +25,10 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    loadPerson: function (name) {
+    loadPerson: function (id) {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+name).done(function (person) {
+        $.get(this._baseUrl+'/person/'+id).done(function (person) {
             self._activePerson = person;
             self._selectedFaces = [];
             deferred.resolve();

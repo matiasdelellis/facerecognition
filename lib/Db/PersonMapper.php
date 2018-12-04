@@ -54,6 +54,19 @@ class PersonMapper extends Mapper {
 		return $person;
 	}
 
+	public function findAll (string $userId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name')
+			->from('face_recognition_persons', 'p')
+			->where($qb->expr()->eq('user', $qb->createParameter('user_id')));
+
+		$params = array();
+		$params['user_id'] = $userId;
+
+		$person = $this->findEntities($qb->getSQL(), $params);
+		return $person;
+	}
+
 	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *

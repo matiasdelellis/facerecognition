@@ -2,6 +2,7 @@
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
+use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -12,20 +13,35 @@ use OCP\AppFramework\Controller;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
+use OCA\FaceRecognition\Db\FaceNew;
+use OCA\FaceRecognition\Db\FaceNewMapper;
+
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
 class PersonController extends Controller {
 
+	private $config;
 	private $rootFolder;
 	private $faceMapper;
+	private $faceNewMapper;
 	private $personMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, PersonMapper $personmapper, $UserId) {
+	public function __construct($AppName, IRequest $request, IConfig $config,
+	                            IRootFolder $rootFolder,
+	                            FaceMapper $facemapper,
+	                            FaceNewMapper $faceNewMapper,
+	                            PersonMapper $personmapper,
+	                            $UserId) 
+	{
 		parent::__construct($AppName, $request);
+		$this->config = $config;
 		$this->rootFolder = $rootFolder;
 		$this->faceMapper = $facemapper;
+		$this->faceNewMapper = $faceNewMapper;
 		$this->personMapper = $personmapper;
 		$this->userId = $UserId;
 	}
@@ -34,10 +50,12 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function index() {
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
 		$resp = array();
-		$groups = $this->faceMapper->getGroups($this->userId);
+		$groups = $this->personMapper->findAll($this->userId);
 		foreach ($groups as $group) {
-			$resp[$group->getName()] = $this->faceMapper->findAllNamed($this->userId, $group->getName(), 12);
+			$resp[$group->getName()] = $this->faceNewMapper->findFacesFromPerson($this->userId, $group->getId(), $model, 12);
 		}
 		return new DataResponse($resp);
 	}
@@ -47,8 +65,8 @@ class PersonController extends Controller {
 	 *
 	 * @param string $name
 	 */
-	public function getFaces($name) {
-		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
+	public function getFaces($personId) {
+		$faces = $this->faceNewMapper->findAllFromPerson($this->userId, $personId);
 		return new DataResponse($faces);
 	}
 

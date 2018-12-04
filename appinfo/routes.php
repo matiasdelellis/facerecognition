@@ -22,7 +22,7 @@ return ['routes' =>
 	// Get all faces of a person.
 	[
 		'name' => 'person#getFaces',
-		'url'  => '/person/{name}',
+		'url'  => '/person/{personId}',
 		'verb' => 'GET'
 	],
 	// Change name to a person.

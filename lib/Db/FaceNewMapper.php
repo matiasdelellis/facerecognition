@@ -103,7 +103,7 @@ class FaceNewMapper extends Mapper {
 
 	public function findFacesFromPerson(string $userId, int $personId, int $model, $limit = null, $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.person', 'f.descriptor')
+		$qb->select('f.id', 'f.person')
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))

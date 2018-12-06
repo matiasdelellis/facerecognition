@@ -16,14 +16,7 @@ Persons.prototype = {
         var deferred = $.Deferred();
         var self = this;
         $.get(this._baseUrl+'/persons').done(function (clusters) {
-            for (var cluster in clusters) {
-                var person = {
-                    name: cluster,
-                    id: clusters[cluster][0].person,
-                    faces: clusters[cluster]
-                };
-                self._persons.push(person);
-            }
+            self._persons = clusters;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();

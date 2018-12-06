@@ -53,9 +53,13 @@ class PersonController extends Controller {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$resp = array();
-		$groups = $this->personMapper->findAll($this->userId);
-		foreach ($groups as $group) {
-			$resp[$group->getName()] = $this->faceNewMapper->findFacesFromPerson($this->userId, $group->getId(), $model);
+		$persons = $this->personMapper->findAll($this->userId);
+		foreach ($persons as $person) {
+			$cluster = [];
+			$cluster['name'] = $person->getName();
+			$cluster['id'] = $person->getId();
+			$cluster['faces'] = $this->faceNewMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$resp[] = $cluster;
 		}
 		return new DataResponse($resp);
 	}

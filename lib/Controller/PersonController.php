@@ -16,6 +16,9 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\FaceNew;
 use OCA\FaceRecognition\Db\FaceNewMapper;
 
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
+
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
@@ -27,6 +30,7 @@ class PersonController extends Controller {
 	private $rootFolder;
 	private $faceMapper;
 	private $faceNewMapper;
+	private $imageMapper;
 	private $personMapper;
 	private $userId;
 
@@ -34,6 +38,7 @@ class PersonController extends Controller {
 	                            IRootFolder $rootFolder,
 	                            FaceMapper $facemapper,
 	                            FaceNewMapper $faceNewMapper,
+	                            ImageMapper $imageMapper,
 	                            PersonMapper $personmapper,
 	                            $UserId) 
 	{
@@ -41,6 +46,7 @@ class PersonController extends Controller {
 		$this->config = $config;
 		$this->rootFolder = $rootFolder;
 		$this->faceMapper = $facemapper;
+		$this->imageMapper = $imageMapper;
 		$this->faceNewMapper = $faceNewMapper;
 		$this->personMapper = $personmapper;
 		$this->userId = $UserId;
@@ -56,9 +62,18 @@ class PersonController extends Controller {
 		$persons = $this->personMapper->findAll($this->userId);
 		foreach ($persons as $person) {
 			$cluster = [];
+			$faces = [];
+			$personFaces = $this->faceNewMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			foreach ($personFaces as $personFace) {
+				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+				$face = [];
+				$face['id'] = $personFace->getId();
+				$face['file-id'] = $image->getFile();
+				$faces[] = $face;
+			}
 			$cluster['name'] = $person->getName();
 			$cluster['id'] = $person->getId();
-			$cluster['faces'] = $this->faceNewMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$cluster['faces'] = $faces;
 			$resp[] = $cluster;
 		}
 		return new DataResponse($resp);

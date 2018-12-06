@@ -15,10 +15,10 @@ style('facerecognition', 'facerecognition');
 	<div id="persons-navigation">
 		{{#each persons}}
 			<div class="person-title">
-				<h2 class="edit-person icon-user" data-id="{{@key}}">{{@key}}</h2>
+				<h2 class="edit-person icon-user" data-id="{{this.id}}">{{this.name}}</h2>
 			</div>
 			<div class="persons-previews">
-				{{#each this}}
+				{{#each this.faces}}
 					<div class="person-container">
 						<div class="lozad" data-background-image="/apps/facerecognition/face/{{id}}/thumb" width="50" height="50"></div>
 					</div>

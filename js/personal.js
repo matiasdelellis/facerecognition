@@ -15,13 +15,25 @@ Persons.prototype = {
     loadPersons: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/persons').done(function (persons) {
-            self._persons = persons;
+        $.get(this._baseUrl+'/persons').done(function (clusters) {
+            for (var cluster in clusters) {
+                var person = {
+                    name: cluster,
+                    id: clusters[cluster][0].person,
+                    faces: clusters[cluster]
+                };
+                self._persons.push(person);
+            }
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    sortBySize: function () {
+        this._persons.sort(function(a, b) {
+            return b.faces.length - a.faces.length;
+        });
     },
     getAll: function () {
         return this._persons;
@@ -47,6 +59,8 @@ View.prototype = {
     renderContent: function () {
         var source = $('#content-tpl').html();
         var template = Handlebars.compile(source);
+
+        this._persons.sortBySize();
 
         var html = template({persons: this._persons.getAll()});
 

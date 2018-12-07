@@ -10,25 +10,26 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\Face;
-use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
 
 class ProcessController extends Controller {
 
 	private $config;
-	private $faceMapper;
+	private $imageMapper;
 	private $dateTimeFormatter;
 	private $userId;
 
 	public function __construct($AppName,
 		                    IRequest $request,
 		                    IConfig $config,
-		                    FaceMapper $facemapper,
+		                    ImageMapper $imageMapper,
 		                    IDateTimeFormatter $dateTimeFormatter,
-		                    $UserId) {
+		                    $UserId)
+		{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
-		$this->faceMapper = $facemapper;
+		$this->imageMapper = $imageMapper;
 		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->userId = $UserId;
 	}
@@ -37,8 +38,11 @@ class ProcessController extends Controller {
 	 */
 	public function index() {
 		$status = ($this->config->getAppValue('facerecognition', 'pid', -1) > 0);
-		$queueTotal = $this->faceMapper->countQueue();
-		$queueDone = $this->config->getAppValue('facerecognition', 'queue-done', 0);
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+
+		$queueTotal = $this->imageMapper->countUserImages($this->userId, $model);
+		$queueDone = $this->imageMapper->countUserProcessedImages($this->userId, $model);
 
 		$endTime = 'Unknown';
 		if ($queueDone > 0) {

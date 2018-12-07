@@ -9,9 +9,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\Face;
-use OCA\FaceRecognition\Db\FaceMapper;
-
 use OCA\FaceRecognition\Db\FaceNew;
 use OCA\FaceRecognition\Db\FaceNewMapper;
 
@@ -21,15 +18,19 @@ use OCA\FaceRecognition\Db\ImageMapper;
 class FaceController extends Controller {
 
 	private $rootFolder;
-	private $faceMapper;
 	private $faceNewMapper;
 	private $imageMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IRootFolder $rootFolder, FaceMapper $facemapper, FaceNewMapper $facenewmapper, ImageMapper $imagemapper, $UserId) {
+	public function __construct($AppName,
+	                            IRequest      $request,
+	                            IRootFolder   $rootFolder,
+	                            FaceNewMapper $facenewmapper,
+	                            ImageMapper   $imagemapper,
+	                            $UserId)
+	{
 		parent::__construct($AppName, $request);
 		$this->rootFolder = $rootFolder;
-		$this->faceMapper = $facemapper;
 		$this->faceNewMapper = $facenewmapper;
 		$this->imageMapper = $imagemapper;
 		$this->userId = $UserId;
@@ -75,18 +76,6 @@ class FaceController extends Controller {
 		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
 
 		return $resp;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $id
-	 */
-	public function invalidate($id) {
-		$face = $this->faceMapper->find($id, $this->userId);
-		$note->setDistance(1.0);
-		$newFace = $this->faceMapper->update($face);
-		return new DataResponse($newFace);
 	}
 
 }

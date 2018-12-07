@@ -10,9 +10,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\Face;
-use OCA\FaceRecognition\Db\FaceMapper;
-
 use OCA\FaceRecognition\Db\FaceNew;
 use OCA\FaceRecognition\Db\FaceNewMapper;
 
@@ -28,7 +25,6 @@ class PersonController extends Controller {
 
 	private $config;
 	private $rootFolder;
-	private $faceMapper;
 	private $faceNewMapper;
 	private $imageMapper;
 	private $personMapper;
@@ -36,16 +32,14 @@ class PersonController extends Controller {
 
 	public function __construct($AppName, IRequest $request, IConfig $config,
 	                            IRootFolder $rootFolder,
-	                            FaceMapper $facemapper,
 	                            FaceNewMapper $faceNewMapper,
 	                            ImageMapper $imageMapper,
 	                            PersonMapper $personmapper,
-	                            $UserId) 
+	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
 		$this->rootFolder = $rootFolder;
-		$this->faceMapper = $facemapper;
 		$this->imageMapper = $imageMapper;
 		$this->faceNewMapper = $faceNewMapper;
 		$this->personMapper = $personmapper;

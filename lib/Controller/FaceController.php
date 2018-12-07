@@ -37,39 +37,6 @@ class FaceController extends Controller {
 
 	/**
 	 * @NoAdminRequired
-	 */
-	 public function index() {
-		$faces = $this->faceMapper->findAll($this->userId);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $id
-	 */
-	public function find ($id) {
-		$face = $this->faceMapper->find($this->userId, $id);
-		return new DataResponse($face);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
-	public function getThumb ($id) {
-		\OC_Util::tearDownFS();
-		\OC_Util::setupFS($this->userId);
-
-		$face = $this->faceMapper->find($id, $this->userId);
-
-		$fileId = $face->getFile();
-
-		return $this->getFaceThumb ($fileId, $face);
-	}
-
-	/**
-	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
 	public function getThumbV2 ($id, $size) {
@@ -111,41 +78,6 @@ class FaceController extends Controller {
 		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
 
 		return $resp;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 */
-	public function random () {
-		$faces = $this->faceMapper->findRandom($this->userId);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param string $fullpath
-	 */
-	public function findFile ($fullpath) {
-		$userFolder = $this->rootFolder->getUserFolder($this->userId);
-		$fileId = $userFolder->get($fullpath)->getId();
-		$faces = $this->faceMapper->findFile($this->userId, $fileId);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $id
-	 * @param string $newName
-	 */
-	public function updateName ($id, $newName) {
-		$face = $this->faceMapper->find($id, $this->userId);
-		$face->setName($newName);
-		$face->setDistance(0.0);
-		$newFace = $this->faceMapper->update($face);
-		return new DataResponse($newFace);
 	}
 
 	/**

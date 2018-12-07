@@ -82,32 +82,6 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param string $name
-	 */
-	public function getFaces($personId) {
-		$faces = $this->faceNewMapper->findAllFromPerson($this->userId, $personId);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param string $name
-	 * @param string $newName
-	 */
-	public function updateName($name, $newName) {
-		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
-		foreach ($faces as $face) {
-			$face->setName($newName);
-			$this->faceMapper->update($face);
-		}
-		$newFaces = $this->faceMapper->findAllNamed($this->userId, $newName);
-		return new DataResponse($newFaces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
 	 * @param int $id
 	 * @param string $name
 	 */

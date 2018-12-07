@@ -22,7 +22,7 @@ return ['routes' =>
 	// Get all faces of a person.
 	[
 		'name' => 'person#getFaces',
-		'url'  => '/person/{name}',
+		'url'  => '/person/{personId}',
 		'verb' => 'GET'
 	],
 	// Change name to a person.
@@ -70,7 +70,7 @@ return ['routes' =>
 	// Get a face Thumb
 	[
 		'name' => 'face#getThumbV2',
-		'url'  => '/face/{id}/thumb',
+		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],
 	// Get persons from path

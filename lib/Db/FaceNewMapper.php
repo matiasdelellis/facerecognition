@@ -22,6 +22,19 @@ class FaceNewMapper extends Mapper {
 		return $faces;
 	}
 
+	public function findAllFromPerson (int $personId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
+			->from('face_recognition_faces', 'f')
+			->where($qb->expr()->eq('person', $qb->createParameter('person_id')));
+
+		$params = array();
+		$params['person_id'] = $personId;
+
+		$faces = $this->findEntities($qb->getSQL(), $params);
+		return $faces;
+	}
+
 	/**
 	 * Counts all the faces that belong to images of a given user, created using given model
 	 *
@@ -87,6 +100,25 @@ class FaceNewMapper extends Mapper {
 		$faces = $this->frFindEntities($qb);
 		return $faces;
 	}
+
+	public function findFacesFromPerson(string $userId, int $personId, int $model, $limit = null, $offset = null): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.image', 'f.person')
+			->from('face_recognition_faces', 'f')
+			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('person', $qb->createParameter('person_id')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
+
+		$params = array();
+		$params['user'] = $userId;
+		$params['person_id'] = $personId;
+		$params['model'] = $model;
+
+		$faces = $this->findEntities($qb->getSQL(), $params, $limit, $offset);
+		return $faces;
+	}
+
 
 	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
 		$qb = $this->db->getQueryBuilder();

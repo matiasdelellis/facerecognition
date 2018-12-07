@@ -27,18 +27,6 @@ use OCA\FaceRecognition\AppInfo\Application;
 
 $app = new Application();
 
-\OC::$server->getNavigationManager()->add(function () {
-	$l = \OC::$server->getL10N('facerecognition');
-	return [
-		'id' => 'facerecognition',
-		'appname' => 'facerecognition',
-		'order' => 100,
-		'name' => $l->t('Face recognition'),
-		'href' => \OC::$server->getURLGenerator()->linkToRoute('facerecognition.page.index'),
-		'icon' => \OC::$server->getURLGenerator()->imagePath('facerecognition', 'app.svg'),
-	];
-});
-
 \OC::$server->getEventDispatcher()->addListener('OCA\Files::loadAdditionalScripts', function(){
 	\OCP\Util::addScript('facerecognition', 'files-tabview');
 	\OCP\Util::addScript('facerecognition', 'files-plugin');

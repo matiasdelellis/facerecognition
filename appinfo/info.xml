@@ -44,6 +44,7 @@
 	</commands>
 	<settings>
 		<admin>OCA\FaceRecognition\Settings\Admin</admin>
-		<!--<personal>OCA\FaceRecognition\Settings\Personal</personal>-->
+		<personal>OCA\FaceRecognition\Settings\Personal</personal>
+		<personal-section>OCA\FaceRecognition\Settings\PersonalSection</personal-section>
 	</settings>
 </info>

@@ -36,7 +36,6 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\FaceNewMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Helper\Requirements;
@@ -59,9 +58,6 @@ class Watcher {
 	/** @var FaceMapper */
 	private $faceMapper;
 
-	/** @var FaceNewMapper */
-	private $faceNewMapper;
-
 	/** @var ImageMapper */
 	private $imageMapper;
 
@@ -76,24 +72,22 @@ class Watcher {
 	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
-	 * @param FaceNewMapper $faceNewMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
 	 */
 	public function __construct(IConfig       $config,
-								ILogger       $logger,
-								IDBConnection $connection,
-								IUserManager  $userManager,
-								FaceMapper    $faceMapper,
-								FaceNewMapper $faceNewMapper,
-								ImageMapper   $imageMapper,
-								PersonMapper  $personMapper) {
+	                            ILogger       $logger,
+	                            IDBConnection $connection,
+	                            IUserManager  $userManager,
+	                            FaceMapper    $faceMapper,
+	                            ImageMapper   $imageMapper,
+	                            PersonMapper  $personMapper)
+	{
 		$this->config = $config;
 		$this->logger = $logger;
 		$this->connection = $connection;
 		$this->userManager = $userManager;
 		$this->faceMapper = $faceMapper;
-		$this->faceNewMapper = $faceNewMapper;
 		$this->imageMapper = $imageMapper;
 		$this->personMapper = $personMapper;
 	}
@@ -105,40 +99,6 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postWrite(Node $node) {
-		// v1 code
-		$absPath = ltrim($node->getPath(), '/');
-		$owner = explode('/', $absPath)[0];
-
-		if (!$this->userManager->userExists($owner) || $node instanceof Folder) {
-			return;
-		}
-
-
-		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
-			return;
-		}
-
-//		if ($this->faceMapper->fileExists($node->getId())) {
-//			return;
-//		}
-
-		$face = new Face();
-		$face->setUid($owner);
-		$face->setFile($node->getId());
-		$face->setName('unknown');
-		$face->setDistance(-1.0);
-		$face->setTop(-1.0);
-		$face->setRight(-1.0);
-		$face->setBottom(-1.0);
-		$face->setLeft(-1.0);
-		$this->faceMapper->insert($face);
-
-	}
-
-	/**
-	 * @param Node $node
-	 */
-	public function postWritev2(Node $node) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
@@ -192,7 +152,7 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
-			$this->faceNewMapper->removeFaces($imageId);
+			$this->faceMapper->removeFaces($imageId);
 		}
 	}
 
@@ -202,30 +162,7 @@ class Watcher {
 	 *
 	 * @param Node $node
 	 */
-	public function preDelete(Node $node) {
-		$absPath = ltrim($node->getPath(), '/');
-		$owner = explode('/', $absPath)[0];
-
-		if (!$this->userManager->userExists($owner) || $node instanceof Folder) {
-			return;
-		}
-
-		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
-			return;
-		}
-
-		try {
-			$faces = $this->faceMapper->findFile($owner, $node->getId());
-		} catch(\Exception $e) {
-			return;
-		}
-
-		foreach ($faces as $face) {
-			$this->faceMapper->delete($face);
-		}
-	}
-
-	public function postDeletev2(Node $node) {
+	public function postDelete(Node $node) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
@@ -263,7 +200,7 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
-			$this->faceNewMapper->removeFaces($imageId);
+			$this->faceMapper->removeFaces($imageId);
 
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);

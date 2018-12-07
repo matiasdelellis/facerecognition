@@ -30,7 +30,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
-use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
@@ -51,13 +51,17 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	/** @var ImageMapper Image mapper*/
 	private $imageMapper;
 
-	/** @var FaceNewMapper Face mapper*/
+	/** @var FaceMapper Face mapper*/
 	private $faceMapper;
 
 	/**
 	 * @param IConfig $config Config
 	 */
-	public function __construct(IConfig $config, PersonMapper $personMapper, ImageMapper $imageMapper, FaceNewMapper $faceMapper) {
+	public function __construct(IConfig      $config,
+	                            PersonMapper $personMapper,
+	                            ImageMapper  $imageMapper,
+	                            FaceMapper   $faceMapper)
+	{
 		parent::__construct();
 		$this->config = $config;
 		$this->personMapper = $personMapper;

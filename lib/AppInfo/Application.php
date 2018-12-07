@@ -51,19 +51,13 @@ class Application extends App {
 			/** @var Watcher $watcher */
 			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->postWrite($node);
-			$watcher->postWritev2($node);
-		});
-		$root->listen('\OC\Files', 'preDelete', function (Node $node) {
-			/** @var Watcher $watcher */
-			$watcher = \OC::$server->query(Watcher::class);
-			$watcher->preDelete($node);
 		});
 		// We want to react on postDelete and not preDelete as in preDelete we don't know if
 		// file actually got deleted (locked, other errors...)
 		$root->listen('\OC\Files', 'postDelete', function (Node $node) {
 			/** @var Watcher $watcher */
 			$watcher = \OC::$server->query(Watcher::class);
-			$watcher->postDeletev2($node);
+			$watcher->postDelete($node);
 		});
 	}
 

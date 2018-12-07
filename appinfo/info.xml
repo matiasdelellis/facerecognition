@@ -35,11 +35,6 @@
 		</uninstall>
 	</repair-steps>
 	<commands>
-		<command>OCA\FaceRecognition\Command\Check</command>
-		<command>OCA\FaceRecognition\Command\Queue</command>
-		<command>OCA\FaceRecognition\Command\Analyze</command>
-		<command>OCA\FaceRecognition\Command\Clustering</command>
-		<command>OCA\FaceRecognition\Command\Update</command>
 		<command>OCA\FaceRecognition\Command\BackgroundCommand</command>
 	</commands>
 	<settings>

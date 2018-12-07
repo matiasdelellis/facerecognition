@@ -13,9 +13,6 @@ use OCP\AppFramework\Controller;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
-use OCA\FaceRecognition\Db\FaceNew;
-use OCA\FaceRecognition\Db\FaceNewMapper;
-
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
@@ -29,25 +26,24 @@ class PersonController extends Controller {
 	private $config;
 	private $rootFolder;
 	private $faceMapper;
-	private $faceNewMapper;
 	private $imageMapper;
 	private $personMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IConfig $config,
-	                            IRootFolder $rootFolder,
-	                            FaceMapper $facemapper,
-	                            FaceNewMapper $faceNewMapper,
-	                            ImageMapper $imageMapper,
+	public function __construct($AppName,
+	                            IRequest     $request,
+	                            IConfig      $config,
+	                            IRootFolder  $rootFolder,
+	                            FaceMapper   $faceMapper,
+	                            ImageMapper  $imageMapper,
 	                            PersonMapper $personmapper,
-	                            $UserId) 
+	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
 		$this->rootFolder = $rootFolder;
-		$this->faceMapper = $facemapper;
 		$this->imageMapper = $imageMapper;
-		$this->faceNewMapper = $faceNewMapper;
+		$this->faceMapper = $faceMapper;
 		$this->personMapper = $personmapper;
 		$this->userId = $UserId;
 	}
@@ -63,7 +59,7 @@ class PersonController extends Controller {
 		foreach ($persons as $person) {
 			$cluster = [];
 			$faces = [];
-			$personFaces = $this->faceNewMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 				$face = [];
@@ -82,36 +78,10 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param string $name
-	 */
-	public function getFaces($personId) {
-		$faces = $this->faceNewMapper->findAllFromPerson($this->userId, $personId);
-		return new DataResponse($faces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param string $name
-	 * @param string $newName
-	 */
-	public function updateName($name, $newName) {
-		$faces = $this->faceMapper->findAllNamed($this->userId, $name);
-		foreach ($faces as $face) {
-			$face->setName($newName);
-			$this->faceMapper->update($face);
-		}
-		$newFaces = $this->faceMapper->findAllNamed($this->userId, $newName);
-		return new DataResponse($newFaces);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
 	 * @param int $id
 	 * @param string $name
 	 */
-	public function updateNameV2($id, $name) {
+	public function updateName($id, $name) {
 		$person = $this->personMapper->find ($this->userId, $id);
 		$person->setName($name);
 		$this->personMapper->update($person);

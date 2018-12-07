@@ -147,7 +147,7 @@ class ImageMapper extends Mapper {
 	 * If there is exception, its stack trace is also updated.
 	 *
 	 * @param Image $image Image to be updated
-	 * @param FaceNew[] $faces Faces to insert
+	 * @param Face[] $faces Faces to insert
 	 * @param int $duration Processing time, in milliseconds
 	 * @param \Exception|null $e Any exception that happened during image processing
 	 */
@@ -181,7 +181,7 @@ class ImageMapper extends Mapper {
 			//
 			foreach ($faces as $face) {
 				// Simple INSERT will close cursor and we want to be in transaction, so use hard way
-				// todo: should we move this to FaceNewMapper (don't forget to hand over connection though)
+				// todo: should we move this to FaceMapper (don't forget to hand over connection though)
 				$qb = $this->db->getQueryBuilder();
 				$qb->insert('face_recognition_faces')
 					->values([

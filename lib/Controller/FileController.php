@@ -10,8 +10,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\FaceNew;
-use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\FaceMapper;
 
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
@@ -24,22 +24,24 @@ class FileController extends Controller {
 
 	private $personMapper;
 
-	private $faceNewMapper;
+	private $faceMapper;
 
 	private $rootFolder;
 
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IConfig $config,
-	                            PersonMapper $personmapper,
-	                            FaceNewMapper $facenewmapper,
-	                            IRootFolder $rootFolder,
+	public function __construct($AppName,
+	                            IRequest     $request,
+	                            IConfig      $config,
+	                            PersonMapper $personMapper,
+	                            FaceMapper   $faceMapper,
+	                            IRootFolder  $rootFolder,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
-		$this->personMapper = $personmapper;
-		$this->faceNewMapper = $facenewmapper;
+		$this->personMapper = $personMapper;
+		$this->faceMapper = $faceMapper;
 		$this->rootFolder = $rootFolder;
 		$this->userId = $UserId;
 	}
@@ -56,7 +58,7 @@ class FileController extends Controller {
 		$resp = array();
 		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
 		foreach ($persons as $person) {
-			$face = $this->faceNewMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $model);
+			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $model);
 			if (!count($face))
 				continue;
 

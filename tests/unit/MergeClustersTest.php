@@ -44,7 +44,7 @@ class MergeClustersTest extends TestCase {
 		$imageMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\ImageMapper')
 			->disableOriginalConstructor()
 			->getMock();
-		$faceMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\FaceNewMapper')
+		$faceMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\FaceMapper')
 			->disableOriginalConstructor()
 			->getMock();
 		$this->createClusterTask = new CreateClustersTask($config, $personMapper, $imageMapper, $faceMapper);

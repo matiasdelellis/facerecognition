@@ -51,9 +51,9 @@
             var arrayLength = data.length;
             for (var i = 0; i < arrayLength; i++) {
                 html += "<tr data-id='" + data[i].person_id + "'>";
-                html += "    <td><div class='face-container'>";
-                html += "        <div class='face-lozad' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb' data-id='" + data[i].face.id + "' width='32' height='32'>";
-                html += "    </div></td>";
+                html += "    <td>";
+                html += "        <div class='face-preview' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb' data-id='" + data[i].face.id + "' width='32' height='32'>";
+                html += "    </td>";
                 html += "    <td class='name'>" + data[i].name + "</td>";
                 html += "    <td>";
                 html += "        <div class='more'>";
@@ -76,7 +76,7 @@
             this.$el.find('.get-faces').html(html);
 
             this.delegateEvents();
-            const observer = lozad('.face-lozad');
+            const observer = lozad('.face-preview');
             observer.observe();
         },
 

@@ -1,13 +1,8 @@
-#app-content-wrapper {
-    height: 100%;
-}
-
 #div-content {
     width: 100%;
 }
 
-#all-button,
-.edit-person {
+.person-title {
     display: inline-flex;
     padding: 10px;
     padding-left: 34px;
@@ -21,68 +16,20 @@
     padding-left: 34px;
 }
 
-#button-fixed,
-.person-title {
-    z-index: 111; /* navigation menu is 110 ;-) */
-    background-color: rgba(255, 255, 255, .75);
-    color: #545454;
-    padding: 10px;
-    position: relative;
-}
-
 .persons-previews {
     margin-left: 24px;
     display: flex;
     flex-wrap: wrap;
 }
 
-.lozad:hover {
-    opacity: .5;
-}
-
-.person-container {
-    position: relative;
-    margin: 2px;
-}
-
-.lozad {
+.face-preview {
     background-color: rgba(210, 210, 210, .75);
     border-radius: 3px;
+    margin: 2px;
     height: 50px;
     width: 50px;
 }
 
-
-.show-overlay-icon {
-    display: block !important;
-}
-
-.icon-rename-select {
-    display: none;
-    float: left;
-    background-color: white;
-    border-radius: 8px;
-    margin: 2px;
-    opacity: 0.5;
-}
-
-.icon-checkmark-select {
-    display: none;
-    float: right;
-    background-color: white;
-    border-radius: 8px;
-    margin: 2px;
-    opacity: 0.5;
-}
-
-.icon-checkmark-selected,
-.icon-checkmark-select:hover,
-.icon-rename-select:hover {
-    display: block !important;
-    background-color: #4285f4;
-    opacity: 1.0;
-}
-
-.face-selected {
-    border: 3px #4285f4 solid
+.face-preview:hover {
+    opacity: .5;
 }

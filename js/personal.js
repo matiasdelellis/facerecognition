@@ -79,7 +79,7 @@ View.prototype = {
 
         $('#div-content').html(html);
 
-        const observer = lozad();
+        const observer = lozad('.face-preview');
         observer.observe();
 
         var self = this;

@@ -14,17 +14,15 @@ style('facerecognition', 'facerecognition');
 	<p class="settings-hint">Here you can see the photos of your friends that we have recognized</p>
 	<div id="persons-navigation">
 		{{#each persons}}
-			<h2 class="edit-person icon-user" data-id="{{this.id}}">
+			<h2 class="person-title icon-user" data-id="{{this.id}}">
 				<span>{{this.name}}</span>
 				<a class="title-icon icon-rename"></a>
 			</h2>
 			<div class="persons-previews">
 				{{#each this.faces}}
-					<div class="person-container">
-						<a target="_blank" href="/f/{{file-id}}">
-							<div class="lozad" data-background-image="/apps/facerecognition/face/{{id}}/thumb" width="50" height="50"></div>
-						</a>
-					</div>
+					<a target="_blank" href="/f/{{file-id}}">
+						<div class="face-preview" data-background-image="/apps/facerecognition/face/{{id}}/thumb" width="50" height="50"></div>
+					</a>
 				{{/each}}
 			</div>
 		{{/each}}

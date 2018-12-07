@@ -85,7 +85,7 @@ class PersonController extends Controller {
 	 * @param int $id
 	 * @param string $name
 	 */
-	public function updateNameV2($id, $name) {
+	public function updateName($id, $name) {
 		$person = $this->personMapper->find ($this->userId, $id);
 		$person->setName($name);
 		$this->personMapper->update($person);

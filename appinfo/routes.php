@@ -9,13 +9,13 @@ return ['routes' =>
 	],
 	// Change name to a person.
 	[
-		'name' => 'person#updateNameV2',
-		'url'  => '/personV2/{id}',
+		'name' => 'person#updateName',
+		'url'  => '/person/{id}',
 		'verb' => 'PUT'
 	],
 	// Get a face Thumb
 	[
-		'name' => 'face#getThumbV2',
+		'name' => 'face#getThumb',
 		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],

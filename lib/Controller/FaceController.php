@@ -39,14 +39,11 @@ class FaceController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function getThumbV2 ($id, $size) {
+	public function getThumb ($id, $size) {
 		$face = $this->faceNewMapper->find($id);
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
-		return $this->getFaceThumb ($fileId, $face, $size);
-	}
 
-	private function getFaceThumb ($fileId, $face, $size = 64) {
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$nodes = $userFolder->getById($fileId);
 		$file = $nodes[0];

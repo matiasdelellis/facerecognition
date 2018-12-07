@@ -72,17 +72,14 @@ class FaceController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function getThumbV2 ($id) {
-//		\OC_Util::tearDownFS();
-//		\OC_Util::setupFS($this->userId);
-
+	public function getThumbV2 ($id, $size) {
 		$face = $this->faceNewMapper->find($id);
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
-		return $this->getFaceThumb ($fileId, $face);
+		return $this->getFaceThumb ($fileId, $face, $size);
 	}
 
-	private function getFaceThumb ($fileId, $face) {
+	private function getFaceThumb ($fileId, $face, $size = 64) {
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$nodes = $userFolder->getById($fileId);
 		$file = $nodes[0];
@@ -106,7 +103,7 @@ class FaceController extends Controller {
 		$h += $padding*2;
 
 		$img->crop($x, $y, $w, $h);
-		$img->scaleDownToFit(64, 64);
+		$img->scaleDownToFit($size, $size);
 
 		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
 		$resp->setETag((string)crc32($img->data()));

@@ -70,7 +70,7 @@ return ['routes' =>
 	// Get a face Thumb
 	[
 		'name' => 'face#getThumbV2',
-		'url'  => '/face/{id}/thumb',
+		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],
 	// Get persons from path

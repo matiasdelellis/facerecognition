@@ -30,6 +30,26 @@ Persons.prototype = {
     },
     getAll: function () {
         return this._persons;
+    },
+    rename: function (personId, personName) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { name: personName };
+        $.ajax({url: this._baseUrl + '/personV2/' + personId,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(opt)
+        }).done(function (data) {
+            self._persons.forEach(function (person) {
+                if (person.id === personId) {
+                    person.name = personName;
+                }
+            });
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
     }
 };
 
@@ -61,6 +81,32 @@ View.prototype = {
 
         const observer = lozad();
         observer.observe();
+
+        var self = this;
+        $('#facerecognition .icon-rename').click(function () {
+            var id = $(this).parent().data('id');
+            OC.dialogs.prompt(
+                t('facerecognition', 'Please enter a name to rename the person'),
+                t('facerecognition', 'Rename'),
+                function(result, value) {
+                    if (result === true && value) {
+                        self._persons.rename (id, value).done(function () {
+                            self.renderContent();
+                        }).fail(function () {
+                            alert('D\'Oh!. Could not rename your friend..');
+                        });
+                    }
+                },
+                true,
+                t('facerecognition', 'Rename Person'),
+                false
+            ).then(function() {
+                var $dialog = $('.oc-dialog:visible');
+                var $buttons = $dialog.find('button');
+                $buttons.eq(0).text(t('facerecognition', 'Cancel'));
+                $buttons.eq(1).text(t('facerecognition', 'Rename'));
+            });
+        });
     }
 };
 

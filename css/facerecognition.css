@@ -8,12 +8,17 @@
 
 #all-button,
 .edit-person {
-    width: 100%;
+    display: inline-flex;
     padding: 10px;
     padding-left: 34px;
     background-position: 10px center;
     text-align: left;
-    margin: 0;
+    margin-top: 22px;
+    margin-bottom: 0px !important;
+}
+
+.title-icon {
+    padding-left: 34px;
 }
 
 #button-fixed,
@@ -29,6 +34,10 @@
     margin-left: 24px;
     display: flex;
     flex-wrap: wrap;
+}
+
+.lozad:hover {
+    opacity: .5;
 }
 
 .person-container {

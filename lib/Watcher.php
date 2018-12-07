@@ -33,9 +33,9 @@ use OCP\ILogger;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
-use OCA\FaceRecognition\Db\FaceNew;
+use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
-use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Helper\Requirements;
@@ -55,8 +55,8 @@ class Watcher {
 	/** @var IUserManager */
 	private $userManager;
 
-	/** @var FaceNewMapper */
-	private $faceNewMapper;
+	/** @var FaceMapper */
+	private $faceMapper;
 
 	/** @var ImageMapper */
 	private $imageMapper;
@@ -71,22 +71,23 @@ class Watcher {
 	 * @param ILogger $logger
 	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
-	 * @param FaceNewMapper $faceNewMapper
+	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
 	 */
 	public function __construct(IConfig       $config,
-								ILogger       $logger,
-								IDBConnection $connection,
-								IUserManager  $userManager,
-								FaceNewMapper $faceNewMapper,
-								ImageMapper   $imageMapper,
-								PersonMapper  $personMapper) {
+	                            ILogger       $logger,
+	                            IDBConnection $connection,
+	                            IUserManager  $userManager,
+	                            FaceMapper    $faceMapper,
+	                            ImageMapper   $imageMapper,
+	                            PersonMapper  $personMapper)
+	{
 		$this->config = $config;
 		$this->logger = $logger;
 		$this->connection = $connection;
 		$this->userManager = $userManager;
-		$this->faceNewMapper = $faceNewMapper;
+		$this->faceMapper = $faceMapper;
 		$this->imageMapper = $imageMapper;
 		$this->personMapper = $personMapper;
 	}
@@ -151,7 +152,7 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
-			$this->faceNewMapper->removeFaces($imageId);
+			$this->faceMapper->removeFaces($imageId);
 		}
 	}
 
@@ -199,7 +200,7 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
-			$this->faceNewMapper->removeFaces($imageId);
+			$this->faceMapper->removeFaces($imageId);
 
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);

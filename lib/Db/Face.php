@@ -32,7 +32,7 @@ use OCP\AppFramework\Db\Entity;
  *
  * todo: currently named facev2 as it should not interfere with existing face. Once we switch, it should be renamed to "Face".
  */
-class FaceNew extends Entity implements JsonSerializable {
+class Face extends Entity implements JsonSerializable {
 
 	/**
 	 * Image from this face originated from.
@@ -95,10 +95,10 @@ class FaceNew extends Entity implements JsonSerializable {
 	 *
 	 * @param int $image Image Id
 	 * @param dict $faceFromModel Face obtained from DNN model
-	 * @return FaceNew Created face
+	 * @return Facew Created face
 	 */
-	public static function fromModel($image, $faceFromModel): FaceNew {
-		$face = new FaceNew();
+	public static function fromModel($image, $faceFromModel): Face {
+		$face = new Facew();
 		$face->image = $image;
 		$face->person = null;
 		$face->left = max($faceFromModel["left"], 0);

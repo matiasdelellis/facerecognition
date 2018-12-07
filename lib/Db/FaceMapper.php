@@ -6,12 +6,12 @@ use OCP\AppFramework\Db\Mapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-class FaceNewMapper extends Mapper {
+class FaceMapper extends Mapper {
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\FaceNew');
+		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
-	public function find (int $faceId): FaceNew {
+	public function find (int $faceId): Face {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
 			->from('face_recognition_faces', 'f')
@@ -70,10 +70,10 @@ class FaceNewMapper extends Mapper {
 	 * @param string $userId User to which faces and associated images belongs to
 	 * @param int $model Model ID
 	 *
-	 * @return FaceNew Oldest face, if any is found
+	 * @return Face Oldest face, if any is found
 	 * @throws DoesNotExistException If there is no faces in database without person for a given user and model.
 	 */
-	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): FaceNew {
+	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): Face {
 		$qb = $this->db->getQueryBuilder();
 		$qb
 			->select('f.id', 'f.creation_time')

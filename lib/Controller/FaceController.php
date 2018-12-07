@@ -9,8 +9,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\FaceNew;
-use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\FaceMapper;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
@@ -18,21 +18,21 @@ use OCA\FaceRecognition\Db\ImageMapper;
 class FaceController extends Controller {
 
 	private $rootFolder;
-	private $faceNewMapper;
+	private $faceMapper;
 	private $imageMapper;
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest      $request,
-	                            IRootFolder   $rootFolder,
-	                            FaceNewMapper $facenewmapper,
-	                            ImageMapper   $imagemapper,
+	                            IRequest    $request,
+	                            IRootFolder $rootFolder,
+	                            FaceMapper  $faceMapper,
+	                            ImageMapper $imageMapper,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 		$this->rootFolder = $rootFolder;
-		$this->faceNewMapper = $facenewmapper;
-		$this->imageMapper = $imagemapper;
+		$this->faceMapper = $faceMapper;
+		$this->imageMapper = $imageMapper;
 		$this->userId = $UserId;
 	}
 
@@ -41,7 +41,7 @@ class FaceController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function getThumb ($id, $size) {
-		$face = $this->faceNewMapper->find($id);
+		$face = $this->faceMapper->find($id);
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
 

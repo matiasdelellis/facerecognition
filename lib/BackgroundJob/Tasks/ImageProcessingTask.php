@@ -33,7 +33,7 @@ use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\Db\FaceNew;
+use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Helper\Requirements;
@@ -53,7 +53,7 @@ class ImageProcessingContext {
 	/** @var float Ratio of resized image, when scaling it */
 	private $ratio;
 
-	/** @var array<FaceNew> All found faces in image */
+	/** @var array<Face> All found faces in image */
 	private $faces;
 
 	public function __construct(string $imagePath, string $tempPath, float $ratio) {
@@ -77,14 +77,14 @@ class ImageProcessingContext {
 	/**
 	 * Gets all faces
 	 *
-	 * @return FaceNew[] Array of faces
+	 * @return Face[] Array of faces
 	 */
 	public function getFaces(): array {
 		return $this->faces;
 	}
 
 	/**
-	 * @param array<FaceNew> $faces Array of faces to set
+	 * @param array<Face> $faces Array of faces to set
 	 */
 	public function setFaces($faces) {
 		$this->faces = $faces;
@@ -197,7 +197,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// Convert from dictionary of faces to our Face Db Entity
 		$faces = array();
 		foreach ($facesFound as $faceFound) {
-			$face = FaceNew::fromModel($image, $faceFound);
+			$face = Face::fromModel($image, $faceFound);
 			$face->normalizeSize($imageProcessingContext->getRatio());
 			$faces[] = $face;
 		}
@@ -293,7 +293,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 	}
 
-	private function cropFace(string $imagePath, FaceNew $face): string {
+	private function cropFace(string $imagePath, Face $face): string {
 		// todo: we are loading same image two times, fix this
 		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);

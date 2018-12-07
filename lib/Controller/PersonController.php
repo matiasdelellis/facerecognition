@@ -10,8 +10,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCA\FaceRecognition\Db\FaceNew;
-use OCA\FaceRecognition\Db\FaceNewMapper;
+use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\FaceMapper;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
@@ -25,15 +25,17 @@ class PersonController extends Controller {
 
 	private $config;
 	private $rootFolder;
-	private $faceNewMapper;
+	private $faceMapper;
 	private $imageMapper;
 	private $personMapper;
 	private $userId;
 
-	public function __construct($AppName, IRequest $request, IConfig $config,
-	                            IRootFolder $rootFolder,
-	                            FaceNewMapper $faceNewMapper,
-	                            ImageMapper $imageMapper,
+	public function __construct($AppName,
+	                            IRequest     $request,
+	                            IConfig      $config,
+	                            IRootFolder  $rootFolder,
+	                            FaceMapper   $faceMapper,
+	                            ImageMapper  $imageMapper,
 	                            PersonMapper $personmapper,
 	                            $UserId)
 	{
@@ -41,7 +43,7 @@ class PersonController extends Controller {
 		$this->config = $config;
 		$this->rootFolder = $rootFolder;
 		$this->imageMapper = $imageMapper;
-		$this->faceNewMapper = $faceNewMapper;
+		$this->faceMapper = $faceMapper;
 		$this->personMapper = $personmapper;
 		$this->userId = $UserId;
 	}
@@ -57,7 +59,7 @@ class PersonController extends Controller {
 		foreach ($persons as $person) {
 			$cluster = [];
 			$faces = [];
-			$personFaces = $this->faceNewMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 				$face = [];

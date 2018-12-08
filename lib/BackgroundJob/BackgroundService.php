@@ -23,6 +23,8 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob;
 
+use OCP\IUser;
+
 use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 

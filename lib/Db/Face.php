@@ -30,7 +30,11 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Face represents one found face from one image.
  *
- * todo: currently named facev2 as it should not interfere with existing face. Once we switch, it should be renamed to "Face".
+ * @method int getImage()
+ * @method int getLeft()
+ * @method int getRight()
+ * @method int getTop()
+ * @method int getBottom()
  */
 class Face extends Entity implements JsonSerializable {
 
@@ -95,10 +99,10 @@ class Face extends Entity implements JsonSerializable {
 	 *
 	 * @param int $image Image Id
 	 * @param dict $faceFromModel Face obtained from DNN model
-	 * @return Facew Created face
+	 * @return Face Created face
 	 */
 	public static function fromModel($image, $faceFromModel): Face {
-		$face = new Facew();
+		$face = new Face();
 		$face->image = $image;
 		$face->person = null;
 		$face->left = max($faceFromModel["left"], 0);

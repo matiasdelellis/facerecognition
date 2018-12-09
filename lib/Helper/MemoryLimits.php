@@ -65,6 +65,10 @@ class MemoryLimits {
 
 	private static function getTotalMemoryLinux(): int {
 		$fh = fopen('/proc/meminfo','r');
+		if ($fh === false) {
+			return 0;
+		}
+
 		$mem = 0;
 		while ($line = fgets($fh)) {
 			$pieces = array();
@@ -82,7 +86,7 @@ class MemoryLimits {
 	 * Converts shorthand memory notation value to bytes
 	 * From http://php.net/manual/en/function.ini-get.php
 	 *
-	 * @param string val Memory size shorthand notation string
+	 * @param string $val Memory size shorthand notation string
 	 *
 	 * @return int Value in integers (bytes)
 	 */
@@ -94,11 +98,12 @@ class MemoryLimits {
 
 		$last = strtolower($val[strlen($val)-1]);
 		switch($last) {
-			// Fallthrough on purpose
 			case 'g':
 				$val *= 1024;
+				// Fallthrough on purpose
 			case 'm':
 				$val *= 1024;
+				// Fallthrough on purpose
 			case 'k':
 				$val *= 1024;
 		}

@@ -226,7 +226,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
 		// This reasoning and calculations are all based on analysis given here:
 		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
-		$allowedMemory = $context->propertyBag['memory'];
+		$allowedMemory = $this->$context->propertyBag['memory'];
 		$maxImageArea = intval($allowedMemory / 1024); // in pixels^2
 		$ratio = $this->resizeImage($image, $maxImageArea);
 

@@ -108,6 +108,6 @@ class MemoryLimits {
 				$val *= 1024;
 		}
 
-		return $val;
+		return intval($val);
 	}
 }

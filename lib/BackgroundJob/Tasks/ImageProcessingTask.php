@@ -223,8 +223,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
 		}
 
-		// todo: be smarter with this 1024 constant. Depending on GPU/memory of the host, this can be larger.
-		$ratio = $this->resizeImage($image, 1024);
+		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
+		// This reasoning and calculations are all based on analysis given here:
+		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
+		$allowedMemory = $context->propertyBag['memory'];
+		$maxImageArea = intval($allowedMemory / 1024); // in pixels^2
+		$ratio = $this->resizeImage($image, $maxImageArea);
 
 		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
 		$image->save($tempfile);
@@ -232,15 +236,15 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	}
 
 	/**
-	 * Resizes the image preserving ratio. Stolen and adopted from OC_Image->resize().
-	 * Difference is that this returns ratio of resize.
-	 * Also, resize is not done if $maxSize is less than both width and height.
+	 * Resizes the image to reach max image area, but preserving ratio.
+	 * Stolen and adopted from OC_Image->resize() (difference is that this returns ratio of resize.)
 	 *
-	 * @* @param OC_Image $image Image to resize
-	 * @param int $maxSize The maximum size of either the width or height.
+	 * @param OC_Image $image Image to resize
+	 * @param int $maxImageArea The maximum size of image we can handle (in pixels^2).
+	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	public function resizeImage(OC_Image $image, int $maxSize): float {
+	public function resizeImage(OC_Image $image, int $maxImageArea): float {
 		if (!$image->valid()) {
 			$message = "Image is not valid, probably cannot be loaded";
 			$this->logInfo($message);
@@ -249,26 +253,24 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$widthOrig = imagesx($image->resource());
 		$heightOrig = imagesy($image->resource());
-		if (($widthOrig < $maxSize) && ($heightOrig < $maxSize)) {
-			return 1.0;
+		if (($widthOrig <= 0) || ($heightOrig <= 0)) {
+			$message = "Image is having non-positive width or height, cannot continue";
+			$this->logInfo($message);
+			throw new \RuntimeException($message);
 		}
 
-		$ratioOrig = $widthOrig / $heightOrig;
+		$areaRatio = $maxImageArea / ($widthOrig * $heightOrig);
+		$scaleFactor = sqrt($areaRatio);
 
-		if ($ratioOrig > 1) {
-			$newHeight = round($maxSize / $ratioOrig);
-			$newWidth = $maxSize;
-		} else {
-			$newWidth = round($maxSize * $ratioOrig);
-			$newHeight = $maxSize;
-		}
+		$newWidth = intval(round($widthOrig * $scaleFactor));
+		$newHeight = intval(round($heightOrig * $scaleFactor));
 
-		$success = $image->preciseResize((int)round($newWidth), (int)round($newHeight));
+		$success = $image->preciseResize($newWidth, $newHeight);
 		if ($success == false) {
 			throw new \RuntimeException("Error during image resize");
 		}
 
-		return $widthOrig / $newWidth;
+		return 1 / $scaleFactor;
 	}
 
 	/**

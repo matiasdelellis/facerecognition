@@ -27,6 +27,7 @@ use OCP\IConfig;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use OCA\FaceRecognition\Helper\MemoryLimits;
 use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
@@ -72,6 +73,28 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 				"Files of model with ID ' . $model . ' are not present in models/ directory.\n" .
 				"Please contact administrator to change models you are using for face recognition\n" .
 				"or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues";
+			$this->logInfo($error_message);
+			return false;
+		}
+
+		$memory = MemoryLimits::getAvailableMemory();
+		if ($memory <= 0) {
+			// We cannot determine amount of memory to give to face recognition CNN.
+			// We will hardcode it here to 1GB, but plan is to expose this to user in future.
+			// TODO: allow user to choose "recognition quality", which will map to given memory.
+			// If user explicitely set something, we ignore getting memory from system.
+			$memory = 1024 * 1024 * 1024;
+		}
+
+		$context->propertyBag['memory'] = $memory;
+
+		if ($memory < 1024 * 1024 * 1024) {
+			$error_message =
+				"\n" .
+				"Seems that you have only " . intval($memory / (1024 * 1024)). "MB of memory given to PHP.\n" .
+				"Face recognition application requires at least 1 GB. You need to change your memory_limit in php.ini.\n" .
+				"Check https://secure.php.net/manual/en/ini.core.php#ini.memory-limit for details.\n" .
+				"If you already set this to unlimited, it seems your system is not having enough RAM memory.";
 			$this->logInfo($error_message);
 			return false;
 		}

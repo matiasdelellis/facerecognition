@@ -102,7 +102,7 @@ class Watcher {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) == false) {
+		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
 			return;
 		}
 
@@ -166,7 +166,7 @@ class Watcher {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) == false) {
+		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
 			return;
 		}
 

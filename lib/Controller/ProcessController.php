@@ -13,6 +13,8 @@ use OCP\AppFramework\Controller;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
 class ProcessController extends Controller {
 
 	private $config;

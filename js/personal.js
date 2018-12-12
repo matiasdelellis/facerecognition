@@ -35,7 +35,7 @@ Persons.prototype = {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: personName };
-        $.ajax({url: this._baseUrl + '/personV2/' + personId,
+        $.ajax({url: this._baseUrl + '/person/' + personId,
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(opt)

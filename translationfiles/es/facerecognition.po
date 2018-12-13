@@ -56,7 +56,7 @@ msgstr "Reconocimiento Facial"
 
 #: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:3
 msgid "A face recognition app"
-msgstr "A aplicacion de reconocimiento facial"
+msgstr "Una aplicacion de reconocimiento facial"
 
 #: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:4
 msgid ""
@@ -74,7 +74,7 @@ msgstr "Abrir Documentación"
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:11
 msgid "Configuration information"
-msgstr "Información de la configuracion"
+msgstr "Información de la configuración"
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:14
 msgid "Here you can see the photos of your friends that we have recognized"
@@ -82,4 +82,4 @@ msgstr "Aqui puedes ver las fotos de tus amigos que reconocimos"
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
 msgid "Looking for your recognized friends"
-msgstr "Buscando tus archicos reconocidos"
+msgstr "Buscando tus amigos reconocidos"

@@ -9,9 +9,9 @@ style('facerecognition', 'facerecognition');
 
 <div class="section" id="facerecognition">
 
-	<h2>Face Recognition</h2>
+	<h2><?php p($l->t('Face Recognition'));?></h2>
 {{#if persons}}
-	<p class="settings-hint">Here you can see the photos of your friends that we have recognized</p>
+	<p class="settings-hint"><?php p($l->t('Here you can see the photos of your friends that we have recognized'));?></p>
 	<div id="persons-navigation">
 		{{#each persons}}
 			<h2 class="person-title icon-user" data-id="{{this.id}}">

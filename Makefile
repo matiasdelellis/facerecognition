@@ -51,7 +51,16 @@ js/lozad.js:
 
 javascript_deps: js/handlebars.js js/lozad.js
 
-deps: download_models composer javascript_deps
+l10n_deps:
+	wget https://github.com/nextcloud/docker-ci/raw/master/translations/translationtool/translationtool.phar
+
+deps: download_models composer javascript_deps l10n_deps
+
+update-pot:
+	php translationtool.phar create-pot-files
+
+update-translations:
+	php translationtool.phar convert-po-files
 
 appstore:
 	mkdir -p $(sign_dir)
@@ -64,6 +73,8 @@ appstore:
 	--exclude=CONTRIBUTING.md \
 	--exclude=composer.json \
 	--exclude=composer.lock \
+	--exclude=translationfiles \
+	--exclude=translationtool.phar \
 	--exclude=l10n/.tx \
 	--exclude=l10n/no-php \
 	--exclude=Makefile \
@@ -87,3 +98,4 @@ clean:
 	rm -f models/1/mmod_human_face_detector.dat
 	rm -f models/1/dlib_face_recognition_resnet_model_v1.dat
 	rm -f models/1/shape_predictor_5_face_landmarks.dat
+	rm -r translationtool.phar

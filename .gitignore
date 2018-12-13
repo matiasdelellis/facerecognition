@@ -1,7 +1,7 @@
 build
-opt
 js/handlebars.js
 js/lozad.js
 vendor/
 models/1
 clover.xml
+translationtool.phar

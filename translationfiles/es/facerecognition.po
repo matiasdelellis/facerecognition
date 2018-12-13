@@ -1,0 +1,85 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Nextcloud package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nextcloud 3.14159\n"
+"Report-Msgid-Bugs-To: translations\\@example.com\n"
+"POT-Creation-Date: 2018-12-12 21:00-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:12
+msgid "Persons"
+msgstr "Personas"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:22
+msgid "Looking for faces in this image..."
+msgstr "Buscando por rostros en esta imagen..."
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:113
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:89
+msgid "Please enter a name to rename the person"
+msgstr "Por favor ingrese un nombre para renombrar la persona"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:114
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:127
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:90
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:107
+msgid "Rename"
+msgstr "Renombrar"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:121
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:101
+msgid "Rename Person"
+msgstr "Renombrar Persona"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:126
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:106
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: /var/www/html/nextcloud/apps/facerecognition/lib/Settings/PersonalSection.php:49
+#: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:2
+#: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:8
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:12
+msgid "Face Recognition"
+msgstr "Reconocimiento Facial"
+
+#: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:3
+msgid "A face recognition app"
+msgstr "A aplicacion de reconocimiento facial"
+
+#: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:4
+msgid ""
+"Face Recognition implement a basic facial recognition system for Nextcloud.\n"
+"\n"
+"\t\tThe application listens to the creation of new image files, and queues "
+"them for later analysis. A scheduled task (Or admin on demand) take this "
+"queue, and analyze the images for looking faces and if possible identify "
+"them by comparing them with those found in user-folder/.faces."
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:9
+msgid "Open Documentation"
+msgstr "Abrir Documentación"
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:11
+msgid "Configuration information"
+msgstr "Información de la configuracion"
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:14
+msgid "Here you can see the photos of your friends that we have recognized"
+msgstr "Aqui puedes ver las fotos de tus amigos que reconocimos"
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
+msgid "Looking for your recognized friends"
+msgstr "Buscando tus archicos reconocidos"

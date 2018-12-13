@@ -87,7 +87,7 @@ View.prototype = {
             var id = $(this).parent().data('id');
             OC.dialogs.prompt(
                 t('facerecognition', 'Please enter a name to rename the person'),
-                t('facerecognition', 'Rename'),
+                t('facerecognition', 'Rename Person'),
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.rename (id, value).done(function () {
@@ -98,7 +98,7 @@ View.prototype = {
                     }
                 },
                 true,
-                t('facerecognition', 'Rename Person'),
+                t('facerecognition', 'Rename'),
                 false
             ).then(function() {
                 var $dialog = $('.oc-dialog:visible');

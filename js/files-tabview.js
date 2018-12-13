@@ -19,7 +19,7 @@
                 this.$el.html('<div style="text-align:center; word-wrap:break-word;" class="get-faces"><p><img src="'
                     + OC.imagePath('core','loading.gif')
                     + '"><br><br></p><p>'
-                    + t('facerecognition', 'Looking for faces in this image...')
+                    + t('facerecognition', 'Looking for faces in this image…')
                     + '</p></div>');
                 var url = OC.generateUrl('/apps/facerecognition/file'),
                     data = {fullpath: fileInfo.getFullPath()},
@@ -62,7 +62,7 @@
                 html += "                <ul>";
                 html += "                    <li>";
                 html += "                        <a href='#' class='icon-rename'>";
-                html += "                            <span>Rename</span>";
+                html += "                            <span>"+ t('facerecognition', 'Rename'), +"</span>";
                 html += "                        </a>";
                 html += "                    </li>";
                 html += "                </ul>";
@@ -111,14 +111,14 @@
             var self = this;
             OC.dialogs.prompt(
                 t('facerecognition', 'Please enter a name to rename the person'),
-                t('facerecognition', 'Rename'),
+                t('facerecognition', 'Rename Person'),
                 function(result, value) {
                     if (result === true && value) {
                         self._renamePerson (id, value);
                     }
                 },
                 true,
-                t('facerecognition', 'Rename Person'),
+                t('facerecognition', 'Rename'),
                 false
             ).then(function() {
                 var $dialog = $('.oc-dialog:visible');

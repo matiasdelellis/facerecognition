@@ -90,24 +90,29 @@ class MemoryLimits {
 	 *
 	 * @return int Value in integers (bytes)
 	 */
-	private static function returnBytes(string $val): int {
+	public static function returnBytes(string $val): int {
 		$val = trim($val);
 		if ($val === "") {
+			return 0;
+		}
+
+		$valInt = intval($val);
+		if ($valInt === 0) {
 			return 0;
 		}
 
 		$last = strtolower($val[strlen($val)-1]);
 		switch($last) {
 			case 'g':
-				$val *= 1024;
+				$valInt *= 1024;
 				// Fallthrough on purpose
 			case 'm':
-				$val *= 1024;
+				$valInt *= 1024;
 				// Fallthrough on purpose
 			case 'k':
-				$val *= 1024;
+				$valInt *= 1024;
 		}
 
-		return intval($val);
+		return $valInt;
 	}
 }

@@ -98,10 +98,10 @@ class Face extends Entity implements JsonSerializable {
 	 * Factory method to create Face from face structure that is returned as output of the model.
 	 *
 	 * @param int $image Image Id
-	 * @param dict $faceFromModel Face obtained from DNN model
+	 * @param array $faceFromModel Face obtained from DNN model
 	 * @return Face Created face
 	 */
-	public static function fromModel($image, $faceFromModel): Face {
+	public static function fromModel(int $image, array $faceFromModel): Face {
 		$face = new Face();
 		$face->image = $image;
 		$face->person = null;

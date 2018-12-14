@@ -84,6 +84,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			// TODO: allow user to choose "recognition quality", which will map to given memory.
 			// If user explicitely set something, we ignore getting memory from system.
 			$memory = 1024 * 1024 * 1024;
+		} else {
+			// No point going above 4GB ("4GB should be enough for everyone")
+			$memory = min($memory, 4 * 1024 * 1024 * 1024);
 		}
 
 		$context->propertyBag['memory'] = $memory;

@@ -197,7 +197,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// Convert from dictionary of faces to our Face Db Entity
 		$faces = array();
 		foreach ($facesFound as $faceFound) {
-			$face = Face::fromModel($image, $faceFound);
+			$face = Face::fromModel($image->getId(), $faceFound);
 			$face->normalizeSize($imageProcessingContext->getRatio());
 			$faces[] = $face;
 		}
@@ -227,7 +227,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// This reasoning and calculations are all based on analysis given here:
 		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
 		$allowedMemory = $this->context->propertyBag['memory'];
-		$maxImageArea = intval($allowedMemory / 1024); // in pixels^2
+		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
 		$ratio = $this->resizeImage($image, $maxImageArea);
 
 		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));

@@ -164,7 +164,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			// todo: 2 queries to get these 2 counts, can we do this smarter?
 			$imageCount = $this->imageMapper->countUserImages($userId, $modelId);
 			$imageProcessed = $this->imageMapper->countUserProcessedImages($userId, $modelId);
-			$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+			$percentImagesProcessed = 0;
+			if ($imageCount > 0) {
+				$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+			}
 			$facesCount = $this->faceMapper->countFaces($userId, $modelId);
 			// todo: get rid of magic numbers (move to config)
 			if (($facesCount < 1000) && ($imageCount < 100) && ($percentImagesProcessed < 0.95)) {

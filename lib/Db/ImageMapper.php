@@ -157,7 +157,7 @@ class ImageMapper extends Mapper {
 			// Update image itself
 			//
 			$error = null;
-			if ($e != null) {
+			if ($e !== null) {
 				$error = substr($e->getMessage(), 0, 1024);
 			}
 

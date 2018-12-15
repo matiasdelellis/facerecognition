@@ -244,7 +244,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	public function resizeImage(OC_Image $image, int $maxImageArea): float {
+	public function resizeImage(OCP_Image $image, int $maxImageArea): float {
 		if (!$image->valid()) {
 			$message = "Image is not valid, probably cannot be loaded";
 			$this->logInfo($message);

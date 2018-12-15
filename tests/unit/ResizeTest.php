@@ -23,7 +23,7 @@
  */
 namespace OCA\FaceRecognition\Tests\Unit;
 
-use OC_Image;
+use OCP\Image as OCP_Image;
 
 use OCP\IConfig;
 use OCP\ILogger;
@@ -62,7 +62,7 @@ class ResizeTest extends TestCase {
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$tempManager = $this->createMock(ITempManager::class);
 		$imageProcessingTask = new ImageProcessingTask($config, $imageMapper, $tempManager);
-		$image = new OC_Image();
+		$image = new OCP_Image();
 
 		// Try when there is no change
 		$image->setResource(imagecreate(100, 100));

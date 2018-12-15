@@ -23,7 +23,7 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OC_Image;
+use OCP\Image as OCP_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -146,7 +146,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 			try {
 				$imageProcessingContext = $this->findFaces($cfd, $dataDir, $image);
-				if ($imageProcessingContext == null) {
+				if ($imageProcessingContext === null) {
 					// We didn't got exception, but null result means we should skip this image
 					continue;
 				}
@@ -216,7 +216,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @return ImageProcessingContext Generated context that hold all information needed later for this image
 	 */
 	private function prepareImage(string $imagePath): ImageProcessingContext {
-		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
+		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
 		if (!$image->valid()) {
@@ -266,7 +266,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$newHeight = intval(round($heightOrig * $scaleFactor));
 
 		$success = $image->preciseResize($newWidth, $newHeight);
-		if ($success == false) {
+		if ($success === false) {
 			throw new \RuntimeException("Error during image resize");
 		}
 
@@ -297,11 +297,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 	private function cropFace(string $imagePath, Face $face): string {
 		// todo: we are loading same image two times, fix this
-		$image = new \OC_Image(null, $this->context->logger->getLogger(), $this->context->config);
+		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
 		$success = $image->crop($face->left, $face->top, $face->width(), $face->height());
-		if ($success == false) {
+		if ($success === false) {
 			throw new \RuntimeException("Error during image cropping");
 		}
 

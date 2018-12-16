@@ -37,31 +37,42 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
 
 class BackgroundCommand extends Command {
+
 	/** @var BackgroundService */
 	protected $backgroundService;
 
+	/** @var IUserManager */
+	protected $userManager;
+
 	/**
 	 * @param BackgroundService $backgroundService
+	 * @param IUserManager $userManager
 	 */
-	public function __construct(BackgroundService $backgroundService) {
+	public function __construct(BackgroundService $backgroundService,
+	                            IUserManager      $userManager) {
 		parent::__construct();
 
 		$this->backgroundService = $backgroundService;
+		$this->userManager = $userManager;
 	}
 
 	protected function configure() {
 		$this
 			->setName('face:background_job')
 			->setDescription('Equivalent of cron job to analyze images, extract faces and create clusters from found faces')
-			->addArgument(
+			->addOption(
 				'user_id',
-				InputArgument::OPTIONAL,
-				'Analyze faces for the given user only. If not given, analyzes images for all users.'
+				'u',
+				InputOption::VALUE_REQUIRED,
+				'Analyze faces for the given user only. If not given, analyzes images for all users.',
+				null
 			)
-			->addArgument(
+			->addOption(
 				'timeout',
-				InputArgument::OPTIONAL,
-				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.'
+				't',
+				InputOption::VALUE_REQUIRED,
+				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.',
+				0
 			);
 	}
 
@@ -75,19 +86,19 @@ class BackgroundCommand extends Command {
 
 		// Extract user, if any
 		//
-		$userId = $input->getArgument('user_id');
+		$userId = $input->getOption('user_id');
 		$user = null;
 
 		if (!is_null($userId)) {
 			$user = $this->userManager->get($userId);
-			if ($user !== null) {
+			if ($user === null) {
 				throw new \InvalidArgumentException("User with id <$userId> in unknown.");
 			}
 		}
 
 		// Extract timeout
 		//
-		$timeout = $input->getArgument('timeout');
+		$timeout = $input->getOption('timeout');
 		if (!is_null($timeout)) {
 			if ($timeout < 0) {
 				throw new \InvalidArgumentException("Timeout must be positive value in seconds.");

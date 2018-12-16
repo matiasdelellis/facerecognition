@@ -37,16 +37,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
 
 class BackgroundCommand extends Command {
+
 	/** @var BackgroundService */
 	protected $backgroundService;
 
+	/** @var IUserManager */
+	protected $userManager;
+
 	/**
 	 * @param BackgroundService $backgroundService
+	 * @param IUserManager $userManager
 	 */
-	public function __construct(BackgroundService $backgroundService) {
+	public function __construct(BackgroundService $backgroundService,
+	                            IUserManager      $userManager) {
 		parent::__construct();
 
 		$this->backgroundService = $backgroundService;
+		$this->userManager = $userManager;
 	}
 
 	protected function configure() {
@@ -80,7 +87,7 @@ class BackgroundCommand extends Command {
 
 		if (!is_null($userId)) {
 			$user = $this->userManager->get($userId);
-			if ($user !== null) {
+			if ($user === null) {
 				throw new \InvalidArgumentException("User with id <$userId> in unknown.");
 			}
 		}

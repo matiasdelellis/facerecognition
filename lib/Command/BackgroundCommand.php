@@ -60,15 +60,19 @@ class BackgroundCommand extends Command {
 		$this
 			->setName('face:background_job')
 			->setDescription('Equivalent of cron job to analyze images, extract faces and create clusters from found faces')
-			->addArgument(
+			->addOption(
 				'user_id',
-				InputArgument::OPTIONAL,
-				'Analyze faces for the given user only. If not given, analyzes images for all users.'
+				'u',
+				InputOption::VALUE_REQUIRED,
+				'Analyze faces for the given user only. If not given, analyzes images for all users.',
+				null
 			)
-			->addArgument(
+			->addOption(
 				'timeout',
-				InputArgument::OPTIONAL,
-				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.'
+				't',
+				InputOption::VALUE_REQUIRED,
+				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.',
+				0
 			);
 	}
 
@@ -82,7 +86,7 @@ class BackgroundCommand extends Command {
 
 		// Extract user, if any
 		//
-		$userId = $input->getArgument('user_id');
+		$userId = $input->getOption('user_id');
 		$user = null;
 
 		if (!is_null($userId)) {
@@ -94,7 +98,7 @@ class BackgroundCommand extends Command {
 
 		// Extract timeout
 		//
-		$timeout = $input->getArgument('timeout');
+		$timeout = $input->getOption('timeout');
 		if (!is_null($timeout)) {
 			if ($timeout < 0) {
 				throw new \InvalidArgumentException("Timeout must be positive value in seconds.");

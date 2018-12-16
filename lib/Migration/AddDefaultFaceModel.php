@@ -94,7 +94,7 @@ class AddDefaultFaceModel implements IRepairStep {
 
 		// Use default model, if it is not set already
 		//
-		if ($this->config->getAppValue('facerecognition', 'model', '-1') == '-1') {
+		if ($this->config->getAppValue('facerecognition', 'model', '-1') === '-1') {
 			$this->config->setAppValue('facerecognition', 'model', self::DEFAULT_FACE_MODEL_ID);
 		}
 	}

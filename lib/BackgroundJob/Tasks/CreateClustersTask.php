@@ -83,7 +83,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 
 		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		if ($fullImageScanDone != 'true') {
+		if ($fullImageScanDone !== 'true') {
 			// If not all images are not interested in the database, we cannot determine when we should start clustering.
 			// Since this is step in beggining, just bail out.
 			$this->logInfo('Skipping cluster creation, as not even existing images are found and inserted in database');
@@ -199,7 +199,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getCurrentClusters(array $faces): array {
 		$chineseClusters = array();
 		foreach($faces as $face) {
-			if ($face->person != null) {
+			if ($face->person !== null) {
 				if (!isset($chineseClusters[$face->person])) {
 					$chineseClusters[$face->person] = array();
 				}
@@ -275,7 +275,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$oldPerson = intval($transition[0]);
 			$newPerson = intval($transition[1]);
 			if (!array_key_exists($newPerson, $newOldPersonMapping)) {
-				if (($oldPerson == 0) || (!array_key_exists($oldPerson, $oldPersonProcessed))) {
+				if (($oldPerson === 0) || (!array_key_exists($oldPerson, $oldPersonProcessed))) {
 					$newOldPersonMapping[$newPerson] = $oldPerson;
 					$oldPersonProcessed[$oldPerson] = 0;
 				} else {
@@ -292,7 +292,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$result = array();
 		foreach ($newCluster as $newPerson => $newFaces) {
 			$oldPerson = $newOldPersonMapping[$newPerson];
-			if ($oldPerson == 0) {
+			if ($oldPerson === 0) {
 				$result[$maxOldPersonId] = $newFaces;
 				$maxOldPersonId++;
 			} else {

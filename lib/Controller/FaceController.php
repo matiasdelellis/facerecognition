@@ -1,6 +1,8 @@
 <?php
 namespace OCA\FaceRecognition\Controller;
 
+use OCP\Image as OCP_Image;
+
 use OCP\IRequest;
 use OCP\Files\IRootFolder;
 use OCP\AppFramework\Http;
@@ -52,7 +54,7 @@ class FaceController extends Controller {
 		$ownerView = new \OC\Files\View('/'. $this->userId . '/files');
 		$path = $userFolder->getRelativePath($file->getPath());
 
-		$img = new \OC_Image();
+		$img = new OCP_Image();
 		$fileName = $ownerView->getLocalFile($path);
 		$img->loadFromFile($fileName);
 

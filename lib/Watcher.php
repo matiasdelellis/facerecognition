@@ -116,9 +116,9 @@ class Watcher {
 			return;
 		}
 
-		// If we detect .nomedia file anywhere on the path to root folder (id==null), bail out
+		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
 		$parentNode = $node->getParent();
-		while (($parentNode instanceof Folder) && ($parentNode->getId() != null)) {
+		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
 			if ($parentNode->nodeExists('.nomedia')) {
 				$this->logger->debug(
 					"Skipping inserting image " . $node->getName() . " because directory " . $parentNode->getName() . " contains .nomedia file");
@@ -174,7 +174,7 @@ class Watcher {
 			return;
 		}
 
-		if ($node->getName() == '.nomedia') {
+		if ($node->getName() === '.nomedia') {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset global flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask and those images will be added.

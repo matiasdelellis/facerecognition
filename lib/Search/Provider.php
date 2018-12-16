@@ -40,7 +40,7 @@ class Provider extends \OCP\Search\Provider {
 	*/
 	function search($query) {
 
-		$userId = \OCP\User::getUser();
+		$userId = \OC::$server->getUserSession()->getUser()->getUID();
 		$ownerView = new \OC\Files\View('/'. $userId . '/files');
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));

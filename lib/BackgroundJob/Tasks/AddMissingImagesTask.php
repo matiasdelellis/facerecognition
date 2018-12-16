@@ -75,7 +75,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 
 		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		if ($fullImageScanDone == 'true') {
+		if ($fullImageScanDone === 'true') {
 			// Completely skip this task, seems that we already did full scan
 			return true;
 		}
@@ -142,7 +142,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			$image->setFile($file->getId());
 			$image->setModel($model);
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
-			if ($this->imageMapper->imageExists($image) == null) {
+			if ($this->imageMapper->imageExists($image) === null) {
 				// todo: can we have larger transaction with bulk insert?
 				$this->imageMapper->insert($image);
 				$insertedImages++;

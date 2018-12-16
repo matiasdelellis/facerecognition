@@ -200,7 +200,7 @@ class PersonMapper extends Mapper {
 				if (array_key_exists($newPerson, $currentClusters)) {
 					// This cluster existed, check if faces match
 					$oldFaces = $currentClusters[$newPerson];
-					if ($newFaces == $oldFaces) {
+					if ($newFaces === $oldFaces) {
 						continue;
 					}
 

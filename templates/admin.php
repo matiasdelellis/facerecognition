@@ -1,5 +1,5 @@
 <?php
-//	script('facerecognition', 'admin');
+	script('facerecognition', 'admin');
 ?>
 
 <form id="facerecognition">
@@ -12,9 +12,9 @@
 		<p><strong>Pdlib Version: </strong><?php p($_['pdlib-version']);?></p>
 		<p><strong>Models Version: </strong><?php p($_['model-version']);?></p>
 		<p><span><?php p($_['resume']); ?></span></p>
-		<h3>Current status</h3>
+		<h3><?php p($l->t('Current status'));?></h3>
 		<div>
-			<p id="progress-text">Stopped</p>
+			<p id="progress-text"><?php p($l->t('Stopped'));?></p>
 			<progress id="progress-bar" value="0" max="100"></progress>
 		</div>
 	</div>

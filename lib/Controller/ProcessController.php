@@ -39,21 +39,26 @@ class ProcessController extends Controller {
 	/**
 	 */
 	public function index() {
-		$status = ($this->config->getAppValue('facerecognition', 'pid', -1) > 0);
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		$queueTotal = $this->imageMapper->countUserImages($this->userId, $model);
-		$queueDone = $this->imageMapper->countUserProcessedImages($this->userId, $model);
+		// TODO: How to know the real state of the process?
+		$status = true;
 
-		$endTime = 'Unknown';
-		if ($queueDone > 0) {
-			$startTime = $this->config->getAppValue('facerecognition', 'starttime', -1);
-			$elapsedTime = time() - $startTime;
-			$calcTime = time() + ($queueTotal - $queueDone)*$elapsedTime/$queueDone;
-			$endTime = $this->dateTimeFormatter->formatTimeSpan($calcTime);
-		}
-		$params = array('status' => $status, 'endtime' => $endTime, 'queuetotal' => $queueTotal, 'queuedone' => $queueDone);
+		$totalImages = $this->imageMapper->countImages($model);
+		$processedImages = $this->imageMapper->countProcessedImages($model);
+		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($model);
+
+		$estimatedTime = ($totalImages - $processedImages) * $avgProcessingTime/1000;
+
+		$estimatedFinalize = $this->dateTimeFormatter->formatTimeSpan(time() + $estimatedTime);
+
+		$params = array(
+			'status' => $status,
+			'estimatedFinalize' => $estimatedFinalize,
+			'totalImages' => $totalImages,
+			'processedImages' => $processedImages
+		);
 
 		return new JSONResponse($params);
 	}

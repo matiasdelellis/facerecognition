@@ -66,6 +66,52 @@ class ImageMapper extends Mapper {
 		return $row ? (int)$row['id'] : null;
 	}
 
+	public function countImages(int $model): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('face_recognition_images')
+			->where($qb->expr()->eq('model', $qb->createParameter('model')))
+			->setParameter('model', $model);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
+	public function countProcessedImages(int $model): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('face_recognition_images')
+			->where($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			->setParameter('model', $model)
+			->setParameter('is_processed', True);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
+	public function avgProcessingDuration(int $model): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('AVG(' . $qb->getColumnName('processing_duration') . ')'))
+			->from('face_recognition_images')
+			->where($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			->setParameter('model', $model)
+			->setParameter('is_processed', True);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
 	public function countUserImages(string $userId, $model): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb

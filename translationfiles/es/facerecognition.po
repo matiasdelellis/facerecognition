@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nextcloud 3.14159\n"
 "Report-Msgid-Bugs-To: translations\\@example.com\n"
-"POT-Creation-Date: 2018-12-13 10:26-0300\n"
+"POT-Creation-Date: 2018-12-16 20:26-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,26 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:6
+msgid "Analyzing images"
+msgstr "Analizando imagenes"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:8
+msgid ""
+"{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}"
+msgstr ""
+"{processedImages} de {totalImages} - Finaliza aproximadamente "
+"{estimatedFinalize}"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:18
+#: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:17
+msgid "Stopped"
+msgstr "Detenido"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:20
+msgid "{queudedImages} images in queue"
+msgstr "{queudedImages} imagenes en cola"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:12
 msgid "Persons"
@@ -77,6 +97,10 @@ msgstr "Abrir Documentación"
 msgid "Configuration information"
 msgstr "Información de la configuración"
 
+#: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:15
+msgid "Current status"
+msgstr "Estado actual"
+
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:14
 msgid "Here you can see photos of your friends that are recognized"
 msgstr "Aqui puedes ver fotos de tus amigos reconocidos"
@@ -84,3 +108,32 @@ msgstr "Aqui puedes ver fotos de tus amigos reconocidos"
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
 msgid "Looking for your recognized friends"
 msgstr "Buscando tus amigos reconocidos"
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/LockNotAcquiredException.php:49
+#, php-format
+msgid "Could not obtain lock type %d on \"%s\"."
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageAuthException.php:40
+#, php-format
+msgid "Storage unauthorized. %s"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageBadConfigException.php:40
+#, php-format
+msgid "Storage incomplete configuration. %s"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageConnectionException.php:40
+#, php-format
+msgid "Storage connection error. %s"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageNotAvailableException.php:61
+msgid "Storage is temporarily not available"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageTimeoutException.php:40
+#, php-format
+msgid "Storage connection timeout. %s"
+msgstr ""

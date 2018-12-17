@@ -3,11 +3,7 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
 use OCP\IConfig;
-use OCP\IDateTimeFormatter;
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
 use OCA\FaceRecognition\Db\Image;
@@ -19,20 +15,17 @@ class ProcessController extends Controller {
 
 	private $config;
 	private $imageMapper;
-	private $dateTimeFormatter;
 	private $userId;
 
 	public function __construct($AppName,
 		                    IRequest $request,
 		                    IConfig $config,
 		                    ImageMapper $imageMapper,
-		                    IDateTimeFormatter $dateTimeFormatter,
 		                    $UserId)
 		{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
 		$this->imageMapper = $imageMapper;
-		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->userId = $UserId;
 	}
 
@@ -51,7 +44,7 @@ class ProcessController extends Controller {
 
 		$estimatedTime = ($totalImages - $processedImages) * $avgProcessingTime/1000;
 
-		$estimatedFinalize = $this->dateTimeFormatter->formatTimeSpan(time() + $estimatedTime);
+		$estimatedFinalize = time() + $estimatedTime;
 
 		$params = array(
 			'status' => $status,

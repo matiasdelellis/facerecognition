@@ -6,7 +6,7 @@ $(document).ready(function() {
                 var desc = t('facerecognition', 'Analyzing images');
                 desc += ' - ';
                 desc += t('facerecognition', '{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}',
-                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: progress.estimatedFinalize});
+                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: relative_modified_date(progress.estimatedFinalize)});
 
                 $('#progress-text').html(desc);
 

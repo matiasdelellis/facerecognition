@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nextcloud 3.14159\n"
 "Report-Msgid-Bugs-To: translations\\@example.com\n"
-"POT-Creation-Date: 2018-12-17 08:48-0300\n"
+"POT-Creation-Date: 2018-12-17 11:57-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,25 +43,38 @@ msgstr ""
 msgid "Looking for faces in this image…"
 msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:65
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:121
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:127
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:62
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:141
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:147
 #: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:109
 #: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:115
 msgid "Rename"
 msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:113
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:85
+msgid "No people found"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:91
+msgid "This image is not yet analyzed"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:92
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:34
+msgid "Please, be patient"
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:133
 #: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:97
 msgid "Please enter a name to rename the person"
 msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:114
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:134
 #: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:98
 msgid "Rename Person"
 msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:126
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:146
 #: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:114
 msgid "Cancel"
 msgstr ""
@@ -105,10 +118,6 @@ msgstr ""
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
 msgid "Your friends have not been recognized yet"
-msgstr ""
-
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:34
-msgid "Please, be patient"
 msgstr ""
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:39

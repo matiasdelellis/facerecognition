@@ -59,7 +59,7 @@ msgstr "No se encontraron personas"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:91
 msgid "This image is not yet analyzed"
-msgstr "Esta imagen aún no está analizada"
+msgstr "Esta imagen aún no ha sido analizada"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:92
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:34

@@ -61,15 +61,14 @@ class FileController extends Controller {
 
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$fileId = $userFolder->get($fullpath)->getId();
+		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 
 		$resp = array();
-
-		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 		$resp['image_id'] = $image ? $image->getId() : 0;
 		$resp['is_processed'] = $image ? $image->getIsProcessed() : 0;
 		$resp['error'] = $image ? $image->getError() : null;
+		$resp['persons'] = array();
 
-		$aPersons = array();
 		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
 		foreach ($persons as $person) {
 			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $model);
@@ -81,9 +80,8 @@ class FileController extends Controller {
 			$facePerson['person_id'] = $person->getId();
 			$facePerson['face'] = $face[0];
 
-			$aPersons[] = $facePerson;
+			$resp['persons'][] = $facePerson;
 		}
-		$resp['persons'] = $aPersons;
 
 		return new DataResponse($resp);
 	}

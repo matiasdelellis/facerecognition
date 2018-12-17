@@ -99,7 +99,7 @@ class Image extends Entity implements JsonSerializable {
 			'user' => $this->user,
 			'file' => $this->file,
 			'model' => $this->model,
-			'is_processed' => $this->is_processed,
+			'is_processed' => $this->isProcessed,
 			'error' => $this->error,
 			'last_processed_time' => $this->last_processed_time,
 			'processing_duration' => $this->processing_duration

@@ -69,7 +69,7 @@ class Image extends Entity implements JsonSerializable {
 	 *
 	 * @var bool
 	 */
-	protected $is_processed;
+	protected $isProcessed;
 
 	/**
 	 * Description of error that happened during image processing.

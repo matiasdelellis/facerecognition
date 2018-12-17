@@ -48,13 +48,13 @@
 
         updateDisplay: function(data) {
             var html = "<table class='persons-list'>";
-            var arrayLength = data.length;
+            var arrayLength = data.persons.length;
             for (var i = 0; i < arrayLength; i++) {
-                html += "<tr data-id='" + data[i].person_id + "'>";
+                html += "<tr data-id='" + data.persons[i].person_id + "'>";
                 html += "    <td>";
-                html += "        <div class='face-preview' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb/32' data-id='" + data[i].face.id + "' width='32' height='32'>";
+                html += "        <div class='face-preview' data-background-image='/apps/facerecognition/face/" + data.persons[i].face.id + "/thumb/32' data-id='" + data.persons[i].face.id + "' width='32' height='32'>";
                 html += "    </td>";
-                html += "    <td class='name'>" + data[i].name + "</td>";
+                html += "    <td class='name'>" + data.persons[i].name + "</td>";
                 html += "    <td>";
                 html += "        <div class='more'>";
                 html += "            <span class='icon-more'></span>";

@@ -49,6 +49,24 @@ class ImageMapper extends Mapper {
 		return $image;
 	}
 
+	public function findFromFile(string $userId, int $fileId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'is_processed', 'error')
+		   ->from('face_recognition_images', 'i')
+		   ->where($qb->expr()->eq('user', $qb->createParameter('user')))
+		   ->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')));
+
+		$params = array();
+		$params['user'] = $userId;
+		$params['file_id'] = $fileId;
+
+		try {
+			return $this->findEntity($qb->getSQL(), $params);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+
 	public function imageExists(Image $image) {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb

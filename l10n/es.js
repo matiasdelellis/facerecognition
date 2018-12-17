@@ -8,6 +8,9 @@ OC.L10N.register(
     "Persons" : "Personas",
     "Looking for faces in this image…" : "Buscando rostros en esta imagen…",
     "Rename" : "Renombrar",
+    "No people found" : "No se encontraron personas",
+    "This image is not yet analyzed" : "Esta imagen aún no ha sido analizada",
+    "Please, be patient" : "Por favor sea paciente",
     "Please enter a name to rename the person" : "Por favor ingrese un nombre para renombrar la persona",
     "Rename Person" : "Renombrar Persona",
     "Cancel" : "Cancelar",
@@ -18,7 +21,6 @@ OC.L10N.register(
     "Current status" : "Estado actual",
     "Here you can see photos of your friends that are recognized" : "Aqui puedes ver fotos de tus amigos reconocidos",
     "Your friends have not been recognized yet" : "Tus amigos aún no han sido reconocidos",
-    "Please, be patient" : "Por favor sea paciente",
     "Looking for your recognized friends" : "Buscando tus amigos reconocidos"
 },
 "");

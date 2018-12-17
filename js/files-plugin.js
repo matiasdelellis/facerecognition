@@ -1,3 +1,4 @@
+'use strict';
 var facerecognitionFileListPlugin = {
     attach: function(fileList) {
       if (fileList.id === 'trashbin' || fileList.id === 'files.public') {

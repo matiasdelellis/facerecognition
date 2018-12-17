@@ -1,3 +1,4 @@
+'use strict';
 (function() {
     var FacesTabView = OCA.Files.DetailTabView.extend({
         id: 'facerecognitionTabView',
@@ -46,15 +47,12 @@
             return (['image/jpeg', 'image/png'].indexOf(mimetype) > -1);
         },
 
-        updateDisplay: function(data) {
-            var html = "<table class='persons-list'>";
-            var arrayLength = data.length;
-            for (var i = 0; i < arrayLength; i++) {
-                html += "<tr data-id='" + data[i].person_id + "'>";
+        insertPersonRow: function(person) {
+                var html = "<tr data-id='" + person.person_id + "'>";
                 html += "    <td>";
-                html += "        <div class='face-preview' data-background-image='/apps/facerecognition/face/" + data[i].face.id + "/thumb/32' data-id='" + data[i].face.id + "' width='32' height='32'>";
+                html += "        <div class='face-preview' data-background-image='/apps/facerecognition/face/" + person.face.id + "/thumb/32' data-id='" + person.face.id + "' width='32' height='32'>";
                 html += "    </td>";
-                html += "    <td class='name'>" + data[i].name + "</td>";
+                html += "    <td class='name'>" + person.name + "</td>";
                 html += "    <td>";
                 html += "        <div class='more'>";
                 html += "            <span class='icon-more'></span>";
@@ -62,7 +60,7 @@
                 html += "                <ul>";
                 html += "                    <li>";
                 html += "                        <a href='#' class='icon-rename'>";
-                html += "                            <span>"+ t('facerecognition', 'Rename'), +"</span>";
+                html += "                            <span>"+ t('facerecognition', 'Rename'); +"</span>";
                 html += "                        </a>";
                 html += "                    </li>";
                 html += "                </ul>";
@@ -70,8 +68,32 @@
                 html += "        </div>";
                 html += "    </td>";
                 html += "</tr>";
+                return html;
+        },
+
+        updateDisplay: function(data) {
+            var html = "";
+            if (data.is_processed) {
+                var arrayLength = data.persons.length;
+                if (arrayLength > 0) {
+                    html += "<table class='persons-list'>";
+                    for (var i = 0; i < arrayLength; i++) {
+                        html += this.insertPersonRow(data.persons[i]);
+                    }
+                    html += "</table>";
+                } else {
+                    html += "<div class='emptycontent'>";
+                    html += "<div class='icon-user svg'></div>";
+                    html += "<p>"+t('facerecognition', 'No people found')+"</p>";
+                    html += "</div>";
+                }
+            } else {
+                html += "<div class='emptycontent'>";
+                html += "<div class='icon-user svg'></div>";
+                html += "<p>"+t('facerecognition', 'This image is not yet analyzed')+"</p>";
+                html += "<p><span>"+t('facerecognition', 'Please, be patient')+"</span></p>";
+                html += "</div>";
             }
-            html += "</table>";
 
             this.$el.find('.get-faces').html(html);
 

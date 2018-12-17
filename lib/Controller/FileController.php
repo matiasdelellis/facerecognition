@@ -10,6 +10,9 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
+
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -22,6 +25,8 @@ class FileController extends Controller {
 
 	private $config;
 
+	private $imageMapper;
+
 	private $personMapper;
 
 	private $faceMapper;
@@ -33,6 +38,7 @@ class FileController extends Controller {
 	public function __construct($AppName,
 	                            IRequest     $request,
 	                            IConfig      $config,
+	                            ImageMapper  $imageMapper,
 	                            PersonMapper $personMapper,
 	                            FaceMapper   $faceMapper,
 	                            IRootFolder  $rootFolder,
@@ -40,6 +46,7 @@ class FileController extends Controller {
 	{
 		parent::__construct($AppName, $request);
 		$this->config = $config;
+		$this->imageMapper = $imageMapper;
 		$this->personMapper = $personMapper;
 		$this->faceMapper = $faceMapper;
 		$this->rootFolder = $rootFolder;
@@ -54,8 +61,14 @@ class FileController extends Controller {
 
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$fileId = $userFolder->get($fullpath)->getId();
+		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 
 		$resp = array();
+		$resp['image_id'] = $image ? $image->getId() : 0;
+		$resp['is_processed'] = $image ? $image->getIsProcessed() : 0;
+		$resp['error'] = $image ? $image->getError() : null;
+		$resp['persons'] = array();
+
 		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
 		foreach ($persons as $person) {
 			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $model);
@@ -67,8 +80,9 @@ class FileController extends Controller {
 			$facePerson['person_id'] = $person->getId();
 			$facePerson['face'] = $face[0];
 
-			$resp[] = $facePerson;
+			$resp['persons'][] = $facePerson;
 		}
+
 		return new DataResponse($resp);
 	}
 

@@ -9,6 +9,7 @@ $(document).ready(function () {
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._persons = [];
+    this._loaded = false;
 };
 
 Persons.prototype = {
@@ -17,11 +18,15 @@ Persons.prototype = {
         var self = this;
         $.get(this._baseUrl+'/persons').done(function (clusters) {
             self._persons = clusters;
+            self._loaded = true;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    isLoaded: function () {
+        return this._loaded;
     },
     sortBySize: function () {
         this._persons.sort(function(a, b) {
@@ -75,7 +80,10 @@ View.prototype = {
 
         this._persons.sortBySize();
 
-        var html = template({persons: this._persons.getAll()});
+        var html = template({
+            loaded: this._persons.isLoaded(),
+            persons: this._persons.getAll(),
+        });
 
         $('#div-content').html(html);
 

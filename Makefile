@@ -58,6 +58,7 @@ deps: download_models composer javascript_deps l10n_deps
 
 update-pot:
 	php translationtool.phar create-pot-files
+	msgmerge -U translationfiles/es/facerecognition.po translationfiles/templates/facerecognition.pot
 
 update-translations:
 	php translationtool.phar convert-po-files

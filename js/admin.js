@@ -3,19 +3,22 @@ $(document).ready(function() {
     function checkProgress() {
         $.get(OC.generateUrl('/apps/facerecognition/process')).done(function (progress) {
             if (progress.status) {
-                var desc ="Analyzing images";
-                if (progress.queuedone > 0)
-                    desc += ' - '+progress.queuedone +' of '+progress.queuetotal+' - Ends approximately '+progress.endtime;
+                var desc = t('facerecognition', 'Analyzing images');
+                desc += ' - ';
+                desc += t('facerecognition', '{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}',
+                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: relative_modified_date(progress.estimatedFinalize)});
+
                 $('#progress-text').html(desc);
 
                 $('#progress-text').html(desc);
-                $('#progress-bar').attr('value', progress.queuedone);
-                $('#progress-bar').attr('max', progress.queuetotal);
+                $('#progress-bar').attr('value', progress.processedImages);
+                $('#progress-bar').attr('max', progress.totalImages);
             } else {
                 $('#progress-bar').attr('value', 0);
-                var desc = 'Stopped'
-                if (progress.queuetotal > 0)
-                    desc += ' - '+progress.queuetotal+' in queue -';
+                var desc = t('facerecognition', 'Stopped');
+                desc += ' - ';
+                desc += t('facerecognition', '{processedImages} images in queue', {processedImages: (progress.totalImages - progress.processedImages)});
+
                 $('#progress-text').html(desc);
             }
         });

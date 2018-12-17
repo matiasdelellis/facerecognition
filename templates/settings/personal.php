@@ -10,8 +10,8 @@ style('facerecognition', 'facerecognition');
 <div class="section" id="facerecognition">
 
 	<h2><?php p($l->t('Face Recognition'));?></h2>
-{{#if persons}}
 	<p class="settings-hint"><?php p($l->t('Here you can see photos of your friends that are recognized'));?></p>
+{{#if persons}}
 	<div id="persons-navigation">
 		{{#each persons}}
 			<h2 class="person-title icon-user" data-id="{{this.id}}">
@@ -26,6 +26,12 @@ style('facerecognition', 'facerecognition');
 				{{/each}}
 			</div>
 		{{/each}}
+	</div>
+{{else if loaded}}
+	<div class="emptycontent">
+		<div class="icon-user svg"></div>
+		<h2><?php p($l->t('Your friends have not been recognized yet'));?></h2>
+		<p><?php p($l->t('Please, be patient'));?></p>
 	</div>
 {{else}}
 	<div class="emptycontent">

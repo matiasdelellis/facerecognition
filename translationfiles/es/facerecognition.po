@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nextcloud 3.14159\n"
 "Report-Msgid-Bugs-To: translations\\@example.com\n"
-"POT-Creation-Date: 2018-12-16 20:26-0300\n"
+"POT-Creation-Date: 2018-12-16 22:01-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,23 +48,23 @@ msgstr "Buscando rostros en esta imagen…"
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:65
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:121
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:127
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:101
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:107
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:109
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:115
 msgid "Rename"
 msgstr "Renombrar"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:113
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:89
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:97
 msgid "Please enter a name to rename the person"
 msgstr "Por favor ingrese un nombre para renombrar la persona"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:114
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:90
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:98
 msgid "Rename Person"
 msgstr "Renombrar Persona"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:126
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:106
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:114
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -101,11 +101,19 @@ msgstr "Información de la configuración"
 msgid "Current status"
 msgstr "Estado actual"
 
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:14
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:13
 msgid "Here you can see photos of your friends that are recognized"
 msgstr "Aqui puedes ver fotos de tus amigos reconocidos"
 
 #: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
+msgid "Your friends have not been recognized yet"
+msgstr "Tus amigos aún no han sido reconocidos"
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:34
+msgid "Please, be patient"
+msgstr "Por favor sea paciente"
+
+#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:39
 msgid "Looking for your recognized friends"
 msgstr "Buscando tus amigos reconocidos"
 

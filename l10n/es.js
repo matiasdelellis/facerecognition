@@ -17,6 +17,8 @@ OC.L10N.register(
     "Configuration information" : "Información de la configuración",
     "Current status" : "Estado actual",
     "Here you can see photos of your friends that are recognized" : "Aqui puedes ver fotos de tus amigos reconocidos",
+    "Your friends have not been recognized yet" : "Tus amigos aún no han sido reconocidos",
+    "Please, be patient" : "Por favor sea paciente",
     "Looking for your recognized friends" : "Buscando tus amigos reconocidos"
 },
 "");

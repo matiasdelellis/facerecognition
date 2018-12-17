@@ -17,7 +17,7 @@ $(document).ready(function() {
                 $('#progress-bar').attr('value', 0);
                 var desc = t('facerecognition', 'Stopped');
                 desc += ' - ';
-                desc += t('facerecognition', '{queudedImages} images in queue', {queuedImages: (progress.totalImages - progress.processedImages)});
+                desc += t('facerecognition', '{processedImages} images in queue', {processedImages: (progress.totalImages - progress.processedImages)});
 
                 $('#progress-text').html(desc);
             }

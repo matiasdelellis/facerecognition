@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nextcloud 3.14159\n"
 "Report-Msgid-Bugs-To: translations\\@example.com\n"
-"POT-Creation-Date: 2018-12-16 22:01-0300\n"
+"POT-Creation-Date: 2018-12-17 08:48-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,8 +34,8 @@ msgid "Stopped"
 msgstr "Detenido"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:20
-msgid "{queudedImages} images in queue"
-msgstr "{queudedImages} imagenes en cola"
+msgid "{processedImages} images in queue"
+msgstr "{processedImages} imagenes en cola"
 
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:12
 msgid "Persons"

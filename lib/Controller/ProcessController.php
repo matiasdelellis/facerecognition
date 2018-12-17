@@ -35,12 +35,12 @@ class ProcessController extends Controller {
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		// TODO: How to know the real state of the process?
-		$status = true;
-
 		$totalImages = $this->imageMapper->countImages($model);
 		$processedImages = $this->imageMapper->countProcessedImages($model);
 		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($model);
+
+		// TODO: How to know the real state of the process?
+		$status = ($processedImages > 0);
 
 		$estimatedTime = ($totalImages - $processedImages) * $avgProcessingTime/1000;
 

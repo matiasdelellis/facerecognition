@@ -4,7 +4,7 @@ OC.L10N.register(
     "Analyzing images" : "Analizando imagenes",
     "{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}" : "{processedImages} de {totalImages} - Finaliza aproximadamente {estimatedFinalize}",
     "Stopped" : "Detenido",
-    "{queudedImages} images in queue" : "{queudedImages} imagenes en cola",
+    "{processedImages} images in queue" : "{processedImages} imagenes en cola",
     "Persons" : "Personas",
     "Looking for faces in this image…" : "Buscando rostros en esta imagen…",
     "Rename" : "Renombrar",

@@ -101,10 +101,11 @@ class Watcher {
 	public function postWrite(Node $node) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
+		// FIXME: Can we know if it is a local or shared file?
 		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+		/*if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
 			return;
-		}
+		}*/
 
 		if ($node instanceof Folder) {
 			return;

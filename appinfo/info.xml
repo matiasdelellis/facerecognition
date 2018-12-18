@@ -10,6 +10,7 @@
 	<version>0.5.7</version>
 	<licence>agpl</licence>
 	<author>Matias De lellis</author>
+	<author>Branko Kokanovic</author>
 	<namespace>FaceRecognition</namespace>
 	<category>multimedia</category>
 	<website>https://github.com/matiasdelellis/facerecognition</website>

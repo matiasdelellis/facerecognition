@@ -44,7 +44,7 @@ class ProcessController extends Controller {
 
 		$estimatedTime = ($totalImages - $processedImages) * $avgProcessingTime/1000;
 
-		$estimatedFinalize = time() + $estimatedTime;
+		$estimatedFinalize = $estimatedTime;
 
 		$params = array(
 			'status' => $status,

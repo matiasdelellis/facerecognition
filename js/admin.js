@@ -4,10 +4,11 @@ $(document).ready(function() {
     function checkProgress() {
         $.get(OC.generateUrl('/apps/facerecognition/process')).done(function (progress) {
             if (progress.status) {
+                var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
                 var desc = t('facerecognition', 'Analyzing images');
                 desc += ' - ';
                 desc += t('facerecognition', '{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}',
-                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: relative_modified_date(progress.estimatedFinalize)});
+                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
 
                 $('#progress-text').html(desc);
 

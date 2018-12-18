@@ -19,8 +19,8 @@
 		<filesystem/>
 	</types>
 	<dependencies>
-		<php min-version="5.6"/>
-		<nextcloud min-version="11" max-version="14" />
+		<php min-version="7.0"/>
+		<nextcloud min-version="14" max-version="15" />
 	</dependencies>
 	<repair-steps>
 		<!-- TODO: do we really need post-migration here, or I am just overparanoid? -->

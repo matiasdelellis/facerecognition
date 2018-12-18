@@ -117,6 +117,14 @@ class Watcher {
 			return;
 		}
 
+		// NOTE: The hooks also report the creation of thumbnails, and other files.
+		// The way to differentiate between them, is that the user files starting with the userId, and the thumbains as appdata_ocs######
+		$absPath = ltrim($node->getPath(), '/');
+		$owner = explode('/', $absPath)[0];
+		if (!$this->userManager->userExists($owner)) {
+			return;
+		}
+
 		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
 		$parentNode = $node->getParent();
 		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
@@ -127,14 +135,6 @@ class Watcher {
 			}
 
 			$parentNode = $parentNode->getParent();
-		}
-
-		$owner = $node->getOwner()->getUid();
-
-		if (!$this->userManager->userExists($owner)) {
-			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
-			return;
 		}
 
 		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");

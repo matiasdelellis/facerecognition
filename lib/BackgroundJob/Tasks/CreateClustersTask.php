@@ -82,14 +82,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		if ($fullImageScanDone !== 'true') {
-			// If not all images are not interested in the database, we cannot determine when we should start clustering.
-			// Since this is step in beggining, just bail out.
-			$this->logInfo('Skipping cluster creation, as not even existing images are found and inserted in database');
-			return true;
-		}
-
 		// We cannot yield inside of Closure, so we need to extract all users and iterate outside of closure.
 		// However, since we don't want to do deep copy of IUser, we keep only UID in this array.
 		//

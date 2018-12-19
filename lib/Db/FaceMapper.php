@@ -90,7 +90,7 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$faces = $this->frFindEntities($qb);
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -127,7 +127,7 @@ class FaceMapper extends QBMapper {
 			->setParameter('file_id', $fileId)
 			->setParameter('model', $model)
 			->setParameter('is_valid', true);
-		$faces = $this->frFindEntities($qb);
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -139,30 +139,6 @@ class FaceMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
 			->execute();
-	}
-
-	/**
-	 * Runs a sql query and returns an array of entities
-	 *
-	 * todo: stolen from QBMapper. However, this class is in use from 14.0 only.
-	 * If we use it, we are "locked" ourselves to versions >= 14.0
-	 *
-	 * @param IQueryBuilder $query
-	 * @return Entity[] all fetched entities
-	 * @since 14.0.0
-	 */
-	protected function frFindEntities(IQueryBuilder $query): array {
-		$cursor = $query->execute();
-
-		$entities = [];
-
-		while($row = $cursor->fetch()){
-			$entities[] = $this->mapRowToEntity($row);
-		}
-
-		$cursor->closeCursor();
-
-		return $entities;
 	}
 
 }

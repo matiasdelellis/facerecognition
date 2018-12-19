@@ -167,7 +167,8 @@ class ImageMapper extends QBMapper {
 		$query = $qb
 			->select(['id', 'user', 'file', 'model'])
 			->from('face_recognition_images')
-			->where($qb->expr()->eq('is_processed',  $qb->createNamedParameter(False)));
+			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')))
+			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
 			$query->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
 		}

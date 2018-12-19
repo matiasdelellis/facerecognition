@@ -162,8 +162,6 @@ class ImageMapper extends QBMapper {
 	 */
 	public function findImagesWithoutFaces(IUser $user = null) {
 		$qb = $this->db->getQueryBuilder();
-		$params = array();
-
 		$query = $qb
 			->select(['id', 'user', 'file', 'model'])
 			->from('face_recognition_images')

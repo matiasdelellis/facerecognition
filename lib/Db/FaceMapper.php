@@ -2,11 +2,11 @@
 namespace OCA\FaceRecognition\Db;
 
 use OCP\IDBConnection;
-use OCP\AppFramework\Db\Mapper;
+use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-class FaceMapper extends Mapper {
+class FaceMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\Face');
 	}
@@ -15,10 +15,8 @@ class FaceMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
 			->from('face_recognition_faces', 'f')
-			->andWhere($qb->expr()->eq('id', $qb->createParameter('face_id')));
-		$params = array();
-		$params['face_id'] = $faceId;
-		$faces = $this->findEntity($qb->getSQL(), $params);
+			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
+		$faces = $this->findEntity($qb);
 		return $faces;
 	}
 
@@ -26,12 +24,8 @@ class FaceMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
 			->from('face_recognition_faces', 'f')
-			->where($qb->expr()->eq('person', $qb->createParameter('person_id')));
-
-		$params = array();
-		$params['person_id'] = $personId;
-
-		$faces = $this->findEntities($qb->getSQL(), $params);
+			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)));
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -79,11 +73,10 @@ class FaceMapper extends Mapper {
 			->select('f.id', 'f.creation_time')
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->isNull('person'));
-		$params = array('user' => $userId, 'model' => $model);
-		$face = $this->findEntity($qb->getSQL(), $params, 1);
+		$face = $this->findEntity($qb);
 		return $face;
 	}
 
@@ -97,7 +90,7 @@ class FaceMapper extends Mapper {
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$faces = $this->frFindEntities($qb);
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -106,16 +99,14 @@ class FaceMapper extends Mapper {
 		$qb->select('f.id', 'f.image', 'f.person')
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('person', $qb->createParameter('person_id')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
 
-		$params = array();
-		$params['user'] = $userId;
-		$params['person_id'] = $personId;
-		$params['model'] = $model;
+		$qb->setMaxResults($limit);
+		$qb->setFirstResult($offset);
 
-		$faces = $this->findEntities($qb->getSQL(), $params, $limit, $offset);
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -136,7 +127,7 @@ class FaceMapper extends Mapper {
 			->setParameter('file_id', $fileId)
 			->setParameter('model', $model)
 			->setParameter('is_valid', true);
-		$faces = $this->frFindEntities($qb);
+		$faces = $this->findEntities($qb);
 		return $faces;
 	}
 
@@ -148,30 +139,6 @@ class FaceMapper extends Mapper {
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
 			->execute();
-	}
-
-	/**
-	 * Runs a sql query and returns an array of entities
-	 *
-	 * todo: stolen from QBMapper. However, this class is in use from 14.0 only.
-	 * If we use it, we are "locked" ourselves to versions >= 14.0
-	 *
-	 * @param IQueryBuilder $query
-	 * @return Entity[] all fetched entities
-	 * @since 14.0.0
-	 */
-	protected function frFindEntities(IQueryBuilder $query): array {
-		$cursor = $query->execute();
-
-		$entities = [];
-
-		while($row = $cursor->fetch()){
-			$entities[] = $this->mapRowToEntity($row);
-		}
-
-		$cursor->closeCursor();
-
-		return $entities;
 	}
 
 }

@@ -26,11 +26,11 @@ namespace OCA\FaceRecognition\Db;
 use OCP\IDBConnection;
 use OCP\IUser;
 
-use OCP\AppFramework\Db\Mapper;
+use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-class ImageMapper extends Mapper {
+class ImageMapper extends QBMapper {
 
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
@@ -40,12 +40,9 @@ class ImageMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file')
 			->from('face_recognition_images', 'i')
-			->where($qb->expr()->eq('user', $qb->createParameter('user_id')))
-			->andWhere($qb->expr()->eq('id', $qb->createParameter('image_id')));
-		$params = array();
-		$params['user_id'] = $userId;
-		$params['image_id'] = $imageId;
-		$image = $this->findEntity($qb->getSQL(), $params);
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($imageId)));
+		$image = $this->findEntity($qb);
 		return $image;
 	}
 
@@ -53,15 +50,11 @@ class ImageMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
 		   ->from('face_recognition_images', 'i')
-		   ->where($qb->expr()->eq('user', $qb->createParameter('user')))
-		   ->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')));
-
-		$params = array();
-		$params['user'] = $userId;
-		$params['file_id'] = $fileId;
+		   ->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+		   ->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
 
 		try {
-			return $this->findEntity($qb->getSQL(), $params);
+			return $this->findEntity($qb);
 		} catch (DoesNotExistException $e) {
 			return null;
 		}
@@ -169,19 +162,16 @@ class ImageMapper extends Mapper {
 	 */
 	public function findImagesWithoutFaces(IUser $user = null) {
 		$qb = $this->db->getQueryBuilder();
-		$params = array();
-
 		$query = $qb
 			->select(['id', 'user', 'file', 'model'])
 			->from('face_recognition_images')
-			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')));
-			$params['is_processed'] = False;
+			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')))
+			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
-			$query->andWhere($qb->expr()->eq('user', $qb->createParameter('user')));
-			$params['user'] = $user->getUID();
+			$query->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
 		}
 
-		$images = $this->findEntities($qb->getSQL(), $params);
+		$images = $this->findEntities($qb);
 		return $images;
 	}
 
@@ -192,17 +182,15 @@ class ImageMapper extends Mapper {
 			->from('face_recognition_images', 'i')
 			->innerJoin('i', 'face_recognition_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('i', 'face_recognition_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
 
-		$params = array();
-		$params['user'] = $userId;
-		$params['model'] = $model;
-		$params['is_processed'] = True;
-		$params['query'] = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
-		$images = $this->findEntities($qb->getSQL(), $params);
+		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
+		$qb->setParameter('query', $query);
+
+		$images = $this->findEntities($qb);
 		return $images;
 	}
 

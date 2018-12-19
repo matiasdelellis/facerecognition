@@ -45,7 +45,7 @@ class PersonMapper extends QBMapper {
 			->from('face_recognition_persons', 'p')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
-		$person = $this->findEntity($qb->getSQL());
+		$person = $this->findEntity($qb);
 		return $person;
 	}
 

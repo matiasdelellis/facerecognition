@@ -28,11 +28,11 @@ use OC\DB\QueryBuilder\Literal;
 use OCP\IDBConnection;
 use OCP\IUser;
 
-use OCP\AppFramework\Db\Mapper;
+use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-class PersonMapper extends Mapper {
+class PersonMapper extends QBMapper {
 
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
@@ -43,14 +43,9 @@ class PersonMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from('face_recognition_persons', 'p')
-			->where($qb->expr()->eq('id', $qb->createParameter('person_id')))
-			->andWhere($qb->expr()->eq('user', $qb->createParameter('user_id')));
-
-		$params = array();
-		$params['person_id'] = $personId;
-		$params['user_id'] = $userId;
-
-		$person = $this->findEntity($qb->getSQL(), $params);
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
+		$person = $this->findEntity($qb->getSQL());
 		return $person;
 	}
 
@@ -58,12 +53,9 @@ class PersonMapper extends Mapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from('face_recognition_persons', 'p')
-			->where($qb->expr()->eq('user', $qb->createParameter('user_id')));
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 
-		$params = array();
-		$params['user_id'] = $userId;
-
-		$person = $this->findEntities($qb->getSQL(), $params);
+		$person = $this->findEntities($qb);
 		return $person;
 	}
 
@@ -109,14 +101,9 @@ class PersonMapper extends Mapper {
 		$qb->from("face_recognition_persons", "p")
 			->innerJoin('p', 'face_recognition_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
 			->innerJoin('p', 'face_recognition_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')));
-
-		$params = array();
-		$params['user'] = $userId;
-		$params['file_id'] = $fileId;
-
-		$persons = $this->findEntities($qb->getSQL(), $params);
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
+		$persons = $this->findEntities($qb);
 
 		return $persons;
 	}

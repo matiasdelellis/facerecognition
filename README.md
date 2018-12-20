@@ -8,79 +8,50 @@
 
 Nextcloud app that implement a basic facial recognition system.
 
+FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing
+and aggregating face data in users images, and providing additional
+functionalities on top of these information, all with built-in privacy of
+Nextcloud. Imagine Google Photos, but only for faces (not detecting objects…)
+and in such way that your images never leave your Nextcloud instance. :smiley:
+
 The application listens to the creation of new image files, and queues them for
 later analysis. A scheduled task (Or admin on demand) take this queue, and
 analyze the images for looking faces and if possible identify them by comparing
 them with previous images assigned by the user.
 
-The app saves the name of the person identified and the position of the face in
-the image. If unknown people are found, they also leave them stored, to identify
-them later.
-
 ![App screenshots](/doc/face-recognition-screenshot.png "App screenshots")
 
-## How do use it?
+## How to use it?
 
- 1. If it is an old installation with photos included the administrator runs the
-    pre-analyze command to search user photos and queue them.
- 2. Administrator run the analyze command to search faces on photos.
- 3. Administrator run the clustering command to group the faces according to the
-    similarity assigning names as 'Person N'.
+First of all, the administrator must configure and execute the analysis. Once finished:
 
-## How do user use it?
-
- 1. In the main application you can rename and combine the groups. Also can
-    select individual faces to separate confused people.
- 2. The user can search the file application using the person's name, and all
-    the images containing that person will be displayed.
+ 1. In the user settings there is a 'Face Recognition' panel where the user can
+    see and rename all the faces of their friends.
+ 2. In the file application the user can search by typing your friend's name,
+    and it will show all the photos.
+ 3. In the side panel of the file application, a 'Persons' tab is added where
+    you can see a list of your friends in the photo, and rename them.
 
 ## Requirements?
 
-The identification is made using these utility written in python:
+ * Nextcloud 14+
+ * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
+ * [Neural models trained for dlib](https://github.com/davisking/dlib-models). :see_no_evil: Do not be scared, they are included and they're free. :smiley:
 
- * https://github.com/matiasdelellis/nextcloud_face_recognition_cmd
-
-That depends on these libraries:
-
- * https://github.com/ageitgey/face_recognition
-
-Which in turn depends on the python bindings of dlib => 19.5:
-
- * http://dlib.net/
-
-Everything is open source. :wink:
+Everything is open source or Creative Commons. :wink:
 
 ## Commands
 
-### face:pre-analyze [user-id]
+There is a single command with which the administrator must work.
+This process can took a lot of CPU and Memory therefore it is recommended to
+run each a reasonable time. Perhaps a cron task configured per day.
 
-Search for new files (Or files in an old installation) and queue them for later
-analysis with the following command. If `user-id` is supplied just loop over the
-files for that user.
+### face:background_job [-u user-id] [-t timeout]
 
-### face:analyze [user-id]
+This command will do all the work. It is responsible for searching the images,
+analyzing them and clustering them in groups of similar people.
 
-Loop over new images in queue and try to find faces on them. If `user-id` is
-supplied just loop over the photos for that user. All faces will be identified
-as 'unknown' and you will be able to see them in the interface as a single group
-This process took a lot of CPU, therefore it is recommended to run each a
-reasonable time. Perhaps a cron task configured per day.
+If `user-id` is supplied just loop over the files for that user.
 
-### face:clustering [user-id]
-
-Loop the faces found by analyze command and try to group them. If `user-id` is
-supplied just loop over the faces for that user. All groups will be identified
-as 'Person N' and you will be able to see them in the interface to rename it.
-This is a quick process, but it should not be used repeatedly. Keep in mind that
-is a destructive process. If you execute it when the user has already renamed
-some known people, the names assigned by the user will be lost.
-
-### face:update [user-id]
-
-Loop over new faces found by analize command and try to relate it to one of the
-previous groups. If can not find generate a new group as 'Person N'. If
-`user-id` is supplied just loop over the files for that user. The new faces will
-be showed as suggested by the known groups.
-This is a quick process and it is recommended to set up a scheduled task however
-it does not make sense to do it every less time than 'analyze' command since it
-depends on the data that it provides.
+if `timeout` is supplied it will stop after the indicated seconds, and continue
+in the next execution.

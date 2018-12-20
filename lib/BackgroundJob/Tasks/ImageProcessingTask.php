@@ -135,9 +135,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];
 
-		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModelv2());
-		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModelv2());
-		$fr = new \FaceRecognition($requirements->getFaceRecognitionModelv2());
+		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModel());
+		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModel());
+		$fr = new \FaceRecognition($requirements->getFaceRecognitionModel());
 
 		foreach($images as $image) {
 			yield;

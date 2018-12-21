@@ -23,7 +23,8 @@ them with previous images assigned by the user.
 
 ## How to use it?
 
-First of all, the administrator must configure and execute the analysis. Once finished:
+First of all, the administrator must configure and execute the analysis. Once
+finished:
 
  1. In the user settings there is a 'Face Recognition' panel where the user can
     see and rename all the faces of their friends.
@@ -36,15 +37,15 @@ First of all, the administrator must configure and execute the analysis. Once fi
 
  * Nextcloud 14+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
- * [Neural models trained for dlib](https://github.com/davisking/dlib-models). :see_no_evil: Do not be scared, they are included and they're free. :smiley:
 
-Everything is open source or Creative Commons. :wink:
+Everything is AGPL or Creative Commons. :wink:
 
 ## Commands
 
 There is a single command with which the administrator must work.
 This process can took a lot of CPU and Memory therefore it is recommended to
-run each a reasonable time. Perhaps a cron task configured per day.
+run it for a reasonable amount of time. Perhaps a scheduled task with cron to
+be executed once a day.
 
 ### face:background_job [-u user-id] [-t timeout]
 
@@ -53,5 +54,6 @@ analyzing them and clustering them in groups of similar people.
 
 If `user-id` is supplied just loop over the files for that user.
 
-if `timeout` is supplied it will stop after the indicated seconds, and continue
-in the next execution.
+If `timeout` is supplied it will stop after the indicated seconds, and continue
+in the next execution. Use this value in conjunction with the times of the
+scheduled task to distribute the system load during the day.

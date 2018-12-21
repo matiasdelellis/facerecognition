@@ -93,6 +93,20 @@ View.prototype = {
         observer.observe();
 
         var self = this;
+
+        /*
+         * User interaction callbacks.
+         */
+
+        $('#enableFacerecognition').on('click', function () {
+            if ($('#enableFacerecognition').prop('checked')) {
+                OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+            }
+            else {
+                OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
+            }
+        });
+
         $('#facerecognition .icon-rename').click(function () {
             var id = $(this).parent().data('id');
             OC.dialogs.prompt(

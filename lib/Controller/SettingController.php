@@ -33,7 +33,7 @@ class SettingController extends Controller {
 	                             IConfig      $config,
 	                             FaceMapper   $faceMapper,
 	                             ImageMapper  $imageMapper,
-	                             PersonMapper $personMapper
+	                             PersonMapper $personMapper,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);

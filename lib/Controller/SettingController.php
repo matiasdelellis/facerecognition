@@ -93,17 +93,21 @@ class SettingController extends Controller {
 	protected function setEnableUser (string $userId, $enabled): bool {
 		$success = false;
 		$this->config->setUserValue($userId, $this->appName, 'enabled', $enabled);
-		if ($enabled == 'false') {
+		if ($enabled === 'false') {
 			// TODO: Invalidate images and remove user info here???
-			//$this->faceMapper->resetUser($this->userId);
-			//$this->personMapper->resetUser($this->userId);
-			//$this->imageMapper->resetUser($this->userId);
+			//$this->resetUser ($userId);
 			$success = true;
 		}
 		else {
 			$success = true;
 		}
 		return $success;
+	}
+
+	protected function resetUser (string $userId) {
+		$this->faceMapper->resetUser($userId);
+		$this->personMapper->resetUser($userId);
+		$this->imageMapper->resetUser($userId);
 	}
 
 }

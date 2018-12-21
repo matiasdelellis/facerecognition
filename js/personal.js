@@ -74,6 +74,25 @@ View.prototype = {
             alert('D\'Oh!. Could not reload faces..');
         });
     },
+
+    setEnabledUser: function (enabled) {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/setvalue'),
+            data: {
+                'type': 'enabled',
+                'value': enabled
+            },
+            success: function () {
+                if (enabled) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
+                }
+            }
+        });
+    },
+
     renderContent: function () {
         this._persons.sortBySize();
 
@@ -103,22 +122,22 @@ View.prototype = {
             if ($('#enableFacerecognition').prop('checked')) {
                 enabled = 'true';
             }
-
-            $.ajax({
-                type: 'GET',
-                url: OC.generateUrl('apps/facerecognition/setvalue'),
-                data: {
-                    'type': 'enabled',
-                    'value': enabled
-                },
-                success: function () {
-                    if (enabled) {
-                        OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
-                    } else {
-                        OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
-                    }
-                }
-            });
+            if (enabled === 'false') {
+                OC.dialogs.confirm(
+                    t('facerecognition', 'Are you sure you want to disable facial recognition?. You will lose all the information analyzed, and if you re-enable it, you will start from scratch.'),
+                    t('facerecognition', 'Disable facial recognition'),
+                    function (result) {
+                        if (result === true) {
+                            self.setEnabledUser ('false');
+                        } else {
+                            $('#enableFacerecognition').prop('checked', true);
+                        }
+                    },
+                    true
+                );
+            } else {
+                self.setEnabledUser ('true');
+            }
         });
 
         $('#facerecognition .icon-rename').click(function () {

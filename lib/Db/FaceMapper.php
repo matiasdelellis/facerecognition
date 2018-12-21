@@ -169,4 +169,5 @@ class FaceMapper extends QBMapper {
 			->setParameter('user', $userId)
 			->execute();
 	}
+
 }

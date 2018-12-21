@@ -2,6 +2,10 @@
 
 namespace OCA\FaceRecognition\Controller;
 
+use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Db\PersonMapper;
+
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -9,18 +13,36 @@ use OCP\IConfig;
 
 class SettingController extends Controller {
 
+	/** @var IConfig */
 	private $config;
+
+	/** @var FaceMapper */
+	private $faceMapper;
+
+	/** @var ImageMapper */
+	private $imageMapper;
+
+	/** @var PersonMapper */
+	private $personMapper;
+
+	/** @var string */
 	private $userId;
 
 	public function __construct ($appName,
-	                             IRequest $request,
-	                             IConfig $config,
+	                             IRequest     $request,
+	                             IConfig      $config,
+	                             FaceMapper   $faceMapper,
+	                             ImageMapper  $imageMapper,
+	                             PersonMapper $personMapper
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
 		$this->appName = $appName;
-		$this->userId = $userId;
 		$this->config = $config;
+		$this->faceMapper = $faceMapper;
+		$this->imageMapper = $imageMapper;
+		$this->personMapper = $personMapper;
+		$this->userId = $userId;
 	}
 
 	/**
@@ -70,9 +92,12 @@ class SettingController extends Controller {
 
 	protected function setEnableUser (string $userId, $enabled): bool {
 		$success = false;
-		$this->config->setUserValue($this->userId, $this->appName, 'enabled', $enabled);
+		$this->config->setUserValue($userId, $this->appName, 'enabled', $enabled);
 		if ($enabled == 'false') {
 			// TODO: Invalidate images and remove user info here???
+			//$this->faceMapper->resetUser($this->userId);
+			//$this->personMapper->resetUser($this->userId);
+			//$this->imageMapper->resetUser($this->userId);
 			$success = true;
 		}
 		else {

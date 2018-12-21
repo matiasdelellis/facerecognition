@@ -294,4 +294,5 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->execute();
 	}
+
 }

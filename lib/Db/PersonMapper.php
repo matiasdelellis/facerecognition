@@ -278,4 +278,5 @@ class PersonMapper extends QBMapper {
 		}
 		return false;
 	}
+
 }

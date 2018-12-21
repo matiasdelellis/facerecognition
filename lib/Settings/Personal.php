@@ -19,13 +19,18 @@ class Personal implements ISettings {
 	/** @var IL10N */
 	protected $l;
 
+	/** @var string */
+	protected $userId;
+
 	public function __construct(IConfig     $config,
 	                            IAppManager $appManager,
-	                            IL10N       $l)
+	                            IL10N       $l,
+	                            $userId)
 	{
 		$this->config = $config;
 		$this->appManager = $appManager;
 		$this->l = $l;
+		$this->userId = $userId;
 	}
 
 	public function getPriority()
@@ -45,7 +50,15 @@ class Personal implements ISettings {
 
 	public function getForm()
 	{
-		$params = [];
+		$enabled = false;
+		$value = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled');
+		if ($value !== '') {
+			$enabled = $value === 'true' ? true : false;
+		}
+
+		$params = [
+			'enabled' => $enabled
+		];
 		return new TemplateResponse('facerecognition', 'settings/personal', $params, '');
 	}
 

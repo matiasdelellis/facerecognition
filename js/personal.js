@@ -99,12 +99,26 @@ View.prototype = {
          */
 
         $('#enableFacerecognition').on('click', function () {
+            var enabled = 'false';
             if ($('#enableFacerecognition').prop('checked')) {
-                OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                enabled = 'true';
             }
-            else {
-                OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
-            }
+
+            $.ajax({
+                type: 'GET',
+                url: OC.generateUrl('apps/facerecognition/setvalue'),
+                data: {
+                    'type': 'enabled',
+                    'value': enabled
+                },
+                success: function () {
+                    if (enabled) {
+                        OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                    } else {
+                        OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
+                    }
+                }
+            });
         });
 
         $('#facerecognition .icon-rename').click(function () {

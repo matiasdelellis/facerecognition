@@ -1,6 +1,17 @@
 <?php
 return ['routes' => 
 [
+	// User settings
+	[
+		'name' => 'setting#setValue',
+		'url' => '/setvalue',
+		'verb' => 'GET'
+	],
+	[
+		'name' => 'setting#getValue',
+		'url' => '/getvalue',
+		'verb' => 'GET'
+	],
 	// Get all persons with faces and file asociated.
 	[
 		'name' => 'person#index',

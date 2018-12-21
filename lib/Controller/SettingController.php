@@ -31,8 +31,18 @@ class SettingController extends Controller {
 	 * @throws \OCP\PreConditionNotMetException
 	 */
 	public function setValue($type, $value) {
-		$this->config->setUserValue($this->userId, $this->appName, $type, $value);
-		return new JSONResponse(array('success' => 'true'));
+		$success = false;
+		switch ($type) {
+			case 'enabled':
+				$success = $this->setEnableUser($this->userId, $value);
+				break;
+			default:
+				break;
+		}
+		$result = [
+			'success' => $success ? 'true' : 'false'
+		];
+		return new JSONResponse($result);
 	}
 
 	/**
@@ -56,6 +66,19 @@ class SettingController extends Controller {
 		$response = new JSONResponse();
 		$response->setData($result);
 		return $response;
+	}
+
+	protected function setEnableUser (string $userId, $enabled): bool {
+		$success = false;
+		$this->config->setUserValue($this->userId, $this->appName, 'enabled', $enabled);
+		if ($enabled == 'false') {
+			// TODO: Invalidate images and remove user info here???
+			$success = true;
+		}
+		else {
+			$success = true;
+		}
+		return $success;
 	}
 
 }

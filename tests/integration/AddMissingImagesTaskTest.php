@@ -59,8 +59,9 @@ class AddMissingImagesTaskTest extends TestCase {
 
 		// Create user on which we will upload images and do testing
 		$userManager = OC::$server->getUserManager();
-		$this->user = $userManager->createUser('testuser' . rand(0, PHP_INT_MAX), 'password');
-
+		$username = 'testuser' . rand(0, PHP_INT_MAX);
+		$this->user = $userManager->createUser($username, 'password');
+		$this->loginAsUser($username);
 		// Get container to get classes using DI
 		$app = new App('facerecognition');
 		$this->container = $app->getContainer();
@@ -90,7 +91,7 @@ class AddMissingImagesTaskTest extends TestCase {
 	public function testFinishedFullScan() {
 		$this->doMissingImageScan();
 
-		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		$fullImageScanDone = $this->config->getUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$this->assertEquals('true', $fullImageScanDone);
 	}
 
@@ -102,7 +103,7 @@ class AddMissingImagesTaskTest extends TestCase {
 
 		// Do it once, to make sure all images are inserted
 		$this->doMissingImageScan();
-		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		$fullImageScanDone = $this->config->getUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$this->assertEquals('true', $fullImageScanDone);
 
 		// Second time, there should be no newly inserted images
@@ -154,18 +155,18 @@ class AddMissingImagesTaskTest extends TestCase {
 	/**
 	 * Helper method to set up and do scanning
 	 *
-	 * @* @param IUser|null $user Optional user to scan for. If not given, images for all users will be scanned.
+	 * @* @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
 	 */
-	private function doMissingImageScan($user = null) {
+	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
-		$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper);
 		$this->assertNotEquals("", $addMissingImagesTask->description());
 
 		// Set user for which to do scanning, if any
-		$this->context->user = $user;
+		$this->context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
 		$generator = $addMissingImagesTask->execute($this->context);

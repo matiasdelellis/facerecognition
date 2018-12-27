@@ -24,6 +24,9 @@ namespace OCA\FaceRecognition\Migration;
 
 use OCP\IConfig;
 use OCP\IDBConnection;
+use OCP\IUser;
+use OCP\IUserManager;
+
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 
@@ -42,26 +45,33 @@ class RemoveFullImageScanDoneFlag implements IRepairStep {
 	/** @var IConfig Config */
 	private $config;
 
+	/** @var IUserManager */
+	private $userManager;
+
 	/**
 	 * RemoveFullImageScanDoneFlag constructor.
 	 *
 	 * @param IConfig $config
+	 * @param IUserManager $userManager
 	 */
-	public function __construct(IConfig $config) {
+	public function __construct(IConfig $config, IUserManager $userManager) {
 		$this->config = $config;
+		$this->userManager = $userManager;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function getName() {
-		return 'Removes ' . AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY . ' flag, so that new installation can crawl over all images again';
+		return 'Removes ' . AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY . ' flag for all users, so that new installation can crawl over all images again';
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function run(IOutput $output) {
-		$this->config->deleteAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY);
+		$this->userManager->callForSeenUsers(function (IUser $user) {
+			$this->config->deleteUserValue($user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY);
+		});
 	}
 }

@@ -74,12 +74,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$fullImageScanDone = $this->config->getAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		if ($fullImageScanDone === 'true') {
-			// Completely skip this task, seems that we already did full scan
-			return true;
-		}
-
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// Check if we are called for one user only, or for all user in instance.
@@ -94,12 +88,16 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		foreach($eligable_users as $user) {
-			$insertedImages += $this->addMissingImagesForUser($user, $model);
-			yield;
-		}
+			$fullImageScanDone = $this->config->getUserValue($user, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			if ($fullImageScanDone === 'true') {
+				// Completely skip this task for this user, seems that we already did full scan for him
+				$this->logDebug('Skipping full image scan for user ' . $user);
+				continue;
+			}
 
-		if (is_null($this->context->user)) {
-			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
+			$insertedImages += $this->addMissingImagesForUser($user, $model);
+			$this->config->setUserValue($user, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
+			yield;
 		}
 
 		$this->context->propertyBag['AddMissingImagesTask_insertedImages'] = $insertedImages;

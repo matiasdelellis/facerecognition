@@ -174,19 +174,19 @@ class Watcher {
 			return;
 		}
 
+		$owner = $node->getOwner()->getUid();
+
 		if ($node->getName() === '.nomedia') {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
-			// But, instead of doing that here, better option seem to be to just reset global flag that image scan is not done.
-			// This will trigger another round of image crawling in AddMissingImagesTask and those images will be added.
-			$this->config->setAppValue('facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
+			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.
+			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 			return;
 		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
-
-		$owner = $node->getOwner()->getUid();
 
 		$this->logger->debug("Deleting image " . $node->getName() . " from face recognition");
 

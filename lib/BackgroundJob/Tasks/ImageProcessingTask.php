@@ -190,6 +190,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$imagePath = $dataDir . $file[0]->getPath();
 		$this->logInfo('Processing image ' . $imagePath);
 		$imageProcessingContext = $this->prepareImage($imagePath);
+		if ($imageProcessingContext == null) {
+			return null;
+		}
 
 		// Detect faces from model
 		$facesFound = $cfd->detect($imageProcessingContext->getTempPath());
@@ -213,14 +216,21 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param string $imagePath Path to image on disk
 	 *
-	 * @return ImageProcessingContext Generated context that hold all information needed later for this image
+	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
+	 * or null if images should be skipped.
 	 */
-	private function prepareImage(string $imagePath): ImageProcessingContext {
+	private function prepareImage(string $imagePath) {
 		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
 		if (!$image->valid()) {
 			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+		}
+
+		// Ignore processing of images that are not large enough.
+		$minImageSize = intval($this->config->getAppValue('facerecognition', 'min_image_size', '512'));
+		if ((imagesx($image->resource()) < $minImageSize) || (imagesy($image->resource()) < $minImageSize)) {
+			return null;
 		}
 
 		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.

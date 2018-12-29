@@ -116,14 +116,15 @@ class PersonMapper extends QBMapper {
 	 */
 	public function invalidatePersons(int $imageId) {
 		$sub = $this->db->getQueryBuilder();
+		$tableNameWithPrefixWithoutQuotes = trim($sub->getTableName($this->getTableName()), '`');
 		$sub->select(new Literal('1'));
 		$sub->from("face_recognition_images", "i")
 			->innerJoin('i', 'face_recognition_faces' ,'f', $sub->expr()->eq('i.id', 'f.image'))
-			->where($sub->expr()->eq('p.id', 'f.person'))
+			->where($sub->expr()->eq($tableNameWithPrefixWithoutQuotes . '.id', 'f.person'))
 			->andWhere($sub->expr()->eq('i.id', $sub->createParameter('image_id')));
 
 		$qb = $this->db->getQueryBuilder();
-		$qb->update($this->getTableName(), 'p')
+		$qb->update($this->getTableName())
 			->set("is_valid", $qb->createParameter('is_valid'))
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('image_id', $imageId)

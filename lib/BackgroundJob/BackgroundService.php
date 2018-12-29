@@ -28,13 +28,14 @@ use OCP\IUser;
 use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
+use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckRequirementsTask;
-use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
-use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\UnlockTask;
 
 use Symfony\Component\Console\Output\OutputInterface;
@@ -90,6 +91,7 @@ class BackgroundService {
 			CheckRequirementsTask::class,
 			CheckCronTask::class,
 			LockTask::class,
+			StaleImagesRemovalTask::class,
 			CreateClustersTask::class,
 			AddMissingImagesTask::class,
 			EnumerateImagesMissingFacesTask::class,

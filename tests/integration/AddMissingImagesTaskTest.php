@@ -155,7 +155,7 @@ class AddMissingImagesTaskTest extends TestCase {
 	/**
 	 * Helper method to set up and do scanning
 	 *
-	 * @* @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
+	 * @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
 	 */
 	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again

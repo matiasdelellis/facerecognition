@@ -106,8 +106,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 
 	/**
 	 * Crawl filesystem for a given user
-	 * TODO: duplicated from Queue.php, figure out how to merge
-	 * (or delete this Queue.php when not needed)
 	 *
 	 * @param string $userId ID of the user for which to crawl images for
 	 * @param int $model Used model

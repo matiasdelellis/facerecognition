@@ -36,7 +36,7 @@ class ImageMapper extends QBMapper {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
 	}
 
-	public function find (string $userId, int $imageId): Image {
+	public function find(string $userId, int $imageId): Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file')
 			->from('face_recognition_images', 'i')
@@ -175,6 +175,16 @@ class ImageMapper extends QBMapper {
 		return $images;
 	}
 
+	public function findImages(string $userId, int $model): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('i.id', 'i.file')
+			->from($this->getTableName(), 'i')
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+
+		$images = $this->findEntities($qb);
+		return $images;
+	}
 
 	public function findImagesFromPerson(string $userId, string $name, int $model): array {
 		$qb = $this->db->getQueryBuilder();

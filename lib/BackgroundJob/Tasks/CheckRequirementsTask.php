@@ -83,10 +83,15 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			// We will hardcode it here to 1GB, but plan is to expose this to user in future.
 			// TODO: allow user to choose "recognition quality", which will map to given memory.
 			// If user explicitely set something, we ignore getting memory from system.
+			$this->logDebug("Cannot detect amount of memory given to PHP process. Using 1GB for image processing");
 			$memory = 1024 * 1024 * 1024;
 		} else {
+			$this->logDebug(sprintf('Found %d MB available to PHP.', $memory / (1024 * 1024)));
 			// No point going above 4GB ("4GB should be enough for everyone")
-			$memory = min($memory, 4 * 1024 * 1024 * 1024);
+			if ($memory > 4 * 1024 * 1024 * 1024) {
+				$this->logDebug('Capping used memory to maximum of 4GB');
+				$memory = 4 * 1024 * 1024 * 1024;
+			}
 		}
 
 		$context->propertyBag['memory'] = $memory;

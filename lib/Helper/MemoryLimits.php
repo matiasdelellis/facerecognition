@@ -50,7 +50,7 @@ class MemoryLimits {
 		}
 
 		// php.ini says that memory_limit is -1, which means unlimited.
-		//We need to get memory from system (if system is supported here).
+		// We need to get memory from system (if OS is supported here).
 		// Only linux is currently supported.
 		if (php_uname("s") === "Linux") {
 			$linuxMemory = MemoryLimits::getTotalMemoryLinux();

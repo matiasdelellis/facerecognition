@@ -33,12 +33,32 @@ finished:
  3. In the side panel of the file application, a 'Persons' tab is added where
     you can see a list of your friends in the photo, and rename them.
 
-## Requirements?
+## Installation
+
+#### Requirements
 
  * Nextcloud 14+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
 
 Everything is AGPL or Creative Commons. :wink:
+
+#### Manual installation on Ubuntu
+
+```
+sudo apt-get update
+sudo apt-get install git-core composer
+cd nextcloud/apps/   # or whatever is your path to nextcloud
+git clone https://github.com/matiasdelellis/facerecognition.git
+cd facerecognition/
+make
+```
+
+If you have it manually installed and want to update to latest from `master`:
+```
+cd nextcloud/apps/facerecognition/
+git pull
+make
+```
 
 ## Commands
 
@@ -57,3 +77,14 @@ If `user-id` is supplied just loop over the files for that user.
 If `timeout` is supplied it will stop after the indicated seconds, and continue
 in the next execution. Use this value in conjunction with the times of the
 scheduled task to distribute the system load during the day.
+
+### Resetting faces
+Run following SQL statements on your Nextcloud DB:
+```
+TRUNCATE oc_face_recognition_faces;
+TRUNCATE oc_face_recognition_persons;
+TRUNCATE oc_face_recognition_images;
+DELETE FROM oc_preferences WHERE configkey="full_image_scan_done";
+```
+
+Then run `face:background_job` again

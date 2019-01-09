@@ -280,6 +280,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			throw new \RuntimeException("Error during image resize");
 		}
 
+		$this->logDebug(sprintf('Image scaled from %dx%d to %dx%d (since max image area is %d pixels^2)',
+			$newWidth, $newHeight, $widthOrig, $heightOrig, $maxImageArea));
+
 		return 1 / $scaleFactor;
 	}
 

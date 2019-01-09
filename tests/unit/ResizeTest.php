@@ -62,6 +62,7 @@ class ResizeTest extends TestCase {
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$tempManager = $this->createMock(ITempManager::class);
 		$imageProcessingTask = new ImageProcessingTask($config, $imageMapper, $tempManager);
+		$imageProcessingTask->setContext($this->context);
 		$image = new OCP_Image();
 
 		// Try when there is no change

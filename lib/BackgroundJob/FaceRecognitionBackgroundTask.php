@@ -58,11 +58,12 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	}
 
 	/**
-	 * Sets context for a given task, so it can accessed in task (without a need to dragging it around from execute() method).
+	 * Sets context for a given task, so it can be accessed in task (without a need to dragging it around from execute() method).
+	 * Currently public, because of tests (ideally it should be protected).
 	 *
 	 * @param FaceRecognitionContext $context Context
 	 */
-	protected function setContext(FaceRecognitionContext $context) {
+	public function setContext(FaceRecognitionContext $context) {
 		$this->context = $context;
 	}
 

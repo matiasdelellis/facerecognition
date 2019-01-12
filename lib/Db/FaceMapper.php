@@ -75,8 +75,16 @@ class FaceMapper extends QBMapper {
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
-			->andWhere($qb->expr()->isNull('person'));
-		$face = $this->findEntity($qb);
+			->andWhere($qb->expr()->isNull('person'))
+			->orderBy('f.creation_time', 'ASC');
+		$cursor = $qb->execute();
+		$row = $cursor->fetch();
+		if($row === false) {
+			$cursor->closeCursor();
+			throw new DoesNotExistException("No faces found and we should have at least one");
+		}
+		$face = $this->mapRowToEntity($row);
+		$cursor->closeCursor();
 		return $face;
 	}
 

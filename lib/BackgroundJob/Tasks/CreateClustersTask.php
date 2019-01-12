@@ -142,7 +142,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			}
 
 			$stalePersonsCount = $this->personMapper->countPersons($userId, true);
-			$this->logDebug(sprintf('Found %d stale persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
+			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
 			$haveStalePersons = $stalePersonsCount > 0;
 
 			if ($haveStalePersons === false && $haveNewFaces === false) {
@@ -182,7 +182,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		//
 		$currentClusters = $this->getCurrentClusters($faces);
 		$newClusters = $this->getNewClusters($faces);
-		$this->logInfo(count($newClusters) . ' clusters found for clustering');
+		$this->logInfo(count($newClusters) . ' persons found after clustering');
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);

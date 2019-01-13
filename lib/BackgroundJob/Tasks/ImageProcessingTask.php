@@ -56,10 +56,18 @@ class ImageProcessingContext {
 	/** @var array<Face> All found faces in image */
 	private $faces;
 
-	public function __construct(string $imagePath, string $tempPath, float $ratio) {
+	/**
+	 * @var bool True if detection should be skipped, but image should be marked as processed.
+	 * If this is set, $tempPath and $ratio will be invalid and $faces should be empty array.
+	 */
+	private $skipDetection;
+
+	public function __construct(string $imagePath, string $tempPath, float $ratio, bool $skipDetection) {
 		$this->imagePath = $imagePath;
 		$this->tempPath = $tempPath;
 		$this->ratio = $ratio;
+		$this->faces = array();
+		$this->skipDetection = $skipDetection;
 	}
 
 	public function getImagePath(): string {
@@ -72,6 +80,10 @@ class ImageProcessingContext {
 
 	public function getRatio(): float {
 		return $this->ratio;
+	}
+
+	public function getSkipDetection(): bool {
+		return $this->skipDetection;
 	}
 
 	/**
@@ -146,12 +158,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 			try {
 				$imageProcessingContext = $this->findFaces($cfd, $dataDir, $image);
-				if ($imageProcessingContext === null) {
-					// We didn't got exception, but null result means we should skip this image
-					continue;
+				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
+					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
 				}
-
-				$this->populateDescriptors($fld, $fr, $imageProcessingContext);
 
 				$endMillis = round(microtime(true) * 1000);
 				$duration = max($endMillis - $startMillis, 0);
@@ -190,8 +199,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$imagePath = $dataDir . $file[0]->getPath();
 		$this->logInfo('Processing image ' . $imagePath);
 		$imageProcessingContext = $this->prepareImage($imagePath);
-		if ($imageProcessingContext == null) {
-			return null;
+		if ($imageProcessingContext->getSkipDetection() === true) {
+			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
+			return $imageProcessingContext;
 		}
 
 		// Detect faces from model
@@ -206,7 +216,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		$imageProcessingContext->setFaces($faces);
-		$this->logInfo('Faces found ' . count($faces));
+		$this->logInfo('Faces found: ' . count($faces));
 
 		return $imageProcessingContext;
 	}
@@ -216,8 +226,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param string $imagePath Path to image on disk
 	 *
-	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
-	 * or null if images should be skipped.
+	 * @return ImageProcessingContext Generated context that hold all information needed later for this image.
 	 */
 	private function prepareImage(string $imagePath) {
 		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
@@ -230,7 +239,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// Ignore processing of images that are not large enough.
 		$minImageSize = intval($this->config->getAppValue('facerecognition', 'min_image_size', '512'));
 		if ((imagesx($image->resource()) < $minImageSize) || (imagesy($image->resource()) < $minImageSize)) {
-			return null;
+			return new ImageProcessingContext($imagePath, "", -1, true);
 		}
 
 		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
@@ -242,7 +251,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
 		$image->save($tempfile);
-		return new ImageProcessingContext($imagePath, $tempfile, $ratio);
+		return new ImageProcessingContext($imagePath, $tempfile, $ratio, false);
 	}
 
 	/**

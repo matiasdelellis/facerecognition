@@ -147,7 +147,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 			if ($haveStalePersons === false && $haveNewFaces === false) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
-				$this->logInfo('Clusters already exist, calculated there is no need to recreate them');
+				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
 			}
 		} else {

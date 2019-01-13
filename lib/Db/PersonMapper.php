@@ -182,42 +182,63 @@ class PersonMapper extends QBMapper {
 					->execute();
 			}
 
-			// Add or modify existing clusters
+			// Modify existing clusters
 			foreach($newClusters as $newPerson=>$newFaces) {
-				if (array_key_exists($newPerson, $currentClusters)) {
-					// This cluster existed, check if faces match
-					$oldFaces = $currentClusters[$newPerson];
-					if ($newFaces === $oldFaces) {
-						continue;
-					}
+				if (!array_key_exists($newPerson, $currentClusters)) {
+					// This cluster didn't exist, there is nothing to modify
+					// It will be processed during cluster adding operation
+					continue;
+				}
 
-					// OK, set of faces do differ. Now, we could potentially go into finer grain details
-					// and add/remove each individual face, but this seems too detailed. Enough is to
-					// reset all existing faces to null and to add new faces to new person. That should
-					// take care of both faces that are removed from cluster, as well as for newly added
-					// faces to this cluster.
-					foreach ($oldFaces as $oldFace) {
+				$oldFaces = $currentClusters[$newPerson];
+				if ($newFaces === $oldFaces) {
+					continue;
+				}
+
+				// OK, set of faces do differ. Now, we could potentially go into finer grain details
+				// and add/remove each individual face, but this seems too detailed. Enough is to
+				// reset all existing faces to null and to add new faces to new person. That should
+				// take care of both faces that are removed from cluster, as well as for newly added
+				// faces to this cluster.
+
+				// First remove all old faces from any cluster (reset them to null)
+				foreach ($oldFaces as $oldFace) {
+					// Reset face to null only if it wasn't moved to other cluster!
+					// (if face is just moved to other cluster, do not reset to null, as some other
+					// pass for some other cluster will eventually update it to proper cluster)
+					if ($this->isFaceInClusters($oldFace, $newClusters) === false) {
 						$this->updateFace($oldFace, null);
 					}
-					foreach ($newFaces as $newFace) {
-						$this->updateFace($newFace, $newPerson);
-					}
-				} else {
-					// This person doesn't even exist, insert it
-					$qb = $this->db->getQueryBuilder();
-					$qb
-						->insert($this->getTableName())
-						->values([
-							'user' => $qb->createNamedParameter($userId),
-							'name' => $qb->createNamedParameter(sprintf("New person %d", $newPerson)),
-							'is_valid' => $qb->createNamedParameter(true),
-							'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
-							'linked_user' => $qb->createNamedParameter(null)])
-						->execute();
-					$insertedPersonId = $this->db->lastInsertId($this->getTableName());
-					foreach ($newFaces as $newFace) {
-						$this->updateFace($newFace, $insertedPersonId);
-					}
+				}
+
+				// Then set all new faces to belong to this cluster
+				foreach ($newFaces as $newFace) {
+					$this->updateFace($newFace, $newPerson);
+				}
+			}
+
+			// Add new clusters
+			foreach($newClusters as $newPerson=>$newFaces) {
+				if (array_key_exists($newPerson, $currentClusters)) {
+					// This cluster already existed, nothing to add
+					// It was already processed during modify cluster operation
+					continue;
+				}
+
+				// Create new cluster and add all faces to it
+				$qb = $this->db->getQueryBuilder();
+				$qb
+					->insert($this->getTableName())
+					->values([
+						'user' => $qb->createNamedParameter($userId),
+						'name' => $qb->createNamedParameter(sprintf("New person %d", $newPerson)),
+						'is_valid' => $qb->createNamedParameter(true),
+						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
+						'linked_user' => $qb->createNamedParameter(null)])
+					->execute();
+				$insertedPersonId = $this->db->lastInsertId($this->getTableName());
+				foreach ($newFaces as $newFace) {
+					$this->updateFace($newFace, $insertedPersonId);
 				}
 			}
 
@@ -226,5 +247,22 @@ class PersonMapper extends QBMapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+	}
+
+	/**
+	 * Checks if face with a given ID is in any cluster.
+	 *
+	 * @param int $faceId ID of the face to check
+	 * @param array $cluster All clusters to check into
+	 *
+	 * @return bool True if face is found in any cluster, false otherwise.
+	 */
+	private function isFaceInClusters(int $faceId, array $clusters): bool {
+		foreach ($clusters as $_=>$faces) {
+			if (in_array($faceId, $faces)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

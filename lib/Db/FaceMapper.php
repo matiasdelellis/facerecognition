@@ -1,6 +1,8 @@
 <?php
 namespace OCA\FaceRecognition\Db;
 
+use OC\DB\QueryBuilder\Literal;
+
 use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -149,4 +151,22 @@ class FaceMapper extends QBMapper {
 			->execute();
 	}
 
+	/**
+	 * Deletes all faces from that user.
+	 *
+	 * @param string $userId User to drop faces from table.
+	 */
+	public function deleteUserFaces(string $userId) {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'));
+		$sub->from("face_recognition_images", "i")
+			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user', $userId)
+			->execute();
+	}
 }

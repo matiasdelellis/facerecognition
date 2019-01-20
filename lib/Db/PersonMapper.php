@@ -250,6 +250,18 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * Deletes all persons from that user.
+	 *
+	 * @param string $userId User to drop persons from a table.
+	 */
+	public function deleteUserPersons(string $userId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->execute();
+	}
+
+	/**
 	 * Checks if face with a given ID is in any cluster.
 	 *
 	 * @param int $faceId ID of the face to check

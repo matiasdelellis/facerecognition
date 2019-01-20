@@ -37,6 +37,7 @@
 	</repair-steps>
 	<commands>
 		<command>OCA\FaceRecognition\Command\BackgroundCommand</command>
+		<command>OCA\FaceRecognition\Command\ResetAllCommand</command>
 	</commands>
 	<settings>
 		<admin>OCA\FaceRecognition\Settings\Admin</admin>

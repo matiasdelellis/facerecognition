@@ -33,6 +33,7 @@ use OCP\ILogger;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\FaceMapper;
@@ -110,13 +111,18 @@ class Watcher {
 			return;
 		}
 
-		// todo: issue #37 - if we detect .nomedia written, reset some global flag such that RemoveMissingImagesTask is triggered.
+		$owner = $node->getOwner()->getUid();
+
+		if ($node->getName() === '.nomedia') {
+			// If user added this file, it means all images in this and all child directories should be removed.
+			// Instead of doing that here, it's better to just add flag that image removal should be done.
+			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			return;
+		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
-
-		$owner = $node->getOwner()->getUid();
 
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(

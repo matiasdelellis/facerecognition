@@ -35,6 +35,12 @@ use OCP\AppFramework\Db\Entity;
  * @method int getRight()
  * @method int getTop()
  * @method int getBottom()
+ * @method void setImage(int $image)
+ * @method void setPerson(int $person)
+ * @method void setLeft(int $left)
+ * @method void setRight(int $right)
+ * @method void setTop(int $top)
+ * @method void setBottom(int $bottom)
  */
 class Face extends Entity implements JsonSerializable {
 
@@ -103,14 +109,14 @@ class Face extends Entity implements JsonSerializable {
 	 */
 	public static function fromModel(int $image, array $faceFromModel): Face {
 		$face = new Face();
-		$face->image = $image;
-		$face->person = null;
-		$face->left = max($faceFromModel["left"], 0);
-		$face->right = $faceFromModel["right"];
-		$face->top = max($faceFromModel["top"], 0);
-		$face->bottom = $faceFromModel["bottom"];
-		$face->descriptor = array();
-		$face->creationTime = new \DateTime();
+		$face->setImage($image);
+		$face->setPerson(null);
+		$face->setLeft(max($faceFromModel["left"], 0));
+		$face->setRight($faceFromModel["right"]);
+		$face->setTop(max($faceFromModel["top"], 0));
+		$face->setBottom($faceFromModel["bottom"]);
+		$face->setDescriptor("[]");
+		$face->setCreationTime(new \DateTime());
 		return $face;
 	}
 
@@ -158,11 +164,27 @@ class Face extends Entity implements JsonSerializable {
 		];
 	}
 
+	public function getDescriptor(): string {
+		return json_encode($this->descriptor);
+	}
+
 	public function setDescriptor($descriptor) {
 		$this->descriptor = json_decode($descriptor);
+		$this->markFieldUpdated('descriptor');
+	}
+
+	public function getCreationTime(): string {
+		// Deck app have special handling for MySQL here:
+		// https://github.com/nextcloud/deck/blob/139b38ca1df0ff17792eb218cc8ba7e3b04b4e51/lib/Db/Card.php#L84
+		return $this->creationTime->format('c');
 	}
 
 	public function setCreationTime($creationTime) {
-		$this->creationTime = new \DateTime($creationTime);
+		if (is_a($creationTime, 'DateTime')) {
+			$this->creationTime = $creationTime;
+		} else {
+			$this->creationTime = new \DateTime($creationTime);
+		}
+		$this->markFieldUpdated('creationTime');
 	}
 }

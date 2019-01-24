@@ -62,29 +62,32 @@ make
 
 ## Commands
 
-There is a single command with which the administrator must work.
-This process can took a lot of CPU and Memory therefore it is recommended to
-run it for a reasonable amount of time. Perhaps a scheduled task with cron to
-be executed once a day.
+### Face analysis
 
-### face:background_job [-u user-id] [-t timeout]
+`occ face:background_job [-u user-id] [-t timeout]`
 
 This command will do all the work. It is responsible for searching the images,
-analyzing them and clustering them in groups of similar people.
+analyzing them and clustering faces found in them in groups of similar people.
 
-If `user-id` is supplied just loop over the files for that user.
+Beware that this command can take a lot of CPU and memory! Before you put it to
+cron job, it is advised to try it out manually first, just to be sure you have
+all requirements and you have enough resources on your machine.
+
+Command is designed to be run continuously, so you will want to schedule it with cron to be executed every once in a while, together with a specified timeout. It can be run every 15 minutes with timeout of `-t 900` (so, it will stop itself automatically after 15 minutes and cron will start it again), or
+once a day with timeout of 2 hours, like `-t 7200`.
+
+If `user-id` is supplied, it will just loop over files of a given user.
 
 If `timeout` is supplied it will stop after the indicated seconds, and continue
 in the next execution. Use this value in conjunction with the times of the
 scheduled task to distribute the system load during the day.
 
 ### Resetting faces
-Run following SQL statements on your Nextcloud DB:
-```
-TRUNCATE oc_face_recognition_faces;
-TRUNCATE oc_face_recognition_persons;
-TRUNCATE oc_face_recognition_images;
-DELETE FROM oc_preferences WHERE configkey="full_image_scan_done";
-```
 
-Then run `face:background_job` again
+`occ face:reset_all [-u user-id]`
+
+This command will completely wipe out all images, faces and cluster of persons.
+It is ideal if you want to start from scratch for any reason. Beware that all
+images will have to be analyzed again!
+
+If `user-id` is supplied, it will just loop over files of a given user.

@@ -39,7 +39,7 @@ class Person extends Entity implements JsonSerializable {
 	 *
 	 * @var string
 	 * */
-	protected $user_id;
+	protected $user;
 
 	/**
 	 * Name for this person/cluster. Must exists, even if linked user is set.
@@ -53,14 +53,14 @@ class Person extends Entity implements JsonSerializable {
 	 *
 	 * @var bool
 	 */
-	protected $is_valid;
+	protected $isValid;
 
 	/**
 	 * Last timestamp when this person/cluster was created, or when it was refreshed
 	 *
 	 * @var timestamp|null
 	 */
-	protected $last_generation_time;
+	protected $lastGenerationTime;
 
 	/**
 	 * Foreign key to other user that this person belongs to (if it is on same Nextcloud instance).
@@ -68,16 +68,16 @@ class Person extends Entity implements JsonSerializable {
 	 *
 	 * @var string|null
 	*/
-	protected $linked_user_id;
+	protected $linkedUser;
 
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,
-			'user' => $this->user_id,
+			'user' => $this->user,
 			'name' => $this->name,
-			'is_valid' => $this->is_valid,
-			'last_generation_time' => $this->last_generation_time,
-			'linked_user' => $this->linked_user_id
+			'is_valid' => $this->isValid,
+			'last_generation_time' => $this->lastGenerationTime,
+			'linked_user' => $this->linkedUser
 		];
 	}
 }

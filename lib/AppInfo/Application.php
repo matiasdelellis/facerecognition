@@ -25,10 +25,12 @@
 namespace OCA\FaceRecognition\AppInfo;
 
 use OCA\FaceRecognition\Watcher;
+
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
+use OCP\IUserManager;
 
 class Application extends App {
 
@@ -47,17 +49,27 @@ class Application extends App {
 	private function connectWatcher() {
 		/** @var IRootFolder $root */
 		$root = $this->getContainer()->query(IRootFolder::class);
+
 		$root->listen('\OC\Files', 'postWrite', function (Node $node) {
 			/** @var Watcher $watcher */
 			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->postWrite($node);
 		});
+
 		// We want to react on postDelete and not preDelete as in preDelete we don't know if
 		// file actually got deleted (locked, other errors...)
 		$root->listen('\OC\Files', 'postDelete', function (Node $node) {
 			/** @var Watcher $watcher */
 			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->postDelete($node);
+		});
+
+		// Watch for user deletion, so we clean up user data, after user gets deleted
+		$userManager = $this->getContainer()->query(IUserManager::class);
+		$userManager->listen('\OC\User', 'postDelete', function (\OC\User\User $user) {
+			/** @var Watcher $watcher */
+			$watcher = \OC::$server->query(Watcher::class);
+			$watcher->postUserDelete($user);
 		});
 	}
 

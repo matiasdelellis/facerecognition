@@ -32,6 +32,8 @@ use OCP\IDBConnection;
 use OCP\ILogger;
 use OCP\IUserManager;
 
+use OCA\FaceRecognition\FaceManagementService;
+
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 use OCA\FaceRecognition\Db\Face;
@@ -65,6 +67,9 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var FaceManagementService */
+	private $faceManagementService;
+
 	/**
 	 * Watcher constructor.
 	 *
@@ -75,14 +80,17 @@ class Watcher {
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
+	 * @param FaceManagementService $faceManagementService
 	 */
-	public function __construct(IConfig       $config,
-	                            ILogger       $logger,
-	                            IDBConnection $connection,
-	                            IUserManager  $userManager,
-	                            FaceMapper    $faceMapper,
-	                            ImageMapper   $imageMapper,
-	                            PersonMapper  $personMapper)
+	public function __construct(
+								IConfig               $config,
+								ILogger               $logger,
+								IDBConnection         $connection,
+								IUserManager          $userManager,
+								FaceMapper            $faceMapper,
+								ImageMapper           $imageMapper,
+								PersonMapper          $personMapper,
+								FaceManagementService $faceManagementService)
 	{
 		$this->config = $config;
 		$this->logger = $logger;
@@ -91,6 +99,7 @@ class Watcher {
 		$this->faceMapper = $faceMapper;
 		$this->imageMapper = $imageMapper;
 		$this->personMapper = $personMapper;
+		$this->faceManagementService = $faceManagementService;
 	}
 
 	/**
@@ -163,7 +172,7 @@ class Watcher {
 	}
 
 	/**
-	 * A node has been delete. Remove faces with file id
+	 * A node has been deleted. Remove faces with file id
 	 * with the current user in the DB
 	 *
 	 * @param Node $node
@@ -211,5 +220,16 @@ class Watcher {
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);
 		}
+	}
+
+	/**
+	 * A user has been deleted. Cleanup everything from this user.
+	 *
+	 * @param \OC\User\User $user Deleted user
+	 */
+	public function postUserDelete(\OC\User\User $user) {
+		$userId = $user->getUid();
+		$this->faceManagementService->resetAllForUser($userId);
+		$this->logger->info("Removed all face recognition data for deleted user " . $userId);
 	}
 }

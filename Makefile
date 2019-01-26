@@ -51,7 +51,9 @@ js/lozad.js:
 
 javascript_deps: js/handlebars.js js/lozad.js
 
-l10n_deps:
+l10n_deps: translationtool.phar
+
+translationtool.phar:
 	wget https://github.com/nextcloud/docker-ci/raw/master/translations/translationtool/translationtool.phar
 
 deps: download_models composer javascript_deps l10n_deps

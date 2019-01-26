@@ -80,8 +80,9 @@ class StaleImagesRemovalTaskTest extends TestCase {
 	}
 
 	public function tearDown() {
-		// TODO: Tracked with #32 - once we implement callback on user deletion,
-		// we need another test that drops images from database.
+		$faceMgmtService = $this->container->query('OCA\FaceRecognition\FaceManagementService');
+		$faceMgmtService->resetAllForUser($this->user->getUID());
+
 		$this->user->delete();
 		parent::tearDown();
 	}

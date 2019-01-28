@@ -156,10 +156,15 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 			$imageProcessingContext = null;
 			$startMillis = round(microtime(true) * 1000);
+
 			try {
 				$imageProcessingContext = $this->findFaces($cfd, $dataDir, $image);
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
 					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
+				}
+
+				if ($imageProcessingContext === null) {
+					continue;
 				}
 
 				$endMillis = round(microtime(true) * 1000);

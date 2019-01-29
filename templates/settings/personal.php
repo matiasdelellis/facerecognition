@@ -20,8 +20,8 @@ style('facerecognition', 'facerecognition');
 			</h2>
 			<div class="persons-previews">
 				{{#each this.faces}}
-					<a target="_blank" href="/f/{{file-id}}">
-						<div class="face-preview" data-background-image="/apps/facerecognition/face/{{id}}/thumb/50" width="50" height="50"></div>
+					<a target="_blank" href="/index.php/f/{{file-id}}">
+						<div class="face-preview" data-background-image="/index.php/apps/facerecognition/face/{{id}}/thumb/50" width="50" height="50"></div>
 					</a>
 				{{/each}}
 			</div>

@@ -43,8 +43,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Background service. Both command and cron job are calling this service for long-running background operations.
  * Background processing for face recognition is comprised of several steps, called tasks. Each task is independent,
- * idempotent, DI-aware logic unit that yields. Since tasks are non-preemptive, they should yield from time to time, so we son't end up
- * working for more than given timeout.
+ * idempotent, DI-aware logic unit that yields. Since tasks are non-preemptive, they should yield from time to time,
+ * so we son't end up working for more than given timeout.
  *
  * Tasks can be seen as normal sequential functions, but they are easier to work with,
  * reason about them and test them independently. Other than that, they are really glorified functions.
@@ -76,14 +76,15 @@ class BackgroundService {
 	 * @param int $timeout Maximum allowed time (in seconds) to execute
 	 * @param bool $verbose Whether to be more verbose
 	 * @param IUser|null $user ID of user to execute background operations for
-	 *
+	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
 	 */
-	public function execute(int $timeout, bool $verbose, IUser $user = null) {
+	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
 		$this->context->verbose = $verbose;
 		$this->context->setRunningThroughCommand();
+		$this->context->propertyBag['max_image_area'] = $maxImageArea;
 
 		// Here we are defining all the tasks that will get executed.
 		//
@@ -121,7 +122,9 @@ class BackgroundService {
 							return;
 						}
 
-						$this->context->logger->logDebug('yielding');
+						if ($this->context->verbose) {
+							$this->context->logger->logDebug('yielding');
+						}
 					}
 				}
 

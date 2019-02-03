@@ -68,6 +68,13 @@ class BackgroundCommand extends Command {
 				null
 			)
 			->addOption(
+				'max_image_area',
+				null,
+				InputOption::VALUE_REQUIRED,
+				'Caps maximum area (in pixels^2) of the image to be fed to neural network, effectively lowering needed memory. ' .
+				'Use this if face detection crashes randomly.'
+			)
+			->addOption(
 				'timeout',
 				't',
 				InputOption::VALUE_REQUIRED,
@@ -107,13 +114,28 @@ class BackgroundCommand extends Command {
 			$timeout = 0;
 		}
 
+		// Extract max image area
+		//
+		$maxImageArea = $input->getOption('max_image_area');
+		if (!is_null($maxImageArea)) {
+			$maxImageArea = intval($maxImageArea);
+
+			if ($maxImageArea == 0) {
+				throw new \InvalidArgumentException("Max image area must be positive number.");
+			}
+
+			if ($maxImageArea < 0) {
+				throw new \InvalidArgumentException("Max image area must be positive value.");
+			}
+		}
+
 		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
 		//
 		$verbose = $input->getOption('verbose');
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user);
+		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea);
 
 		return 0;
 	}

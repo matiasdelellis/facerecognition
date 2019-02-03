@@ -118,6 +118,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ITempManager */
 	private $tempManager;
 
+	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
+	private $maxImageAreaCached;
+
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
@@ -126,6 +129,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->config = $config;
 		$this->imageMapper = $imageMapper;
 		$this->tempManager = $tempManager;
+		$this->maxImageAreaCached = null;
 	}
 
 	/**
@@ -151,6 +155,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModel());
 		$fr = new \FaceRecognition($requirements->getFaceRecognitionModel());
 
+		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
+
 		foreach($images as $image) {
 			yield;
 
@@ -171,6 +177,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$duration = max($endMillis - $startMillis, 0);
 				$this->imageMapper->imageProcessed($image, $imageProcessingContext->getFaces(), $duration);
 			} catch (\Exception $e) {
+				if ($e->getMessage() === "std::bad_alloc") {
+					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");
+				}
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
 				$this->tempManager->clean();
@@ -247,11 +256,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			return new ImageProcessingContext($imagePath, "", -1, true);
 		}
 
-		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
-		// This reasoning and calculations are all based on analysis given here:
-		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
-		$allowedMemory = $this->context->propertyBag['memory'];
-		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
+		$maxImageArea = $this->getMaxImageArea();
 		$ratio = $this->resizeImage($image, $maxImageArea);
 
 		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
@@ -335,5 +340,51 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
 		$image->save($tempfile);
 		return $tempfile;
+	}
+
+	/**
+	 * Obtains max image area lazily (from cache, or calculates it and puts it to cache)
+	 *
+	 * @return int Max image area (in pixels^2)
+	 */
+	private function getMaxImageArea(): int {
+		if (!is_null($this->maxImageAreaCached)) {
+			return $this->maxImageAreaCached;
+		}
+
+		$this->maxImageAreaCached = $this->calculateMaxImageArea();
+		return $this->maxImageAreaCached;
+	}
+
+	/**
+	 * Calculates max image area. This is separate function, as there are several levels of user overrides.
+	 *
+	 * @return int Max image area (in pixels^2)
+	 */
+	private function calculateMaxImageArea(): int {
+		// First check if we are provided value from command line
+		//
+		if (
+			(array_key_exists('max_image_area', $this->context->propertyBag)) &&
+			(!is_null($this->context->propertyBag['max_image_area']))
+		) {
+				return $this->context->propertyBag['max_image_area'];
+		}
+
+		// Check if admin persisted this setting in config and it is valid value
+		//
+		$maxImageArea = intval($this->config->getAppValue('facerecognition', 'max_image_area', 0));
+		if ($maxImageArea > 0) {
+			return $maxImageArea;
+		}
+
+		// Calculate it from memory
+		//
+		$allowedMemory = $this->context->propertyBag['memory'];
+		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
+		// This reasoning and calculations are all based on analysis given here:
+		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
+		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
+		return $maxImageArea;
 	}
 }

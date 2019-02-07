@@ -82,15 +82,14 @@ class Watcher {
 	 * @param PersonMapper $personMapper
 	 * @param FaceManagementService $faceManagementService
 	 */
-	public function __construct(
-								IConfig               $config,
-								ILogger               $logger,
-								IDBConnection         $connection,
-								IUserManager          $userManager,
-								FaceMapper            $faceMapper,
-								ImageMapper           $imageMapper,
-								PersonMapper          $personMapper,
-								FaceManagementService $faceManagementService)
+	public function __construct(IConfig               $config,
+	                            ILogger               $logger,
+	                            IDBConnection         $connection,
+	                            IUserManager          $userManager,
+	                            FaceMapper            $faceMapper,
+	                            ImageMapper           $imageMapper,
+	                            PersonMapper          $personMapper,
+	                            FaceManagementService $faceManagementService)
 	{
 		$this->config = $config;
 		$this->logger = $logger;

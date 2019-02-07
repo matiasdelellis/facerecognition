@@ -24,10 +24,6 @@
 		<nextcloud min-version="14" max-version="15" />
 	</dependencies>
 	<repair-steps>
-		<!-- TODO: do we really need post-migration here, or I am just overparanoid? -->
-		<post-migration>
-			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
-		</post-migration>
 		<install>
 			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
 		</install>

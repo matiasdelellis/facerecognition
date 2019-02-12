@@ -82,7 +82,7 @@ View.prototype = {
             persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
-            loadingMsg: t('facecognition', 'Looking for your recognized friends'),
+            loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
             loadingIcon: OC.imagePath('core', 'loading.gif'),
             emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
             emptyHint: t('facerecognition', 'Please, be patient'),

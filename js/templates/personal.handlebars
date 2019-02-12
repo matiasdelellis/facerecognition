@@ -1,0 +1,45 @@
+<div class="section" id="facerecognition">
+
+	<h2>
+		{{appName}}
+	</h2>
+	<p class="settings-hint">
+		{{welcomeHint}}
+	</p>
+	{{#if persons}}
+	<div id="persons-navigation">
+		{{#each persons}}
+			<h2 class="person-title icon-user" data-id="{{this.id}}">
+				<span>{{this.name}}</span>
+				<a class="title-icon icon-rename"></a>
+			</h2>
+			<div class="persons-previews">
+				{{#each this.faces}}
+					<a target="_blank" href="/index.php/f/{{file-id}}">
+						<div class="face-preview" data-background-image="/index.php/apps/facerecognition/face/{{id}}/thumb/50" width="50" height="50"></div>
+					</a>
+				{{/each}}
+			</div>
+		{{/each}}
+	</div>
+	{{else if loaded}}
+	<div class="emptycontent">
+		<div class="icon-user svg"></div>
+		<h2>
+			{{emptyMsg}}
+		</h2>
+		<p>
+			{{emptyHint}}
+		</p>
+	</div>
+	{{else}}
+	<div class="emptycontent">
+		<div class="icon-user svg"></div>
+		<h2>
+			{{loadingMsg}}
+		</h2>
+		<img class="loadingimport" src="{{loadingIcon}}"/>
+	</div>
+	{{/if}}
+
+</div>

@@ -57,6 +57,7 @@ class FaceController extends Controller {
 		$img = new OCP_Image();
 		$fileName = $ownerView->getLocalFile($path);
 		$img->loadFromFile($fileName);
+		$img->fixOrientation();
 
 		$x = $face->getLeft ();
 		$y = $face->getTop ();

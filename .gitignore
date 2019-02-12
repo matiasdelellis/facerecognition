@@ -1,5 +1,6 @@
 build
 js/handlebars.js
+js/templates.js
 js/lozad.js
 vendor/
 models/1

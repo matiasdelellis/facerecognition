@@ -13,6 +13,10 @@
             return t('facerecognition', 'Persons');
         },
 
+        getIcon: function() {
+            return 'icon-contacts-dark';
+        },
+
         render: function() {
             var fileInfo = this.getFileInfo();
 

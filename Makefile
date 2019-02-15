@@ -51,6 +51,9 @@ js/lozad.js:
 
 javascript_deps: js/handlebars.js js/lozad.js
 
+js-templates:
+	handlebars js/templates -f js/templates.js
+
 l10n_deps: translationtool.phar
 
 translationtool.phar:

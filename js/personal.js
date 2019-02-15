@@ -75,16 +75,18 @@ View.prototype = {
         });
     },
     renderContent: function () {
-        var source = $('#content-tpl').html();
-        var template = Handlebars.compile(source);
-
         this._persons.sortBySize();
 
-        var html = template({
+        var html = Handlebars.templates['personal']({
             loaded: this._persons.isLoaded(),
             persons: this._persons.getAll(),
+            appName: t('facerecognition', 'Face Recognition'),
+            welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
+            loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
+            loadingIcon: OC.imagePath('core', 'loading.gif'),
+            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
+            emptyHint: t('facerecognition', 'Please, be patient'),
         });
-
         $('#div-content').html(html);
 
         const observer = lozad('.face-preview');

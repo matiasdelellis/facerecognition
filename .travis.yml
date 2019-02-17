@@ -7,10 +7,8 @@ services:
   - postgresql
 
 php:
-  - 7.0
   - 7.1
   - 7.2
-  - nightly
 
 env:
   global:
@@ -18,8 +16,11 @@ env:
     - APP_NAME=facerecognition
   matrix:
     - DB=mysql
+    - DB=mysql CORE_BRANCH=stable15
     - DB=pgsql
+    - DB=pgsql CORE_BRANCH=stable15
     - DB=sqlite
+    - DB=sqlite CORE_BRANCH=stable15
 
 before_install:
   - make

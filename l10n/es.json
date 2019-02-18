@@ -13,12 +13,12 @@
     "Rename Person" : "Renombrar Persona",
     "Cancel" : "Cancelar",
     "Face Recognition" : "Reconocimiento Facial",
+    "Here you can see photos of your friends that are recognized" : "Aqui puedes ver fotos de tus amigos reconocidos",
+    "Looking for your recognized friends" : "Buscando tus amigos reconocidos",
+    "Your friends have not been recognized yet" : "Tus amigos aún no han sido reconocidos",
     "A face recognition app" : "Una aplicación de reconocimiento facial",
     "Open Documentation" : "Abrir Documentación",
     "Configuration information" : "Información de la configuración",
-    "Current status" : "Estado actual",
-    "Here you can see photos of your friends that are recognized" : "Aqui puedes ver fotos de tus amigos reconocidos",
-    "Your friends have not been recognized yet" : "Tus amigos aún no han sido reconocidos",
-    "Looking for your recognized friends" : "Buscando tus amigos reconocidos"
+    "Current status" : "Estado actual"
 },"pluralForm" :""
 }

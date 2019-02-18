@@ -1,8 +1,8 @@
 build
-js/handlebars.js
 js/templates.js
-js/lozad.js
-vendor/
-models/1
+vendor/*
+!vendor/models
+!vendor/models/README.md
+!vendor/models/LICENCE.md
 clover.xml
 translationtool.phar

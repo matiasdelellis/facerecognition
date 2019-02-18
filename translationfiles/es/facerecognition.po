@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nextcloud 3.14159\n"
 "Report-Msgid-Bugs-To: translations\\@example.com\n"
-"POT-Creation-Date: 2018-12-17 11:57-0300\n"
+"POT-Creation-Date: 2019-02-17 20:00-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,76 +17,88 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:6
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:8
 msgid "Analyzing images"
 msgstr "Analizando imagenes"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:8
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:10
 msgid ""
 "{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}"
 msgstr ""
 "{processedImages} de {totalImages} - Finaliza aproximadamente "
 "{estimatedFinalize}"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:18
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:20
 #: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:17
 msgid "Stopped"
 msgstr "Detenido"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:20
+#: /var/www/html/nextcloud/apps/facerecognition/js/admin.js:22
 msgid "{processedImages} images in queue"
 msgstr "{processedImages} imagenes en cola"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:12
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:13
 msgid "Persons"
 msgstr "Personas"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:22
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:27
 msgid "Looking for faces in this image…"
 msgstr "Buscando rostros en esta imagen…"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:62
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:141
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:67
 #: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:147
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:109
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:115
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:153
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:111
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:117
 msgid "Rename"
 msgstr "Renombrar"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:85
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:91
 msgid "No people found"
 msgstr "No se encontraron personas"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:91
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:97
 msgid "This image is not yet analyzed"
 msgstr "Esta imagen aún no ha sido analizada"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:92
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:34
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:98
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:88
 msgid "Please, be patient"
 msgstr "Por favor sea paciente"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:133
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:97
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:139
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:99
 msgid "Please enter a name to rename the person"
 msgstr "Por favor ingrese un nombre para renombrar la persona"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:134
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:98
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:140
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:100
 msgid "Rename Person"
 msgstr "Renombrar Persona"
 
-#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:146
-#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:114
+#: /var/www/html/nextcloud/apps/facerecognition/js/files-tabview.js:152
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:116
 msgid "Cancel"
 msgstr "Cancelar"
 
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:83
 #: /var/www/html/nextcloud/apps/facerecognition/lib/Settings/PersonalSection.php:49
 #: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:2
 #: /var/www/html/nextcloud/apps/facerecognition/templates/admin.php:8
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:12
 msgid "Face Recognition"
 msgstr "Reconocimiento Facial"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:84
+msgid "Here you can see photos of your friends that are recognized"
+msgstr "Aqui puedes ver fotos de tus amigos reconocidos"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:85
+msgid "Looking for your recognized friends"
+msgstr "Buscando tus amigos reconocidos"
+
+#: /var/www/html/nextcloud/apps/facerecognition/js/personal.js:87
+msgid "Your friends have not been recognized yet"
+msgstr "Tus amigos aún no han sido reconocidos"
 
 #: /var/www/html/nextcloud/apps/facerecognition/specialAppInfoFakeDummyForL10nScript.php:3
 msgid "A face recognition app"
@@ -114,17 +126,31 @@ msgstr "Información de la configuración"
 msgid "Current status"
 msgstr "Estado actual"
 
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:13
-msgid "Here you can see photos of your friends that are recognized"
-msgstr "Aqui puedes ver fotos de tus amigos reconocidos"
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Federation/Exceptions/ActionNotSupportedException.php:44
+#, php-format
+msgid "Action \"%s\" not supported or implemented."
+msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:33
-msgid "Your friends have not been recognized yet"
-msgstr "Tus amigos aún no han sido reconocidos"
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Federation/Exceptions/AuthenticationFailedException.php:44
+msgid "Authentication failed, wrong token or provider ID given"
+msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/templates/settings/personal.php:39
-msgid "Looking for your recognized friends"
-msgstr "Buscando tus amigos reconocidos"
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Federation/Exceptions/BadRequestException.php:49
+#, php-format
+msgid ""
+"Parameters missing in order to complete the request. Missing Parameters: \"%s"
+"\""
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Federation/Exceptions/ProviderAlreadyExistsException.php:46
+#, php-format
+msgid "ID \"%s\" already used by cloud federation provider \"%s\""
+msgstr ""
+
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Federation/Exceptions/ProviderDoesNotExistsException.php:45
+#, php-format
+msgid "Cloud Federation Provider with ID: \"%s\" does not exist."
+msgstr ""
 
 #: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/LockNotAcquiredException.php:49
 #, php-format
@@ -146,7 +172,7 @@ msgstr ""
 msgid "Storage connection error. %s"
 msgstr ""
 
-#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageNotAvailableException.php:61
+#: /var/www/html/nextcloud/apps/facerecognition/vendor/christophwurst/nextcloud/OCP/Files/StorageNotAvailableException.php:63
 msgid "Storage is temporarily not available"
 msgstr ""
 

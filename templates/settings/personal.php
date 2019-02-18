@@ -1,7 +1,7 @@
 <?php
-script('facerecognition', 'handlebars');
+vendor_script('facerecognition', 'js/handlebars');
+vendor_script('facerecognition', 'js/lozad');
 script('facerecognition', 'templates');
-script('facerecognition', 'lozad');
 script('facerecognition', 'personal');
 style('facerecognition', 'facerecognition');
 ?>

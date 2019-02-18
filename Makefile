@@ -11,7 +11,23 @@ package_name=$(app_name)
 cert_dir=$(HOME)/.nextcloud/certificates
 composer=$(shell which composer 2> /dev/null)
 
-default: deps
+
+# Default rule
+
+default: build
+
+
+# Some utils rules
+
+test-bin-deps:
+	@echo "Checking binaries needed to build the application"
+	@echo "Testing curl, wget and bzip2. If one is missing, install it with the tools of your system."
+	curl -V
+	wget -V
+#	bzip2 -V # FIXME: bzip2 always return an error.
+	@echo "Testing handlebars needed to compile the templates. If it fails install as:"
+	@echo " # sudo npm install handlebars -g"
+	handlebars -v
 
 composer:
 ifeq (,$(composer))
@@ -26,47 +42,61 @@ else
 	composer update --prefer-dist
 endif
 
-models/1/mmod_human_face_detector.dat:
-	mkdir -p models/1
-	wget https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2 -O models/1/mmod_human_face_detector.dat.bz2
-	bzip2 -d models/1/mmod_human_face_detector.dat.bz2
 
-models/1/dlib_face_recognition_resnet_model_v1.dat:
-	mkdir -p models/1
-	wget https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2 -O models/1/dlib_face_recognition_resnet_model_v1.dat.bz2
-	bzip2 -d models/1/dlib_face_recognition_resnet_model_v1.dat.bz2
+# Dependencies of the application
 
-models/1/shape_predictor_5_face_landmarks.dat:
-	mkdir -p models/1
-	wget https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2 -O models/1/shape_predictor_5_face_landmarks.dat.bz2
-	bzip2 -d models/1/shape_predictor_5_face_landmarks.dat.bz2
+vendor/models/1/mmod_human_face_detector.dat:
+	mkdir -p vendor/models/1
+	wget https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2 -O vendor/models/1/mmod_human_face_detector.dat.bz2
+	bzip2 -d vendor/models/1/mmod_human_face_detector.dat.bz2
 
-download_models: models/1/mmod_human_face_detector.dat models/1/dlib_face_recognition_resnet_model_v1.dat models/1/shape_predictor_5_face_landmarks.dat
+vendor/models/1/dlib_face_recognition_resnet_model_v1.dat:
+	mkdir -p vendor/models/1
+	wget https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2 -O vendor/models/1/dlib_face_recognition_resnet_model_v1.dat.bz2
+	bzip2 -d vendor/models/1/dlib_face_recognition_resnet_model_v1.dat.bz2
 
-js/handlebars.js:
-	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js -O js/handlebars.js
+vendor/models/1/shape_predictor_5_face_landmarks.dat:
+	mkdir -p vendor/models/1
+	wget https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2 -O vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
+	bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
 
-js/lozad.js:
-	wget https://raw.githubusercontent.com/ApoorvSaxena/lozad.js/master/dist/lozad.js -O js/lozad.js
+download_models: vendor/models/1/mmod_human_face_detector.dat vendor/models/1/dlib_face_recognition_resnet_model_v1.dat vendor/models/1/shape_predictor_5_face_landmarks.dat
 
-javascript_deps: js/handlebars.js js/lozad.js
+vendor/js/handlebars.js:
+	mkdir -p vendor/js
+	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js -O vendor/js/handlebars.js
 
-js-templates:
-	handlebars js/templates -f js/templates.js
+vendor/js/lozad.js:
+	mkdir -p vendor/js
+	wget https://raw.githubusercontent.com/ApoorvSaxena/lozad.js/master/dist/lozad.js -O vendor/js/lozad.js
 
-l10n_deps: translationtool.phar
+javascript_deps: vendor/js/handlebars.js vendor/js/lozad.js
+
+vendor-deps: download_models composer javascript_deps
+
+
+# L10N Rules
 
 translationtool.phar:
 	wget https://github.com/nextcloud/docker-ci/raw/master/translations/translationtool/translationtool.phar -O translationtool.phar
 
-deps: download_models composer javascript_deps l10n_deps
-
-update-pot:
+l10n-update-pot: translationtool.phar
 	php translationtool.phar create-pot-files
 	msgmerge -U translationfiles/es/facerecognition.po translationfiles/templates/facerecognition.pot
 
-update-translations:
+l10n-update-translations: translationtool.phar
 	php translationtool.phar convert-po-files
+
+l10n_deps: translationtool.phar
+
+
+# Build Rules
+
+js-templates:
+	handlebars js/templates -f js/templates.js
+
+build: test-bin-deps vendor-deps js-templates
+	@echo "Build done. You can enable the application in Nextcloud."
 
 appstore:
 	mkdir -p $(sign_dir)
@@ -95,13 +125,13 @@ appstore:
 		-C $(sign_dir) $(app_name)
 	openssl dgst -sha512 -sign $(cert_dir)/$(app_name).key $(build_dir)/$(app_name).tar.gz | openssl base64
 
-test: deps
+test: build
 	phpunit --coverage-clover clover.xml -c phpunit.xml
 
 clean:
 	rm -rf ./build
-	rm -f js/handlebars.js js/lozad.js
+	rm -rf vendor
 	rm -f models/1/mmod_human_face_detector.dat
 	rm -f models/1/dlib_face_recognition_resnet_model_v1.dat
 	rm -f models/1/shape_predictor_5_face_landmarks.dat
-	rm -r translationtool.phar
+	rm -f translationtool.phar

@@ -1,8 +1,9 @@
 build
-js/handlebars.js
 js/templates.js
-js/lozad.js
-vendor/
-models/1
+vendor/models/1
+vendor/autoload.php
+vendor/christophwurst/
+vendor/composer/
+vendor/js/
 clover.xml
 translationtool.phar

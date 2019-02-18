@@ -68,7 +68,7 @@ class Requirements
 			return NULL;
 		}
 
-		$fullPath = $this->appManager->getAppPath('facerecognition') . '/models/1/' . $file;
+		$fullPath = $this->appManager->getAppPath('facerecognition') . '/vendor/models/1/' . $file;
 		if (file_exists($fullPath)) {
 			return $fullPath;
 		} else {

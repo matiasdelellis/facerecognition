@@ -1,7 +1,6 @@
 build
 js/templates.js
 vendor/*
-!vendor/models
 !vendor/models/README.md
 !vendor/models/LICENCE.md
 clover.xml

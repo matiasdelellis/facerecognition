@@ -80,6 +80,7 @@ View.prototype = {
         var html = Handlebars.templates['personal']({
             loaded: this._persons.isLoaded(),
             persons: this._persons.getAll(),
+            appPath: OC.generateUrl('/'),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),

@@ -45,6 +45,12 @@ use OCP\AppFramework\Db\Entity;
 class Face extends Entity implements JsonSerializable {
 
 	/**
+	 * Database type, needed to format dates
+	 * @var string
+	 */
+	private $databaseType = 'sqlite';
+
+	/**
 	 * Image from this face originated from.
 	 *
 	 * @var int
@@ -120,6 +126,10 @@ class Face extends Entity implements JsonSerializable {
 		return $face;
 	}
 
+	public function setDatabaseType(string $type) {
+		$this->databaseType = $type;
+	}
+
 	/**
 	 * Helper method, to normalize face sizes back to original dimensions, based on ratio
 	 *
@@ -160,7 +170,7 @@ class Face extends Entity implements JsonSerializable {
 			'top' => $this->top,
 			'bottom' => $this->bottom,
 			'descriptor' => $this->descriptor,
-			'creation_time' => $this->creationTime
+			'creation_time' => $this->getCreationTime(true)
 		];
 	}
 

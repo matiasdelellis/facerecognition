@@ -3,33 +3,14 @@ namespace OCA\FaceRecognition\Db;
 
 use OC\DB\QueryBuilder\Literal;
 
-use OCP\IConfig;
 use OCP\IDBConnection;
-
-use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class FaceMapper extends QBMapper {
-	/** @var IConfig Config */
-	private $config;
-
-	public function __construct(IDBConnection $db, IConfig $config) {
+	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\Face');
-		$this->config = $config;
-	}
-
-	public function insert(Entity $entity): Entity {
-		$databaseType = $this->config->getSystemValue('dbtype', 'sqlite');
-		$entity->setDatabaseType($databaseType);
-		return parent::insert($entity);
-	}
-
-	public function update(Entity $entity, $updateModified = true): Entity {
-		$databaseType = $this->config->getSystemValue('dbtype', 'sqlite');
-		$entity->setDatabaseType($databaseType);
-		return parent::update($entity);
 	}
 
 	public function find (int $faceId): Face {

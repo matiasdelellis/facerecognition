@@ -169,4 +169,33 @@ class FaceMapper extends QBMapper {
 			->setParameter('user', $userId)
 			->execute();
 	}
+
+	/**
+	 * Insert one face to database.
+	 * Note: only reason we are not using (idiomatic) QBMapper method is
+	 * because "QueryBuilder::PARAM_DATE" cannot be set there
+	 *
+	 * @param Face $face Face to insert
+	 * @param IDBConnection $db Existing connection, if we need to reuse it. Null if we commit immediatelly.
+	 */
+	public function insertFace(Face $face, IDBConnection $db = null) {
+		if ($db !== null) {
+			$qb = $db->getQueryBuilder();
+		} else {
+			$qb = $this->db->getQueryBuilder();
+		}
+
+		$qb->insert($this->getTableName())
+			->values([
+				'image' => $qb->createNamedParameter($face->image),
+				'person' => $qb->createNamedParameter($face->person),
+				'left' => $qb->createNamedParameter($face->left),
+				'right' => $qb->createNamedParameter($face->right),
+				'top' => $qb->createNamedParameter($face->top),
+				'bottom' => $qb->createNamedParameter($face->bottom),
+				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
+				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
+			])
+			->execute();
+	}
 }

@@ -105,7 +105,7 @@ class ResetAllTest extends TestCase {
 		// Add one face to DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100));
-		$faceMapper->insert($face);
+		$faceMapper->insertFace($face);
 		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
 

@@ -173,12 +173,6 @@ class Face extends Entity implements JsonSerializable {
 		$this->markFieldUpdated('descriptor');
 	}
 
-	public function getCreationTime(): string {
-		// Deck app have special handling for MySQL here:
-		// https://github.com/nextcloud/deck/blob/139b38ca1df0ff17792eb218cc8ba7e3b04b4e51/lib/Db/Card.php#L84
-		return $this->creationTime->format('c');
-	}
-
 	public function setCreationTime($creationTime) {
 		if (is_a($creationTime, 'DateTime')) {
 			$this->creationTime = $creationTime;

@@ -31,9 +31,12 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class ImageMapper extends QBMapper {
+	/** @var FaceMapper Face mapper*/
+	private $faceMapper;
 
-	public function __construct(IDBConnection $db) {
+	public function __construct(IDBConnection $db, FaceMapper $faceMapper) {
 		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
+		$this->faceMapper = $faceMapper;
 	}
 
 	public function find(string $userId, int $imageId): Image {
@@ -242,21 +245,7 @@ class ImageMapper extends QBMapper {
 			// Insert all faces
 			//
 			foreach ($faces as $face) {
-				// Simple INSERT will close cursor and we want to be in transaction, so use hard way
-				// todo: should we move this to FaceMapper (don't forget to hand over connection though)
-				$qb = $this->db->getQueryBuilder();
-				$qb->insert('face_recognition_faces')
-					->values([
-						'image' => $qb->createNamedParameter($image->id),
-						'person' => $qb->createNamedParameter(null),
-						'left' => $qb->createNamedParameter($face->left),
-						'right' => $qb->createNamedParameter($face->right),
-						'top' => $qb->createNamedParameter($face->top),
-						'bottom' => $qb->createNamedParameter($face->bottom),
-						'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
-						'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
-					])
-					->execute();
+				$this->faceMapper->insertFace($face, $this->db);
 			}
 
 			$this->db->commit();

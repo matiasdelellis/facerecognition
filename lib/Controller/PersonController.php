@@ -4,6 +4,8 @@ namespace OCA\FaceRecognition\Controller;
 use OCP\IRequest;
 use OCP\IConfig;
 use OCP\Files\IRootFolder;
+use OCP\IUserSession;
+use OCP\IURLGenerator;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -25,27 +27,33 @@ class PersonController extends Controller {
 
 	private $config;
 	private $rootFolder;
+	private $userSession;
+	private $urlGenerator;
 	private $faceMapper;
 	private $imageMapper;
 	private $personMapper;
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest     $request,
-	                            IConfig      $config,
-	                            IRootFolder  $rootFolder,
-	                            FaceMapper   $faceMapper,
-	                            ImageMapper  $imageMapper,
-	                            PersonMapper $personmapper,
+	                            IRequest      $request,
+	                            IConfig       $config,
+	                            IRootFolder   $rootFolder,
+	                            IUserSession  $userSession,
+	                            IURLGenerator $urlGenerator,
+	                            FaceMapper    $faceMapper,
+	                            ImageMapper   $imageMapper,
+	                            PersonMapper  $personmapper,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
-		$this->config = $config;
-		$this->rootFolder = $rootFolder;
-		$this->imageMapper = $imageMapper;
-		$this->faceMapper = $faceMapper;
+		$this->config       = $config;
+		$this->rootFolder   = $rootFolder;
+		$this->userSession  = $userSession;
+		$this->urlGenerator = $urlGenerator;
+		$this->imageMapper  = $imageMapper;
+		$this->faceMapper   = $faceMapper;
 		$this->personMapper = $personmapper;
-		$this->userId = $UserId;
+		$this->userId       = $UserId;
 	}
 
 	/**
@@ -63,8 +71,8 @@ class PersonController extends Controller {
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 				$face = [];
-				$face['id'] = $personFace->getId();
-				$face['file-id'] = $image->getFile();
+				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
+				$face['file-url'] = $this->getRedirectToFileUrl($image->getFile());
 				$faces[] = $face;
 			}
 			$cluster['name'] = $person->getName();
@@ -85,8 +93,29 @@ class PersonController extends Controller {
 		$person = $this->personMapper->find ($this->userId, $id);
 		$person->setName($name);
 		$this->personMapper->update($person);
+
 		$newPerson = $this->personMapper->find($this->userId, $id);
 		return new DataResponse($newPerson);
+	}
+
+	private function getThumbUrl($faceId) {
+		$params = [];
+		$params['id'] = $faceId;
+		$params['size'] = 50;
+		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
+	}
+
+	private function getRedirectToFileUrl($fileId) {
+		$uid        = $this->userSession->getUser()->getUID();
+		$baseFolder = $this->rootFolder->getUserFolder($uid);
+		$files      = $baseFolder->getById($fileId);
+		$file       = current($files);
+
+		$params = [];
+		$params['dir'] = $baseFolder->getRelativePath($file->getParent()->getPath());
+		$params['scrollto'] = $file->getName();
+
+		return $this->urlGenerator->linkToRoute('files.view.index', $params);
 	}
 
 }

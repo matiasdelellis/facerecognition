@@ -1,0 +1,10 @@
+[main]
+host = https://www.transifex.com
+
+[nextcloud-facerecognition.facerecognition-pot]
+file_filter = translationfiles/<lang>/facerecognition.po
+minimum_perc = 0
+source_file = translationfiles/templates/facerecognition.pot
+source_lang = en
+type = PO
+

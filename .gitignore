@@ -5,3 +5,4 @@ vendor/*
 !vendor/models/LICENCE.md
 clover.xml
 translationtool.phar
+translationfiles

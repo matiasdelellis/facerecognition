@@ -9,6 +9,7 @@ $(document).ready(function () {
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._persons = [];
+    this._person = undefined;
     this._loaded = false;
 };
 
@@ -24,6 +25,25 @@ Persons.prototype = {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    loadPerson: function (id) {
+        this.unsetPerson();
+
+        var deferred = $.Deferred();
+        var self = this;
+        $.get(this._baseUrl+'/person/'+id).done(function (person) {
+            self._person = person;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
+    unsetPerson: function () {
+        this._person = undefined;
+    },
+    getActive: function () {
+        return this._person;
     },
     isLoaded: function () {
         return this._loaded;
@@ -71,13 +91,12 @@ View.prototype = {
         this._persons.loadPersons().done(function () {
             self.render();
         }).fail(function () {
-            alert('D\'Oh!. Could not reload faces..');
+            OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
         });
     },
     renderContent: function () {
         this._persons.sortBySize();
-
-        var html = Handlebars.templates['personal']({
+        var context = {
             loaded: this._persons.isLoaded(),
             persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
@@ -85,14 +104,29 @@ View.prototype = {
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
             loadingIcon: OC.imagePath('core', 'loading.gif'),
             emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
-            emptyHint: t('facerecognition', 'Please, be patient'),
-        });
+            emptyHint: t('facerecognition', 'Please, be patient')
+        };
+
+        if (this._persons.getActive() !== undefined)
+            context.person = this._persons.getActive();
+
+        var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
 
         const observer = lozad('.face-preview');
         observer.observe();
 
         var self = this;
+
+        $('#facerecognition .person-name').click(function () {
+            var id = $(this).parent().data('id');
+            self._persons.loadPerson(id).done(function () {
+                self.renderContent();
+            }).fail(function () {
+                OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+            });
+        });
+
         $('#facerecognition .icon-rename').click(function () {
             var id = $(this).parent().data('id');
             OC.dialogs.prompt(
@@ -101,9 +135,10 @@ View.prototype = {
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.rename (id, value).done(function () {
+                            self._persons.unsetPerson();
                             self.renderContent();
                         }).fail(function () {
-                            alert('D\'Oh!. Could not rename your friend..');
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                         });
                     }
                 },
@@ -132,7 +167,7 @@ view.renderContent();
 persons.loadPersons().done(function () {
     view.renderContent();
 }).fail(function () {
-    alert('D\'Oh!. Could not load faces..');
+    OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
 });
 
 

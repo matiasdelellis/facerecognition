@@ -9,6 +9,12 @@ return ['routes' =>
 	],
 	// Change name to a person.
 	[
+		'name' => 'person#find',
+		'url'  => '/person/{id}',
+		'verb' => 'GET'
+	],
+	// Change name to a person.
+	[
 		'name' => 'person#updateName',
 		'url'  => '/person/{id}',
 		'verb' => 'PUT'

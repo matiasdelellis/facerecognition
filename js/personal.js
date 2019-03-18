@@ -91,7 +91,7 @@ View.prototype = {
         this._persons.loadPersons().done(function () {
             self.render();
         }).fail(function () {
-            alert('D\'Oh!. Could not reload faces..');
+            OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
         });
     },
     renderContent: function () {
@@ -123,7 +123,7 @@ View.prototype = {
             self._persons.loadPerson(id).done(function () {
                 self.renderContent();
             }).fail(function () {
-                alert('D\'Oh!. Could not load person..');
+                OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
             });
         });
 
@@ -138,7 +138,7 @@ View.prototype = {
                             self._persons.unsetPerson();
                             self.renderContent();
                         }).fail(function () {
-                            alert('D\'Oh!. Could not rename your friend..');
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                         });
                     }
                 },
@@ -167,7 +167,7 @@ view.renderContent();
 persons.loadPersons().done(function () {
     view.renderContent();
 }).fail(function () {
-    alert('D\'Oh!. Could not load faces..');
+    OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
 });
 
 

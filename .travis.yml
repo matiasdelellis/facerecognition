@@ -23,6 +23,11 @@ env:
     - DB=sqlite CORE_BRANCH=stable15
 
 before_install:
+  - sudo sh -c 'echo "deb [trusted=yes] http://repo.delellis.com.ar xenial main" > /etc/apt/sources.list.d/20-pdlib.list'
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+  - sudo apt update
+  - sudo apt install php7.0-pdlib
+
   - sudo apt-get install npm
   - sudo npm config set strict-ssl false
   - sudo npm install -g handlebars

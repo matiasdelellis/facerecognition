@@ -77,17 +77,27 @@ vendor-deps: download_models composer javascript_deps
 
 # L10N Rules
 
-translationtool.phar:
-	wget https://github.com/nextcloud/docker-ci/raw/master/translations/translationtool/translationtool.phar -O translationtool.phar
-
-l10n-update-pot: translationtool.phar
+l10n-update-pot:
 	php translationtool.phar create-pot-files
-	msgmerge -U translationfiles/es/facerecognition.po translationfiles/templates/facerecognition.pot
 
-l10n-update-translations: translationtool.phar
+l10n-transifex-pull:
+	tx pull -s -a
+
+l10n-transifex-push:
+	tx push -s -t
+
+l10n-transifex-apply:
 	php translationtool.phar convert-po-files
 
-l10n_deps: translationtool.phar
+l10n-clean:
+	rm -rf translationfiles
+	rm -f translationtool.phar
+
+l10n-deps:
+	@echo "Checking transifex client."
+	tx --version
+	@echo "Downloading translationtool.phar"
+	wget https://github.com/nextcloud/docker-ci/raw/master/translations/translationtool/translationtool.phar -O translationtool.phar
 
 
 # Build Rules
@@ -128,7 +138,7 @@ appstore:
 test: build
 	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml
 
-clean:
+clean: l10n-clean
 	rm -rf ./build
 	rm -f vendor/autoload.php
 	rm -rf vendor/bin/
@@ -146,4 +156,3 @@ clean:
 	rm -rf vendor/symfony/
 	rm -rf vendor/theseer/
 	rm -rf vendor/webmozart/
-	rm -f translationtool.phar

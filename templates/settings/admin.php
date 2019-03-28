@@ -12,9 +12,10 @@
 		<div>
 			<h3>
 				<strong><?php p($l->t('Sensitivity'));?></strong>
-				<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
 			</h3>
-			<p class="settings-hint"><?php p($l->t('The sensitivity determines how different the descriptors of the faces can be to consider them the same person.'));?></p>
+			<p class="settings-hint"><?php p($l->t('The sensitivity determines how different the faces can be to continue to be considered as the same person.'));?>
+				<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
+			</p>
 			<p>
 				<span><?php p($l->t('More sensitivity, more groups'));?></span>
 				<span><input type="range" id="sensitivity-range" min="0.4" max="0.6" value="0.5" step="0.01" class="ui-slider"></span>

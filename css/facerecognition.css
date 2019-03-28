@@ -33,3 +33,21 @@
 .face-preview:hover {
     opacity: .5;
 }
+
+/*
+ * Admin page
+ */
+.icon-align {
+    padding: 11px 20px;
+}
+
+.ui-slider {
+    vertical-align: middle;
+}
+
+.span-highlighted {
+    text-align: center;
+    padding: 2px 5px;
+    border-radius: 10px;
+    background-color: darkgray;
+}

@@ -142,13 +142,21 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			}
 
 			$stalePersonsCount = $this->personMapper->countPersons($userId, true);
-			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
 			$haveStalePersons = $stalePersonsCount > 0;
+			$staleCluster = $haveStalePersons === false && $haveNewFaces === false;
 
-			if ($haveStalePersons === false && $haveNewFaces === false) {
+			$recreateClusters = $this->config->getUserValue($userId, 'facerecognition', 'recreate-clusters', 'false');
+			$forceRecreation = ($recreateClusters === 'true');
+
+			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
+
+			if ($staleCluster && !$forceRecreation) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
+			}
+			else if ($forceRecreation) {
+				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
 		} else {
 			// These are basic criteria without which we should not even consider creating clusters.
@@ -186,6 +194,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
+
+		// Prevents not recreate the clusters unnecessarily.
+		$this->config->setUserValue($userId, 'facerecognition', 'recreate-clusters', 'false');
+
 	}
 
 	private function getCurrentClusters(array $faces): array {
@@ -204,6 +216,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getNewClusters(array $faces): array {
 		// Create edges for chinese whispers
 		$euclidean = new Euclidean();
+		$sensitivity = floatval($this->config->getAppValue('facerecognition', 'sensitivity', '0.5'));
+
 		$edges = array();
 		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];
@@ -212,7 +226,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				// todo: can't this distance be a method in $face1->distance($face2)?
 				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
 				// todo: extract this magic number to app param
-				if ($distance < 0.5) {
+				if ($distance < $sensitivity) {
 					$edges[] = array($i, $j);
 				}
 			}

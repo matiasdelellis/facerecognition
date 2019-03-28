@@ -31,14 +31,14 @@ before_install:
   - sudo apt-get install libdlib-dev
   - wget https://github.com/goodspb/pdlib/archive/v1.0.tar.gz
   - tar -xzf v1.0.tar.gz
-  - cd pdlib
+  - cd pdlib-1.0
   - phpize
   - ./configure --enable-debug
   - make
   - sudo make install
-  - sudo apt-get install npm
   - echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - cd ..
+  - sudo apt-get install npm
   - sudo npm config set strict-ssl false
   - sudo npm install -g handlebars
   - make

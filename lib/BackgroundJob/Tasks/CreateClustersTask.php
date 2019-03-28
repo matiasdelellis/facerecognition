@@ -142,16 +142,21 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			}
 
 			$stalePersonsCount = $this->personMapper->countPersons($userId, true);
-			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
 			$haveStalePersons = $stalePersonsCount > 0;
+			$staleCluster = $haveStalePersons === false && $haveNewFaces === false;
 
 			$recreateClusters = $this->config->getUserValue($userId, 'facerecognition', 'recreate-clusters', 'false');
-			if ($recreateClusters === 'true') {
-				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
-			} else if ($haveStalePersons === false && $haveNewFaces === false) {
+			$forceRecreation = ($recreateClusters === 'true');
+
+			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
+
+			if ($staleCluster && !$forceRecreation) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
+			}
+			else if ($forceRecreation) {
+				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
 		} else {
 			// These are basic criteria without which we should not even consider creating clusters.

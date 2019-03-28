@@ -204,6 +204,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getNewClusters(array $faces): array {
 		// Create edges for chinese whispers
 		$euclidean = new Euclidean();
+		$sensitivity = floatval($this->config->getAppValue('facerecognition', 'sensitivity', '0.5'));
+
 		$edges = array();
 		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];
@@ -212,7 +214,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				// todo: can't this distance be a method in $face1->distance($face2)?
 				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
 				// todo: extract this magic number to app param
-				if ($distance < 0.5) {
+				if ($distance < $sensitivity) {
 					$edges[] = array($i, $j);
 				}
 			}

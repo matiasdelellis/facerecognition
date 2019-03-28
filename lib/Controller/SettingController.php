@@ -33,6 +33,11 @@ class SettingController extends Controller {
 	/** @var string */
 	private $userId;
 
+	const STATE_OK = 0;
+	const STATE_FALSE = 1;
+	const STATE_SUCCESS = 2;
+	const STATE_ERROR = 3;
+
 	public function __construct ($appName,
 	                             IRequest     $request,
 	                             IConfig      $config,
@@ -59,7 +64,10 @@ class SettingController extends Controller {
 	 * @throws \OCP\PreConditionNotMetException
 	 */
 	public function setAppValue($type, $value) {
+		// Apply the change of settings
 		$this->config->setAppValue('facerecognition', $type, $value);
+
+		// Handles special cases when have to do something else according to the change
 		switch ($type) {
 			case 'sensitivity':
 				$this->userManager->callForSeenUsers(function(IUser $user) {
@@ -70,8 +78,9 @@ class SettingController extends Controller {
 				break;
 		}
 
+		// Response
 		$result = [
-			'success' => 'true',
+			'status' => self::STATE_SUCCESS,
 			'value' => $value
 		];
 		return new JSONResponse($result);
@@ -85,12 +94,12 @@ class SettingController extends Controller {
 		$value = $this->config->getAppValue('facerecognition', $type);
 		if ($value !== '') {
 			$result = [
-				'status' => 'success',
+				'status' => self::STATE_OK,
 				'value' => $value
 			];
 		} else {
 			$result = [
-				'status' => 'false',
+				'status' => self::STATE_FALSE,
 				'value' =>'nodata'
 			];
 		}

@@ -1,5 +1,11 @@
 'use strict';
 $(document).ready(function() {
+    const state = {
+        OK: 0,
+        FALSE: 1,
+        SUCCESS: 2,
+        ERROR:  3
+    }
 
     function checkProgress() {
         $.get(OC.generateUrl('/apps/facerecognition/process')).done(function (progress) {
@@ -34,7 +40,7 @@ $(document).ready(function() {
                 'type': 'sensitivity',
             },
             success: function (data) {
-                if (data.status === 'success') {
+                if (data.status === state.OK) {
                     var sensitivity = parseFloat(data.value);
                     $('#sensitivity-range').val(sensitivity);
                     $('#sensitivity-value').html(sensitivity);
@@ -68,8 +74,8 @@ $(document).ready(function() {
                 'value': sensitivity
             },
             success: function (data) {
-                if (data.success === 'true') {
-                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved'));
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
                     $('#restore-sensitivity').hide();
                     $('#save-sensitivity').hide();
                 }

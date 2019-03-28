@@ -25,7 +25,20 @@ env:
     - DB=sqlite CORE_BRANCH=stable15
 
 before_install:
+  - sudo sh -c 'echo "deb [trusted=yes] http://repo.delellis.com.ar xenial main" > /etc/apt/sources.list.d/20-pdlib.list'
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+  - sudo apt update
+  - sudo apt-get install libdlib-dev
+  - wget https://github.com/goodspb/pdlib/archive/v1.0.tar.gz
+  - tar -xzf v1.0.tar.gz
+  - cd pdlib
+  - phpize
+  - ./configure --enable-debug
+  - make
+  - sudo make install
   - sudo apt-get install npm
+  - echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+  - cd ..
   - sudo npm config set strict-ssl false
   - sudo npm install -g handlebars
   - make

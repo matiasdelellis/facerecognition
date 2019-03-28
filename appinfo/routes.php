@@ -31,6 +31,17 @@ return ['routes' =>
 		'url'  => '/file',
 		'verb' => 'GET'
 	],
+	// App settings
+	[
+		'name' => 'setting#setAppValue',
+		'url' => '/setappvalue',
+		'verb' => 'GET'
+	],
+	[
+		'name' => 'setting#getAppValue',
+		'url' => '/getappvalue',
+		'verb' => 'GET'
+	],
 	// Get process status.
 	[
 		'name' => 'process#index',

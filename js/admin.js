@@ -26,7 +26,66 @@ $(document).ready(function() {
         });
     }
 
+    function getSensitivity() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'sensitivity',
+            },
+            success: function (data) {
+                if (data.status === 'success') {
+                    var sensitivity = parseFloat(data.value);
+                    $('#sensitivity-range').val(sensitivity);
+                    $('#sensitivity-value').html(sensitivity);
+                }
+            }
+        });
+    }
+
+    $('#sensitivity-range').on('input', function() {
+        $('#sensitivity-value').html(this.value);
+        $('#restore-sensitivity').show();
+        $('#save-sensitivity').show();
+    });
+
+    $('#restore-sensitivity').on('click', function(event) {
+        event.preventDefault();
+        getSensitivity();
+
+        $('#restore-sensitivity').hide();
+        $('#save-sensitivity').hide();
+    });
+
+    $('#save-sensitivity').on('click', function(event) {
+        event.preventDefault();
+        var sensitivity = $('#sensitivity-range').val().toString();
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'sensitivity',
+                'value': sensitivity
+            },
+            success: function (data) {
+                if (data.success === 'true') {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved'));
+                    $('#restore-sensitivity').hide();
+                    $('#save-sensitivity').hide();
+                }
+            }
+        });
+    });
+
+    /*
+     * Get initial values.
+     */
+    getSensitivity();
     checkProgress();
+
+    /*
+     * Update progress
+     */
     window.setInterval(checkProgress, 5000);
 
 });

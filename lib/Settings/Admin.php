@@ -71,7 +71,7 @@ class Admin implements ISettings {
 			'resume' => $resume,
 		];
 
-		return new TemplateResponse('facerecognition', 'admin', $params, '');
+		return new TemplateResponse('facerecognition', 'settings/admin', $params, '');
 
 	}
 }

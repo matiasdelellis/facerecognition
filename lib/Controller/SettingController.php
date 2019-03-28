@@ -53,6 +53,14 @@ class SettingController extends Controller {
 	 */
 	public function setAppValue($type, $value) {
 		$this->config->setAppValue('facerecognition', $type, $value);
+		switch ($type) {
+			case 'sensitivity':
+				$this->config->setAppValue('facerecognition', 'recreate-clusters', 'true');
+				break;
+			default:
+				break;
+		}
+
 		$result = [
 			'success' => 'true',
 			'value' => $value

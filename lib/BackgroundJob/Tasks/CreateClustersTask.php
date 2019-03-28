@@ -98,6 +98,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$this->createClusterIfNeeded($user);
 		}
 
+		$this->config->setAppValue('facerecognition', 'recreate-clusters', 'false');
+
 		return true;
 	}
 
@@ -145,7 +147,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
 			$haveStalePersons = $stalePersonsCount > 0;
 
-			if ($haveStalePersons === false && $haveNewFaces === false) {
+			$recreateClusters = $this->config->getAppValue('facerecognition', 'recreate-clusters', 'false');
+			if ($recreateClusters === 'true') {
+				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
+			} else if ($haveStalePersons === false && $haveNewFaces === false) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
@@ -186,6 +191,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
+
 	}
 
 	private function getCurrentClusters(array $faces): array {

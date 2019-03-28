@@ -10,11 +10,16 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IConfig;
+use OCP\IUserManager;
+use OCP\IUser;
 
 class SettingController extends Controller {
 
 	/** @var IConfig */
 	private $config;
+
+	/** @var IUserManager */
+	private $userManager;
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -31,18 +36,20 @@ class SettingController extends Controller {
 	public function __construct ($appName,
 	                             IRequest     $request,
 	                             IConfig      $config,
+	                             IUserManager $userManager,
 	                             FaceMapper   $faceMapper,
 	                             ImageMapper  $imageMapper,
 	                             PersonMapper $personMapper,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
-		$this->appName = $appName;
-		$this->config = $config;
-		$this->faceMapper = $faceMapper;
-		$this->imageMapper = $imageMapper;
+		$this->appName      = $appName;
+		$this->config       = $config;
+		$this->userManager  = $userManager;
+		$this->faceMapper   = $faceMapper;
+		$this->imageMapper  = $imageMapper;
 		$this->personMapper = $personMapper;
-		$this->userId = $userId;
+		$this->userId       = $userId;
 	}
 
 	/**
@@ -55,7 +62,9 @@ class SettingController extends Controller {
 		$this->config->setAppValue('facerecognition', $type, $value);
 		switch ($type) {
 			case 'sensitivity':
-				$this->config->setAppValue('facerecognition', 'recreate-clusters', 'true');
+				$this->userManager->callForSeenUsers(function(IUser $user) {
+					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
+				});
 				break;
 			default:
 				break;

@@ -63,6 +63,8 @@ class PersonController extends Controller {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$resp = array();
+		$resp['enabled'] = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', false);
+		$resp['clusters'] = array();
 		$persons = $this->personMapper->findAll($this->userId);
 		foreach ($persons as $person) {
 			$cluster = [];
@@ -78,7 +80,8 @@ class PersonController extends Controller {
 			$cluster['name'] = $person->getName();
 			$cluster['id'] = $person->getId();
 			$cluster['faces'] = $faces;
-			$resp[] = $cluster;
+
+			$resp['clusters'][] = $cluster;
 		}
 		return new DataResponse($resp);
 	}

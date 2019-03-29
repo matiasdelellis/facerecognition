@@ -18,7 +18,7 @@
 		</div>
 	</div>
 	{{else if persons}}
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1">
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div id="persons-navigation">
 		{{#each persons}}
@@ -36,7 +36,7 @@
 		{{/each}}
 	</div>
 	{{else if loaded}}
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1">
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div class="emptycontent">
 		<div class="icon-user svg"></div>

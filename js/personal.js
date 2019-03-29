@@ -15,17 +15,19 @@ const state = {
  */
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
+    this._enabled = false;
     this._persons = [];
     this._person = undefined;
     this._loaded = false;
 };
 
 Persons.prototype = {
-    loadPersons: function () {
+    load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/persons').done(function (clusters) {
-            self._persons = clusters;
+        $.get(this._baseUrl+'/persons').done(function (response) {
+            self._enabled = response.enabled;
+            self._persons = response.clusters;
             self._loaded = true;
             deferred.resolve();
         }).fail(function () {
@@ -54,6 +56,9 @@ Persons.prototype = {
     },
     isLoaded: function () {
         return this._loaded;
+    },
+    isEnabled: function () {
+        return this._enabled;
     },
     sortBySize: function () {
         this._persons.sort(function(a, b) {
@@ -134,6 +139,9 @@ View.prototype = {
             emptyHint: t('facerecognition', 'Please, be patient')
         };
 
+        if (this._persons.isEnabled() === 'true')
+            context.enabled = true;
+
         if (this._persons.getActive() !== undefined)
             context.person = this._persons.getActive();
 
@@ -211,7 +219,7 @@ var view = new View(persons);
 
 view.renderContent();
 
-persons.loadPersons().done(function () {
+persons.load().done(function () {
     view.renderContent();
 }).fail(function () {
     OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));

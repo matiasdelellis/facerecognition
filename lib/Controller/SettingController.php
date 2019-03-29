@@ -2,9 +2,7 @@
 
 namespace OCA\FaceRecognition\Controller;
 
-use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\FaceManagementService;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
@@ -33,35 +31,82 @@ class SettingController extends Controller {
 	/** @var string */
 	private $userId;
 
+	/** @var FaceManagementService */
+	private $faceManagementService;
+
 	const STATE_OK = 0;
 	const STATE_FALSE = 1;
 	const STATE_SUCCESS = 2;
 	const STATE_ERROR = 3;
 
 	public function __construct ($appName,
-	                             IRequest     $request,
-	                             IConfig      $config,
-	                             IUserManager $userManager,
-	                             FaceMapper   $faceMapper,
-	                             ImageMapper  $imageMapper,
-	                             PersonMapper $personMapper,
+	                             IRequest              $request,
+	                             IConfig               $config,
+	                             IUserManager          $userManager,
+	                             FaceManagementService $faceManagementService,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
-		$this->appName      = $appName;
-		$this->config       = $config;
-		$this->userManager  = $userManager;
-		$this->faceMapper   = $faceMapper;
-		$this->imageMapper  = $imageMapper;
-		$this->personMapper = $personMapper;
-		$this->userId       = $userId;
+		$this->appName               = $appName;
+		$this->config                = $config;
+		$this->userManager           = $userManager;
+		$this->faceManagementService = $faceManagementService;
+		$this->userId                = $userId;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @param $type
+	 * @param $value
+	 * @return JSONResponse
+	 */
+	public function setUserValue($type, $value) {
+		// Apply the change of settings
+		$this->config->setUserValue($this->userId, $this->appName, $type, $value);
+
+		// Handles special cases when have to do something else according to the change
+		switch ($type) {
+			case 'enabled':
+				if ($value === 'false')
+					$this->faceManagementService->resetAllForUser($this->userId);
+				break;
+			default:
+				break;
+		}
+
+		// Response
+		$result = [
+			'status' => self::STATE_SUCCESS,
+			'value' => $value
+		];
+		return new JSONResponse($result);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @param $type
+	 * @return JSONResponse
+	 */
+	public function getUserValue($type) {
+		$value = $this->config->getUserValue($this->userId, $this->appName, $type);
+		if ($value !== '') {
+			$result = [
+				'status' => self::STATE_OK,
+				'value' => $value
+			];
+		} else {
+			$result = [
+				'status' => self::STATE_FALSE,
+				'value' =>'nodata'
+			];
+		}
+		return new JSONResponse($result);
 	}
 
 	/**
 	 * @param $type
 	 * @param $value
 	 * @return JSONResponse
-	 * @throws \OCP\PreConditionNotMetException
 	 */
 	public function setAppValue($type, $value) {
 		// Apply the change of settings
@@ -103,9 +148,7 @@ class SettingController extends Controller {
 				'value' =>'nodata'
 			];
 		}
-		$response = new JSONResponse();
-		$response->setData($result);
-		return $response;
+		return new JSONResponse($result);
 	}
 
 }

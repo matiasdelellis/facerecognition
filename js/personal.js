@@ -3,6 +3,13 @@
 
 $(document).ready(function () {
 
+const state = {
+    OK: 0,
+    FALSE: 1,
+    SUCCESS: 2,
+    ERROR:  3
+}
+
 /*
  * Faces in memory handlers.
  */
@@ -94,6 +101,25 @@ View.prototype = {
             OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
         });
     },
+    setEnabledUser: function (enabled) {
+        var self = this;
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/setuservalue'),
+            data: {
+                'type': 'enabled',
+                'value': enabled
+            },
+            success: function () {
+                if (enabled) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
+                    self.reload();
+                }
+            }
+        });
+    },
     renderContent: function () {
         this._persons.sortBySize();
         var context = {
@@ -101,6 +127,7 @@ View.prototype = {
             persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
+            enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
             loadingIcon: OC.imagePath('core', 'loading.gif'),
             emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
@@ -117,6 +144,26 @@ View.prototype = {
         observer.observe();
 
         var self = this;
+
+        $('#enableFacerecognition').click(function() {
+            var enabled = $(this).is(':checked');
+            if (enabled === false) {
+                OC.dialogs.confirm(
+                    t('facerecognition', 'You will lose all the information analyzed, and if you re-enable it, you will start from scratch.'),
+                    t('facerecognition', 'Do you want to deactivate the grouping by faces?'),
+                    function (result) {
+                        if (result === true) {
+                            self.setEnabledUser (false);
+                        } else {
+                            $('#enableFacerecognition').prop('checked', true);
+                        }
+                    },
+                    true
+                );
+            } else {
+                self.setEnabledUser (true);
+            }
+        });
 
         $('#facerecognition .person-name').click(function () {
             var id = $(this).parent().data('id');

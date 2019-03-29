@@ -31,6 +31,17 @@ return ['routes' =>
 		'url'  => '/file',
 		'verb' => 'GET'
 	],
+	// User settings
+	[
+		'name' => 'setting#setUserValue',
+		'url' => '/setuservalue',
+		'verb' => 'GET'
+	],
+	[
+		'name' => 'setting#getUserValue',
+		'url' => '/getuservalue',
+		'verb' => 'GET'
+	],
 	// App settings
 	[
 		'name' => 'setting#setAppValue',

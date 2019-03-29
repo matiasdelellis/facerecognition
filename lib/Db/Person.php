@@ -80,4 +80,13 @@ class Person extends Entity implements JsonSerializable {
 			'linked_user' => $this->linkedUser
 		];
 	}
+
+	public function setIsValid($isValid) {
+		if (is_bool($isValid)) {
+			$this->isValid = $isValid;
+		} else {
+			$this->isValid = filter_var($isValid, FILTER_VALIDATE_BOOLEAN);
+		}
+		$this->markFieldUpdated('isValid');
+	}
 }

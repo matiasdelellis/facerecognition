@@ -2,6 +2,7 @@
 
 namespace OCA\FaceRecognition\Controller;
 
+use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\FaceManagementService;
 
 use OCP\AppFramework\Controller;
@@ -69,6 +70,8 @@ class SettingController extends Controller {
 			case 'enabled':
 				if ($value === 'false')
 					$this->faceManagementService->resetAllForUser($this->userId);
+				else
+					$this->config->setUserValue($this->userId, $this->appName, AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 				break;
 			default:
 				break;

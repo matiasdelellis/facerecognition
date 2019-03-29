@@ -119,8 +119,8 @@ View.prototype = {
                 if (enabled) {
                     OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
                 } else {
-                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled, we eliminate all information for the recognition of your friends.'));
-                    self.reload();
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. In the next execution your data will be completely eliminated.'));
+                    location.reload();
                 }
             }
         });

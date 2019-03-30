@@ -84,14 +84,14 @@ class Image extends Entity implements JsonSerializable {
 	 *
 	 * @var timestamp|null
 	*/
-	protected $last_processed_time;
+	protected $lastProcessedTime;
 
 	/**
 	 * Duration (in ms) it took to completely process this image. Should serve as a way to give estimates to user.
 	 *
 	 * @var integer|null
 	*/
-	protected $processing_duration;
+	protected $processingDuration;
 
 	public function jsonSerialize() {
 		return [
@@ -101,8 +101,17 @@ class Image extends Entity implements JsonSerializable {
 			'model' => $this->model,
 			'is_processed' => $this->isProcessed,
 			'error' => $this->error,
-			'last_processed_time' => $this->last_processed_time,
-			'processing_duration' => $this->processing_duration
+			'last_processed_time' => $this->lastProcessedTime,
+			'processing_duration' => $this->processingDuration
 		];
+	}
+
+	public function setIsProcessed($isProcessed) {
+		if (is_bool($isProcessed)) {
+			$this->isProcessed = $isProcessed;
+		} else {
+			$this->isProcessed = filter_var($isProcessed, FILTER_VALIDATE_BOOLEAN);
+		}
+		$this->markFieldUpdated('isProcessed');
 	}
 }

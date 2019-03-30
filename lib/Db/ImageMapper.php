@@ -41,7 +41,7 @@ class ImageMapper extends QBMapper {
 
 	public function find(string $userId, int $imageId): Image {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'file')
+		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from('face_recognition_images', 'i')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($imageId)));

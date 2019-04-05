@@ -49,7 +49,7 @@ class PersonMapper extends QBMapper {
 		return $person;
 	}
 
-	public function findAll (string $userId): array {
+	public function findAll(string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from('face_recognition_persons', 'p')
@@ -148,7 +148,7 @@ class PersonMapper extends QBMapper {
 
 	/**
 	 * Based on current clusters and new clusters, do database reconciliation.
-	 * It tries to do that in minumal number of SQL queries. Operation is atomic.
+	 * It tries to do that in minimal number of SQL queries. Operation is atomic.
 	 *
 	 * Clusters are array, where keys are ID of persons, and values are indexed arrays
 	 * with values that are ID of the faces for those persons.

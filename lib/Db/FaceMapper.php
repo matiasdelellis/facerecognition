@@ -22,15 +22,6 @@ class FaceMapper extends QBMapper {
 		return $faces;
 	}
 
-	public function findAllFromPerson (int $personId): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
-			->from('face_recognition_faces', 'f')
-			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)));
-		$faces = $this->findEntities($qb);
-		return $faces;
-	}
-
 	/**
 	 * Counts all the faces that belong to images of a given user, created using given model
 	 *
@@ -197,5 +188,6 @@ class FaceMapper extends QBMapper {
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])
 			->execute();
+		$face->setId((int) $qb->getLastInsertId());
 	}
 }

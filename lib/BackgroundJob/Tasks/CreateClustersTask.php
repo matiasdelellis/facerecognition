@@ -96,6 +96,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 		foreach($eligable_users as $user) {
 			$this->createClusterIfNeeded($user);
+			yield;
 		}
 
 		return true;
@@ -159,6 +160,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
 		} else {
+			// User should not be able to use this directly, used in tests
+			$forceCreateClusters = $this->config->getUserValue($userId, 'facerecognition', 'force-create-clusters', 'false');
+			$forceCreation = ($forceCreateClusters === 'true');
+
 			// These are basic criteria without which we should not even consider creating clusters.
 			// These clusters will be small and not "stable" enough and we should better wait for more images to come.
 			// todo: 2 queries to get these 2 counts, can we do this smarter?
@@ -170,7 +175,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			}
 			$facesCount = $this->faceMapper->countFaces($userId, $modelId);
 			// todo: get rid of magic numbers (move to config)
-			if (($facesCount < 1000) && ($imageCount < 100) && ($percentImagesProcessed < 0.95)) {
+			if (!$forceCreation && ($facesCount < 1000) && ($imageCount < 100) && ($percentImagesProcessed < 0.95)) {
 				$this->logInfo(
 					'Skipping cluster creation, not enough data (yet) collected. ' .
 					'For cluster creation, you need either one of the following:');
@@ -195,9 +200,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
-		// Prevents not recreate the clusters unnecessarily.
+		// Prevents not create/recreate the clusters unnecessarily.
 		$this->config->setUserValue($userId, 'facerecognition', 'recreate-clusters', 'false');
-
+		$this->config->setUserValue($userId, 'facerecognition', 'force-create-clusters', 'false');
 	}
 
 	private function getCurrentClusters(array $faces): array {
@@ -272,7 +277,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$transitionCount[$key] = 1;
 			}
 		}
-		// Create map of new person -> old persion transitions
+		// Create map of new person -> old person transitions
 		$newOldPersonMapping = array();
 		$oldPersonProcessed = array(); // store this, so we don't waste cycles for in_array()
 		arsort($transitionCount);

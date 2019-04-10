@@ -26,11 +26,7 @@ namespace OCA\FaceRecognition\Tests\Integration;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
-use Test\TestCase;
-
-class AppTest extends TestCase {
-	/** @var IAppContainer */
-	private $container;
+class AppTest extends IntegrationTestCase {
 
 	public function setUp() {
 		parent::setUp();

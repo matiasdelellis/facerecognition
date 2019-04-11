@@ -40,43 +40,10 @@ use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 use Test\TestCase;
 
-class ImageProcessingTaskTest extends TestCase {
-	/** @var IAppContainer */
-	private $container;
-
-	/** @var FaceRecognitionContext Context */
-	private $context;
-
-	/** @var IUser User */
-	private $user;
-
-	/** @var IConfig Config */
-	private $config;
+class ImageProcessingTaskTest extends IntegrationTestCase {
 
 	public function setUp() {
 		parent::setUp();
-		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
-		if (false === getenv('TRAVIS')) {
-			$this->fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
-		}
-
-		// Create user on which we will upload images and do testing
-		$userManager = OC::$server->getUserManager();
-		$username = 'testuser' . rand(0, PHP_INT_MAX);
-		$this->user = $userManager->createUser($username, 'password');
-		$this->loginAsUser($username);
-		// Get container to get classes using DI
-		$app = new App('facerecognition');
-		$this->container = $app->getContainer();
-
-		// Instantiate our context, that all tasks need
-		$appManager = $this->container->query('OCP\App\IAppManager');
-		$userManager = $this->container->query('OCP\IUserManager');
-		$rootFolder = $this->container->query('OCP\Files\IRootFolder');
-		$this->config = $this->container->query('OCP\IConfig');
-		$logger = $this->container->query('OCP\ILogger');
-		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $this->config);
-		$this->context->logger = new FaceRecognitionLogger($logger);
 
 		// Since test is changing this values, try to preserve old values (this is best effort)
 		$this->originalMinImageSize = intval($this->config->getAppValue('facerecognition', 'min_image_size', '512'));
@@ -89,10 +56,6 @@ class ImageProcessingTaskTest extends TestCase {
 		$this->config->setAppValue('facerecognition', 'min_image_size', $this->originalMinImageSize);
 		$this->config->setAppValue('facerecognition', 'max_image_area', $this->originalMaxImageArea);
 
-		$faceMgmtService = $this->container->query('OCA\FaceRecognition\FaceManagementService');
-		$faceMgmtService->resetAllForUser($this->user->getUID());
-
-		$this->user->delete();
 		parent::tearDown();
 	}
 

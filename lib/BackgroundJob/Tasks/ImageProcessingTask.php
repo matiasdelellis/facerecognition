@@ -300,7 +300,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		$this->logDebug(sprintf('Image scaled from %dx%d to %dx%d (since max image area is %d pixels^2)',
-			$newWidth, $newHeight, $widthOrig, $heightOrig, $maxImageArea));
+			$widthOrig, $heightOrig, $newWidth, $newHeight, $maxImageArea));
 
 		return 1 / $scaleFactor;
 	}
@@ -316,30 +316,22 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$faces = $imageProcessingContext->getFaces();
 
 		foreach($faces as &$face) {
-			$tempfilePath = $this->cropFace($imageProcessingContext->getImagePath(), $face);
+			// For each face, we want to detect landmarks and compute descriptors.
+			// We use already resized image (from temp, used to detect faces) for this.
+			// (better would be to work with original image, but that will require
+			// another orientation fix and another save to the temp)
+			// But, since our face coordinates are already changed to align to original image,
+			// we need to fix them up to align them to temp image here.
+			$normalizedFace = clone $face;
+			$normalizedFace->normalizeSize(1.0 / $imageProcessingContext->getRatio());
 
-			// Usually, second argument to detect should be just $face. However, since we are doing image acrobatics
-			// and already have cropped image, bounding box for landmark detection is now complete (cropped) image!
-			$landmarks = $fld->detect($tempfilePath, array(
-				"left" => 0, "top" => 0, "bottom" => $face->height(), "right" => $face->width()));
-			$descriptor = $fr->computeDescriptor($tempfilePath, $landmarks);
+			// We are getting face landmarks from already prepared (temp) image (resized and with orienation fixed).
+			$landmarks = $fld->detect($imageProcessingContext->getTempPath(), array(
+				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
+				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
+			$descriptor = $fr->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
 			$face->descriptor = $descriptor;
 		}
-	}
-
-	private function cropFace(string $imagePath, Face $face): string {
-		// todo: we are loading same image two times, fix this
-		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
-		$image->loadFromFile($imagePath);
-		$image->fixOrientation();
-		$success = $image->crop($face->left, $face->top, $face->width(), $face->height());
-		if ($success === false) {
-			throw new \RuntimeException("Error during image cropping");
-		}
-
-		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
-		$image->save($tempfile);
-		return $tempfile;
 	}
 
 	/**

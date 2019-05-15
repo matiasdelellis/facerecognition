@@ -77,21 +77,37 @@
 
         updateDisplay: function(data) {
             var html = "";
-            if (data.is_processed) {
+            if (data.enabled === 'false')
+            {
+                var openSettingsLink = t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it.',
+                                        {settingsLink: OC.generateUrl('settings/user/facerecognition')});
+                html += "<div class='emptycontent'>";
+                html += "<div class='icon-user svg'></div>";
+                html += "<p>" + t('facerecognition', 'Facial recognition is disabled') + "</p>";
+                html += "<p><span>" + openSettingsLink + "</span></p>";
+                html += "</div>";
+            }
+            else if (data.is_processed)
+            {
                 var arrayLength = data.persons.length;
-                if (arrayLength > 0) {
+                if (arrayLength > 0)
+                {
                     html += "<table class='persons-list'>";
                     for (var i = 0; i < arrayLength; i++) {
                         html += this.insertPersonRow(data.persons[i]);
                     }
                     html += "</table>";
-                } else {
+                }
+                else
+                {
                     html += "<div class='emptycontent'>";
                     html += "<div class='icon-user svg'></div>";
                     html += "<p>"+t('facerecognition', 'No people found')+"</p>";
                     html += "</div>";
                 }
-            } else {
+            }
+            else
+            {
                 html += "<div class='emptycontent'>";
                 html += "<div class='icon-user svg'></div>";
                 html += "<p>"+t('facerecognition', 'This image is not yet analyzed')+"</p>";

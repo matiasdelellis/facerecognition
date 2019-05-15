@@ -134,13 +134,18 @@ View.prototype = {
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
-            loadingIcon: OC.imagePath('core', 'loading.gif'),
-            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
-            emptyHint: t('facerecognition', 'Please, be patient')
+            loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
-        if (this._persons.isEnabled() === 'true')
+        if (this._persons.isEnabled() === 'true') {
             context.enabled = true;
+            context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
+            context.emptyHint = t('facerecognition', 'Please, be patient');
+        }
+        else {
+            context.emptyMsg = t('facerecognition', 'The analysis is disabled');
+            context.emptyHint = t('facerecognition', 'Enable it to find your loved ones');
+        }
 
         if (this._persons.getActive() !== undefined)
             context.person = this._persons.getActive();

@@ -88,7 +88,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		foreach($eligable_users as $user) {
-			$userEnabled = $this->config->getUserValue($userId, 'facerecognition', 'enabled', 'false');
+			$userEnabled = $this->config->getUserValue($user, 'facerecognition', 'enabled', 'false');
 			if ($userEnabled === 'false') {
 				// Completely skip this task for this user, seems that disable analysis
 				$this->logDebug('Skipping image scan for user ' . $user . ' that has disabled the analysis');

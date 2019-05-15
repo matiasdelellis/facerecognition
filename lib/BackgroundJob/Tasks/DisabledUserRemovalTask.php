@@ -33,9 +33,8 @@ use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 use OCA\FaceRecognition\FaceManagementService;
 
 /**
- * Task that, for each user, crawls for all images in database,
- * checks if they actually exist and removes them if they don't.
- * It should be executed rarely.
+ * Task that, for each user, check if disabled the analysis,
+ * and if necessary remove data from this application
  */
 class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 
@@ -51,8 +50,7 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
-	 * @param FaceMapper $faceMapper Face mapper
-	 * @param PersonMapper $personMapper Person mapper
+	 * @param FaceManagementService $faceManagementService
 	 */
 	public function __construct (IConfig               $config,
 		                     ImageMapper           $imageMapper,
@@ -80,7 +78,6 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		// Check if we are called for one user only, or for all user in instance.
-		$staleRemovedImages = 0;
 		$eligable_users = array();
 		if (is_null($this->context->user)) {
 			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {

@@ -119,7 +119,7 @@ View.prototype = {
                 if (enabled) {
                     OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
                 } else {
-                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. In the next execution your data will be completely eliminated.'));
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
                     location.reload();
                 }
             }

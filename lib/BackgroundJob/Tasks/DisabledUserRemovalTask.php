@@ -96,6 +96,7 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 				$this->logInfo(sprintf('Removing data from user %s that disable analysis', $userId));
 				$this->faceManagementService->resetAllForUser($userId);
 			}
+			yield;
 		}
 
 		return true;

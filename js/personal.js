@@ -100,8 +100,8 @@ var View = function (persons) {
 View.prototype = {
     reload: function (name) {
         var self = this;
-        this._persons.loadPersons().done(function () {
-            self.render();
+        this._persons.load().done(function () {
+            self.renderContent();
         }).fail(function () {
             OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
         });
@@ -120,8 +120,8 @@ View.prototype = {
                     OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
-                    location.reload();
                 }
+                self.reload();
             }
         });
     },

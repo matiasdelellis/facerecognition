@@ -77,6 +77,9 @@ abstract class IntegrationTestCase extends TestCase {
 		$logger = $this->container->query('OCP\ILogger');
 		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $this->config);
 		$this->context->logger = new FaceRecognitionLogger($logger);
+
+		// The tests, by default, are with the analysis activated.
+		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
 	}
 
 	public function tearDown() {

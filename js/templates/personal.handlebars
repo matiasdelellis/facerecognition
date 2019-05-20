@@ -3,9 +3,6 @@
 	<h2>
 		{{appName}}
 	</h2>
-	<p class="settings-hint">
-		{{welcomeHint}}
-	</p>
 	{{#if person}}
 	<div id="persons-navigation">
 		<h2 class="person-title icon-user" data-id="{{person.id}}">
@@ -21,6 +18,8 @@
 		</div>
 	</div>
 	{{else if persons}}
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div id="persons-navigation">
 		{{#each persons}}
 			<h2 class="person-title icon-user" data-id="{{this.id}}">
@@ -37,6 +36,8 @@
 		{{/each}}
 	</div>
 	{{else if loaded}}
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div class="emptycontent">
 		<div class="icon-user svg"></div>
 		<h2>

@@ -58,12 +58,20 @@ class FileController extends Controller {
 	 */
 	public function getPersonsFromPath(string $fullpath) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
+
+		if ($userEnabled !== 'true') {
+			$resp = array();
+			$resp['enabled'] = 'false';
+			return new DataResponse($resp);
+		}
 
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$fileId = $userFolder->get($fullpath)->getId();
 		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 
 		$resp = array();
+		$resp['enabled'] = 'true';
 		$resp['image_id'] = $image ? $image->getId() : 0;
 		$resp['is_processed'] = $image ? $image->getIsProcessed() : 0;
 		$resp['error'] = $image ? $image->getError() : null;

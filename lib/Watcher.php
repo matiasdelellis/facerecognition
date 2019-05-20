@@ -121,6 +121,12 @@ class Watcher {
 
 		$owner = $node->getOwner()->getUid();
 
+		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
+		if ($enabled !== 'true') {
+			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
+			return;
+		}
+
 		if ($node->getName() === '.nomedia') {
 			// If user added this file, it means all images in this and all child directories should be removed.
 			// Instead of doing that here, it's better to just add flag that image removal should be done.
@@ -189,6 +195,12 @@ class Watcher {
 		}
 
 		$owner = $node->getOwner()->getUid();
+
+		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
+		if ($enabled !== 'true') {
+			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
+			return;
+		}
 
 		if ($node->getName() === '.nomedia') {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.

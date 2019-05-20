@@ -32,6 +32,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckRequirementsTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
@@ -92,6 +93,7 @@ class BackgroundService {
 			CheckRequirementsTask::class,
 			CheckCronTask::class,
 			LockTask::class,
+			DisabledUserRemovalTask::class,
 			StaleImagesRemovalTask::class,
 			CreateClustersTask::class,
 			AddMissingImagesTask::class,

@@ -3,22 +3,31 @@
 
 $(document).ready(function () {
 
+const state = {
+    OK: 0,
+    FALSE: 1,
+    SUCCESS: 2,
+    ERROR:  3
+}
+
 /*
  * Faces in memory handlers.
  */
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
+    this._enabled = false;
     this._persons = [];
     this._person = undefined;
     this._loaded = false;
 };
 
 Persons.prototype = {
-    loadPersons: function () {
+    load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/persons').done(function (clusters) {
-            self._persons = clusters;
+        $.get(this._baseUrl+'/persons').done(function (response) {
+            self._enabled = response.enabled;
+            self._persons = response.clusters;
             self._loaded = true;
             deferred.resolve();
         }).fail(function () {
@@ -47,6 +56,9 @@ Persons.prototype = {
     },
     isLoaded: function () {
         return this._loaded;
+    },
+    isEnabled: function () {
+        return this._enabled;
     },
     sortBySize: function () {
         this._persons.sort(function(a, b) {
@@ -88,10 +100,29 @@ var View = function (persons) {
 View.prototype = {
     reload: function (name) {
         var self = this;
-        this._persons.loadPersons().done(function () {
-            self.render();
+        this._persons.load().done(function () {
+            self.renderContent();
         }).fail(function () {
             OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
+        });
+    },
+    setEnabledUser: function (enabled) {
+        var self = this;
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/setuservalue'),
+            data: {
+                'type': 'enabled',
+                'value': enabled
+            },
+            success: function () {
+                if (enabled) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
+                }
+                self.reload();
+            }
         });
     },
     renderContent: function () {
@@ -101,11 +132,20 @@ View.prototype = {
             persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
+            enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
-            loadingIcon: OC.imagePath('core', 'loading.gif'),
-            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
-            emptyHint: t('facerecognition', 'Please, be patient')
+            loadingIcon: OC.imagePath('core', 'loading.gif')
         };
+
+        if (this._persons.isEnabled() === 'true') {
+            context.enabled = true;
+            context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
+            context.emptyHint = t('facerecognition', 'Please, be patient');
+        }
+        else {
+            context.emptyMsg = t('facerecognition', 'The analysis is disabled');
+            context.emptyHint = t('facerecognition', 'Enable it to find your loved ones');
+        }
 
         if (this._persons.getActive() !== undefined)
             context.person = this._persons.getActive();
@@ -117,6 +157,26 @@ View.prototype = {
         observer.observe();
 
         var self = this;
+
+        $('#enableFacerecognition').click(function() {
+            var enabled = $(this).is(':checked');
+            if (enabled === false) {
+                OC.dialogs.confirm(
+                    t('facerecognition', 'You will lose all the information analyzed, and if you re-enable it, you will start from scratch.'),
+                    t('facerecognition', 'Do you want to deactivate the grouping by faces?'),
+                    function (result) {
+                        if (result === true) {
+                            self.setEnabledUser (false);
+                        } else {
+                            $('#enableFacerecognition').prop('checked', true);
+                        }
+                    },
+                    true
+                );
+            } else {
+                self.setEnabledUser (true);
+            }
+        });
 
         $('#facerecognition .person-name').click(function () {
             var id = $(this).parent().data('id');
@@ -164,7 +224,7 @@ var view = new View(persons);
 
 view.renderContent();
 
-persons.loadPersons().done(function () {
+persons.load().done(function () {
     view.renderContent();
 }).fail(function () {
     OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));

@@ -131,11 +131,10 @@ class SettingController extends Controller {
 			case 'memory-limits':
 				if (is_numeric ($value)) {
 					// Apply prundent limits.
-					if ($value < 1 * 1024 * 1024) {
-						$value = 1 * 1024 * 1024;
+					if ($value < 1 * 1024 * 1024 * 1024) {
+						$value = 1 * 1024 * 1024 * 1024;
 						$status = self::STATE_ERROR;
-					}
-					else if ($value > 4 * 1024 * 1024) {
+					} else if ($value > 4 * 1024 * 1024 * 1024) {
 						$value = 4 * 1024 * 1024;
 						$status = self::STATE_ERROR;
 					}
@@ -182,8 +181,8 @@ class SettingController extends Controller {
 				// values used by the background task as a reference.
 				if ($value === '-1') {
 					$memory = MemoryLimits::getAvailableMemory();
-					if ($memory > 4 * 1024 * 1024)
-						$memory = 4 * 1024 * 1024;
+					if ($memory > 4 * 1024 * 1024 * 1024)
+						$memory = 4 * 1024 * 1024 * 1024;
 					$value = $memory;
 					$status = self::STATE_FALSE;
 				}

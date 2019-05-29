@@ -25,6 +25,20 @@
 				<a id="save-sensitivity" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
 			</p>
 		</div>
+		<div>
+			<h3>
+				<strong><?php p($l->t('Memory limits'));?></strong>
+			</h3>
+			<p class="settings-hint"><?php p($l->t('We limit the use of RAM according to your hardware, but you can change it. Higher memory may improve the results a bit, but it will also be unnecessarily slower.'));?>
+				<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection"></a>
+			</p>
+			<p>
+				<span><input type="memory" id="memory-limits-text" name="memory-limits-text" placeholder="<?php p($l->t('Use subfix as 2048 MB or 2G'));?>"></span>
+				<span id="memory-limits-value"class="span-highlighted">...</span>
+				<a id="restore-memory-limits" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+				<a id="save-memory-limits" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+			</p>
+		</div>
 		<h3><strong><?php p($l->t('Configuration information'));?> <span class="status success<?php if(!($_['pdlib-loaded'] && $_['model-present'])):?> error<?php endif;?>"></span></strong></h3>
 		<p><strong>Pdlib Version: </strong><?php p($_['pdlib-version']);?></p>
 		<p><strong>Models Version: </strong><?php p($_['model-version']);?></p>

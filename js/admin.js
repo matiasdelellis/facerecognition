@@ -117,6 +117,7 @@ $(document).ready(function() {
             $('#memory-limits-value').html(human);
             $('#save-memory-limits').show();
         } else {
+            $('#memory-limits-value').html("...");
             $('#save-memory-limits').hide();
         }
     });
@@ -143,11 +144,13 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.status === state.SUCCESS) {
                     OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                    var memory = OC.Util.humanFileSize(data.value, false);
+                    $('#memory-limits-text').val(memory);
                     $('#restore-memory-limits').hide();
                     $('#save-memory-limits').hide();
                 }
                 else {
-                    OC.Notification.showTemporary(t('facerecognition', 'The change could not be applied. Please, verify the memory format'));
+                    OC.Notification.showTemporary(t('facerecognition', 'The change could not be applied.'));
                 }
             }
         });

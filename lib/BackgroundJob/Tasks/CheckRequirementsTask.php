@@ -77,6 +77,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			return false;
 		}
 
+		// Determine the system memory with some considerations.
 		$memory = MemoryLimits::getAvailableMemory();
 		if ($memory <= 0) {
 			// We cannot determine amount of memory to give to face recognition CNN.
@@ -85,17 +86,8 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			// If user explicitely set something, we ignore getting memory from system.
 			$this->logDebug("Cannot detect amount of memory given to PHP process. Using 1GB for image processing");
 			$memory = 1024 * 1024 * 1024;
-		} else {
-			$this->logDebug(sprintf('Found %d MB available to PHP.', $memory / (1024 * 1024)));
-			// No point going above 4GB ("4GB should be enough for everyone")
-			if ($memory > 4 * 1024 * 1024 * 1024) {
-				$this->logDebug('Capping used memory to maximum of 4GB');
-				$memory = 4 * 1024 * 1024 * 1024;
-			}
-		}
 
-		$context->propertyBag['memory'] = $memory;
-
+		// Apply some prudent limits.
 		if ($memory < 1024 * 1024 * 1024) {
 			$error_message =
 				"\n" .
@@ -105,7 +97,36 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 				"If you already set this to unlimited, it seems your system is not having enough RAM memory.";
 			$this->logInfo($error_message);
 			return false;
+		} else {
+			$this->logDebug(sprintf('Found %d MB available to PHP.', $memory / (1024 * 1024)));
+			// No point going above 4GB ("4GB should be enough for everyone")
+			if ($memory > 4 * 1024 * 1024 * 1024) {
+				$this->logDebug('Capping used memory to maximum of 4GB');
+				$memory = 4 * 1024 * 1024 * 1024;
+			}
 		}
+
+		// Apply admin setting limit.
+		$memorySetting = $this->config->getAppValue('facerecognition', 'memory-limits', '-1');
+		if ($memorySetting > 0) {
+			if ($memorySetting > $memory) {
+				$error_message =
+					"\n" .
+					"Seems that you configured" . intval($memorySetting / (1024 * 1024)) . " MB of memory, however, this exede"
+					"detected as maximum for PHP: " . intval($memory / (1024 * 1024)). "MB.\n" .
+					"You need to change your memory_limit in php.ini or 'Memory Limits' in settings.\n" .
+					"Check https://secure.php.net/manual/en/ini.core.php#ini.memory-limit for details.\n" .
+					"If you already set this to unlimited, it seems your system is not having enough RAM memory.";
+				$this->logInfo($error_message);
+				return false;
+			}
+			else {
+				$this->logInfo("Applying the memory limit to " . intval($memorySetting / (1024*1024)) . "MB configured in settings.");
+				$memory = $memorySetting;
+			}
+		}
+
+		$context->propertyBag['memory'] = $memory;
 
 		return true;
 	}

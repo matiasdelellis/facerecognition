@@ -99,7 +99,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			$this->logInfo($error_message);
 			return false;
 		} else {
-			$this->logDebug(sprintf('Found %d MB available to PHP.', $systemMemory / (1024 * 1024)));
+			$this->logDebug(sprintf('Found %d MB available to PHP.', $memoryAvailable / (1024 * 1024)));
 			// No point going above 4GB ("4GB should be enough for everyone")
 			if ($memoryAvailable > 4 * 1024 * 1024 * 1024) {
 				$this->logDebug('Capping used memory to maximum of 4GB');

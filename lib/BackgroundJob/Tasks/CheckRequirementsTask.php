@@ -113,7 +113,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			if ($memorySetting > $memoryAvailable) {
 				$error_message =
 					"\n" .
-					"Seems that you configured" . intval($memorySetting / (1024 * 1024)) . " MB of memory, however, this exceeds"
+					"Seems that you configured" . intval($memorySetting / (1024 * 1024)) . " MB of memory, however, this exceeds" .
 					"detected as maximum for PHP: " . intval($memoryAvailable / (1024 * 1024)). "MB.\n" .
 					"We will ignore the FaceRecognition settings, and we will limit to that.";
 				$this->logInfo($error_message);

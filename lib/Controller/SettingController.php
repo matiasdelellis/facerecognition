@@ -130,10 +130,27 @@ class SettingController extends Controller {
 				break;
 			case 'memory-limits':
 				if (is_numeric ($value)) {
-					//TODO: Apply true memory limits.
-					$this->config->setAppValue('facerecognition', $type, $value);
+					// Apply prundent limits.
+					if ($value < 1 * 1024 * 1024) {
+						$value = 1 * 1024 * 1024;
+						$status = self::STATE_ERROR;
+					}
+					else if ($value > 4 * 1024 * 1024) {
+						$value = 4 * 1024 * 1024;
+						$status = self::STATE_ERROR;
+					}
+					// Valid according to RAM of php.ini setting.
+					$memory = MemoryLimits::getAvailableMemory();
+					if ($value > $memory) {
+						$value = $memory;
+						$status = self::STATE_ERROR;
+					}
+					// If any validation error saves the value
+					if ($status !== self::STATE_ERROR)
+						$this->config->setAppValue('facerecognition', $type, $value);
 				} else {
 					$status = self::STATE_ERROR;
+					$value = '-1';
 				}
 				break;
 			default:
@@ -161,8 +178,13 @@ class SettingController extends Controller {
 				break;
 			case 'memory-limits':
 				$value = $this->config->getAppValue('facerecognition', $type, '-1');
+				// If it was not configured, returns the default
+				// values used by the background task as a reference.
 				if ($value === '-1') {
-					$value = MemoryLimits::getAvailableMemory()*0.75;
+					$memory = MemoryLimits::getAvailableMemory();
+					if ($memory > 4 * 1024 * 1024)
+						$memory = 4 * 1024 * 1024;
+					$value = $memory;
 					$status = self::STATE_FALSE;
 				}
 				break;

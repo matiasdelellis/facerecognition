@@ -73,7 +73,7 @@ $(document).ready(function() {
         event.preventDefault();
         var sensitivity = $('#sensitivity-range').val().toString();
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setappvalue'),
             data: {
                 'type': 'sensitivity',
@@ -135,7 +135,7 @@ $(document).ready(function() {
         var memoryInput = $('#memory-limits-text').val().toString();
         var memory = OC.Util.computerFileSize(memoryInput);
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setappvalue'),
             data: {
                 'type': 'memory-limits',

@@ -35,7 +35,7 @@ class Admin implements ISettings {
 	}
 
 	public function getSection() {
-		return 'overview';
+		return 'facerecognition';
 	}
 
 	public function getForm() {

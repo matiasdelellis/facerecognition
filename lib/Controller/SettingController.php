@@ -34,11 +34,16 @@ use OCP\IRequest;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUser;
+use OCP\IL10N;
 
 class SettingController extends Controller {
 
 	/** @var IConfig */
 	private $config;
+
+
+	/** @var \OCP\IL10N */
+	protected $l10n;
 
 	/** @var IUserManager */
 	private $userManager;
@@ -54,12 +59,14 @@ class SettingController extends Controller {
 	public function __construct ($appName,
 	                             IRequest     $request,
 	                             IConfig      $config,
+	                             IL10N        $l10n,
 	                             IUserManager $userManager,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
 		$this->appName               = $appName;
 		$this->config                = $config;
+		$this->l10n                  = $l10n;
 		$this->userManager           = $userManager;
 		$this->userId                = $userId;
 	}
@@ -121,6 +128,7 @@ class SettingController extends Controller {
 	 */
 	public function setAppValue($type, $value) {
 		$status = self::STATE_SUCCESS;
+		$message = "";
 		switch ($type) {
 			case 'sensitivity':
 				$this->config->setAppValue('facerecognition', $type, $value);
@@ -133,22 +141,28 @@ class SettingController extends Controller {
 					// Apply prundent limits.
 					if ($value < 1 * 1024 * 1024 * 1024) {
 						$value = 1 * 1024 * 1024 * 1024;
+						$message = $this->l10n->t("The recommended analysis needs at least 1 GB of RAM.");
 						$status = self::STATE_ERROR;
 					} else if ($value > 4 * 1024 * 1024 * 1024) {
 						$value = 4 * 1024 * 1024;
+						$message = $this->l10n->t("It is not recommended to use more than 4GB of RAM.");
 						$status = self::STATE_ERROR;
 					}
 					// Valid according to RAM of php.ini setting.
 					$memory = MemoryLimits::getAvailableMemory();
 					if ($value > $memory) {
 						$value = $memory;
+						$message = $this->l10n->t("According to your system you can not use more than %s GB of RAM", ($value / 1024 / 1024 / 1024));
 						$status = self::STATE_ERROR;
 					}
 					// If any validation error saves the value
-					if ($status !== self::STATE_ERROR)
+					if ($status !== self::STATE_ERROR) {
+						$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
 						$this->config->setAppValue('facerecognition', $type, $value);
+					}
 				} else {
 					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The format seems to be incorrect.");
 					$value = '-1';
 				}
 				break;
@@ -159,6 +173,7 @@ class SettingController extends Controller {
 		// Response
 		$result = [
 			'status' => $status,
+			'message' => $message,
 			'value' => $value
 		];
 		return new JSONResponse($result);

@@ -150,7 +150,9 @@ $(document).ready(function() {
                     $('#save-memory-limits').hide();
                 }
                 else {
-                    OC.Notification.showTemporary(t('facerecognition', 'The change could not be applied.'));
+                    var message = t('facerecognition', 'The change could not be applied.');
+                    message += " - " + data.message;
+                    OC.Notification.showTemporary(message);
                 }
             }
         });

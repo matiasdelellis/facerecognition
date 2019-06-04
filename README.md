@@ -16,18 +16,21 @@ and in such way that your images never leave your Nextcloud instance. :smiley:
 
 The application listens to the creation of new image files, and queues them for
 later analysis. A scheduled task (Or admin on demand) take this queue, and
-analyze the images for looking faces and if possible identify them by comparing
-them with previous images assigned by the user.
+analyze the images for looking faces and if possible identify them grouping by
+similarity.
 
 ![App screenshots](/doc/face-recognition-screenshot.png "App screenshots")
 
 ## How to use it?
 
-First of all, the administrator must configure and execute the analysis. Once
-finished:
+The administrator must properly configure the application, and once it is
+working, the user must accept that he wants to allow the analysis of his images
+to discover his friends.
+Finally the user can use the application in three ways
 
- 1. In the user settings there is a 'Face Recognition' panel where the user can
-    see and rename all the faces of their friends.
+ 1. In the user settings there is a 'Face Recognition' panel where first of all
+    each user must enable the analysis. Once enabled, you will progressively see
+    the discovery of your friends, and you can assign them names.
  2. In the file application the user can search by typing your friend's name,
     and it will show all the photos.
  3. In the side panel of the file application, a 'Persons' tab is added where
@@ -73,10 +76,15 @@ Beware that this command can take a lot of CPU and memory! Before you put it to
 cron job, it is advised to try it out manually first, just to be sure you have
 all requirements and you have enough resources on your machine.
 
-Command is designed to be run continuously, so you will want to schedule it with cron to be executed every once in a while, together with a specified timeout. It can be run every 15 minutes with timeout of `-t 900` (so, it will stop itself automatically after 15 minutes and cron will start it again), or
-once a day with timeout of 2 hours, like `-t 7200`.
+Command is designed to be run continuously, so you will want to schedule it with
+cron to be executed every once in a while, together with a specified timeout. It
+can be run every 15 minutes with timeout of `-t 900` (so, it will stop itself
+automatically after 15 minutes and cron will start it again), or once a day with
+timeout of 2 hours, like `-t 7200`.
 
-If `user-id` is supplied, it will just loop over files of a given user.
+If `user-id` is supplied, it will just loop over files of a given user. Keep in
+mind that each user must enable the analysis individually, and otherwise this
+command will ignore the user.
 
 If `timeout` is supplied it will stop after the indicated seconds, and continue
 in the next execution. Use this value in conjunction with the times of the
@@ -90,4 +98,5 @@ This command will completely wipe out all images, faces and cluster of persons.
 It is ideal if you want to start from scratch for any reason. Beware that all
 images will have to be analyzed again!
 
-If `user-id` is supplied, it will just loop over files of a given user.
+If `user-id` is provided, it will just reset all the information of a particular
+user.

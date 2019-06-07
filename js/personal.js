@@ -109,7 +109,7 @@ View.prototype = {
     setEnabledUser: function (enabled) {
         var self = this;
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setuservalue'),
             data: {
                 'type': 'enabled',

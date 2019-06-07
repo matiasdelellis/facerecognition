@@ -35,7 +35,7 @@ return ['routes' =>
 	[
 		'name' => 'setting#setUserValue',
 		'url' => '/setuservalue',
-		'verb' => 'GET'
+		'verb' => 'POST'
 	],
 	[
 		'name' => 'setting#getUserValue',
@@ -46,7 +46,7 @@ return ['routes' =>
 	[
 		'name' => 'setting#setAppValue',
 		'url' => '/setappvalue',
-		'verb' => 'GET'
+		'verb' => 'POST'
 	],
 	[
 		'name' => 'setting#getAppValue',

@@ -26,17 +26,24 @@ namespace OCA\FaceRecognition\Controller;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\FaceManagementService;
 
+use OCA\FaceRecognition\Helper\MemoryLimits;
+
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUser;
+use OCP\IL10N;
 
 class SettingController extends Controller {
 
 	/** @var IConfig */
 	private $config;
+
+
+	/** @var \OCP\IL10N */
+	protected $l10n;
 
 	/** @var IUserManager */
 	private $userManager;
@@ -52,12 +59,14 @@ class SettingController extends Controller {
 	public function __construct ($appName,
 	                             IRequest     $request,
 	                             IConfig      $config,
+	                             IL10N        $l10n,
 	                             IUserManager $userManager,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
 		$this->appName               = $appName;
 		$this->config                = $config;
+		$this->l10n                  = $l10n;
 		$this->userManager           = $userManager;
 		$this->userId                = $userId;
 	}
@@ -118,15 +127,44 @@ class SettingController extends Controller {
 	 * @return JSONResponse
 	 */
 	public function setAppValue($type, $value) {
-		// Apply the change of settings
-		$this->config->setAppValue('facerecognition', $type, $value);
-
-		// Handles special cases when have to do something else according to the change
+		$status = self::STATE_SUCCESS;
+		$message = "";
 		switch ($type) {
 			case 'sensitivity':
+				$this->config->setAppValue('facerecognition', $type, $value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
 				});
+				break;
+			case 'memory-limits':
+				if (is_numeric ($value)) {
+					// Apply prundent limits.
+					if ($value < 1 * 1024 * 1024 * 1024) {
+						$value = 1 * 1024 * 1024 * 1024;
+						$message = $this->l10n->t("The recommended analysis needs at least 1 GB of RAM.");
+						$status = self::STATE_ERROR;
+					} else if ($value > 4 * 1024 * 1024 * 1024) {
+						$value = 4 * 1024 * 1024;
+						$message = $this->l10n->t("It is not recommended to use more than 4GB of RAM.");
+						$status = self::STATE_ERROR;
+					}
+					// Valid according to RAM of php.ini setting.
+					$memory = MemoryLimits::getAvailableMemory();
+					if ($value > $memory) {
+						$value = $memory;
+						$message = $this->l10n->t("According to your system you can not use more than %s GB of RAM", ($value / 1024 / 1024 / 1024));
+						$status = self::STATE_ERROR;
+					}
+					// If any validation error saves the value
+					if ($status !== self::STATE_ERROR) {
+						$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
+						$this->config->setAppValue('facerecognition', $type, $value);
+					}
+				} else {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The format seems to be incorrect.");
+					$value = '-1';
+				}
 				break;
 			default:
 				break;
@@ -134,7 +172,8 @@ class SettingController extends Controller {
 
 		// Response
 		$result = [
-			'status' => self::STATE_SUCCESS,
+			'status' => $status,
+			'message' => $message,
 			'value' => $value
 		];
 		return new JSONResponse($result);
@@ -145,18 +184,34 @@ class SettingController extends Controller {
 	 * @return JSONResponse
 	 */
 	public function getAppValue($type) {
-		$value = $this->config->getAppValue('facerecognition', $type);
-		if ($value !== '') {
-			$result = [
-				'status' => self::STATE_OK,
-				'value' => $value
-			];
-		} else {
-			$result = [
-				'status' => self::STATE_FALSE,
-				'value' =>'nodata'
-			];
+		$value = 'nodata';
+		$status = self::STATE_OK;
+		switch ($type) {
+			case 'sensitivity':
+				$value = $this->config->getAppValue('facerecognition', $type, '0.5');
+				break;
+			case 'memory-limits':
+				$value = $this->config->getAppValue('facerecognition', $type, '-1');
+				// If it was not configured, returns the default
+				// values used by the background task as a reference.
+				if ($value === '-1') {
+					$memory = MemoryLimits::getAvailableMemory();
+					if ($memory > 4 * 1024 * 1024 * 1024)
+						$memory = 4 * 1024 * 1024 * 1024;
+					$value = $memory;
+					$status = self::STATE_FALSE;
+				}
+				break;
+			default:
+				break;
 		}
+
+		// Response
+		$result = [
+			'status' => $status,
+			'value' => $value
+		];
+
 		return new JSONResponse($result);
 	}
 

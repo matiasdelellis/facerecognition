@@ -7,6 +7,9 @@ $(document).ready(function() {
         ERROR:  3
     }
 
+    /*
+     * Progress
+     */
     function checkProgress() {
         $.get(OC.generateUrl('/apps/facerecognition/process')).done(function (progress) {
             if (progress.status) {
@@ -32,6 +35,9 @@ $(document).ready(function() {
         });
     }
 
+    /*
+     * Sensitivity
+     */
     function getSensitivity() {
         $.ajax({
             type: 'GET',
@@ -67,7 +73,7 @@ $(document).ready(function() {
         event.preventDefault();
         var sensitivity = $('#sensitivity-range').val().toString();
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setappvalue'),
             data: {
                 'type': 'sensitivity',
@@ -84,9 +90,79 @@ $(document).ready(function() {
     });
 
     /*
+     * MemoryLimits
+     */
+    function getMemoryLimits() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'memory-limits',
+            },
+            success: function (data) {
+                var memory = OC.Util.humanFileSize(data.value, false);
+                if (data.status === state.OK) {
+                    $('#memory-limits-text').val(memory);
+                }
+                $('#memory-limits-value').html(memory);
+            }
+        });
+    }
+
+    $('#memory-limits-text').on('input', function() {
+        var memory = OC.Util.computerFileSize (this.value);
+        $('#restore-memory-limits').show();
+        if (memory !== null) {
+            var human = OC.Util.humanFileSize(memory, false);
+            $('#memory-limits-value').html(human);
+            $('#save-memory-limits').show();
+        } else {
+            $('#memory-limits-value').html("...");
+            $('#save-memory-limits').hide();
+        }
+    });
+
+    $('#restore-memory-limits').on('click', function(event) {
+        event.preventDefault();
+        getMemoryLimits();
+
+        $('#restore-memory-limits').hide();
+        $('#save-memory-limits').hide();
+    });
+
+    $('#save-memory-limits').on('click', function(event) {
+        event.preventDefault();
+        var memoryInput = $('#memory-limits-text').val().toString();
+        var memory = OC.Util.computerFileSize(memoryInput);
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'memory-limits',
+                'value': memory
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                    var memory = OC.Util.humanFileSize(data.value, false);
+                    $('#memory-limits-text').val(memory);
+                    $('#restore-memory-limits').hide();
+                    $('#save-memory-limits').hide();
+                }
+                else {
+                    var message = t('facerecognition', 'The change could not be applied.');
+                    message += " - " + data.message;
+                    OC.Notification.showTemporary(message);
+                }
+            }
+        });
+    });
+
+    /*
      * Get initial values.
      */
     getSensitivity();
+    getMemoryLimits();
     checkProgress();
 
     /*

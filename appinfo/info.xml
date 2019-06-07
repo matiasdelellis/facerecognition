@@ -37,6 +37,7 @@
 	</commands>
 	<settings>
 		<admin>OCA\FaceRecognition\Settings\Admin</admin>
+		<admin-section>OCA\FaceRecognition\Settings\AdminSection</admin-section>
 		<personal>OCA\FaceRecognition\Settings\Personal</personal>
 		<personal-section>OCA\FaceRecognition\Settings\PersonalSection</personal-section>
 	</settings>

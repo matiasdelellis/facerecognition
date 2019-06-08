@@ -3,9 +3,7 @@
 	<id>facerecognition</id>
 	<name>Face Recognition</name>
 	<summary>A face recognition app</summary>
-	<description><![CDATA[Face Recognition implement a basic facial recognition system for Nextcloud.
-
-		The application listens to the creation of new image files, and queues them for later analysis. A scheduled task (Or admin on demand) take this queue, and analyze the images for looking faces and if possible identify them by comparing them with those found in user-folder/.faces.]]>
+	<description><![CDATA[FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing and aggregating face data in users images, and providing additional functionalities on top of these information, all with built-in privacy of Nextcloud]]>
 	</description>
 	<version>0.5.7</version>
 	<licence>agpl</licence>

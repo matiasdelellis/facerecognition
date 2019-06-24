@@ -144,7 +144,7 @@ class SettingController extends Controller {
 						$message = $this->l10n->t("The recommended analysis needs at least 1 GB of RAM.");
 						$status = self::STATE_ERROR;
 					} else if ($value > 4 * 1024 * 1024 * 1024) {
-						$value = 4 * 1024 * 1024;
+						$value = 4 * 1024 * 1024 * 1024;
 						$message = $this->l10n->t("It is not recommended to use more than 4GB of RAM.");
 						$status = self::STATE_ERROR;
 					}

@@ -4,6 +4,7 @@ namespace OCA\FaceRecognition\Controller;
 use OCP\IRequest;
 use OCP\IConfig;
 use OCP\Files\IRootFolder;
+use OCP\Files\File;
 use OCP\IUserSession;
 use OCP\IURLGenerator;
 use OCP\AppFramework\Http;
@@ -75,9 +76,12 @@ class PersonController extends Controller {
 				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model, 14);
 				foreach ($personFaces as $personFace) {
 					$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+					$fileUrl = $this->getRedirectToFileUrl($image->getFile());
+					if (NULL === $fileUrl)
+						continue;
 					$face = [];
 					$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
-					$face['file-url'] = $this->getRedirectToFileUrl($image->getFile());
+					$face['file-url'] = $fileUrl;
 					$faces[] = $face;
 				}
 				$cluster['name'] = $person->getName();
@@ -103,9 +107,12 @@ class PersonController extends Controller {
 		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			$fileUrl = $this->getRedirectToFileUrl($image->getFile());
+			if (NULL === $fileUrl)
+				continue;
 			$face = [];
 			$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
-			$face['file-url'] = $this->getRedirectToFileUrl($image->getFile());
+			$face['file-url'] = $fileUrl;
 			$faces[] = $face;
 		}
 		$resp['name'] = $person->getName();
@@ -142,6 +149,9 @@ class PersonController extends Controller {
 		$baseFolder = $this->rootFolder->getUserFolder($uid);
 		$files      = $baseFolder->getById($fileId);
 		$file       = current($files);
+
+		if(!($file instanceof File))
+			return NULL;
 
 		$params = [];
 		$params['dir'] = $baseFolder->getRelativePath($file->getParent()->getPath());

@@ -212,10 +212,7 @@ View.prototype = {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                         });
                     }
-                },
-                true,
-                t('facerecognition', 'Rename'),
-                false
+                }
             );
         });
     }

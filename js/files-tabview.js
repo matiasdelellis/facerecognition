@@ -147,27 +147,22 @@
             var $target = $(event.target);
             var $row = $target.closest('tr');
             var id = $row.data('id');
+            var name = $row.find('.name')[0].innerHTML;
+            var thumbUrl = $row.find('.face-preview').attr("data-background-image");
+
             $row.toggleClass('active');
             $row.find('.popovermenu').toggleClass('open');
 
             var self = this;
-            OC.dialogs.prompt(
-                t('facerecognition', 'Please enter a name to rename the person'),
-                t('facerecognition', 'Rename Person'),
+            FrDialogs.rename(
+                name,
+                thumbUrl,
                 function(result, value) {
                     if (result === true && value) {
                         self._renamePerson (id, value);
                     }
-                },
-                true,
-                t('facerecognition', 'Rename'),
-                false
-            ).then(function() {
-                var $dialog = $('.oc-dialog:visible');
-                var $buttons = $dialog.find('button');
-                $buttons.eq(0).text(t('facerecognition', 'Cancel'));
-                $buttons.eq(1).text(t('facerecognition', 'Rename'));
-            });
+                }
+            );
         }
 
     });

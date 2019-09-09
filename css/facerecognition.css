@@ -34,6 +34,23 @@
     opacity: .5;
 }
 
+
+/*
+ * Rename dialog
+ */
+
+#fr-dialog-content-input {
+    width: 80%;
+    margin: 6px;
+}
+
+.face-preview-dialog {
+    background-color: rgba(210, 210, 210, .75);
+    border-radius: 25px;
+    height: 50px;
+    width: 50px;
+}
+
 /*
  * Admin page
  */

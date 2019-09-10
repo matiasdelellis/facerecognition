@@ -62,6 +62,7 @@ class PersonController extends Controller {
 	 */
 	public function index() {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$notGrouped = $this->config->getAppValue('facerecognition', 'show-not-grouped', 'false');
 		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
 
 		$resp = array();
@@ -71,20 +72,30 @@ class PersonController extends Controller {
 		if ($userEnabled === 'true') {
 			$persons = $this->personMapper->findAll($this->userId);
 			foreach ($persons as $person) {
-				$cluster = [];
+				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+				if ($notGrouped === 'false' && count($personFaces) <= 1)
+					continue;
+
+				$limit = 14;
 				$faces = [];
-				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model, 14);
 				foreach ($personFaces as $personFace) {
+					if ($limit-- === 0)
+						break;
+
 					$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 					$fileUrl = $this->getRedirectToFileUrl($image->getFile());
 					if (NULL === $fileUrl)
 						continue;
+
 					$face = [];
 					$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 					$face['file-url'] = $fileUrl;
 					$faces[] = $face;
 				}
+
+				$cluster = [];
 				$cluster['name'] = $person->getName();
+				$cluster['count'] = count($personFaces);
 				$cluster['id'] = $person->getId();
 				$cluster['faces'] = $faces;
 

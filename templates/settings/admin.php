@@ -39,14 +39,31 @@
 				<a id="save-memory-limits" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
 			</p>
 		</div>
-		<h3><strong><?php p($l->t('Configuration information'));?> <span class="status success<?php if(!($_['pdlib-loaded'] && $_['model-present'])):?> error<?php endif;?>"></span></strong></h3>
-		<p><strong>Pdlib Version: </strong><?php p($_['pdlib-version']);?></p>
-		<p><strong>Models Version: </strong><?php p($_['model-version']);?></p>
-		<p><span><?php p($_['resume']); ?></span></p>
-		<h3><strong><?php p($l->t('Current status'));?></strong></h3>
 		<div>
-			<p id="progress-text"><?php p($l->t('Stopped'));?></p>
-			<progress id="progress-bar" value="0" max="100"></progress>
+			<h3>
+				<strong><?php p($l->t('Misc settings'));?></strong>
+			</h3>
+			<p>
+				<input id="showNotGrouped" name="showNotGrouped" type="checkbox" class="checkbox">
+				<label for="showNotGrouped"><?php p($l->t('Show people who are not grouped'));?></label><br>
+			</p>
+		</div>
+		<div>
+			<h3>
+				<strong><?php p($l->t('Configuration information'));?> <span class="status success<?php if(!($_['pdlib-loaded'] && $_['model-present'])):?> error<?php endif;?>"></span></strong>
+			</h3>
+			<p><strong>Pdlib Version: </strong><?php p($_['pdlib-version']);?></p>
+			<p><strong>Models Version: </strong><?php p($_['model-version']);?></p>
+			<p><span><?php p($_['resume']); ?></span></p>
+		</div>
+		<div>
+			<h3>
+				<strong><?php p($l->t('Current status'));?></strong>
+			</h3>
+			<div>
+				<p id="progress-text"><?php p($l->t('Stopped'));?></p>
+				<progress id="progress-bar" value="0" max="100"></progress>
+			</div>
 		</div>
 	</div>
 </form>

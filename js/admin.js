@@ -158,11 +158,52 @@ $(document).ready(function() {
         });
     });
 
+
+    /*
+     * Show not clustered people
+     */
+    function getNotGrouped() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'show-not-grouped',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    if (data.value == 'true')
+                        $('#showNotGrouped').prop('checked', true);
+                    else
+                        $('#showNotGrouped').prop('checked', false);
+                }
+            }
+        });
+    }
+
+    $('#showNotGrouped').click(function() {
+        var checked = $(this).is(':checked');
+        var self = this;
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'show-not-grouped',
+                'value': checked
+            },
+            error: function () {
+                $('#showNotGrouped').prop('checked', !checked);
+                OC.Notification.showTemporary(t('facerecognition', 'The change could not be applied.'));
+            }
+        });
+    })
+
+
     /*
      * Get initial values.
      */
     getSensitivity();
     getMemoryLimits();
+    getNotGrouped();
     checkProgress();
 
     /*

@@ -54,6 +54,16 @@ Persons.prototype = {
     getActive: function () {
         return this._person;
     },
+    getById: function (personId) {
+        var ret = undefined;
+        for (var person of this._persons) {
+            if (person.id === personId) {
+                ret = person;
+                break;
+            }
+        };
+        return ret;
+    },
     isLoaded: function () {
         return this._loaded;
     },
@@ -189,9 +199,10 @@ View.prototype = {
 
         $('#facerecognition .icon-rename').click(function () {
             var id = $(this).parent().data('id');
-            OC.dialogs.prompt(
-                t('facerecognition', 'Please enter a name to rename the person'),
-                t('facerecognition', 'Rename Person'),
+            var person = self._persons.getById(id);
+            FrDialogs.rename(
+                person.name,
+                person.faces[0]['thumb-url'],
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.rename (id, value).done(function () {
@@ -201,16 +212,8 @@ View.prototype = {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                         });
                     }
-                },
-                true,
-                t('facerecognition', 'Rename'),
-                false
-            ).then(function() {
-                var $dialog = $('.oc-dialog:visible');
-                var $buttons = $dialog.find('button');
-                $buttons.eq(0).text(t('facerecognition', 'Cancel'));
-                $buttons.eq(1).text(t('facerecognition', 'Rename'));
-            });
+                }
+            );
         });
     }
 };

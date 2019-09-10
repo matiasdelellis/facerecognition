@@ -29,6 +29,7 @@ $app = new Application();
 
 \OC::$server->getEventDispatcher()->addListener('OCA\Files::loadAdditionalScripts', function(){
 	OC_Util::addVendorScript('facerecognition', 'js/lozad');
+	\OCP\Util::addScript('facerecognition', 'fr-dialogs');
 	\OCP\Util::addScript('facerecognition', 'files-tabview');
 	\OCP\Util::addScript('facerecognition', 'files-plugin');
 	\OCP\Util::addStyle('facerecognition', 'files-tabview');

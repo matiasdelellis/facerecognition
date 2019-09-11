@@ -41,11 +41,11 @@
 		</div>
 		<div>
 			<h3>
-				<strong><?php p($l->t('Misc settings'));?></strong>
+				<strong><?php p($l->t('Additional settings'));?></strong>
 			</h3>
 			<p>
 				<input id="showNotGrouped" name="showNotGrouped" type="checkbox" class="checkbox">
-				<label for="showNotGrouped"><?php p($l->t('Show people who are not grouped'));?></label><br>
+				<label for="showNotGrouped"><?php p($l->t('Show persons with a only 1 face found'));?></label><br>
 			</p>
 		</div>
 		<div>

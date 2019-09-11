@@ -13,22 +13,30 @@ $(document).ready(function() {
     function checkProgress() {
         $.get(OC.generateUrl('/apps/facerecognition/process')).done(function (progress) {
             if (progress.status) {
-                var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
-                var desc = t('facerecognition', 'Analyzing images');
-                desc += ' - ';
-                desc += t('facerecognition', '{processedImages} of {totalImages} - Ends approximately {estimatedFinalize}',
-                         {processedImages: progress.processedImages, totalImages: progress.totalImages, estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
-
-                $('#progress-text').html(desc);
-
+                var desc = '';
+                if (progress.processedImages == progress.totalImages) {
+                    desc = t('facerecognition', 'The analysis is finished');
+                    desc += ' - ';
+                    desc += n('facerecognition', '1 image was analyzed', '{totalImages} images were analyzed', progress.totalImages, {totalImages: progress.totalImages});
+                } else {
+                    var queuedImages = (progress.totalImages - progress.processedImages);
+                    var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
+                    desc = t('facerecognition', 'Analyzing images');
+                    desc += ' - ';
+                    desc += n('facerecognition', '1 image detected', '{totalImages} images detected', progress.totalImages, {totalImages: progress.totalImages});
+                    desc += ' - ';
+                    desc += n('facerecognition', '1 image in queue', '{queuedImages} images in queue', queuedImages, {queuedImages: queuedImages});
+                    desc += ' - ';
+                    desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', {estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
+                }
                 $('#progress-text').html(desc);
                 $('#progress-bar').attr('value', progress.processedImages);
                 $('#progress-bar').attr('max', progress.totalImages);
             } else {
                 $('#progress-bar').attr('value', 0);
-                var desc = t('facerecognition', 'Stopped');
+                var desc = t('facerecognition', 'The analisys is not started yet');
                 desc += ' - ';
-                desc += t('facerecognition', '{processedImages} images in queue', {processedImages: (progress.totalImages - progress.processedImages)});
+                desc += n('facerecognition', '1 image in queue', '{queuedImages} images in queue', progress.totalImages, {queuedImages: progress.totalImages});
 
                 $('#progress-text').html(desc);
             }

@@ -72,7 +72,7 @@ Persons.prototype = {
     },
     sortBySize: function () {
         this._persons.sort(function(a, b) {
-            return b.faces.length - a.faces.length;
+            return b.count - a.count;
         });
     },
     getAll: function () {

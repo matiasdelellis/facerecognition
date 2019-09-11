@@ -166,6 +166,9 @@ class SettingController extends Controller {
 					$value = '-1';
 				}
 				break;
+			case 'show-not-grouped':
+				$this->config->setAppValue('facerecognition', $type, $value);
+				break;
 			default:
 				break;
 		}
@@ -201,6 +204,9 @@ class SettingController extends Controller {
 					$value = $memory;
 					$status = self::STATE_FALSE;
 				}
+				break;
+			case 'show-not-grouped':
+				$value = $this->config->getAppValue('facerecognition', $type, 'false');
 				break;
 			default:
 				break;

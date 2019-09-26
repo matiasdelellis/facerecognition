@@ -236,6 +236,21 @@
 				<comments>Bottom border of bounding rectangle for this face</comments>
 			</field>
 			<field>
+				<name>confidence</name>
+				<type>float</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Confidence of face detection obtained from the model used</comments>
+			</field>
+			<field>
+				<name>landmarks</name>
+				<!-- todo: Doctrine obviusly allows json type, but I tested with PG only, need to test with SQLite and MySQL too -->
+				<type>json_array</type>
+				<notnull>true</notnull>
+				<!-- todo: compress this once we don't need to debug this that much -->
+				<comments>JSON array of 5 or 68 point values that comprise the landmarks obtained from used model</comments>
+			</field>
+			<field>
 				<name>descriptor</name>
 				<!-- todo: Doctrine obviusly allows json type, but I tested with PG only, need to test with SQLite and MySQL too -->
 				<type>json_array</type>

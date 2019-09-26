@@ -84,7 +84,7 @@ class FaceMapper extends QBMapper {
 	public function getFaces(string $userId, $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
-			->select('f.id', 'f.person', 'f.descriptor')
+			->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))

@@ -222,15 +222,19 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Create edges for chinese whispers
 		$euclidean = new Euclidean();
 		$sensitivity = floatval($this->config->getAppValue('facerecognition', 'sensitivity', '0.5'));
-
+		$min_confidence = floatval($this->config->getAppValue('facerecognition', 'min_confidence', '1.0'));
 		$edges = array();
 		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];
+			if ($face1->confidence < $min_confidence) {
+				$edges[] = array($i, $i); // fixme: Should we create an single group? o just ignore.
+				continue;
+			}
 			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
 				$face2 = $faces[$j];
 				// todo: can't this distance be a method in $face1->distance($face2)?
 				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
-				// todo: extract this magic number to app param
+
 				if ($distance < $sensitivity) {
 					$edges[] = array($i, $j);
 				}

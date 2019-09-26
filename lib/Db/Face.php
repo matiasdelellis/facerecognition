@@ -93,7 +93,7 @@ class Face extends Entity implements JsonSerializable {
 	 *
 	 * @var float
 	 * */
-	public $confidende;
+	public $confidence;
 
 	/**
 	 * 5x2D of 68x2D landmarks for this face.

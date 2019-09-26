@@ -131,7 +131,7 @@ class Face extends Entity implements JsonSerializable {
 		$face->setRight($faceFromModel["right"]);
 		$face->setTop(max($faceFromModel["top"], 0));
 		$face->setBottom($faceFromModel["bottom"]);
-		$face->setConfidence(0.0);
+		$face->setConfidence($faceFromModel["detection_confidence"]);
 		$face->setLandmarks("[]");
 		$face->setDescriptor("[]");
 		$face->setCreationTime(new \DateTime());

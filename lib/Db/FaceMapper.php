@@ -184,6 +184,8 @@ class FaceMapper extends QBMapper {
 				'right' => $qb->createNamedParameter($face->right),
 				'top' => $qb->createNamedParameter($face->top),
 				'bottom' => $qb->createNamedParameter($face->bottom),
+				'confidence' => $qb->createNamedParameter($face->confidence),
+				'landmarks' => $qb->createNamedParameter(json_encode($face->landmarks)),
 				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])

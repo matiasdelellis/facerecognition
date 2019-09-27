@@ -127,7 +127,8 @@ class FaceMapper extends QBMapper {
 			->setParameter('person', $personId)
 			->setParameter('file_id', $fileId)
 			->setParameter('model', $model)
-			->setParameter('is_valid', true);
+			->setParameter('is_valid', true)
+			->orderBy('confidence', 'DESC');
 		$faces = $this->findEntities($qb);
 		return $faces;
 	}

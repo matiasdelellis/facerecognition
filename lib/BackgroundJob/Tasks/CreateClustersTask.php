@@ -222,7 +222,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Create edges for chinese whispers
 		$euclidean = new Euclidean();
 		$sensitivity = floatval($this->config->getAppValue('facerecognition', 'sensitivity', '0.5'));
-		$min_confidence = floatval($this->config->getAppValue('facerecognition', 'min-confidence', '0.5'));
+		$min_confidence = floatval($this->config->getAppValue('facerecognition', 'min-confidence', '0.9'));
 		$edges = array();
 		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];

@@ -200,7 +200,7 @@ class SettingController extends Controller {
 				$value = $this->config->getAppValue('facerecognition', $type, '0.5');
 				break;
 			case 'min-confidence':
-				$value = $this->config->getAppValue('facerecognition', $type, '0.5');
+				$value = $this->config->getAppValue('facerecognition', $type, '0.9');
 				break;
 			case 'memory-limits':
 				$value = $this->config->getAppValue('facerecognition', $type, '-1');

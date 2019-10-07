@@ -54,7 +54,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
-		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100));
+		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$faceMapper->insertFace($face);
 
 		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $this->user);

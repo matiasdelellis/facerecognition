@@ -5,7 +5,7 @@
 	<summary>A face recognition app</summary>
 	<description><![CDATA[FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing and aggregating face data in users images, and providing additional functionalities on top of these information, all with built-in privacy of Nextcloud]]>
 	</description>
-	<version>0.5.7</version>
+	<version>0.5.8</version>
 	<licence>agpl</licence>
 	<author>Matias De lellis</author>
 	<author>Branko Kokanovic</author>

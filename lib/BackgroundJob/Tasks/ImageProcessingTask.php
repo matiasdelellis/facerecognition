@@ -331,6 +331,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$landmarks = $fld->detect($imageProcessingContext->getTempPath(), array(
 				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
 				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
+			$face->landmarks = $landmarks['parts'];
+
 			$descriptor = $fr->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
 			$face->descriptor = $descriptor;
 		}

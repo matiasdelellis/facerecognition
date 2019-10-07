@@ -35,12 +35,14 @@ use OCP\AppFramework\Db\Entity;
  * @method int getRight()
  * @method int getTop()
  * @method int getBottom()
+ * @method float getConfidence()
  * @method void setImage(int $image)
  * @method void setPerson(int $person)
  * @method void setLeft(int $left)
  * @method void setRight(int $right)
  * @method void setTop(int $top)
  * @method void setBottom(int $bottom)
+ * @method void setConfidence(float $confidence)
  */
 class Face extends Entity implements JsonSerializable {
 
@@ -87,6 +89,20 @@ class Face extends Entity implements JsonSerializable {
 	public $bottom;
 
 	/**
+	 * Confidence of face detection obtained from the model
+	 *
+	 * @var float
+	 * */
+	public $confidence;
+
+	/**
+	 * landmarks for this face.
+	 *
+	 * @var array
+	 * */
+	public $landmarks;
+
+	/**
 	 * 128D face descriptor for this face.
 	 *
 	 * @var array
@@ -115,6 +131,8 @@ class Face extends Entity implements JsonSerializable {
 		$face->setRight($faceFromModel["right"]);
 		$face->setTop(max($faceFromModel["top"], 0));
 		$face->setBottom($faceFromModel["bottom"]);
+		$face->setConfidence($faceFromModel["detection_confidence"]);
+		$face->setLandmarks("[]");
 		$face->setDescriptor("[]");
 		$face->setCreationTime(new \DateTime());
 		return $face;
@@ -159,9 +177,20 @@ class Face extends Entity implements JsonSerializable {
 			'right' => $this->right,
 			'top' => $this->top,
 			'bottom' => $this->bottom,
+			'confidence' => $this->confidence,
+			'landmarks' => $this->landmarks,
 			'descriptor' => $this->descriptor,
 			'creation_time' => $this->creationTime
 		];
+	}
+
+	public function getLandmarks(): string {
+		return json_encode($this->landmarks);
+	}
+
+	public function setLandmarks($landmarks) {
+		$this->landmarks = json_decode($landmarks);
+		$this->markFieldUpdated('landmarks');
 	}
 
 	public function getDescriptor(): string {

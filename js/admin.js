@@ -98,6 +98,60 @@ $(document).ready(function() {
     });
 
     /*
+     * Confidence
+     */
+    function getMinConfidence() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'min-confidence',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    var confidence = parseFloat(data.value);
+                    $('#min-confidence-range').val(confidence);
+                    $('#min-confidence-value').html(confidence);
+                }
+            }
+        });
+    }
+
+    $('#min-confidence-range').on('input', function() {
+        $('#min-confidence-value').html(this.value);
+        $('#restore-min-confidence').show();
+        $('#save-min-confidence').show();
+    });
+
+    $('#restore-min-confidence').on('click', function(event) {
+        event.preventDefault();
+        getMinConfidence();
+
+        $('#restore-min-confidence').hide();
+        $('#save-min-confidence').hide();
+    });
+
+    $('#save-min-confidence').on('click', function(event) {
+        event.preventDefault();
+        var confidence = $('#min-confidence-range').val().toString();
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'min-confidence',
+                'value': confidence
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                    $('#restore-min-confidence').hide();
+                    $('#save-min-confidence').hide();
+                }
+            }
+        });
+    });
+
+    /*
      * MemoryLimits
      */
     function getMemoryLimits() {
@@ -210,6 +264,7 @@ $(document).ready(function() {
      * Get initial values.
      */
     getSensitivity();
+    getMinConfidence();
     getMemoryLimits();
     getNotGrouped();
     checkProgress();

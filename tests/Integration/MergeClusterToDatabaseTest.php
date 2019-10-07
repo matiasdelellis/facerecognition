@@ -564,7 +564,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	private function createFace($imageId, $personId = null) {
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$face = Face::fromModel($imageId, array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100));
+		$face = Face::fromModel($imageId, array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		if ($personId !== null) {
 			$face->setPerson($personId);
 		}

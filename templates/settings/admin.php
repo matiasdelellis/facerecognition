@@ -25,6 +25,21 @@
 		</p>
 		<br>
 		<h3>
+			<?php p($l->t('Minimum confidence'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('The minimun confidence determines how reliable must be a face detection to try to group it. Blurred or misaligned faces would have a confidence closer to 0.0, and the best images close to 1.0.'));?>
+			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Confidencee"></a>
+		</p>
+		<p>
+			<span><?php p($l->t('Less minimum confidence'));?></span>
+			<span><input type="range" id="min-confidence-range" min="0.0" max="1.0" value="0.5" step="0.01" class="ui-slider"></span>
+			<span><?php p($l->t('Highest minimum confidence'));?></span>
+			<span id="min-confidence-value"class="span-highlighted">...</span>
+			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-min-confidence" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
 			<?php p($l->t('Memory limits'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('Assigning more RAM can improve the results, but the analysis will be slower. Limiting its use you will get results faster, but for example you can lose the discovery of smaller faces in your images.'));?>

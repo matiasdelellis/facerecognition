@@ -84,7 +84,7 @@ class FaceMapper extends QBMapper {
 	public function getFaces(string $userId, $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
-			->select('f.id', 'f.person', 'f.descriptor')
+			->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
 			->from('face_recognition_faces', 'f')
 			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
@@ -127,7 +127,8 @@ class FaceMapper extends QBMapper {
 			->setParameter('person', $personId)
 			->setParameter('file_id', $fileId)
 			->setParameter('model', $model)
-			->setParameter('is_valid', true);
+			->setParameter('is_valid', true)
+			->orderBy('confidence', 'DESC');
 		$faces = $this->findEntities($qb);
 		return $faces;
 	}
@@ -184,6 +185,8 @@ class FaceMapper extends QBMapper {
 				'right' => $qb->createNamedParameter($face->right),
 				'top' => $qb->createNamedParameter($face->top),
 				'bottom' => $qb->createNamedParameter($face->bottom),
+				'confidence' => $qb->createNamedParameter($face->confidence),
+				'landmarks' => $qb->createNamedParameter(json_encode($face->landmarks)),
 				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])

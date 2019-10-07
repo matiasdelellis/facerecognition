@@ -136,6 +136,12 @@ class SettingController extends Controller {
 					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
 				});
 				break;
+			case 'min-confidence':
+				$this->config->setAppValue('facerecognition', $type, $value);
+				$this->userManager->callForSeenUsers(function(IUser $user) {
+					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
+				});
+				break;
 			case 'memory-limits':
 				if (is_numeric ($value)) {
 					// Apply prundent limits.
@@ -192,6 +198,9 @@ class SettingController extends Controller {
 		switch ($type) {
 			case 'sensitivity':
 				$value = $this->config->getAppValue('facerecognition', $type, '0.5');
+				break;
+			case 'min-confidence':
+				$value = $this->config->getAppValue('facerecognition', $type, '0.9');
 				break;
 			case 'memory-limits':
 				$value = $this->config->getAppValue('facerecognition', $type, '-1');

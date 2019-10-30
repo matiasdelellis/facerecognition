@@ -3,6 +3,7 @@ js/templates.js
 vendor/*
 !vendor/models/README.md
 !vendor/models/LICENCE.md
+node_modules
 clover.xml
 translationtool.phar
 translationfiles

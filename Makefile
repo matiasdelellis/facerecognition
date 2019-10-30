@@ -21,13 +21,11 @@ default: build
 
 test-bin-deps:
 	@echo "Checking binaries needed to build the application"
-	@echo "Testing curl, wget and bzip2. If one is missing, install it with the tools of your system."
+	@echo "Testing npm, curl, wget and bzip2. If one is missing, install it with the tools of your system."
+	npm -v
 	curl -V
 	wget -V
 #	bzip2 -V # FIXME: bzip2 always return an error.
-	@echo "Testing handlebars needed to compile the templates. If it fails install as:"
-	@echo " # sudo npm install handlebars -g"
-	handlebars -v
 
 composer:
 ifeq (,$(composer))
@@ -60,19 +58,22 @@ vendor/models/1/shape_predictor_5_face_landmarks.dat:
 	wget https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2 -O vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
 	bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
 
-download_models: vendor/models/1/mmod_human_face_detector.dat vendor/models/1/dlib_face_recognition_resnet_model_v1.dat vendor/models/1/shape_predictor_5_face_landmarks.dat
+download-models: vendor/models/1/mmod_human_face_detector.dat vendor/models/1/dlib_face_recognition_resnet_model_v1.dat vendor/models/1/shape_predictor_5_face_landmarks.dat
 
-vendor/js/handlebars.js:
+npm-deps:
+	npm i
+
+vendor/js/handlebars.js: npm-deps
 	mkdir -p vendor/js
-	wget http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v4.0.5.js -O vendor/js/handlebars.js
+	cp node_modules/handlebars/dist/handlebars.js -f vendor/js/handlebars.js
 
-vendor/js/lozad.js:
+vendor/js/lozad.js: npm-deps
 	mkdir -p vendor/js
-	wget https://raw.githubusercontent.com/ApoorvSaxena/lozad.js/master/dist/lozad.js -O vendor/js/lozad.js
+	cp node_modules/lozad/dist/lozad.js -f vendor/js/lozad.js
 
-javascript_deps: vendor/js/handlebars.js vendor/js/lozad.js
+javascript-deps: vendor/js/handlebars.js vendor/js/lozad.js
 
-vendor-deps: download_models composer javascript_deps
+vendor-deps: download-models composer javascript-deps
 
 
 # L10N Rules
@@ -103,9 +104,10 @@ l10n-deps:
 # Build Rules
 
 js-templates:
-	handlebars js/templates -f js/templates.js
+	node_modules/handlebars/bin/handlebars js/templates -f js/templates.js
 
 build: test-bin-deps vendor-deps js-templates
+	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 
 appstore:
@@ -156,3 +158,4 @@ clean: l10n-clean
 	rm -rf vendor/symfony/
 	rm -rf vendor/theseer/
 	rm -rf vendor/webmozart/
+	rm -rf node_modules

@@ -40,7 +40,6 @@ before_install:
 
   - sudo apt-get install npm
   - sudo npm config set strict-ssl false
-  - sudo npm install -g handlebars
   - make
   - wget https://raw.githubusercontent.com/nextcloud/travis_ci/master/before_install.sh;
   - bash ./before_install.sh $APP_NAME $CORE_BRANCH $DB

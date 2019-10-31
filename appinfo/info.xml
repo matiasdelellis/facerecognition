@@ -19,7 +19,7 @@
 	</types>
 	<dependencies>
 		<php min-version="7.0"/>
-		<nextcloud min-version="14" max-version="16" />
+		<nextcloud min-version="15" max-version="17"/>
 	</dependencies>
 	<repair-steps>
 		<install>

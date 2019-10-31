@@ -1,0 +1,29 @@
+{
+  "name": "facerecognition",
+  "version": "0.5.8",
+  "description": "FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing and aggregating face data in users images, and providing additional functionalities on top of these information, all with built-in privacy of Nextcloud",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "lib": "lib",
+    "test": "tests"
+  },
+  "dependencies": {
+    "handlebars": "^4.5.1",
+    "lozad": "^1.14.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matiasdelellis/facerecognition.git"
+  },
+  "author": "Matias De lellis <mati86dl@gmail.com>",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/matiasdelellis/facerecognition/issues"
+  },
+  "homepage": "https://github.com/matiasdelellis/facerecognition"
+}

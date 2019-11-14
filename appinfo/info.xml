@@ -10,13 +10,13 @@
 	<author>Matias De lellis</author>
 	<author>Branko Kokanovic</author>
 	<namespace>FaceRecognition</namespace>
+	<types>
+		<filesystem/>
+	</types>
 	<category>multimedia</category>
 	<website>https://github.com/matiasdelellis/facerecognition</website>
 	<bugs>https://github.com/matiasdelellis/facerecognition/issues</bugs>
 	<repository type="git">https://github.com/matiasdelellis/facerecognition.git</repository>
-	<types>
-		<filesystem/>
-	</types>
 	<dependencies>
 		<php min-version="7.0"/>
 		<nextcloud min-version="15" max-version="17"/>

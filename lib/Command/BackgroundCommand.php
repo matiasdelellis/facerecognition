@@ -120,7 +120,7 @@ class BackgroundCommand extends Command {
 		if (!is_null($maxImageArea)) {
 			$maxImageArea = intval($maxImageArea);
 
-			if ($maxImageArea == 0) {
+			if ($maxImageArea === 0) {
 				throw new \InvalidArgumentException("Max image area must be positive number.");
 			}
 

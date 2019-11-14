@@ -186,7 +186,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 			// Yield from time to time
 			$processed++;
-			if ($processed % 10 == 0) {
+			if ($processed % 10 === 0) {
 				$this->logDebug(sprintf('Processed %d/%d stale images for user %s', $processed, count($allImages), $userId));
 				yield;
 			}

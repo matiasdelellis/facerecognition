@@ -1,0 +1,27 @@
+OC.L10N.register(
+    "facerecognition",
+    {
+    "Analyzing images" : "Анализирам слике",
+    "Persons" : "Особе",
+    "Looking for faces in this image…" : "Тражим лица на сликама…",
+    "Rename" : "Преименуј",
+    "No people found" : "Нема нађених особа",
+    "This image is not yet analyzed" : "Ова слика још није анализирана",
+    "Please, be patient" : "Будите стрпљиви",
+    "Rename Person" : "Преименуј особу",
+    "Please enter a name to rename the person" : "Унесите ново име за особу",
+    "Cancel" : "Поништи",
+    "There was an error trying to show your friends" : "Грешка при приказивању Ваших пријатеља",
+    "Face Recognition" : "Препознавање лица",
+    "Here you can see photos of your friends that are recognized" : "Овде можете видети све слике Ваших пријатеља који су препознати",
+    "Looking for your recognized friends" : "Тражим препознате пријатеље",
+    "Your friends have not been recognized yet" : "Ваши пријатељи још нису препознати",
+    "There was an error when trying to find photos of your friend" : "Догодила се грешка приликом тражења слика Ваших пријатеља",
+    "There was an error renaming this person" : "Догодила се грешка приликом преименовања ове особе",
+    "A face recognition app" : "Апликација препознавања лица",
+    "Open Documentation" : "Отвори документацију",
+    "Configuration information" : "Информације о поставкама",
+    "Current status" : "Тренутно стање",
+    "Stopped" : "Заустављено"
+},
+"nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);");

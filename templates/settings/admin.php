@@ -27,8 +27,8 @@
 		<h3>
 			<?php p($l->t('Minimum confidence'));?>
 		</h3>
-		<p class="settings-hint"><?php p($l->t('The minimun confidence determines how reliable must be a face detection to try to group it. Blurred or misaligned faces would have a confidence closer to 0.0, and the best images close to 1.0.'));?>
-			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Confidencee"></a>
+		<p class="settings-hint"><?php p($l->t('The minimum confidence determines how reliable must be a face detection to try to group it. Blurred or misaligned faces would have a confidence closer to 0.0, and the best images close to 1.0.'));?>
+			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Confidence"></a>
 		</p>
 		<p>
 			<span><?php p($l->t('Less minimum confidence'));?></span>
@@ -46,7 +46,7 @@
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection"></a>
 		</p>
 		<p>
-			<span><input type="memory" id="memory-limits-text" name="memory-limits-text" placeholder="<?php p($l->t('Use subfix as 2048 MB or 2G'));?>"></span>
+			<span><input type="memory" id="memory-limits-text" name="memory-limits-text" placeholder="<?php p($l->t('Use suffix as 2048 MB or 2G'));?>"></span>
 			<span id="memory-limits-value"class="span-highlighted">...</span>
 			<a id="restore-memory-limits" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-memory-limits" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>

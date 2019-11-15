@@ -34,7 +34,7 @@ $(document).ready(function() {
                 $('#progress-bar').attr('max', progress.totalImages);
             } else {
                 $('#progress-bar').attr('value', 0);
-                var desc = t('facerecognition', 'The analisys is not started yet');
+                var desc = t('facerecognition', 'The analysis is not started yet');
                 desc += ' - ';
                 desc += n('facerecognition', '1 image in queue', '{queuedImages} images in queue', progress.totalImages, {queuedImages: progress.totalImages});
 

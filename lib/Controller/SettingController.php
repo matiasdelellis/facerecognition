@@ -147,11 +147,11 @@ class SettingController extends Controller {
 					// Apply prundent limits.
 					if ($value < 1 * 1024 * 1024 * 1024) {
 						$value = 1 * 1024 * 1024 * 1024;
-						$message = $this->l10n->t("The recommended analysis needs at least 1 GB of RAM.");
+						$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
 						$status = self::STATE_ERROR;
 					} else if ($value > 4 * 1024 * 1024 * 1024) {
 						$value = 4 * 1024 * 1024 * 1024;
-						$message = $this->l10n->t("It is not recommended to use more than 4GB of RAM.");
+						$message = $this->l10n->t("We are not recommending using more than 4GB of RAM memory, as we see little to no benefit.");
 						$status = self::STATE_ERROR;
 					}
 					// Valid according to RAM of php.ini setting.

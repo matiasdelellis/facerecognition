@@ -51,7 +51,7 @@ class PersonMapper extends QBMapper {
 
 	public function findAll(string $userId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name')
+		$qb->select('id', 'name', 'is_valid')
 			->from('face_recognition_persons', 'p')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 
@@ -216,6 +216,15 @@ class PersonMapper extends QBMapper {
 				foreach ($newFaces as $newFace) {
 					$this->updateFace($newFace, $newPerson);
 				}
+
+				// Set cluster as valid now
+				$qb = $this->db->getQueryBuilder();
+				$qb
+					->update($this->getTableName())
+					->set("is_valid", $qb->createParameter('is_valid'))
+					->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
+					->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+					->execute();
 			}
 
 			// Add new clusters

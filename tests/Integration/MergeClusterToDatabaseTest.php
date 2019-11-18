@@ -95,6 +95,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array($person->getId() => [$face->getId()]),
@@ -150,6 +151,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -170,6 +172,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		});
 		$this->assertTrue(strpos($persons[0]->getName(), strval($person->getId()+1)) !== false);
 		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+2)) !== false);
+		$this->assertTrue($persons[0]->getIsValid());
+		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertPersonDoNotExist($person->getId());
 		$person1Id = $persons[0]->getId();
 		$person2Id = $persons[1]->getId();
@@ -188,6 +192,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -208,6 +213,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		});
 		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
 		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+1)) !== false);
+		$this->assertTrue($persons[0]->getIsValid());
+		$this->assertTrue($persons[1]->getIsValid());
 		$person1Id = $persons[0]->getId();
 		$person2Id = $persons[1]->getId();
 		$this->assertEquals($person1Id, $person->getId());
@@ -228,6 +235,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -258,6 +266,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -288,6 +297,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -309,6 +319,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		});
 		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
 		$this->assertTrue(strpos($persons[1]->getName(), 'bar') !== false);
+		$this->assertTrue($persons[0]->getIsValid());
+		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertEquals($person1->getId(), $persons[0]->getId());
 		$this->assertEquals($person2->getId(), $persons[1]->getId());
 
@@ -328,6 +340,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -349,6 +362,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		});
 		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
 		$this->assertTrue(strpos($persons[1]->getName(), strval($person2->getId()+5)) !== false);
+		$this->assertTrue($persons[0]->getIsValid());
+		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertEquals($person1->getId(), $persons[0]->getId());
 		$person3Id = $persons[1]->getId();
 
@@ -396,6 +411,11 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
+		$personMapper->invalidatePersons($image->getId());
+
+		// First person is not invalid (it will remain same, so change it back to valid)
+		$person1->setIsValid(true);
+		$personMapper->update($person1);
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -427,6 +447,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$this->assertTrue(strpos($persons[3]->getName(), 'foo-p4') !== false);
 		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+100)) !== false);
 		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+101)) !== false);
+		foreach ($persons as $person) {
+			$this->assertTrue($person->getIsValid());
+		}
 		$this->assertEquals($person1->getId(), $persons[0]->getId());
 		$this->assertEquals($person2->getId(), $persons[1]->getId());
 		$this->assertEquals($person3->getId(), $persons[2]->getId());
@@ -487,6 +510,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array(
@@ -522,6 +546,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$this->assertTrue(strpos($persons[3]->getName(), strval($person1->getId()+103)) !== false);
 		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+104)) !== false);
 		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+105)) !== false);
+		foreach ($persons as $person) {
+			$this->assertTrue($person->getIsValid());
+		}
 		$person5Id = $persons[0]->getId();
 		$person6Id = $persons[1]->getId();
 		$person7Id = $persons[2]->getId();
@@ -584,6 +611,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		// Check that it can be found using this method too
 		$personMapper->find($this->user->getUID(), $persons[0]->getId());
+
+		// After clustering, person must be valid
+		$this->assertTrue($persons[0]->getIsValid());
 
 		return $persons[0]->getId();
 	}

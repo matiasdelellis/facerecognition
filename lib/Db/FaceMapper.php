@@ -134,6 +134,20 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Finds all faces contained in one image
+	 *
+	 * @param int $imageId Image for which to find all faces for
+	 */
+	public function findByImage(int $imageId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'image', 'person')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)));
+		$faces = $this->findEntities($qb);
+		return $faces;
+	}
+
+	/**
 	 * @param int $imageId Image for which to delete faces for
 	 */
 	public function removeFaces(int $imageId) {

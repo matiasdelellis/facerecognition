@@ -272,6 +272,25 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * Deletes person if it is empty (have no faces associated to it)
+	 *
+	 * @param int $personId Person to check if it should be deleted
+	 */
+	public function removeIfEmpty(int $personId) {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'));
+		$sub->from("face_recognition_faces", "f")
+			->where($sub->expr()->eq('f.person', $sub->createParameter('person')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createParameter('person')))
+			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('person', $personId)
+			->execute();
+	}
+
+	/**
 	 * Checks if face with a given ID is in any cluster.
 	 *
 	 * @param int $faceId ID of the face to check

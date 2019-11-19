@@ -200,6 +200,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
+		// Remove all orphaned persons (those without any faces)
+		// NOTE: we will do this for all models, not just for current one, but this is not problem.
+		$this->personMapper->deleteOrphaned($userId);
+
 		// Prevents not create/recreate the clusters unnecessarily.
 		$this->config->setUserValue($userId, 'facerecognition', 'recreate-clusters', 'false');
 		$this->config->setUserValue($userId, 'facerecognition', 'force-create-clusters', 'false');

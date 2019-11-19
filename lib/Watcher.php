@@ -172,7 +172,17 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
+
+			// Fetch all faces to be deleted before deleting them, and then delete them
+			$facesToRemove = $this->faceMapper->findByImage($imageId);
 			$this->faceMapper->removeFaces($imageId);
+
+			// If any person is now without faces, remove those (empty) persons
+			foreach ($facesToRemove as $faceToRemove) {
+				if ($faceToRemove->getPerson() !== null) {
+					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
+				}
+			}
 		}
 	}
 
@@ -226,10 +236,20 @@ class Watcher {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
 			$this->personMapper->invalidatePersons($imageId);
+
+			// Fetch all faces to be deleted before deleting them, and then delete them
+			$facesToRemove = $this->faceMapper->findByImage($imageId);
 			$this->faceMapper->removeFaces($imageId);
 
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);
+
+			// If any person is now without faces, remove those (empty) persons
+			foreach ($facesToRemove as $faceToRemove) {
+				if ($faceToRemove->getPerson() !== null) {
+					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
+				}
+			}
 		}
 	}
 

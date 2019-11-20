@@ -295,14 +295,14 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @param string $userId ID of user for which we are deleting orphaned persons
 	 */
-	public function deleteOrphaned(string $userId) {
+	public function deleteOrphaned(string $userId): int {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from("face_recognition_faces", "f")
 			->where($sub->expr()->eq('f.person', 'p.id'));
 
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName(), 'p')
+		return $qb->delete($this->getTableName(), 'p')
 			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
 			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)

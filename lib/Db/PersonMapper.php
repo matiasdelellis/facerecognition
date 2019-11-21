@@ -193,6 +193,14 @@ class PersonMapper extends QBMapper {
 
 				$oldFaces = $currentClusters[$newPerson];
 				if ($newFaces === $oldFaces) {
+					// Set cluster as valid now
+					$qb = $this->db->getQueryBuilder();
+					$qb
+						->update($this->getTableName())
+						->set("is_valid", $qb->createParameter('is_valid'))
+						->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
+						->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+						->execute();
 					continue;
 				}
 

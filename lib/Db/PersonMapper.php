@@ -291,6 +291,25 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * Deletes all persons that have no faces associated to them
+	 *
+	 * @param string $userId ID of user for which we are deleting orphaned persons
+	 */
+	public function deleteOrphaned(string $userId): int {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'));
+		$sub->from("face_recognition_faces", "f")
+			->where($sub->expr()->eq('f.person', 'p.id'));
+
+		$qb = $this->db->getQueryBuilder();
+		return $qb->delete($this->getTableName(), 'p')
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user', $userId)
+			->execute();
+	}
+
+	/**
 	 * Checks if face with a given ID is in any cluster.
 	 *
 	 * @param int $faceId ID of the face to check

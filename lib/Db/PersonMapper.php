@@ -297,7 +297,7 @@ class PersonMapper extends QBMapper {
 	 */
 	public function deleteOrphaned(string $userId): int {
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('*');
+		$sub->select(new Literal('1'));
 		$sub->from("face_recognition_faces", "f")
 			->where($sub->expr()->eq('f.person', 'p.id'));
 

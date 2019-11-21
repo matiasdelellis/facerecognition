@@ -76,6 +76,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
+		$personMapper->invalidatePersons($image->getId());
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(),
 			array($person->getId() => [$face->getId()]),

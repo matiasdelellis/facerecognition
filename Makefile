@@ -114,20 +114,21 @@ appstore:
 	mkdir -p $(sign_dir)
 	rsync -a \
 	--exclude=.git \
-	--exclude=build \
 	--exclude=.gitignore \
-	--exclude=.travis.yml \
+	--exclude=.l10nignore \
 	--exclude=.scrutinizer.yml \
+	--exclude=.travis.yml \
+	--exclude=.tx \
+	--exclude=build \
 	--exclude=CONTRIBUTING.md \
 	--exclude=composer.json \
 	--exclude=composer.lock \
 	--exclude=translationfiles \
 	--exclude=translationtool.phar \
-	--exclude=l10n/.tx \
-	--exclude=l10n/no-php \
+	--exclude=node_modules \
 	--exclude=Makefile \
-	--exclude=nbproject \
-	--exclude=screenshots \
+	--exclude=package.json \
+	--exclude=package-lock.json \
 	--exclude=phpunit*xml \
 	--exclude=tests \
 	--exclude=vendor/bin \

@@ -302,11 +302,21 @@ class PersonMapper extends QBMapper {
 			->where($sub->expr()->eq('f.person', 'p.id'));
 
 		$qb = $this->db->getQueryBuilder();
-		return $qb->delete($this->getTableName(), 'p')
+		$qb->select('p.id')
+			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
 			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
-			->setParameter('user', $userId)
-			->execute();
+			->setParameter('user', $userId);
+		$orphanedPersons = $this->findEntities($qb);
+
+		$orphaned = 0;
+		foreach ($orphanedPersons as $person) {
+			$qb = $this->db->getQueryBuilder();
+			$orphaned += $qb->delete($this->getTableName())
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id)))
+				->execute();
+		}
+		return $orphaned;
 	}
 
 	/**

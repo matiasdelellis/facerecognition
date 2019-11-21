@@ -130,6 +130,7 @@ appstore:
 	--exclude=package.json \
 	--exclude=package-lock.json \
 	--exclude=phpunit*xml \
+	--exclude=screenshots \
 	--exclude=tests \
 	--exclude=vendor/bin \
 	$(project_dir) $(sign_dir)

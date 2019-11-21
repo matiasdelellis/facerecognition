@@ -19,7 +19,7 @@ later analysis. A scheduled task (Or admin on demand) take this queue, and
 analyze the images for looking faces and if possible identify them grouping by
 similarity.
 
-![App screenshots](/doc/face-recognition-screenshot.png "App screenshots")
+![App screenshots](/screenshots/facerecognition-clusters-view-small.jpg "App screenshots")
 
 ## How to use it?
 

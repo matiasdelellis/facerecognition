@@ -3,9 +3,11 @@ Hey, Thanks for reporting issues back to Nextcloud Face Recognition. Try filling
 Make sure you read all the [documentation](https://github.com/matiasdelellis/facerecognition/wiki), and the [FAQ](https://github.com/matiasdelellis/facerecognition/wiki/FAQ), and that the issue has not been reported before. :wink:
 
 ### Expected behaviour
+
 Tell us what should happen
 
 ### Actual behaviour
+
 Tell us what happens instead
 
 ### Steps to reproduce
@@ -19,9 +21,9 @@ Tell us what happens instead
 
 * **Pdlib version:**
 
-* **How installed dlib:**
+* **How installed dlib:** Make sure it is installed correctly with https://github.com/matiasdelellis/pdlib-min-test-suite
 
-* **How installed pdlib:**
+* **How installed pdlib:** Make sure it is installed correctly with https://github.com/matiasdelellis/pdlib-min-test-suite
 
 * **PHP version:**
 
@@ -47,7 +49,6 @@ Tell us what happens instead
 Insert your background log here
 ```
 </details>
-
 
 #### Web server error log
 <details>

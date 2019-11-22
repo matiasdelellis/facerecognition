@@ -5,7 +5,7 @@
 	<summary>A face recognition app</summary>
 	<description><![CDATA[**Detect and group faces of your loved one in your cloud**
 
-⚠️ This application requires minimum of 12GB of RAM memory to work! See [Requirements](https://github.com/matiasdelellis/facerecognition/wiki/Requirements-and-Limitations) for details.
+⚠️ This application requires minimum of 1-2GB of RAM memory to work! See [Requirements](https://github.com/matiasdelellis/facerecognition/wiki/Requirements-and-Limitations) for details.
 
 ⚠️ Setup of this app requires access to terminal and even getting your hands dirty with installation of additional software. See [Installation](https://github.com/matiasdelellis/facerecognition/wiki/Installation) for details.
 

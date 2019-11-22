@@ -1,4 +1,4 @@
-Hey, Thanks for reporting issues back to Nextcloud Face Recognition. Try filling this report with the greatest care so that we can help you. :smile:
+Hey, Thanks for reporting issues back to Nextcloud Face Recognition. Please, try to complete this report in detail so we can help you easier. :smile:
 
 Make sure you read all the [documentation](https://github.com/matiasdelellis/facerecognition/wiki), and the [FAQ](https://github.com/matiasdelellis/facerecognition/wiki/FAQ), and that the issue has not been reported before. :wink:
 
@@ -21,9 +21,9 @@ Tell us what happens instead
 
 * **Pdlib version:**
 
-* **How installed dlib:** Make sure it is installed correctly with https://github.com/matiasdelellis/pdlib-min-test-suite
+* **How is DLib installed:** Make sure it is working correctly with this [tool](https://github.com/matiasdelellis/pdlib-min-test-suite)
 
-* **How installed pdlib:** Make sure it is installed correctly with https://github.com/matiasdelellis/pdlib-min-test-suite
+* **How is PDlib installed:** Make sure it is working correctly with this [tool](https://github.com/matiasdelellis/pdlib-min-test-suite)
 
 * **PHP version:**
 

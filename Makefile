@@ -133,6 +133,7 @@ appstore:
 	--exclude=screenshots \
 	--exclude=tests \
 	--exclude=vendor/bin \
+	--exclude=vendor/models/1/* \
 	$(project_dir) $(sign_dir)
 	@echo "Signing…"
 	tar -czf $(build_dir)/$(app_name).tar.gz \

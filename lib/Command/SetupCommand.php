@@ -29,6 +29,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 use OCA\FaceRecognition\Service\ModelService;
 
 class SetupCommand extends Command {
@@ -48,6 +50,8 @@ class SetupCommand extends Command {
 	/*
 	 * Model 1
 	 */
+	private $modelVersion = AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID;
+
 	private $detectorModelUrl = 'https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2';
 	private $detectorModel = 'mmod_human_face_detector.dat';
 
@@ -84,7 +88,14 @@ class SetupCommand extends Command {
 
 		$this->logger = $output;
 
-		$this->modelService->useModelVersion(1);
+		$requirements = new Requirements($this->modelService, $this->modelVersion);
+		if ($requirements->modelFilesPresent()) {
+			$this->logger->writeln('The models are already installed');
+			return 0;
+		}
+
+		$this->modelService->useModelVersion($this->modelVersion);
+
 		$this->tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
 
 		$this->downloadModel ($this->detectorModelUrl);

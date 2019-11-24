@@ -88,13 +88,13 @@ class SetupCommand extends Command {
 		$this->tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
 
 		$this->downloadModel ($this->detectorModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->detectorModelUrl), $this->modelService->getModelFile($this->detectorModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->detectorModelUrl), $this->modelService->getModelPath($this->detectorModel));
 
 		$this->downloadModel ($this->resnetModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->resnetModelUrl), $this->modelService->getModelFile($this->resnetModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->resnetModelUrl), $this->modelService->getModelPath($this->resnetModel));
 
 		$this->downloadModel ($this->predictorModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->predictorModelUrl), $this->modelService->getModelFile($this->predictorModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->predictorModelUrl), $this->modelService->getModelPath($this->predictorModel));
 
 		$this->logger->writeln('Install models successfully done');
 

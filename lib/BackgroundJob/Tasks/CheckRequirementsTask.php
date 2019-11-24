@@ -60,7 +60,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		$req = new Requirements($context->appManager, $model);
+		$req = new Requirements($context->modelService, $model);
 
 		if (!$req->pdlibLoaded()) {
 			$error_message = "PDLib is not loaded. Cannot continue";

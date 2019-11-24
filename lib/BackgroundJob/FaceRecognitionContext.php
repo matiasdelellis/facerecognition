@@ -30,6 +30,7 @@ use OCP\App\IAppManager;
 use OCP\Files\IRootFolder;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
+use OCA\FaceRecognition\Service\ModelService;
 
 /**
  * Simple class holding all information that tasks might need, so they can do their job.
@@ -48,6 +49,9 @@ class FaceRecognitionContext {
 	/** @var IConfig */
 	public $config;
 
+	/** @var ModelService */
+	public $modelService;
+
 	/** @var FaceRecognitionLogger */
 	public $logger;
 
@@ -63,11 +67,16 @@ class FaceRecognitionContext {
 	/** @var bool True if we are running from command, false if we are running as background job */
 	private $isRunningThroughCommand;
 
-	public function __construct(IAppManager $appManager, IUserManager $userManager, IRootFolder $rootFolder, IConfig $config) {
+	public function __construct(IAppManager  $appManager,
+	                            IUserManager $userManager,
+	                            IRootFolder  $rootFolder,
+	                            IConfig      $config,
+	                            ModelService $modelService) {
 		$this->appManager = $appManager;
 		$this->userManager = $userManager;
 		$this->rootFolder = $rootFolder;
 		$this->config = $config;
+		$this->modelService = $modelService;
 		$this->isRunningThroughCommand = false;
 	}
 

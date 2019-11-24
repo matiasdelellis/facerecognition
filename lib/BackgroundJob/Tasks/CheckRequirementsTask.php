@@ -60,7 +60,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		$req = new Requirements($context->appManager, $model);
+		$req = new Requirements($context->modelService, $model);
 
 		if (!$req->pdlibLoaded()) {
 			$error_message = "PDLib is not loaded. Cannot continue";
@@ -70,9 +70,10 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 
 		if (!$req->modelFilesPresent()) {
 			$error_message =
-				"Files of model with ID ' . $model . ' are not present in models/ directory.\n" .
+				"Files of model with ID " . $model . " are not present in models/ directory.\n" .
 				"Please contact administrator to change models you are using for face recognition\n" .
-				"or reinstall application. File an issue here if that doesn\'t help: https://github.com/matiasdelellis/facerecognition/issues";
+				"or reinstall them with the 'occ face:setup' command. \n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}

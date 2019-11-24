@@ -1,20 +1,18 @@
 <?php
-
 namespace OCA\FaceRecognition\Helper;
 
-use OCP\App\IAppManager;
+use OCA\FaceRecognition\Service\ModelService;
 
 class Requirements
 {
-	/** @var \OCP\App\IAppManager **/
-	protected $appManager;
+	/** @var ModelService */
+	protected $modelService;
 
-	/** @var int ID of used model */
-	private $model;
+	public function __construct(ModelService $modelService,
+	                            int          $model) {
+		$this->modelService = $modelService;
 
-	public function __construct(IAppManager $appManager, int $model) {
-		$this->appManager = $appManager;
-		$this->model = $model;
+		$this->modelService->useModelVersion($model);
 	}
 
 	public function pdlibLoaded() {
@@ -28,20 +26,14 @@ class Requirements
 	}
 
 	public function modelFilesPresent(): bool {
-		if ($this->model === 1) {
-			$faceDetection = $this->getFaceDetectionModel();
-			$landmarkDetection = $this->getLandmarksDetectionModel();
-			$faceRecognition = $this->getFaceRecognitionModel();
+		$faceDetection = $this->getFaceDetectionModel();
+		$landmarkDetection = $this->getLandmarksDetectionModel();
+		$faceRecognition = $this->getFaceRecognitionModel();
 
-			if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
-				return false;
-			} else {
-				return true;
-			}
-		} else {
-			// Since current app version only can handle model with ID=1,
-			// we surely cannot check if files from other model exist
+		if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
 			return false;
+		} else {
+			return true;
 		}
 	}
 
@@ -64,11 +56,8 @@ class Requirements
 	 * @return string|null Full path to file, or NULL if file is not found
 	 */
 	private function getModel1File(string $file) {
-		if ($this->model !== 1) {
-			return NULL;
-		}
+		$fullPath = $this->modelService->getModelPath($file);
 
-		$fullPath = $this->appManager->getAppPath('facerecognition') . '/vendor/models/1/' . $file;
 		if (file_exists($fullPath)) {
 			return $fullPath;
 		} else {

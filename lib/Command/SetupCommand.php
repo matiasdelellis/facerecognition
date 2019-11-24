@@ -23,28 +23,23 @@
 namespace OCA\FaceRecognition\Command;
 
 use OCP\ITempManager;
-use OCP\App\IAppManager;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Service\ModelService;
+
 class SetupCommand extends Command {
 
-	/** @var \OCP\App\IAppManager **/
-	protected $appManager;
+	/** @var ModelService */
+	protected $modelService;
 
 	/** @var ITempManager */
 	protected $tempManager;
 
-	/** @var string */
-	protected $tempFolder;
-
-	/** @var string */
-	protected $modelsFolder;
-
-	/* @var  OutputInterface */
+	/** @var OutputInterface */
 	protected $logger;
 
 	/*
@@ -60,15 +55,15 @@ class SetupCommand extends Command {
 	private $predictorModel = 'shape_predictor_5_face_landmarks.dat';
 
 	/**
-	 * @param FaceManagementService $faceManagementService
-	 * @param IUserManager $userManager
+	 * @param ModelService $modelService
+	 * @param ITempManager $tempManager
 	 */
-	public function __construct(IAppManager  $appManager,
+	public function __construct(ModelService $modelService,
 	                            ITempManager $tempManager) {
 		parent::__construct();
 
-		$this->appManager = $appManager;
-		$this->tempManager = $tempManager;
+		$this->modelService = $modelService;
+		$this->tempManager  = $tempManager;
 	}
 
 	protected function configure() {
@@ -83,22 +78,22 @@ class SetupCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+
 		$this->logger = $output;
 
+		$this->modelService->useModelVersion(1);
 		$this->tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
-		$this->modelsFolder = $this->appManager->getAppPath('facerecognition') . '/vendor/models/1/';
 
 		$this->downloadModel ($this->detectorModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->detectorModelUrl), $this->getModelFile($this->detectorModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->detectorModelUrl), $this->modelService->getModelFile($this->detectorModel));
 
 		$this->downloadModel ($this->resnetModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->resnetModelUrl), $this->getModelFile($this->resnetModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->resnetModelUrl), $this->modelService->getModelFile($this->resnetModel));
 
 		$this->downloadModel ($this->predictorModelUrl);
-		$this->bunzip2 ($this->getDownloadedFile($this->predictorModelUrl), $this->getModelFile($this->predictorModel));
+		$this->bunzip2 ($this->getDownloadedFile($this->predictorModelUrl), $this->modelService->getModelFile($this->predictorModel));
 
 		$this->logger->writeln('Install models successfully done');
-		die();
 
 		$this->tempManager->clean();
 
@@ -106,7 +101,7 @@ class SetupCommand extends Command {
 	}
 
 	/**
-	 * Downloads the facereconition model to $/updater-$instanceid/downloads/$filename
+	 * Downloads the facereconition model to an temp folder.
 	 *
 	 * @throws \Exception
 	 */
@@ -184,7 +179,7 @@ class SetupCommand extends Command {
 
 		while ($buffer = bzread ($in_file, 4096)) {
 			if($buffer === FALSE)
-				throw new \Exception('Read problem:  ' . bzerrstr($in_file));
+				throw new \Exception('Read problem: ' . bzerrstr($in_file));
 			if(bzerrno($in_file) !== 0)
 				throw new \Exception('Compression problem: '. bzerrstr($in_file));
 			fwrite ($out_file, $buffer, 4096);
@@ -196,11 +191,6 @@ class SetupCommand extends Command {
 
 	private function getDownloadedFile (string $url): string {
 		$file = $this->tempFolder . basename($url);
-		return $file;
-	}
-
-	private function getModelFile (string $name): string {
-		$file = $this->modelsFolder . $name;
 		return $file;
 	}
 

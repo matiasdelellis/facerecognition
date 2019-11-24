@@ -54,7 +54,7 @@ class ModelService {
 	/**
 	 * @return none
 	 */
-	public useModelVersion (int $version) {
+	public function useModelVersion (int $version) {
 		try {
 			$this->appData->getFolder('/models/' . $version);
 		} catch (NotFoundException $e) {

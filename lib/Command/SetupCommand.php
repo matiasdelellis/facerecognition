@@ -42,6 +42,9 @@ class SetupCommand extends Command {
 	/** @var OutputInterface */
 	protected $logger;
 
+	/* @var string */
+	protected $tempFolder;
+
 	/*
 	 * Model 1
 	 */

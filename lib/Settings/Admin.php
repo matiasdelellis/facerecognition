@@ -4,10 +4,10 @@ namespace OCA\FaceRecognition\Settings;
 
 use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\ModelService;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
-use OCP\App\IAppManager;
 use OCP\IConfig;
 use OCP\IL10N;
 
@@ -16,18 +16,18 @@ class Admin implements ISettings {
 	/** @var IConfig */
 	protected $config;
 
-	/** @var \OCP\App\IAppManager **/
-	protected $appManager;
+	/** @var ModelService */
+	public $modelService;
 
 	/** @var IL10N */
 	protected $l;
 
-	public function __construct(IConfig $config,
-		                    IAppManager $appManager,
-		                    IL10N $l) {
-		$this->config = $config;
-		$this->appManager = $appManager;
-		$this->l = $l;
+	public function __construct(IConfig      $config,
+	                            ModelService $modelService,
+	                            IL10N        $l) {
+		$this->config       = $config;
+		$this->modelService = $modelService;
+		$this->l            = $l;
 	}
 
 	public function getPriority() {
@@ -48,7 +48,7 @@ class Admin implements ISettings {
 
 		$modelVersion = intval($this->config->getAppValue('facerecognition', 'model', $modelVersion));
 
-		$req = new Requirements($this->appManager, $modelVersion);
+		$req = new Requirements($this->modelService, $modelVersion);
 
 		if ($req->pdlibLoaded()) {
 			$pdlibVersion = $req->pdlibVersion();

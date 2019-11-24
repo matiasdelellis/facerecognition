@@ -65,7 +65,7 @@ class ModelService {
 		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
 		$dataDir = $this->config->getSystemValue('datadirectory', null);
 
-		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/' . $version +.'/';
+		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/' . $version . '/';
 	}
 
 	/**

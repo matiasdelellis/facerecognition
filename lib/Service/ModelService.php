@@ -26,6 +26,7 @@ namespace OCA\FaceRecognition\Service;
 use OCP\IConfig;
 use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
 
 class ModelService {
 

@@ -72,7 +72,7 @@ class ModelService {
 	 * @return String
 	 */
 	public function getModelPath(string $file): string {
-		return $this->modelFolder . $file;
+		return $this->modelsFolder . $file;
 	}
 
 	/**

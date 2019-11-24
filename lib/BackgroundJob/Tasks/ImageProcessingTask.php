@@ -146,7 +146,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$requirements = new Requirements($context->appManager, $model);
+		$requirements = new Requirements($context->modelService, $model);
 
 		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];

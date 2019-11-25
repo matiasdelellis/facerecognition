@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.9] - 2019-11-25
+### Changed
+- Migrate deprecated json_array db type to json.
+
 ## [0.5.8] - 2019-11-22
 ### Added
 - A personal settings panel to enable the analysis by each user.

@@ -244,14 +244,14 @@
 			</field>
 			<field>
 				<name>landmarks</name>
-				<type>json_array</type>
+				<type>json</type>
 				<notnull>true</notnull>
 				<!-- todo: compress this once we don't need to debug this that much -->
 				<comments>JSON array that specifies values that comprise the landmarks obtained from used model</comments>
 			</field>
 			<field>
 				<name>descriptor</name>
-				<type>json_array</type>
+				<type>json</type>
 				<notnull>true</notnull>
 				<!-- todo: compress this once we don't need to debug this that much -->
 				<comments>JSON array of 128 value that comprise face descriptor obtained from used model</comments>

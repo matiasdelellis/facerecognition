@@ -23,6 +23,7 @@ use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 
 class PersonController extends Controller {
 
@@ -84,8 +85,10 @@ class PersonController extends Controller {
 
 					$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 					$fileUrl = $this->getRedirectToFileUrl($image->getFile());
-					if (NULL === $fileUrl)
+					if (NULL === $fileUrl) {
+						$limit++;
 						continue;
+					}
 
 					$face = [];
 					$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
@@ -161,8 +164,10 @@ class PersonController extends Controller {
 		$files      = $baseFolder->getById($fileId);
 		$file       = current($files);
 
-		if(!($file instanceof File))
+		if(!($file instanceof File)) {
+			$this->config->setUserValue($this->userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			return NULL;
+		}
 
 		$params = [];
 		$params['dir'] = $baseFolder->getRelativePath($file->getParent()->getPath());

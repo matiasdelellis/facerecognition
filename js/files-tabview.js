@@ -122,9 +122,9 @@
             observer.observe();
         },
 
-        _renamePerson: function (personId, personName) {
+        _renamePerson: function (clusterId, personName) {
             var opt = { name: personName };
-            var url  = OC.generateUrl('/apps/facerecognition') + '/person/' + personId;
+            var url  = OC.generateUrl('/apps/facerecognition') + '/cluster/' + clusterId;
             var self = this;
             $.ajax({url: url,
                     method: 'PUT',

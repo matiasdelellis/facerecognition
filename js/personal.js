@@ -16,8 +16,9 @@ const state = {
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._enabled = false;
-    this._persons = [];
-    this._person = undefined;
+    this._clusters = [];
+    this._cluster = undefined;
+    this._clustersByName = undefined;
     this._loaded = false;
 };
 
@@ -25,9 +26,9 @@ Persons.prototype = {
     load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/persons').done(function (response) {
+        $.get(this._baseUrl+'/clusters').done(function (response) {
             self._enabled = response.enabled;
-            self._persons = response.clusters;
+            self._clusters = response.clusters;
             self._loaded = true;
             deferred.resolve();
         }).fail(function () {
@@ -35,30 +36,45 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    loadPerson: function (id) {
-        this.unsetPerson();
+    loadCluster: function (id) {
+        this.unsetActive();
 
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+id).done(function (person) {
-            self._person = person;
+        $.get(this._baseUrl+'/cluster/'+id).done(function (cluster) {
+            self._cluster = cluster;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
     },
-    unsetPerson: function () {
-        this._person = undefined;
+    loadClustersByName: function (personName) {
+        var deferred = $.Deferred();
+        var self = this;
+        $.get(this._baseUrl+'/person/'+personName).done(function (clusters) {
+            self._clustersByName = clusters.clusters;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
+    unsetActive: function () {
+        this._cluster = undefined;
+        this._clustersByName = undefined;
     },
     getActive: function () {
-        return this._person;
+        return this._cluster;
     },
-    getById: function (personId) {
+    getActiveByName: function () {
+        return this._clustersByName;
+    },
+    getById: function (clusterId) {
         var ret = undefined;
-        for (var person of this._persons) {
-            if (person.id === personId) {
-                ret = person;
+        for (var cluster of this._clusters) {
+            if (cluster.id === clusterId) {
+                ret = cluster;
                 break;
             }
         };
@@ -71,25 +87,30 @@ Persons.prototype = {
         return this._enabled;
     },
     sortBySize: function () {
-        this._persons.sort(function(a, b) {
-            return b.count - a.count;
-        });
+        if (this._clusters !== undefined)
+            this._clusters.sort(function(a, b) {
+                return b.count - a.count;
+            });
+        if (this._clustersByName !== undefined)
+            this._clustersByName.sort(function(a, b) {
+                return b.count - a.count;
+            });
     },
     getAll: function () {
-        return this._persons;
+        return this._clusters;
     },
-    rename: function (personId, personName) {
+    renameCluster: function (clusterId, personName) {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: personName };
-        $.ajax({url: this._baseUrl + '/person/' + personId,
+        $.ajax({url: this._baseUrl + '/cluster/' + clusterId,
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._persons.forEach(function (person) {
-                if (person.id === personId) {
-                    person.name = personName;
+            self._clusters.forEach(function (cluster) {
+                if (cluster.id === clusterId) {
+                    cluster.name = personName;
                 }
             });
             deferred.resolve();
@@ -139,26 +160,28 @@ View.prototype = {
         this._persons.sortBySize();
         var context = {
             loaded: this._persons.isLoaded(),
-            persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
+            showMoreButton: t('facerecognition', 'Show all groups with the same name'),
+            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
+            emptyHint: t('facerecognition', 'Please, be patient'),
+            emptyMsg: t('facerecognition', 'The analysis is disabled'),
+            emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
             loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
         if (this._persons.isEnabled() === 'true') {
             context.enabled = true;
-            context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
-            context.emptyHint = t('facerecognition', 'Please, be patient');
-        }
-        else {
-            context.emptyMsg = t('facerecognition', 'The analysis is disabled');
-            context.emptyHint = t('facerecognition', 'Enable it to find your loved ones');
+            context.clusters = this._persons.getAll();
         }
 
         if (this._persons.getActive() !== undefined)
-            context.person = this._persons.getActive();
+            context.cluster = this._persons.getActive();
+
+        if (this._persons.getActiveByName() !== undefined)
+            context.clustersByName = this._persons.getActiveByName();
 
         var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
@@ -190,7 +213,7 @@ View.prototype = {
 
         $('#facerecognition .person-name').click(function () {
             var id = $(this).parent().data('id');
-            self._persons.loadPerson(id).done(function () {
+            self._persons.loadCluster(id).done(function () {
                 self.renderContent();
             }).fail(function () {
                 OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
@@ -205,8 +228,8 @@ View.prototype = {
                 person.faces[0]['thumb-url'],
                 function(result, value) {
                     if (result === true && value) {
-                        self._persons.rename (id, value).done(function () {
-                            self._persons.unsetPerson();
+                        self._persons.renameCluster (id, value).done(function () {
+                            self._persons.unsetActive();
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
@@ -214,6 +237,20 @@ View.prototype = {
                     }
                 }
             );
+        });
+
+        $('#facerecognition #show-more-clusters').click(function () {
+            var personName = self._persons.getActive().name;
+            self._persons.loadClustersByName(personName).done(function () {
+                self.renderContent();
+            }).fail(function () {
+                OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+            });
+        });
+
+        $('#facerecognition .icon-view-previous').click(function () {
+            self._persons.unsetActive();
+            self.renderContent();
         });
     }
 };

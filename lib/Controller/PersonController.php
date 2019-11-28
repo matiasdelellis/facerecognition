@@ -82,20 +82,18 @@ class PersonController extends Controller {
 			$limit = 14;
 			$faces = [];
 			foreach ($personFaces as $personFace) {
-				if ($limit-- === 0)
-					break;
-
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 				$fileUrl = $this->getRedirectToFileUrl($image->getFile());
-				if (NULL === $fileUrl) {
-					$limit++;
+				if (NULL === $fileUrl)
 					continue;
-				}
 
 				$face = [];
 				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 				$face['file-url'] = $fileUrl;
 				$faces[] = $face;
+
+				if (--$limit === 0)
+					break;
 			}
 
 			$cluster = [];
@@ -210,6 +208,7 @@ class PersonController extends Controller {
 		$file       = current($files);
 
 		if(!($file instanceof File)) {
+			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
 			$this->config->setUserValue($this->userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			return NULL;
 		}

@@ -18,6 +18,7 @@ var Persons = function (baseUrl) {
     this._enabled = false;
     this._clusters = [];
     this._cluster = undefined;
+    this._clustersByName = undefined;
     this._loaded = false;
 };
 
@@ -36,7 +37,7 @@ Persons.prototype = {
         return deferred.promise();
     },
     loadCluster: function (id) {
-        this.unsetCluster();
+        this.unsetActive();
 
         var deferred = $.Deferred();
         var self = this;
@@ -48,11 +49,26 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    unsetCluster: function () {
+    loadClustersByName: function (personName) {
+        var deferred = $.Deferred();
+        var self = this;
+        $.get(this._baseUrl+'/person/'+personName).done(function (clusters) {
+            self._clustersByName = clusters.clusters;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
+    unsetActive: function () {
         this._cluster = undefined;
+        this._clustersByName = undefined;
     },
     getActive: function () {
         return this._cluster;
+    },
+    getActiveByName: function () {
+        return this._clustersByName;
     },
     getById: function (clusterId) {
         var ret = undefined;
@@ -71,9 +87,14 @@ Persons.prototype = {
         return this._enabled;
     },
     sortBySize: function () {
-        this._clusters.sort(function(a, b) {
-            return b.count - a.count;
-        });
+        if (this._clusters !== undefined)
+            this._clusters.sort(function(a, b) {
+                return b.count - a.count;
+            });
+        if (this._clustersByName !== undefined)
+            this._clustersByName.sort(function(a, b) {
+                return b.count - a.count;
+            });
     },
     getAll: function () {
         return this._clusters;
@@ -139,26 +160,28 @@ View.prototype = {
         this._persons.sortBySize();
         var context = {
             loaded: this._persons.isLoaded(),
-            persons: this._persons.getAll(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
+            showMoreButton: t('facerecognition', 'Show all groups with the same name'),
+            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
+            emptyHint: t('facerecognition', 'Please, be patient'),
+            emptyMsg: t('facerecognition', 'The analysis is disabled'),
+            emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
             loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
         if (this._persons.isEnabled() === 'true') {
             context.enabled = true;
-            context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
-            context.emptyHint = t('facerecognition', 'Please, be patient');
-        }
-        else {
-            context.emptyMsg = t('facerecognition', 'The analysis is disabled');
-            context.emptyHint = t('facerecognition', 'Enable it to find your loved ones');
+            context.clusters = this._persons.getAll();
         }
 
         if (this._persons.getActive() !== undefined)
-            context.person = this._persons.getActive();
+            context.cluster = this._persons.getActive();
+
+        if (this._persons.getActiveByName() !== undefined)
+            context.clustersByName = this._persons.getActiveByName();
 
         var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
@@ -206,7 +229,7 @@ View.prototype = {
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.renameCluster (id, value).done(function () {
-                            self._persons.unsetCluster();
+                            self._persons.unsetActive();
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
@@ -214,6 +237,20 @@ View.prototype = {
                     }
                 }
             );
+        });
+
+        $('#facerecognition #show-more-clusters').click(function () {
+            var personName = self._persons.getActive().name;
+            self._persons.loadClustersByName(personName).done(function () {
+                self.renderContent();
+            }).fail(function () {
+                OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+            });
+        });
+
+        $('#facerecognition .icon-view-previous').click(function () {
+            self._persons.unsetActive();
+            self.renderContent();
         });
     }
 };

@@ -38,7 +38,6 @@ class PersonMapper extends QBMapper {
 		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
-
 	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
@@ -47,6 +46,15 @@ class PersonMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 		$person = $this->findEntity($qb);
 		return $person;
+	}
+
+	public function findByName(string $userId, string $personName): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name')
+			->from('face_recognition_persons', 'p')
+			->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)))
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
+		return $this->findEntities($qb);
 	}
 
 	public function findAll(string $userId): array {

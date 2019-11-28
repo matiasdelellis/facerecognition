@@ -1,13 +1,19 @@
 <?php
 return ['routes' => 
 [
-	// Get all persons with faces and file asociated.
+	// Get all face clusters with faces and file asociated.
 	[
 		'name' => 'person#index',
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
-	// Change name to a person.
+	// Get all clusters filtered by Name.
+	[
+		'name' => 'person#findByName',
+		'url'  => '/person/{personName}',
+		'verb' => 'GET'
+	],
+	// Get a cluster by Id.
 	[
 		'name' => 'person#find',
 		'url'  => '/cluster/{id}',

@@ -111,7 +111,6 @@ class FaceMapper extends QBMapper {
 		return $faces;
 	}
 
-
 	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'left', 'right', 'top', 'bottom')

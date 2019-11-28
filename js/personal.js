@@ -16,8 +16,8 @@ const state = {
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._enabled = false;
-    this._persons = [];
-    this._person = undefined;
+    this._clusters = [];
+    this._cluster = undefined;
     this._loaded = false;
 };
 
@@ -25,9 +25,9 @@ Persons.prototype = {
     load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/persons').done(function (response) {
+        $.get(this._baseUrl+'/clusters').done(function (response) {
             self._enabled = response.enabled;
-            self._persons = response.clusters;
+            self._clusters = response.clusters;
             self._loaded = true;
             deferred.resolve();
         }).fail(function () {
@@ -35,30 +35,30 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    loadPerson: function (id) {
-        this.unsetPerson();
+    loadCluster: function (id) {
+        this.unsetCluster();
 
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+id).done(function (person) {
-            self._person = person;
+        $.get(this._baseUrl+'/cluster/'+id).done(function (cluster) {
+            self._cluster = cluster;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
     },
-    unsetPerson: function () {
-        this._person = undefined;
+    unsetCluster: function () {
+        this._cluster = undefined;
     },
     getActive: function () {
-        return this._person;
+        return this._cluster;
     },
-    getById: function (personId) {
+    getById: function (clusterId) {
         var ret = undefined;
-        for (var person of this._persons) {
-            if (person.id === personId) {
-                ret = person;
+        for (var cluster of this._clusters) {
+            if (cluster.id === clusterId) {
+                ret = cluster;
                 break;
             }
         };
@@ -71,25 +71,25 @@ Persons.prototype = {
         return this._enabled;
     },
     sortBySize: function () {
-        this._persons.sort(function(a, b) {
+        this._clusters.sort(function(a, b) {
             return b.count - a.count;
         });
     },
     getAll: function () {
-        return this._persons;
+        return this._clusters;
     },
-    rename: function (personId, personName) {
+    renameCluster: function (clusterId, personName) {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: personName };
-        $.ajax({url: this._baseUrl + '/person/' + personId,
+        $.ajax({url: this._baseUrl + '/cluster/' + clusterId,
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._persons.forEach(function (person) {
-                if (person.id === personId) {
-                    person.name = personName;
+            self._clusters.forEach(function (cluster) {
+                if (cluster.id === clusterId) {
+                    cluster.name = personName;
                 }
             });
             deferred.resolve();
@@ -190,7 +190,7 @@ View.prototype = {
 
         $('#facerecognition .person-name').click(function () {
             var id = $(this).parent().data('id');
-            self._persons.loadPerson(id).done(function () {
+            self._persons.loadCluster(id).done(function () {
                 self.renderContent();
             }).fail(function () {
                 OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
@@ -205,8 +205,8 @@ View.prototype = {
                 person.faces[0]['thumb-url'],
                 function(result, value) {
                     if (result === true && value) {
-                        self._persons.rename (id, value).done(function () {
-                            self._persons.unsetPerson();
+                        self._persons.renameCluster (id, value).done(function () {
+                            self._persons.unsetCluster();
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));

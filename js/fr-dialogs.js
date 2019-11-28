@@ -55,7 +55,7 @@ const FrDialogs = {
 				text: t('facerecognition', 'Cancel'),
 				click: function () {
 					if (callback !== undefined) {
-						callback(false, input.val());
+						callback(false, input.val().trim());
 					}
 					$(dialogId).ocdialog('close');
 				}
@@ -63,7 +63,7 @@ const FrDialogs = {
 				text: t('facerecognition', 'Rename'),
 				click: function () {
 					if (callback !== undefined) {
-						callback(true, input.val());
+						callback(true, input.val().trim());
 					}
 					$(dialogId).ocdialog('close');
 				},
@@ -82,7 +82,9 @@ const FrDialogs = {
 					}
 				}
 			});
+
 			input.focus();
+			input.select();
 		});
 	},
 	_getMessageTemplate: function () {

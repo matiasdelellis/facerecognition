@@ -1,27 +1,54 @@
 <div class="section" id="facerecognition">
 
+	{{#if clustersByName}}
 	<h2>
+		<a class="title-icon icon-view-previous"></a>
 		{{appName}}
 	</h2>
-	{{#if person}}
 	<div id="persons-navigation">
-		<h2 class="person-title icon-user" data-id="{{person.id}}">
-			<span>{{person.name}}</span>
+		{{#each clustersByName}}
+			<h2 class="person-title icon-user" data-id="{{this.id}}">
+				<span>{{this.name}}</span>
+				<a class="title-icon icon-rename"></a>
+			</h2>
+			<div class="persons-previews">
+				{{#each this.faces}}
+					<a target="_blank" href="{{file-url}}">
+						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+					</a>
+				{{/each}}
+			</div>
+		{{/each}}
+	</div>
+	{{else if cluster}}
+	<h2>
+		<a class="title-icon icon-view-previous"></a>
+		{{appName}}
+	</h2>
+	<div id="persons-navigation">
+		<h2 class="person-title icon-user" data-id="{{cluster.id}}">
+			<span>{{cluster.name}}</span>
 			<a class="title-icon icon-rename"></a>
 		</h2>
 		<div class="persons-previews">
-			{{#each person.faces}}
+			{{#each cluster.faces}}
 				<a target="_blank" href="{{file-url}}">
 					<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
 				</a>
 			{{/each}}
 		</div>
 	</div>
-	{{else if persons}}
+	<button id="show-more-clusters" type="button" class="primary">
+		{{showMoreButton}}
+	</button>
+	{{else if clusters}}
+	<h2>
+		{{appName}}
+	</h2>
 	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div id="persons-navigation">
-		{{#each persons}}
+		{{#each clusters}}
 			<h2 class="person-title icon-user" data-id="{{this.id}}">
 				<a class="person-name" href="#"><span>{{this.name}}</span></a>
 				<a class="title-icon icon-rename"></a>
@@ -36,6 +63,9 @@
 		{{/each}}
 	</div>
 	{{else if loaded}}
+	<h2>
+		{{appName}}
+	</h2>
 	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div class="emptycontent">
@@ -48,6 +78,9 @@
 		</p>
 	</div>
 	{{else}}
+	<h2>
+		{{appName}}
+	</h2>
 	<div class="emptycontent">
 		<div class="icon-user svg"></div>
 		<h2>

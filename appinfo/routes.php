@@ -4,19 +4,19 @@ return ['routes' =>
 	// Get all persons with faces and file asociated.
 	[
 		'name' => 'person#index',
-		'url'  => '/persons',
+		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
 	// Change name to a person.
 	[
 		'name' => 'person#find',
-		'url'  => '/person/{id}',
+		'url'  => '/cluster/{id}',
 		'verb' => 'GET'
 	],
 	// Change name to a person.
 	[
 		'name' => 'person#updateName',
-		'url'  => '/person/{id}',
+		'url'  => '/cluster/{id}',
 		'verb' => 'PUT'
 	],
 	// Get a face Thumb

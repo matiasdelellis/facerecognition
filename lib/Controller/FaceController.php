@@ -57,7 +57,11 @@ class FaceController extends Controller {
 			if (!is_null($imgData)) {
 				$img = new OCP_Image();
 				$img->loadFromData($imgData);
-				return new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+
+				$resp =  new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+				$resp->cacheFor(7 * 24 * 60 * 60);
+				$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
+				return $resp;
 			}
 		}
 
@@ -93,7 +97,10 @@ class FaceController extends Controller {
 
 		$this->fileCache->set($key, $img->data());
 
-		return new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+		$resp =  new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+		$resp->cacheFor(7 * 24 * 60 * 60);
+		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
+		return $resp;
 
 	}
 

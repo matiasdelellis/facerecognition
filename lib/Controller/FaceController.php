@@ -17,11 +17,14 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Service\FileCache;
+
 class FaceController extends Controller {
 
 	private $rootFolder;
 	private $faceMapper;
 	private $imageMapper;
+	private $fileCache;
 	private $userId;
 
 	public function __construct($AppName,
@@ -29,20 +32,35 @@ class FaceController extends Controller {
 	                            IRootFolder $rootFolder,
 	                            FaceMapper  $faceMapper,
 	                            ImageMapper $imageMapper,
+	                            FileCache   $fileCache,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 		$this->rootFolder = $rootFolder;
 		$this->faceMapper = $faceMapper;
 		$this->imageMapper = $imageMapper;
+		$this->fileCache = $fileCache;
 		$this->userId = $UserId;
 	}
 
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse
 	 */
-	public function getThumb ($id, $size) {
+	public function getThumb (int $id, int $size) {
+
+		$key = 'face-'. $this->userId . '-' .$id . '-' . $size . 'x' . $size;
+		if ($this->fileCache->hasKey($key)) {
+			$imgData = $this->fileCache->get($key);
+			if (!is_null($imgData)) {
+				$img = new OCP_Image();
+				$img->loadFromData($imgData);
+				return new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+			}
+		}
+
 		$face = $this->faceMapper->find($id);
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
@@ -73,12 +91,10 @@ class FaceController extends Controller {
 		$img->crop($x, $y, $w, $h);
 		$img->scaleDownToFit($size, $size);
 
-		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
-		$resp->setETag((string)crc32($img->data()));
-		$resp->cacheFor(7 * 24 * 60 * 60);
-		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
+		$this->fileCache->set($key, $img->data());
 
-		return $resp;
+		return new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
+
 	}
 
 }

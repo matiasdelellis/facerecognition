@@ -73,9 +73,10 @@ abstract class IntegrationTestCase extends TestCase {
 		$appManager = $this->container->query('OCP\App\IAppManager');
 		$userManager = $this->container->query('OCP\IUserManager');
 		$rootFolder = $this->container->query('OCP\Files\IRootFolder');
+		$modelService = $this->container->query('OCA\FaceRecognition\Service\ModelService');
 		$this->config = $this->container->query('OCP\IConfig');
 		$logger = $this->container->query('OCP\ILogger');
-		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $this->config);
+		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $this->config, $modelService);
 		$this->context->logger = new FaceRecognitionLogger($logger);
 
 		// The tests, by default, are with the analysis activated.

@@ -53,7 +53,7 @@ class LockTaskTest extends TestCase {
 		$config = $this->createMock(IConfig::class);
 		$modelService = $this->createMock(ModelService::class);
 		$logger = $this->createMock(ILogger::class);
-		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config $modelService);
+		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config, $modelService);
 		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 

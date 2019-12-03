@@ -57,8 +57,13 @@ class RequirementsTest extends TestCase {
 	}
 
 	public function testPdlibLoaded() {
-		$modelService = $this->createMock(ModelService::class);
-		$requirements = new Requirements($modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$requirements = new Requirements($this->context->modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 		$this->assertTrue($requirements->pdlibLoaded());
 	}
+
+	public function testModelFilesPresent() {
+		$requirements = new Requirements($this->context->modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$this->assertTrue($requirements->modelFilesPresent());
+	}
+
 }

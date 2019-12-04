@@ -201,6 +201,8 @@ class SetupCommand extends Command {
 
 		bzclose ($in_file);
 		fclose ($out_file);
+
+		$this->logger->writeln(filesize($out)/(1024*1024) . ' Mb');
 	}
 
 	private function getDownloadedFile (string $url): string {

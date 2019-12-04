@@ -54,7 +54,7 @@ before_script:
   - cd apps/$APP_NAME
 
 script:
-  - ../../occ face:setup && make test
+  - bash ./tests/travis-script.sh
 
   # Create coverage report
   - wget https://scrutinizer-ci.com/ocular.phar

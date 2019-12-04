@@ -91,7 +91,7 @@ class SetupCommand extends Command {
 		$requirements = new Requirements($this->modelService, $this->modelVersion);
 		if ($requirements->modelFilesPresent()) {
 			$this->logger->writeln('The models are already installed');
-			return 0;
+			//return 0;
 		}
 
 		$this->modelService->useModelVersion($this->modelVersion);

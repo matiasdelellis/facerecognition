@@ -123,7 +123,7 @@ appstore:
 	openssl dgst -sha512 -sign $(cert_dir)/$(app_name).key $(build_dir)/$(app_name).tar.gz | openssl base64
 
 test: build
-	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml
+	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml --verbose
 
 clean: l10n-clean
 	rm -rf ./build

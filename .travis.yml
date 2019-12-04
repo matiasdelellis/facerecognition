@@ -48,10 +48,10 @@ before_install:
   - bash ./before_install.sh $APP_NAME $CORE_BRANCH $DB
   - cd ../server;
   - ./occ app:enable $APP_NAME
-  - ./occ face:setup
 
 before_script:
   - ./occ app:check-code $APP_NAME || true
+  - ./occ face:setup
   - cd apps/$APP_NAME
 
 script:
@@ -63,4 +63,3 @@ script:
 
 after_failure:
   - cat ../../data/nextcloud.log
-

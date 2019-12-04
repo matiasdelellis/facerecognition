@@ -51,10 +51,10 @@ before_install:
 
 before_script:
   - ./occ app:check-code $APP_NAME || true
-  - ./occ face:setup
   - cd apps/$APP_NAME
 
 script:
+  - ../../occ face:setup
   - make test
 
   # Create coverage report

@@ -81,6 +81,7 @@ abstract class IntegrationTestCase extends TestCase {
 
 		// The tests, by default, are with the analysis activated.
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
+		$this->config->setAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 	}
 
 	public function tearDown() {

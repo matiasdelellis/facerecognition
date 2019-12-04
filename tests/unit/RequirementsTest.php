@@ -56,21 +56,9 @@ class RequirementsTest extends TestCase {
 		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 
-	public function testModelInstalled() {
-		$config = $this->createMock(IConfig::class);
-		$defaultModel = AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID;
-		$modelInstalled = intval($config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$this->assertEquals($defaultModel, $modelInstalled);
-	}
-
 	public function testPdlibLoaded() {
 		$requirements = new Requirements($this->context->modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 		$this->assertTrue($requirements->pdlibLoaded());
-	}
-
-	public function testModelFilesPresent() {
-		$requirements = new Requirements($this->context->modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
-		$this->assertTrue($requirements->modelFilesPresent());
 	}
 
 }

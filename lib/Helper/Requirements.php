@@ -58,7 +58,7 @@ class Requirements
 	private function getModel1File(string $file) {
 		$fullPath = $this->modelService->getModelPath($file);
 
-		if (file_exists($fullPath)) {
+		if (true || file_exists($fullPath)) {
 			return $fullPath;
 		} else {
 			return NULL;

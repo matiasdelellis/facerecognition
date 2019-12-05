@@ -32,8 +32,8 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 		/** @var ISchemaWrapper $schema */
 		$schema = $schemaClosure();
 
-		if (!$schema->hasTable('face_recognition_face_models')) {
-			$table = $schema->createTable('face_recognition_face_models');
+		if (!$schema->hasTable('facerecog_models')) {
+			$table = $schema->createTable('facerecog_models');
 			$table->addColumn('id', 'integer', [
 				'autoincrement' => true,
 				'notnull' => true,
@@ -50,8 +50,8 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 			$table->setPrimaryKey(['id']);
 		}
 
-		if (!$schema->hasTable('face_recognition_persons')) {
-			$table = $schema->createTable('face_recognition_persons');
+		if (!$schema->hasTable('facerecog_persons')) {
+			$table = $schema->createTable('facerecog_persons');
 			$table->addColumn('id', 'integer', [
 				'autoincrement' => true,
 				'notnull' => true,
@@ -80,8 +80,8 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 			$table->addIndex(['user'], 'persons_user_idx');
 		}
 
-		if (!$schema->hasTable('face_recognition_images')) {
-			$table = $schema->createTable('face_recognition_images');
+		if (!$schema->hasTable('facerecog_images')) {
+			$table = $schema->createTable('facerecog_images');
 			$table->addColumn('id', 'integer', [
 				'autoincrement' => true,
 				'notnull' => true,
@@ -120,8 +120,8 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 			$table->addIndex(['model'], 'images_model_idx');
 		}
 
-		if (!$schema->hasTable('face_recognition_faces')) {
-			$table = $schema->createTable('face_recognition_faces');
+		if (!$schema->hasTable('facerecog_faces')) {
+			$table = $schema->createTable('facerecog_faces');
 			$table->addColumn('id', 'integer', [
 				'autoincrement' => true,
 				'notnull' => true,

@@ -35,13 +35,13 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 class PersonMapper extends QBMapper {
 
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'face_recognition_persons', '\OCA\FaceRecognition\Db\Person');
+		parent::__construct($db, 'facerecog_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
 	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
-			->from('face_recognition_persons', 'p')
+			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 		$person = $this->findEntity($qb);
@@ -51,7 +51,7 @@ class PersonMapper extends QBMapper {
 	public function findByName(string $userId, string $personName): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
-			->from('face_recognition_persons', 'p')
+			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 		return $this->findEntities($qb);
@@ -60,7 +60,7 @@ class PersonMapper extends QBMapper {
 	public function findAll(string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name', 'is_valid')
-			->from('face_recognition_persons', 'p')
+			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
 
 		$person = $this->findEntities($qb);
@@ -106,9 +106,9 @@ class PersonMapper extends QBMapper {
 	public function findFromFile(string $userId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id', 'name');
-		$qb->from("face_recognition_persons", "p")
-			->innerJoin('p', 'face_recognition_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
-			->innerJoin('p', 'face_recognition_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
+		$qb->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
+			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
 		$persons = $this->findEntities($qb);
@@ -126,8 +126,8 @@ class PersonMapper extends QBMapper {
 		$sub = $this->db->getQueryBuilder();
 		$tableNameWithPrefixWithoutQuotes = trim($sub->getTableName($this->getTableName()), '`');
 		$sub->select(new Literal('1'));
-		$sub->from("face_recognition_images", "i")
-			->innerJoin('i', 'face_recognition_faces' ,'f', $sub->expr()->eq('i.id', 'f.image'))
+		$sub->from('facerecog_images', 'i')
+			->innerJoin('i', 'facerecog_faces' ,'f', $sub->expr()->eq('i.id', 'f.image'))
 			->where($sub->expr()->eq($tableNameWithPrefixWithoutQuotes . '.id', 'f.person'))
 			->andWhere($sub->expr()->eq('i.id', $sub->createParameter('image_id')));
 
@@ -148,7 +148,7 @@ class PersonMapper extends QBMapper {
 	 */
 	private function updateFace(int $faceId, $personId) {
 		$qb = $this->db->getQueryBuilder();
-		$qb->update('face_recognition_faces')
+		$qb->update('facerecog_faces')
 			->set("person", $qb->createNamedParameter($personId))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
 			->execute();
@@ -295,7 +295,7 @@ class PersonMapper extends QBMapper {
 	public function removeIfEmpty(int $personId) {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
-		$sub->from("face_recognition_faces", "f")
+		$sub->from('facerecog_faces', 'f')
 			->where($sub->expr()->eq('f.person', $sub->createParameter('person')));
 
 		$qb = $this->db->getQueryBuilder();
@@ -314,7 +314,7 @@ class PersonMapper extends QBMapper {
 	public function deleteOrphaned(string $userId): int {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
-		$sub->from("face_recognition_faces", "f")
+		$sub->from('facerecog_faces', 'f')
 			->where($sub->expr()->eq('f.person', 'p.id'));
 
 		$qb = $this->db->getQueryBuilder();

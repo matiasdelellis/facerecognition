@@ -35,14 +35,14 @@ class ImageMapper extends QBMapper {
 	private $faceMapper;
 
 	public function __construct(IDBConnection $db, FaceMapper $faceMapper) {
-		parent::__construct($db, 'face_recognition_images', '\OCA\FaceRecognition\Db\Image');
+		parent::__construct($db, 'facerecog_images', '\OCA\FaceRecognition\Db\Image');
 		$this->faceMapper = $faceMapper;
 	}
 
 	public function find(string $userId, int $imageId): Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
-			->from('face_recognition_images', 'i')
+			->from($this->getTableName(), 'i')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($imageId)));
 		$image = $this->findEntity($qb);
@@ -52,7 +52,7 @@ class ImageMapper extends QBMapper {
 	public function findFromFile(string $userId, int $fileId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
-		   ->from('face_recognition_images', 'i')
+		   ->from($this->getTableName(), 'i')
 		   ->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 		   ->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
 
@@ -67,7 +67,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select(['id'])
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('file', $qb->createParameter('file')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
@@ -84,7 +84,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('model', $model);
 		$resultStatement = $query->execute();
@@ -98,7 +98,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
@@ -114,7 +114,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('AVG(' . $qb->getColumnName('processing_duration') . ')'))
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
@@ -130,7 +130,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
@@ -146,7 +146,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
@@ -167,7 +167,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select(['id', 'user', 'file', 'model'])
-			->from('face_recognition_images')
+			->from($this->getTableName())
 			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')))
 			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
@@ -192,9 +192,9 @@ class ImageMapper extends QBMapper {
 	public function findImagesFromPerson(string $userId, string $name, int $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'i.file')
-			->from('face_recognition_images', 'i')
-			->innerJoin('i', 'face_recognition_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('i', 'face_recognition_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
@@ -227,7 +227,7 @@ class ImageMapper extends QBMapper {
 			}
 
 			$qb = $this->db->getQueryBuilder();
-			$qb->update('face_recognition_images')
+			$qb->update($this->getTableName())
 				->set("is_processed", $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
 				->set("error", $qb->createNamedParameter($error))
 				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE))
@@ -238,7 +238,7 @@ class ImageMapper extends QBMapper {
 			// Delete all previous faces
 			//
 			$qb = $this->db->getQueryBuilder();
-			$qb->delete('face_recognition_faces')
+			$qb->delete('facerecog_faces')
 				->where($qb->expr()->eq('image', $qb->createNamedParameter($image->id)))
 				->execute();
 

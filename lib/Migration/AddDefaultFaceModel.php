@@ -70,7 +70,7 @@ class AddDefaultFaceModel implements IRepairStep {
 	public function run(IOutput $output) {
 		$qb = $this->connection->getQueryBuilder();
 		$query = $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('face_recognition_face_models')
+			->from('facerecog_models')
 			->where($qb->expr()->eq('id', $qb->createParameter('id')))
 			->setParameter('id', self::DEFAULT_FACE_MODEL_ID);
 		$resultStatement = $query->execute();
@@ -79,7 +79,7 @@ class AddDefaultFaceModel implements IRepairStep {
 
 		if ((int)$data[0] <= 0) {
 			$query = $this->connection->getQueryBuilder();
-			$query->insert('face_recognition_face_models')
+			$query->insert('facerecog_models')
 				->values([
 					'id' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_ID),
 					'name' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_NAME),

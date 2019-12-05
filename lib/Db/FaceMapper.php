@@ -10,13 +10,13 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class FaceMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'face_recognition_faces', '\OCA\FaceRecognition\Db\Face');
+		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
 	public function find (int $faceId): Face {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
-			->from('face_recognition_faces', 'f')
+			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		$faces = $this->findEntity($qb);
 		return $faces;
@@ -34,8 +34,8 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('f.id') . ')'))
-			->from('face_recognition_faces', 'f')
-			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
 		if ($onlyWithoutPersons) {
@@ -64,8 +64,8 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb
 			->select('f.id', 'f.creation_time')
-			->from('face_recognition_faces', 'f')
-			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->isNull('person'))
@@ -85,8 +85,8 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
-			->from('face_recognition_faces', 'f')
-			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
@@ -98,8 +98,8 @@ class FaceMapper extends QBMapper {
 	public function findFacesFromPerson(string $userId, int $personId, int $model, $limit = null, $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.image', 'f.person')
-			->from('face_recognition_faces', 'f')
-			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
@@ -114,9 +114,9 @@ class FaceMapper extends QBMapper {
 	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'left', 'right', 'top', 'bottom')
-			->from('face_recognition_faces', 'f')
-			->innerJoin('f', 'face_recognition_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
-			->innerJoin('f', 'face_recognition_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('person', $qb->createParameter('person')))
 			->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')))
@@ -164,7 +164,7 @@ class FaceMapper extends QBMapper {
 	public function deleteUserFaces(string $userId) {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
-		$sub->from("face_recognition_images", "i")
+		$sub->from('facerecog_images', 'i')
 			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
 			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user')));
 

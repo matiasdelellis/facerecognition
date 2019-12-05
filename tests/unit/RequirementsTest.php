@@ -34,6 +34,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\ModelService;
 
 use Test\TestCase;
 
@@ -49,14 +50,15 @@ class RequirementsTest extends TestCase {
 		$userManager = $this->createMock(IUserManager::class);
 		$rootFolder = $this->createMock(IRootFolder::class);
 		$config = $this->createMock(IConfig::class);
+		$modelService = $this->createMock(ModelService::class);
+		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config, $modelService);
 		$logger = $this->createMock(ILogger::class);
-		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config);
 		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 
 	public function testPdlibLoaded() {
-		$appManager = $this->createMock(IAppManager::class);
-		$requirements = new Requirements($appManager, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$modelService = $this->createMock(ModelService::class);
+		$requirements = new Requirements($modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
 		$this->assertTrue($requirements->pdlibLoaded());
 	}
 }

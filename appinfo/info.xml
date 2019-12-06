@@ -12,7 +12,7 @@
 - **😏 Detect faces from images:** Use FaceRecognition app to detect _any_ face in _any_ of your images!
 - **👪 Group faces to persons:** Detected faces are grouped together based on similarity and then FaceRecognition app can recognize persons!
 - **🔒 Built-in privacy:** No data is leaving your cloud. Defaults are always off and each user controls enabling/disabling face detection. Images from every directory can be excluded from face detection, if needed.
-- **⚙️ Power of AI:** FaceRecognition app leverages power of AI and already built neural network models through extensive usage od [DLib](http://dlib.net/) library.
+- **⚙️ Power of AI:** FaceRecognition app leverages power of AI and already built neural network models through extensive usage of [DLib](http://dlib.net/) library.
 - **🚀 Build your own thing:** FaceRecognition app is just a basic building block. Through FaceRecognition API, you can build your advanced scenarios - automatically add tags to images, connect contacts and persons, share images from specific person… We want to hear your ideas!
 ]]>
 	</description>

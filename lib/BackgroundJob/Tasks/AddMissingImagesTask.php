@@ -28,7 +28,6 @@ use OCP\IUser;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\Files\IHomeStorage;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
@@ -124,7 +123,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		\OC_Util::setupFS($userId);
 
 		$userFolder = $this->context->rootFolder->getUserFolder($userId);
-		return $this->parseUserFolder($model, $userFolder);
+		return $this->parseUserFolder($userId, $model, $userFolder);
 	}
 
 	/**
@@ -134,14 +133,14 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @param Folder $folder Folder to recursively search images in
 	 * @return int Number of missing images found
 	 */
-	private function parseUserFolder(int $model, Folder $folder): int {
+	private function parseUserFolder(string $userId, int $model, Folder $folder): int {
 		$insertedImages = 0;
 		$nodes = $this->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
 
 			$image = new Image();
-			$image->setUser($file->getOwner()->getUid());
+			$image->setUser($userId);
 			$image->setFile($file->getId());
 			$image->setModel($model);
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
@@ -164,13 +163,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	private function getPicturesFromFolder(Folder $folder, $results = array()) {
-		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($folder->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
-			return $results;
-		}
-
 		$nodes = $folder->getDirectoryListing();
-
 		foreach ($nodes as $node) {
 			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);

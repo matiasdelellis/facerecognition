@@ -212,7 +212,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// todo: this concat is wrong with shared files.
-		$imagePath = $dataDir . $file[0]->getPath();
+		$imagePath = $this->getLocalFile($file[0]);
+
 		$this->logInfo('Processing image ' . $imagePath);
 		$imageProcessingContext = $this->prepareImage($imagePath);
 		if ($imageProcessingContext->getSkipDetection() === true) {
@@ -383,4 +384,30 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
 		return $maxImageArea;
 	}
+
+	/**
+	 * Get a path to either the local file or temporary file
+	 *
+	 * @param File $file
+	 * @param int $maxSize maximum size for temporary files
+	 * @return string
+	 */
+	private function getLocalFile(File $file, int $maxSize = null): string {
+		$useTempFile = $file->isEncrypted() || !$file->getStorage()->isLocal();
+		if ($useTempFile) {
+			$absPath = \OC::$server->getTempManager()->getTemporaryFile();
+
+			$content = $file->fopen('r');
+			if ($maxSize) {
+				$content = stream_get_contents($content, $maxSize);
+			}
+
+			file_put_contents($absPath, $content);
+			//$this->tmpFiles[] = $absPath;
+			return $absPath;
+		} else {
+			return $file->getStorage()->getLocalFile($file->getInternalPath());
+		}
+	}
+
 }

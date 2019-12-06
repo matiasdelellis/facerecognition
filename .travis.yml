@@ -14,15 +14,12 @@ php:
 
 env:
   global:
-    - CORE_BRANCH=stable15
+    - CORE_BRANCH=stable16
     - APP_NAME=facerecognition
   matrix:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
-    - DB=mysql CORE_BRANCH=stable16
-    - DB=pgsql CORE_BRANCH=stable16
-    - DB=sqlite CORE_BRANCH=stable16
     - DB=mysql CORE_BRANCH=stable17
     - DB=pgsql CORE_BRANCH=stable17
     - DB=sqlite CORE_BRANCH=stable17

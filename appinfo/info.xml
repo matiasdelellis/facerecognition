@@ -34,7 +34,7 @@
 	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-files-search.jpg</screenshot>
 	<dependencies>
 		<php min-version="7.0"/>
-		<nextcloud min-version="15" max-version="17"/>
+		<nextcloud min-version="16" max-version="17"/>
 	</dependencies>
 	<repair-steps>
 		<install>

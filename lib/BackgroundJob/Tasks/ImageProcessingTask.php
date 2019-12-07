@@ -159,11 +159,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		foreach($images as $image) {
 			yield;
 
-			$imageProcessingContext = null;
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
 				$imageProcessingContext = $this->findFaces($cfd, $image);
+
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
 					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
 				}
@@ -207,7 +207,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		if (empty($file)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->config->setUserValue($this->userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			$this->config->setUserValue($image->user, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 			return null;
 		}
@@ -271,7 +271,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * Resizes the image to reach max image area, but preserving ratio.
 	 * Stolen and adopted from OC_Image->resize() (difference is that this returns ratio of resize.)
 	 *
-	 * @param OC_Image $image Image to resize
+	 * @param Image $image Image to resize
 	 * @param int $maxImageArea The maximum size of image we can handle (in pixels^2).
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
@@ -398,7 +398,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$absPath = $this->tempManager->getTemporaryFile();
 
 			$content = $file->fopen('r');
-			if ($maxSize) {
+			if ($maxSize !== null) {
 				$content = stream_get_contents($content, $maxSize);
 			}
 			file_put_contents($absPath, $content);

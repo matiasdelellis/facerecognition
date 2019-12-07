@@ -148,7 +148,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 		$requirements = new Requirements($context->modelService, $model);
 
-		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];
 
 		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModel());
@@ -164,7 +163,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$imageProcessingContext = $this->findFaces($cfd, $dataDir, $image);
+				$imageProcessingContext = $this->findFaces($cfd, $image);
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
 					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
 				}
@@ -197,21 +196,22 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If there is any error, throws exception
 	 *
 	 * @param \CnnFaceDetection $cfd Face detection model
-	 * @param string $dataDir Directory where data is stored
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(\CnnFaceDetection $cfd, string $dataDir, Image $image) {
+	private function findFaces(\CnnFaceDetection $cfd, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$userFolder = $this->context->rootFolder->getUserFolder($image->user);
 		$userRoot = $userFolder->getParent();
 		$file = $userRoot->getById($image->file);
+
 		if (empty($file)) {
+			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
+			$this->config->setUserValue($this->userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 			return null;
 		}
 
-		// todo: this concat is wrong with shared files.
 		$imagePath = $this->getLocalFile($file[0]);
 
 		$this->logInfo('Processing image ' . $imagePath);
@@ -395,15 +395,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	private function getLocalFile(File $file, int $maxSize = null): string {
 		$useTempFile = $file->isEncrypted() || !$file->getStorage()->isLocal();
 		if ($useTempFile) {
-			$absPath = \OC::$server->getTempManager()->getTemporaryFile();
+			$absPath = $this->tempManager->getTemporaryFile();
 
 			$content = $file->fopen('r');
 			if ($maxSize) {
 				$content = stream_get_contents($content, $maxSize);
 			}
-
 			file_put_contents($absPath, $content);
-			//$this->tmpFiles[] = $absPath;
+
 			return $absPath;
 		} else {
 			return $file->getStorage()->getLocalFile($file->getInternalPath());

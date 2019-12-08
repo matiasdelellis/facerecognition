@@ -35,6 +35,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\FileService;
 
 /**
  * Task that, for each user, crawls for all images in filesystem and insert them in database.
@@ -50,14 +51,21 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	/** @var ImageMapper Image mapper */
 	private $imageMapper;
 
+	/** @var FileService */
+	private $fileService;
+
 	/**
 	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
+	 * @param FileService $fileService File Service
 	 */
-	public function __construct(IConfig $config, ImageMapper $imageMapper) {
+	public function __construct(IConfig     $config,
+	                            ImageMapper $imageMapper,
+	                            FileService $fileService) {
 		parent::__construct();
-		$this->config = $config;
+		$this->config      = $config;
 		$this->imageMapper = $imageMapper;
+		$this->fileService = $fileService;
 	}
 
 	/**
@@ -119,8 +127,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 */
 	private function addMissingImagesForUser(string $userId, int $model): int {
 		$this->logInfo(sprintf('Finding missing images for user %s', $userId));
-		\OC_Util::tearDownFS();
-		\OC_Util::setupFS($userId);
+		$this->fileService->setupFS($userId);
 
 		$userFolder = $this->context->rootFolder->getUserFolder($userId);
 		return $this->parseUserFolder($userId, $model, $userFolder);
@@ -163,8 +170,15 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	private function getPicturesFromFolder(Folder $folder, $results = array()) {
+		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
+
 		$nodes = $folder->getDirectoryListing();
 		foreach ($nodes as $node) {
+			if (!$this->fileService->isUserFile($node) &&
+			    ($this->fileService->isSharedFile($node) && $handleSharedFiles !== 'true')) {
+				$this->logDebug('Ignore ' . $node->getPath() . ' since is shared and is disabled');
+				continue;
+			}
 			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			} else if ($node instanceof File) {

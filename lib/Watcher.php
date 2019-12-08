@@ -28,11 +28,12 @@ use OCP\Files\Folder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\Node;
 use OCP\IConfig;
-use OCP\IDBConnection;
 use OCP\ILogger;
 use OCP\IUserManager;
+use OCP\User;
 
 use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FileService;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
@@ -52,9 +53,6 @@ class Watcher {
 	/** @var ILogger Logger */
 	private $logger;
 
-	/** @var IDBConnection */
-	private $connection;
-
 	/** @var IUserManager */
 	private $userManager;
 
@@ -67,6 +65,9 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var FileService */
+	private $fileService;
+
 	/** @var FaceManagementService */
 	private $faceManagementService;
 
@@ -75,29 +76,29 @@ class Watcher {
 	 *
 	 * @param IConfig $config
 	 * @param ILogger $logger
-	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
+	 * @param FileService $fileService
 	 * @param FaceManagementService $faceManagementService
 	 */
 	public function __construct(IConfig               $config,
 	                            ILogger               $logger,
-	                            IDBConnection         $connection,
 	                            IUserManager          $userManager,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
+	                            FileService           $fileService,
 	                            FaceManagementService $faceManagementService)
 	{
-		$this->config = $config;
-		$this->logger = $logger;
-		$this->connection = $connection;
-		$this->userManager = $userManager;
-		$this->faceMapper = $faceMapper;
-		$this->imageMapper = $imageMapper;
-		$this->personMapper = $personMapper;
+		$this->config                = $config;
+		$this->logger                = $logger;
+		$this->userManager           = $userManager;
+		$this->faceMapper            = $faceMapper;
+		$this->imageMapper           = $imageMapper;
+		$this->personMapper          = $personMapper;
+		$this->fileService           = $fileService;
 		$this->faceManagementService = $faceManagementService;
 	}
 
@@ -109,17 +110,23 @@ class Watcher {
 	 */
 	public function postWrite(Node $node) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
 
-		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+		if ($this->fileService->isUserFile($node)) {
+			$owner = $node->getOwner()->getUid();
+		}
+		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
+			// If we are going to analyze the shared files, we must 'appropriate' it.
+			$owner = User::getUser();
+		}
+		else {
+			// Nextcloud also sends the Hooks when create thumbnails for example.
 			return;
 		}
 
 		if ($node instanceof Folder) {
 			return;
 		}
-
-		$owner = $node->getOwner()->getUid();
 
 		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
 		if ($enabled !== 'true') {
@@ -144,16 +151,10 @@ class Watcher {
 			return;
 		}
 
-		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
-		$parentNode = $node->getParent();
-		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
-			if ($parentNode->nodeExists('.nomedia')) {
-				$this->logger->debug(
-					"Skipping inserting image " . $node->getName() . " because directory " . $parentNode->getName() . " contains .nomedia file");
-				return;
-			}
-
-			$parentNode = $parentNode->getParent();
+		if ($this->fileService->isUnderNoMedia($node)) {
+			$this->logger->debug(
+				"Skipping inserting image " . $node->getName() . " because is inside an folder that contains a .nomedia file");
+			return;
 		}
 
 		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");
@@ -194,17 +195,23 @@ class Watcher {
 	 */
 	public function postDelete(Node $node) {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
 
-		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+		if ($this->fileService->isUserFile($node)) {
+			$owner = $node->getOwner()->getUid();
+		}
+		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
+			// If we are going to analyze the shared files, we must 'appropriate' it.
+			$owner = User::getUser();
+		}
+		else {
+			// Nextcloud also sends the Hooks when create thumbnails for example.
 			return;
 		}
 
 		if ($node instanceof Folder) {
 			return;
 		}
-
-		$owner = $node->getOwner()->getUid();
 
 		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
 		if ($enabled !== 'true') {

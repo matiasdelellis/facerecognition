@@ -28,7 +28,7 @@ use OCP\IUser;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\Files\IHomeStorage;
+use OCP\Files\Node;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
@@ -37,6 +37,7 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\FileService;
 
 /**
  * Task that, for each user, crawls for all images in database,
@@ -59,18 +60,27 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	/** @var PersonMapper Person mapper */
 	private $personMapper;
 
+	/** @var FileService */
+	private $fileService;
+
 	/**
 	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FaceMapper $faceMapper Face mapper
 	 * @param PersonMapper $personMapper Person mapper
+	 * @param FileService $fileService File Service
 	 */
-	public function __construct(IConfig $config, ImageMapper $imageMapper, FaceMapper $faceMapper, PersonMapper $personMapper) {
+	public function __construct(IConfig      $config,
+	                            ImageMapper  $imageMapper,
+	                            FaceMapper   $faceMapper,
+	                            PersonMapper $personMapper,
+	                            FileService  $fileService) {
 		parent::__construct();
 		$this->config = $config;
-		$this->imageMapper = $imageMapper;
-		$this->faceMapper = $faceMapper;
+		$this->imageMapper  = $imageMapper;
+		$this->faceMapper   = $faceMapper;
 		$this->personMapper = $personMapper;
+		$this->fileService  = $fileService;
 	}
 
 	/**
@@ -134,8 +144,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	 * which represent number of stale images removed
 	 */
 	private function staleImagesRemovalForUser(string $userId, int $model) {
-		\OC_Util::tearDownFS();
-		\OC_Util::setupFS($userId);
+
+		$this->fileService->setupFS($userId);
 
 		$this->logDebug(sprintf('Getting all images for user %s', $userId));
 		$allImages = $this->imageMapper->findImages($userId, $model);
@@ -164,18 +174,23 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			count($allImages), $userId));
 		yield;
 
+		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
+
 		// Now iterate and check remaining images
-		$userFolder = $this->context->rootFolder->getUserFolder($userId);
 		$processed = 0;
 		$imagesRemoved = 0;
 		foreach ($allImages as $image) {
-			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
-			$mount = $this->getHomeMount($userFolder, $image);
+			// Try to get the file to ensure that exist.
+			try {
+				$file = $this->fileService->getFileById($image->getFile(), $userId);
+			} catch (\OCP\Files\NotFoundException $e) {
+				$file = null;
+			}
 
-			if ($mount === null) {
-				$this->deleteImage($image, $userId);
-				$imagesRemoved++;
-			} else if ($this->isUnderNoMedia($mount)) {
+			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
+			if (($file === null) ||
+			    ($this->fileService->isUnderNoMedia($file)) ||
+			    ($this->fileService->isSharedFile($file) && $handleSharedFiles !== 'true')) {
 				$this->deleteImage($image, $userId);
 				$imagesRemoved++;
 			}
@@ -195,47 +210,6 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		// Remove this value when we are done, so next cleanup can start from 0
 		$this->config->deleteUserValue($userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_LAST_CHECKED_KEY);
 		return $imagesRemoved;
-	}
-
-	/**
-	 * For a given image, tries to find home mount. Returns null if it is not found (equivalent of image does not exist).
-	 *
-	 * @param Folder $userFolder User folder to search in
-	 * @param Image $image Image to find home mount for
-	 *
-	 * @return File|null File if image file node is found, null otherwise.
-	 */
-	private function getHomeMount(Folder $userFolder, Image $image) {
-		$allMounts = $userFolder->getById($image->file);
-		$homeMounts = array_filter($allMounts, function ($m) {
-			return $m->getStorage()->instanceOfStorage(IHomeStorage::class);
-		});
-
-		if (count($homeMounts) === 0) {
-			return null;
-		} else {
-			return $homeMounts[0];
-		}
-	}
-
-	/**
-	 * Checks if this file is located somewhere under .nomedia file and should be therefore ignored.
-	 * TODO: same method is in Watcher.php, find a place for both methods
-	 *
-	 * @param File $file File to search for
-	 * @return bool True if file is located under .nomedia, false otherwise
-	 */
-	private function isUnderNoMedia(File $file): bool {
-		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
-		$parentNode = $file->getParent();
-		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
-			if ($parentNode->nodeExists('.nomedia')) {
-				return true;
-			}
-			$parentNode = $parentNode->getParent();
-		}
-
-		return false;
 	}
 
 	private function deleteImage(Image $image, string $userId) {

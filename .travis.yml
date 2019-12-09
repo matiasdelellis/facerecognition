@@ -48,13 +48,18 @@ before_install:
   - bash ./before_install.sh $APP_NAME $CORE_BRANCH $DB
   - cd ../server;
   - ./occ app:enable $APP_NAME
+  - ./occ face:setup
 
 before_script:
   - ./occ app:check-code $APP_NAME || true
   - cd apps/$APP_NAME
 
 script:
-  - bash ./tests/travis-script.sh
+  - make test
+
+  # Create coverage report
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover clover.xml
 
 after_failure:
   - cat ../../data/nextcloud.log

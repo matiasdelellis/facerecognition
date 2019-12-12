@@ -80,16 +80,27 @@ class FileService {
 
 	/**
 	 * Checks if this file is located somewhere under .nomedia file and should be therefore ignored.
+	 * Or with an .facerecognition.json setting file that disable tha analysis
 	 *
 	 * @param File $file File to search for
-	 * @return bool True if file is located under .nomedia, false otherwise
+	 * @return bool True if file is located under .nomedia or .facerecognition.json that disabled
+	 * analysis, false otherwise
 	 */
-	public function isUnderNoMedia(Node $node): bool {
+	public function isUnderNoDetection(Node $node): bool {
 		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
 		$parentNode = $node->getParent();
 		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
 			if ($parentNode->nodeExists('.nomedia')) {
 				return true;
+			}
+			if ($parentNode->nodeExists('.facerecognition.json')) {
+				$file = $this->folder->get('.facerecognition.json');
+				$localPath = $this->getLocalFile($file);
+
+				$settings = json_decode(file_get_contents($localPath));
+
+				if ($settings['detection'] === 'off')
+					return true;
 			}
 			$parentNode = $parentNode->getParent();
 		}

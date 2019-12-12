@@ -141,6 +141,13 @@ class Watcher {
 			return;
 		}
 
+		if ($node->getName() === '.facerecognition.json') {
+			// This file can enable or disable the analysis, so I have to look for new files and forget others.
+			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			return;
+		}
+
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
@@ -151,7 +158,7 @@ class Watcher {
 			return;
 		}
 
-		if ($this->fileService->isUnderNoMedia($node)) {
+		if ($this->fileService->isUnderNoDetection($node)) {
 			$this->logger->debug(
 				"Skipping inserting image " . $node->getName() . " because is inside an folder that contains a .nomedia file");
 			return;
@@ -223,6 +230,13 @@ class Watcher {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.
+			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			return;
+		}
+
+		if ($node->getName() === '.facerecognition.json') {
+			// This file can enable or disable the analysis, so I have to look for new files and forget others.
+			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 			return;
 		}

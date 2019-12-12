@@ -189,7 +189,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
 			if (($file === null) ||
-			    ($this->fileService->isUnderNoMedia($file)) ||
+			    ($this->fileService->isUnderNoDetection($file)) ||
 			    ($this->fileService->isSharedFile($file) && $handleSharedFiles !== 'true')) {
 				$this->deleteImage($image, $userId);
 				$imagesRemoved++;

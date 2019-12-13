@@ -27,6 +27,7 @@ namespace OCA\FaceRecognition\Service;
 
 use OCP\Files\IRootFolder;
 use OCP\Files\File;
+use OCP\Files\Folder;
 use OCP\Files\Node;
 use OCP\ITempManager;
 
@@ -36,6 +37,10 @@ use OCP\Files\NotFoundException;
 use OCA\Files_Sharing\External\Storage as SharingExternalStorage;
 
 class FileService {
+
+	const NOMEDIA_FILE = ".nomedia";
+
+	const FACERECOGNITION_SETTINGS_FILE = ".facerecognition.json";
 
 	/**  @var string|null */
 	private $userId;
@@ -90,21 +95,39 @@ class FileService {
 		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
 		$parentNode = $node->getParent();
 		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
-			if ($parentNode->nodeExists('.nomedia')) {
+			$allowDetection = $this->allowsChildDetection($parentNode);
+			if (!$allowDetection)
 				return true;
-			}
-			if ($parentNode->nodeExists('.facerecognition.json')) {
-				$file = $this->folder->get('.facerecognition.json');
-				$localPath = $this->getLocalFile($file);
-
-				$settings = json_decode(file_get_contents($localPath));
-
-				if ($settings['detection'] === 'off')
-					return true;
-			}
 			$parentNode = $parentNode->getParent();
 		}
 		return false;
+	}
+
+	/**
+	 * Checks if this folder has .nomedia file an .facerecognition.json setting file that
+	 * disable that analysis.
+	 *
+	 * @param Folder $folder Folder to search for
+	 * @return bool true if folder dont have an .nomedia file or .facerecognition.json that disabled
+	 * analysis, false otherwise
+	 */
+	public function allowsChildDetection(Folder $folder): bool {
+		if ($folder->nodeExists(FileService::NOMEDIA_FILE)) {
+			return false;
+		}
+		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
+			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
+			$localPath = $this->getLocalFile($file);
+
+			$settings = json_decode(file_get_contents($localPath));
+			if ($settings === null || !array_key_exists('detection', $settings))
+				return true;
+
+			if ($settings['detection'] === 'off')
+				return false;
+		}
+
+		return true;
 	}
 
 	/**

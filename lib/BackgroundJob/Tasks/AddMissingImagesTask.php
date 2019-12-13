@@ -179,7 +179,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 				$this->logDebug('Ignore ' . $node->getPath() . ' since is shared and is disabled');
 				continue;
 			}
-			if ($node instanceof Folder and !$node->nodeExists('.nomedia')) {
+			if ($node instanceof Folder and $this->fileService->allowsChildDetection($node)) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			} else if ($node instanceof File) {
 				if (Requirements::isImageTypeSupported($node->getMimeType())) {

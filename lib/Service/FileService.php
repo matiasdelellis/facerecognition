@@ -127,7 +127,7 @@ class FileService {
 			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
 			$localPath = $this->getLocalFile($file);
 
-			$settings = json_decode(file_get_contents($localPath));
+			$settings = json_decode(file_get_contents($localPath), true);
 			if ($settings === null || !array_key_exists('detection', $settings))
 				return true;
 

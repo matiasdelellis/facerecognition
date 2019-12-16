@@ -30,7 +30,6 @@ use OCP\Files\Node;
 use OCP\IConfig;
 use OCP\ILogger;
 use OCP\IUserManager;
-use OCP\User;
 
 use OCA\FaceRecognition\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
@@ -117,7 +116,7 @@ class Watcher {
 		}
 		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
 			// If we are going to analyze the shared files, we must 'appropriate' it.
-			$owner = User::getUser();
+			$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		}
 		else {
 			// Nextcloud also sends the Hooks when create thumbnails for example.
@@ -209,7 +208,7 @@ class Watcher {
 		}
 		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
 			// If we are going to analyze the shared files, we must 'appropriate' it.
-			$owner = User::getUser();
+			$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		}
 		else {
 			// Nextcloud also sends the Hooks when create thumbnails for example.

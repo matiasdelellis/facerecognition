@@ -174,8 +174,6 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			count($allImages), $userId));
 		yield;
 
-		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
-
 		// Now iterate and check remaining images
 		$processed = 0;
 		$imagesRemoved = 0;
@@ -188,9 +186,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			}
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
-			if (($file === null) ||
-			    ($this->fileService->isUnderNoDetection($file)) ||
-			    ($this->fileService->isSharedFile($file) && $handleSharedFiles !== 'true')) {
+			if (($file === null) || (!$this->fileService->isAllowedNode($file)) ||
+			    ($this->fileService->isUnderNoDetection($file))) {
 				$this->deleteImage($image, $userId);
 				$imagesRemoved++;
 			}

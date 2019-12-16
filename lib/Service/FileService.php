@@ -25,6 +25,9 @@ declare(strict_types=1);
 
 namespace OCA\FaceRecognition\Service;
 
+use OCA\FaceRecognition\Helper\Requirements;
+
+use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -45,6 +48,9 @@ class FileService {
 	/**  @var string|null */
 	private $userId;
 
+	/** @var IConfig Config */
+	private $config;
+
 	/** @var IRootFolder */
 	private $rootFolder;
 
@@ -52,10 +58,12 @@ class FileService {
 	private $tempManager;
 
 	public function __construct($userId,
+	                            IConfig      $config,
 	                            IRootFolder  $rootFolder,
 	                            ITempManager $tempManager)
 	{
 		$this->userId      = $userId;
+		$this->config      = $config;
 		$this->rootFolder  = $rootFolder;
 		$this->tempManager = $tempManager;
 	}
@@ -166,6 +174,33 @@ class FileService {
 		} else {
 			return $file->getStorage()->getLocalFile($file->getInternalPath());
 		}
+	}
+
+	/**
+	 * Return all images from a given folder.
+	 *
+	 * TODO: It is inefficient since it copies the array recursively.
+	 *
+	 * @param Folder $folder Folder to get images from
+	 * @return array List of all images and folders to continue recursive crawling
+	 */
+	public function getPicturesFromFolder(Folder $folder, $results = array()) {
+		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
+		$nodes = $folder->getDirectoryListing();
+		foreach ($nodes as $node) {
+			if (!$this->isUserFile($node) || ($this->isSharedFile($node) && $handleSharedFiles !== 'true')) {
+				continue;
+			}
+			if ($node instanceof Folder && $this->allowsChildDetection($node)) {
+				$results = $this->getPicturesFromFolder($node, $results);
+			}
+			else if ($node instanceof File) {
+				if (Requirements::isImageTypeSupported($node->getMimeType())) {
+					$results[] = $node;
+				}
+			}
+		}
+		return $results;
 	}
 
 	/**

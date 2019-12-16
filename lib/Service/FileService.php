@@ -153,6 +153,19 @@ class FileService {
 	}
 
 	/**
+	 * Returns if the Node is allowed based on preferences.
+	 */
+	public function isAllowedNode(Node $node): bool {
+		if ($this->isUserFile($node)) {
+			return true;
+		} else if ($this->isSharedFile($node)) {
+			$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
+			return ($handleSharedFiles === 'true');
+		}
+		return false;
+	}
+
+	/**
 	 * Get a path to either the local file or temporary file
 	 *
 	 * @param File $file
@@ -185,10 +198,9 @@ class FileService {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	public function getPicturesFromFolder(Folder $folder, $results = array()) {
-		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
 		$nodes = $folder->getDirectoryListing();
 		foreach ($nodes as $node) {
-			if (!$this->isUserFile($node) || ($this->isSharedFile($node) && $handleSharedFiles !== 'true')) {
+			if (!$this->isAllowedNode($node)) {
 				continue;
 			}
 			if ($node instanceof Folder && $this->allowsChildDetection($node)) {

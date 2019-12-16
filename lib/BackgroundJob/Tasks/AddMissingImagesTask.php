@@ -33,7 +33,6 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 use OCA\FaceRecognition\Service\FileService;
 
@@ -142,7 +141,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 */
 	private function parseUserFolder(string $userId, int $model, Folder $folder): int {
 		$insertedImages = 0;
-		$nodes = $this->getPicturesFromFolder($folder);
+		$nodes = $this->fileService->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
 
@@ -161,33 +160,4 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		return $insertedImages;
 	}
 
-	/**
-	 * Return all images from a given folder.
-	 *
-	 * TODO: It is inefficient since it copies the array recursively.
-	 *
-	 * @param Folder $folder Folder to get images from
-	 * @return array List of all images and folders to continue recursive crawling
-	 */
-	private function getPicturesFromFolder(Folder $folder, $results = array()) {
-		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
-
-		$nodes = $folder->getDirectoryListing();
-		foreach ($nodes as $node) {
-			if (!$this->fileService->isUserFile($node) &&
-			    ($this->fileService->isSharedFile($node) && $handleSharedFiles !== 'true')) {
-				$this->logDebug('Ignore ' . $node->getPath() . ' since is shared and is disabled');
-				continue;
-			}
-			if ($node instanceof Folder and $this->fileService->allowsChildDetection($node)) {
-				$results = $this->getPicturesFromFolder($node, $results);
-			} else if ($node instanceof File) {
-				if (Requirements::isImageTypeSupported($node->getMimeType())) {
-					$results[] = $node;
-				}
-			}
-		}
-
-		return $results;
-	}
 }

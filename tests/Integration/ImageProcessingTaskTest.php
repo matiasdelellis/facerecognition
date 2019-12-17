@@ -146,8 +146,8 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	private function doImageProcessing($imgData, $contextUser = null) {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$tempManager = $this->container->query('OCP\ITempManager');
-		$imageProcessingTask = new ImageProcessingTask($this->config, $imageMapper, $tempManager);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$imageProcessingTask = new ImageProcessingTask($this->config, $imageMapper, $fileService);
 		$this->assertNotEquals("", $imageProcessingTask->description());
 
 		// Set user for which to do processing, if any

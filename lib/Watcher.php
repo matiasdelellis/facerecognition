@@ -108,22 +108,19 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postWrite(Node $node) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
-
-		if ($this->fileService->isUserFile($node)) {
-			$owner = $node->getOwner()->getUid();
-		}
-		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
-			// If we are going to analyze the shared files, we must 'appropriate' it.
-			$owner = \OC::$server->getUserSession()->getUser()->getUID();
-		}
-		else {
-			// Nextcloud also sends the Hooks when create thumbnails for example.
+		if (!$this->fileService->isAllowedNode($node)) {
+			// Nextcloud sends the Hooks when create thumbnails for example.
 			return;
 		}
 
 		if ($node instanceof Folder) {
+			return;
+		}
+
+		$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		if (!$this->userManager->userExists($owner)) {
+			$this->logger->debug(
+				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
 			return;
 		}
 
@@ -151,12 +148,6 @@ class Watcher {
 			return;
 		}
 
-		if (!$this->userManager->userExists($owner)) {
-			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
-			return;
-		}
-
 		if ($this->fileService->isUnderNoDetection($node)) {
 			$this->logger->debug(
 				"Skipping inserting image " . $node->getName() . " because is inside an folder that contains a .nomedia file");
@@ -164,6 +155,8 @@ class Watcher {
 		}
 
 		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$image = new Image();
 		$image->setUser($owner);
@@ -200,18 +193,8 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postDelete(Node $node) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
-
-		if ($this->fileService->isUserFile($node)) {
-			$owner = $node->getOwner()->getUid();
-		}
-		else if ($handleSharedFiles === 'true' && $this->fileService->isSharedFile($node)) {
-			// If we are going to analyze the shared files, we must 'appropriate' it.
-			$owner = \OC::$server->getUserSession()->getUser()->getUID();
-		}
-		else {
-			// Nextcloud also sends the Hooks when create thumbnails for example.
+		if (!$this->fileService->isAllowedNode($node)) {
+			// Nextcloud sends the Hooks when create thumbnails for example.
 			return;
 		}
 
@@ -219,6 +202,7 @@ class Watcher {
 			return;
 		}
 
+		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
 		if ($enabled !== 'true') {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
@@ -245,6 +229,8 @@ class Watcher {
 		}
 
 		$this->logger->debug("Deleting image " . $node->getName() . " from face recognition");
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$image = new Image();
 		$image->setUser($owner);

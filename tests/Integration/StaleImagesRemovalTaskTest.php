@@ -140,6 +140,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		return new StaleImagesRemovalTask($this->config, $imageMapper, $faceMapper, $personMapper);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		return new StaleImagesRemovalTask($this->config, $imageMapper, $faceMapper, $personMapper, $fileService);
 	}
 }

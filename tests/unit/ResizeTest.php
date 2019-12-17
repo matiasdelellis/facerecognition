@@ -27,7 +27,6 @@ use OCP\Image as OCP_Image;
 
 use OCP\IConfig;
 use OCP\ILogger;
-use OCP\ITempManager;
 use OCP\IUserManager;
 
 use OCP\App\IAppManager;
@@ -37,6 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 
 use Test\TestCase;
@@ -62,8 +62,8 @@ class ResizeTest extends TestCase {
 	public function testResize() {
 		$config = $this->createMock(IConfig::class);
 		$imageMapper = $this->createMock(ImageMapper::class);
-		$tempManager = $this->createMock(ITempManager::class);
-		$imageProcessingTask = new ImageProcessingTask($config, $imageMapper, $tempManager);
+		$fileService = $this->createMock(FileService::class);
+		$imageProcessingTask = new ImageProcessingTask($config, $imageMapper, $fileService);
 		$imageProcessingTask->setContext($this->context);
 		$image = new OCP_Image();
 

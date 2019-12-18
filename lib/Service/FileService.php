@@ -92,6 +92,16 @@ class FileService {
 	}
 
 	/**
+	 * @return Node
+	 */
+	public function getFileByPath($fullpath, $userId = null): Node {
+		$userFolder = $this->rootFolder->getUserFolder($this->userId);
+		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+
+		return $files;
+	}
+
+	/**
 	 * Checks if this file is located somewhere under .nomedia file and should be therefore ignored.
 	 * Or with an .facerecognition.json setting file that disable tha analysis
 	 *
@@ -125,15 +135,39 @@ class FileService {
 		}
 		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
 			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
-			$localPath = $this->getLocalFile($file);
-
-			$settings = json_decode(file_get_contents($localPath), true);
+			$settings = json_decode($file->getContent(), true);
 			if ($settings === null || !array_key_exists('detection', $settings))
 				return true;
 
 			if ($settings['detection'] === 'off')
 				return false;
 		}
+
+		return true;
+	}
+
+	/**
+	 * Set this folder to enable or disable the analysis using the .facerecognition.json file.
+	 *
+	 * @param Folder $folder Folder to enable/disable for
+	 * @return bool true if the change is done. False if failed.
+	 */
+	public function setAllowChildDetection(Folder $folder, bool $detection): bool {
+		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
+			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
+			$settings = json_decode($file->getContent(), true);
+			if ($settings === null) {
+				// Invalid json.
+				return false;
+			}
+		}
+		else {
+			$file = $folder->newFile(FileService::FACERECOGNITION_SETTINGS_FILE);
+			$settings = array();
+		}
+
+		$settings['detection'] = $detection ? "on" : "off";
+		$file->putContent(json_encode($settings));
 
 		return true;
 	}

@@ -79,26 +79,29 @@ class FileService {
 	}
 
 	/**
-	 * @return Node
-	 * @throws NotFoundException
+	 * Get a Node from userFolder
+	 * @param int $id the id of the Node
+	 * @param string $userId
+	 * @return Node | null
 	 */
 	public function getFileById($fileId, $userId = null): Node {
 		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->getById($fileId);
 		if (count($files) === 0) {
-			throw new NotFoundException();
+			return null;
 		}
 
 		return $files[0];
 	}
 
 	/**
-	 * @return Node
+	 * Get a Node from userFolder
+	 * @param string $fullpath the fullpath of the Node
+	 * @param string $userId
+	 * @return Node | null
 	 */
 	public function getFileByPath($fullpath, $userId = null): Node {
-		$userFolder = $this->rootFolder->getUserFolder($this->userId);
-		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
-
-		return $files;
+		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+		return $file;
 	}
 
 	/**

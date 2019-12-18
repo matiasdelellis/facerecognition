@@ -84,7 +84,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Node | null
 	 */
-	public function getFileById($fileId, $userId = null): Node {
+	public function getFileById($fileId, $userId = null): ?Node {
 		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->getById($fileId);
 		if (count($files) === 0) {
 			return null;
@@ -99,7 +99,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Node | null
 	 */
-	public function getFileByPath($fullpath, $userId = null): Node {
+	public function getFileByPath($fullpath, $userId = null): ?Node {
 		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
 		return $file;
 	}
@@ -116,7 +116,7 @@ class FileService {
 		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
 		$parentNode = $node->getParent();
 		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
-			$allowDetection = $this->allowsChildDetection($parentNode);
+			$allowDetection = $this->getDescendantDetection($parentNode);
 			if (!$allowDetection)
 				return true;
 			$parentNode = $parentNode->getParent();
@@ -132,7 +132,7 @@ class FileService {
 	 * @return bool true if folder dont have an .nomedia file or .facerecognition.json that disabled
 	 * analysis, false otherwise
 	 */
-	public function allowsChildDetection(Folder $folder): bool {
+	public function getDescendantDetection(Folder $folder): bool {
 		if ($folder->nodeExists(FileService::NOMEDIA_FILE)) {
 			return false;
 		}
@@ -155,7 +155,7 @@ class FileService {
 	 * @param Folder $folder Folder to enable/disable for
 	 * @return bool true if the change is done. False if failed.
 	 */
-	public function setAllowChildDetection(Folder $folder, bool $detection): bool {
+	public function setDescendantDetection(Folder $folder, bool $detection): bool {
 		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
 			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
 			$settings = json_decode($file->getContent(), true);
@@ -240,7 +240,7 @@ class FileService {
 			if (!$this->isAllowedNode($node)) {
 				continue;
 			}
-			if ($node instanceof Folder && $this->allowsChildDetection($node)) {
+			if ($node instanceof Folder && $this->getDescendantDetection($node)) {
 				$results = $this->getPicturesFromFolder($node, $results);
 			}
 			else if ($node instanceof File) {

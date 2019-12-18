@@ -3,7 +3,6 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
 use OCP\IConfig;
-use OCP\Files\IRootFolder;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -19,6 +18,8 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Service\FileService;
+
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 class FileController extends Controller {
@@ -31,7 +32,7 @@ class FileController extends Controller {
 
 	private $faceMapper;
 
-	private $rootFolder;
+	private $fileService;
 
 	private $userId;
 
@@ -41,16 +42,16 @@ class FileController extends Controller {
 	                            ImageMapper  $imageMapper,
 	                            PersonMapper $personMapper,
 	                            FaceMapper   $faceMapper,
-	                            IRootFolder  $rootFolder,
+	                            FileService  $fileService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
-		$this->config = $config;
-		$this->imageMapper = $imageMapper;
+		$this->config       = $config;
+		$this->imageMapper  = $imageMapper;
 		$this->personMapper = $personMapper;
-		$this->faceMapper = $faceMapper;
-		$this->rootFolder = $rootFolder;
-		$this->userId = $UserId;
+		$this->faceMapper   = $faceMapper;
+		$this->fileService  = $fileService;
+		$this->userId       = $UserId;
 	}
 
 	/**
@@ -60,18 +61,20 @@ class FileController extends Controller {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
 
+		$resp = array();
 		if ($userEnabled !== 'true') {
-			$resp = array();
 			$resp['enabled'] = 'false';
 			return new DataResponse($resp);
 		}
 
-		$userFolder = $this->rootFolder->getUserFolder($this->userId);
-		$fileId = $userFolder->get($fullpath)->getId();
+		$file = $this->fileService->getFileByPath($fullpath);
+
+		$fileId = $file->getId();
 		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 
-		$resp = array();
 		$resp['enabled'] = 'true';
+		$resp['is_allowed'] = $this->fileService->isAllowedNode($file);
+		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($file);
 		$resp['image_id'] = $image ? $image->getId() : 0;
 		$resp['is_processed'] = $image ? $image->getIsProcessed() : 0;
 		$resp['error'] = $image ? $image->getError() : null;
@@ -92,6 +95,38 @@ class FileController extends Controller {
 		}
 
 		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 */
+	public function getFolderOptions(string $fullpath) {
+		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
+
+		$resp = array();
+		if ($userEnabled !== 'true') {
+			$resp['enabled'] = 'false';
+			return new DataResponse($resp);
+		}
+
+		$folder = $this->fileService->getFileByPath($fullpath);
+
+		$resp['enabled'] = 'true';
+		$resp['is_allowed'] = $this->fileService->isAllowedNode($folder);
+		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($folder);
+		$resp['descendant_detection'] = $this->fileService->getDescendantDetection($folder);
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 */
+	public function setFolderOptions(string $fullpath, bool $detection) {
+		$folder = $this->fileService->getFileByPath($fullpath);
+		$this->fileService->setDescendantDetection($folder, $detection);
+
+		return $this->getFolderOptions($fullpath);
 	}
 
 }

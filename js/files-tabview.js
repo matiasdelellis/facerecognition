@@ -104,7 +104,7 @@
         },
 
         getUserDisabledTemplate: function () {
-            var openSettingsLink = t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it.',
+            var openSettingsLink = t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it',
                                     {settingsLink: OC.generateUrl('settings/user/facerecognition')});
             var html = "";
             html += "<div class='emptycontent'>";
@@ -119,23 +119,26 @@
             var html = "";
             html += "<div class='emptycontent'>";
             html += "<div class='icon-user svg'></div>";
-            html += "<p>" + t('facerecognition', 'Facial recognition is disabled for this folder.') + "</p>";
+            html += "<p>" + t('facerecognition', 'Facial recognition is disabled for this folder') + "</p>";
             html += "</div>";
             return html;
         },
 
         getFolderTemplate: function (data) {
+            var openDocsLink = t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.',
+                                 {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'});
             var html = "";
             html += "<div class='emptycontent'>";
             html += "<div class='icon-user svg'></div>";
             html += "<p>";
             html += "<input class='checkbox' id='searchPersonsToggle'";
-            if (data.child_detection)
+            if (data.descendant_detection)
                 html += "checked='checked'";
             html += "type='checkbox'>";
-            html += "<label for='searchPersonsToggle'>" + t('facerecognition', 'Search for my loved ones in this folder.') + "</label>";
+            html += "<label for='searchPersonsToggle'>" + t('facerecognition', 'Search for persons in the photos of this directory') + "</label>";
             html += "</p>";
-            html += "<span>" + t('facerecognition', 'Folders with <em>.nomedia</em> files still will be ignored.') + "</span>";
+            html += "<p><span>" + t('facerecognition', 'Photos that are not in the gallery are also ignored') + "</span></p>";
+            html += "<p><span>" + openDocsLink + "</span></p>";
             html += "</div>";
             return html;
         },
@@ -144,7 +147,7 @@
             var html = "";
             html += "<div class='emptycontent'>";
             html += "<div class='icon-user svg'></div>";
-            html += "<p>" + t('facerecognition', 'The type of storage is not supported to analyze your photos.') + "</p>";
+            html += "<p>" + t('facerecognition', 'The type of storage is not supported to analyze your photos') + "</p>";
             html += "</div>";
             return html;
         },
@@ -161,7 +164,6 @@
 
         updateDisplay: function(fileInfo, data) {
             var html = "";
-            console.log(fileInfo);
             if (data.enabled === 'false') {
                 html += this.getUserDisabledTemplate();
             }
@@ -244,7 +246,7 @@
                 contentType: 'application/json',
                 data: JSON.stringify(data)
             }).done(function (data) {
-                _self.updateDisplay(data);
+                _self.updateDisplay(_self.getFileInfo(), data);
             });
         }
 

@@ -114,7 +114,7 @@ class FileController extends Controller {
 		$resp['enabled'] = 'true';
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($folder);
 		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($folder);
-		$resp['child_detection'] = $this->fileService->allowsChildDetection($folder);
+		$resp['descendant_detection'] = $this->fileService->getDescendantDetection($folder);
 
 		return new DataResponse($resp);
 	}
@@ -124,11 +124,7 @@ class FileController extends Controller {
 	 */
 	public function setFolderOptions(string $fullpath, bool $detection) {
 		$folder = $this->fileService->getFileByPath($fullpath);
-		$done = $this->fileService->setAllowChildDetection($folder, $detection);
-
-		$resp = array();
-		$resp['done'] = $done ? 'true' : 'false';
-		$resp['child_detection'] = $detection ? 'true' : 'false';
+		$this->fileService->setDescendantDetection($folder, $detection);
 
 		return $this->getFolderOptions($fullpath);
 	}

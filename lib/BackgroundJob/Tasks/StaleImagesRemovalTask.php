@@ -178,12 +178,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		$processed = 0;
 		$imagesRemoved = 0;
 		foreach ($allImages as $image) {
-			// Try to get the file to ensure that exist.
-			try {
-				$file = $this->fileService->getFileById($image->getFile(), $userId);
-			} catch (\OCP\Files\NotFoundException $e) {
-				$file = null;
-			}
+			$file = $this->fileService->getFileById($image->getFile(), $userId);
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
 			if (($file === null) || (!$this->fileService->isAllowedNode($file)) ||

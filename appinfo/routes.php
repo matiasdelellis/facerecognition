@@ -37,6 +37,18 @@ return ['routes' =>
 		'url'  => '/file',
 		'verb' => 'GET'
 	],
+	// Get folder preferences
+	[
+		'name' => 'file#getFolderOptions',
+		'url'  => '/folder',
+		'verb' => 'GET'
+	],
+	// Set folder preferences
+	[
+		'name' => 'file#setFolderOptions',
+		'url'  => '/folder',
+		'verb' => 'PUT'
+	],
 	// User settings
 	[
 		'name' => 'setting#setUserValue',

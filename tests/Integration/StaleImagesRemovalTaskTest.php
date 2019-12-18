@@ -90,7 +90,8 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		// Create these two images in database by calling add missing images task
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper, $fileService);
 		$this->context->user = $this->user;
 		$generator = $addMissingImagesTask->execute($this->context);
 		foreach ($generator as $_) {
@@ -140,6 +141,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		return new StaleImagesRemovalTask($this->config, $imageMapper, $faceMapper, $personMapper);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		return new StaleImagesRemovalTask($this->config, $imageMapper, $faceMapper, $personMapper, $fileService);
 	}
 }

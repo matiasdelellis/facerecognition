@@ -28,11 +28,11 @@ use OCP\Files\Folder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\Node;
 use OCP\IConfig;
-use OCP\IDBConnection;
 use OCP\ILogger;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FileService;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
@@ -52,9 +52,6 @@ class Watcher {
 	/** @var ILogger Logger */
 	private $logger;
 
-	/** @var IDBConnection */
-	private $connection;
-
 	/** @var IUserManager */
 	private $userManager;
 
@@ -67,6 +64,9 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var FileService */
+	private $fileService;
+
 	/** @var FaceManagementService */
 	private $faceManagementService;
 
@@ -75,29 +75,29 @@ class Watcher {
 	 *
 	 * @param IConfig $config
 	 * @param ILogger $logger
-	 * @param IDBConnection $connection
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
+	 * @param FileService $fileService
 	 * @param FaceManagementService $faceManagementService
 	 */
 	public function __construct(IConfig               $config,
 	                            ILogger               $logger,
-	                            IDBConnection         $connection,
 	                            IUserManager          $userManager,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
+	                            FileService           $fileService,
 	                            FaceManagementService $faceManagementService)
 	{
-		$this->config = $config;
-		$this->logger = $logger;
-		$this->connection = $connection;
-		$this->userManager = $userManager;
-		$this->faceMapper = $faceMapper;
-		$this->imageMapper = $imageMapper;
-		$this->personMapper = $personMapper;
+		$this->config                = $config;
+		$this->logger                = $logger;
+		$this->userManager           = $userManager;
+		$this->faceMapper            = $faceMapper;
+		$this->imageMapper           = $imageMapper;
+		$this->personMapper          = $personMapper;
+		$this->fileService           = $fileService;
 		$this->faceManagementService = $faceManagementService;
 	}
 
@@ -108,10 +108,8 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postWrite(Node $node) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
-		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+		if (!$this->fileService->isAllowedNode($node)) {
+			// Nextcloud sends the Hooks when create thumbnails for example.
 			return;
 		}
 
@@ -119,7 +117,12 @@ class Watcher {
 			return;
 		}
 
-		$owner = $node->getOwner()->getUid();
+		$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		if (!$this->userManager->userExists($owner)) {
+			$this->logger->debug(
+				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
+			return;
+		}
 
 		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
 		if ($enabled !== 'true') {
@@ -127,10 +130,17 @@ class Watcher {
 			return;
 		}
 
-		if ($node->getName() === '.nomedia') {
+		if ($node->getName() === FileService::NOMEDIA_FILE) {
 			// If user added this file, it means all images in this and all child directories should be removed.
 			// Instead of doing that here, it's better to just add flag that image removal should be done.
 			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			return;
+		}
+
+		if ($node->getName() === FileService::FACERECOGNITION_SETTINGS_FILE) {
+			// This file can enable or disable the analysis, so I have to look for new files and forget others.
+			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 			return;
 		}
 
@@ -138,25 +148,15 @@ class Watcher {
 			return;
 		}
 
-		if (!$this->userManager->userExists($owner)) {
+		if ($this->fileService->isUnderNoDetection($node)) {
 			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
+				"Skipping inserting image " . $node->getName() . " because is inside an folder that contains a .nomedia file");
 			return;
 		}
 
-		// If we detect .nomedia file anywhere on the path to root folder (id===null), bail out
-		$parentNode = $node->getParent();
-		while (($parentNode instanceof Folder) && ($parentNode->getId() !== null)) {
-			if ($parentNode->nodeExists('.nomedia')) {
-				$this->logger->debug(
-					"Skipping inserting image " . $node->getName() . " because directory " . $parentNode->getName() . " contains .nomedia file");
-				return;
-			}
-
-			$parentNode = $parentNode->getParent();
-		}
-
 		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$image = new Image();
 		$image->setUser($owner);
@@ -193,10 +193,8 @@ class Watcher {
 	 * @param Node $node
 	 */
 	public function postDelete(Node $node) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
-		// todo: should we also care about this too: instanceOfStorage(ISharedStorage::class);
-		if ($node->getStorage()->instanceOfStorage(IHomeStorage::class) === false) {
+		if (!$this->fileService->isAllowedNode($node)) {
+			// Nextcloud sends the Hooks when create thumbnails for example.
 			return;
 		}
 
@@ -204,18 +202,24 @@ class Watcher {
 			return;
 		}
 
-		$owner = $node->getOwner()->getUid();
-
+		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		$enabled = $this->config->getUserValue($owner, 'facerecognition', 'enabled', 'false');
 		if ($enabled !== 'true') {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
 			return;
 		}
 
-		if ($node->getName() === '.nomedia') {
+		if ($node->getName() === FileService::NOMEDIA_FILE) {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.
+			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+			return;
+		}
+
+		if ($node->getName() === FileService::FACERECOGNITION_SETTINGS_FILE) {
+			// This file can enable or disable the analysis, so I have to look for new files and forget others.
+			$this->config->setUserValue($owner, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			$this->config->setUserValue($owner, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 			return;
 		}
@@ -225,6 +229,8 @@ class Watcher {
 		}
 
 		$this->logger->debug("Deleting image " . $node->getName() . " from face recognition");
+
+		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
 		$image = new Image();
 		$image->setUser($owner);

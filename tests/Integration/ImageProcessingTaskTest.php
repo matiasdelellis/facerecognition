@@ -146,8 +146,8 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	private function doImageProcessing($imgData, $contextUser = null) {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$tempManager = $this->container->query('OCP\ITempManager');
-		$imageProcessingTask = new ImageProcessingTask($this->config, $imageMapper, $tempManager);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$imageProcessingTask = new ImageProcessingTask($this->config, $imageMapper, $fileService);
 		$this->assertNotEquals("", $imageProcessingTask->description());
 
 		// Set user for which to do processing, if any
@@ -179,7 +179,8 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper);
+		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper, $fileService);
 
 		// Set user for which to do scanning, if any
 		$this->context->user = $contextUser;

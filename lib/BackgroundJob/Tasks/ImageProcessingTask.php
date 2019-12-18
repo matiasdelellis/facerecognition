@@ -28,7 +28,6 @@ use OCP\Image as OCP_Image;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\IConfig;
-use OCP\ITempManager;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -38,6 +37,8 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
+use OCA\FaceRecognition\Service\FileService;
 
 /**
  * Plain old PHP object holding all information
@@ -115,20 +116,25 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
-	/** @var ITempManager */
-	private $tempManager;
+	/** @var FileService */
+	private $fileService;
 
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
 	/**
+	 * @param IConfig $config
 	 * @param ImageMapper $imageMapper Image mapper
+	 * @param FileService $fileService
 	 */
-	public function __construct(IConfig $config, ImageMapper $imageMapper, ITempManager $tempManager) {
+	public function __construct(IConfig     $config,
+	                            ImageMapper $imageMapper,
+	                            FileService $fileService)
+	{
 		parent::__construct();
-		$this->config = $config;
-		$this->imageMapper = $imageMapper;
-		$this->tempManager = $tempManager;
+		$this->config             = $config;
+		$this->imageMapper        = $imageMapper;
+		$this->fileService        = $fileService;
 		$this->maxImageAreaCached = null;
 	}
 
@@ -148,7 +154,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 		$requirements = new Requirements($context->modelService, $model);
 
-		$dataDir = rtrim($context->config->getSystemValue('datadirectory', \OC::$SERVERROOT.'/data'), '/');
 		$images = $context->propertyBag['images'];
 
 		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModel());
@@ -160,11 +165,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		foreach($images as $image) {
 			yield;
 
-			$imageProcessingContext = null;
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$imageProcessingContext = $this->findFaces($cfd, $dataDir, $image);
+				$imageProcessingContext = $this->findFaces($cfd, $image);
+
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
 					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
 				}
@@ -184,7 +189,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->logDebug($e);
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
-				$this->tempManager->clean();
+				$this->fileService->clean();
 			}
 		}
 
@@ -197,22 +202,22 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If there is any error, throws exception
 	 *
 	 * @param \CnnFaceDetection $cfd Face detection model
-	 * @param string $dataDir Directory where data is stored
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(\CnnFaceDetection $cfd, string $dataDir, Image $image) {
+	private function findFaces(\CnnFaceDetection $cfd, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
-		$userFolder = $this->context->rootFolder->getUserFolder($image->user);
-		$userRoot = $userFolder->getParent();
-		$file = $userRoot->getById($image->file);
+		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
+
 		if (empty($file)) {
+			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
+			$this->config->setUserValue($image->user, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 			$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 			return null;
 		}
 
-		// todo: this concat is wrong with shared files.
-		$imagePath = $dataDir . $file[0]->getPath();
+		$imagePath = $this->fileService->getLocalFile($file);
+
 		$this->logInfo('Processing image ' . $imagePath);
 		$imageProcessingContext = $this->prepareImage($imagePath);
 		if ($imageProcessingContext->getSkipDetection() === true) {
@@ -248,6 +253,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
 		$image->loadFromFile($imagePath);
 		$image->fixOrientation();
+
 		if (!$image->valid()) {
 			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
 		}
@@ -261,8 +267,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$maxImageArea = $this->getMaxImageArea();
 		$ratio = $this->resizeImage($image, $maxImageArea);
 
-		$tempfile = $this->tempManager->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
+		$tempfile = $this->fileService->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
 		$image->save($tempfile);
+
 		return new ImageProcessingContext($imagePath, $tempfile, $ratio, false);
 	}
 
@@ -270,7 +277,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * Resizes the image to reach max image area, but preserving ratio.
 	 * Stolen and adopted from OC_Image->resize() (difference is that this returns ratio of resize.)
 	 *
-	 * @param OC_Image $image Image to resize
+	 * @param Image $image Image to resize
 	 * @param int $maxImageArea The maximum size of image we can handle (in pixels^2).
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
@@ -383,4 +390,5 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
 		return $maxImageArea;
 	}
+
 }

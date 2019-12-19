@@ -43,7 +43,7 @@
         },
 
         canDisplay: function(fileInfo) {
-            if (!fileInfo  || !fileInfo.has('mimetype')) {
+            if (!fileInfo) {
                 return false;
             }
             var mimetype = fileInfo.get('mimetype');

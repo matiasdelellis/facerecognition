@@ -112,26 +112,18 @@ build: test-bin-deps vendor-deps js-templates
 appstore:
 	mkdir -p $(sign_dir)
 	rsync -a \
-	--exclude=.git \
-	--exclude=.gitignore \
-	--exclude=.l10nignore \
-	--exclude=.scrutinizer.yml \
-	--exclude=.travis.yml \
-	--exclude=.tx \
+	--exclude='.*' \
 	--exclude=build \
-	--exclude=CONTRIBUTING.md \
-	--exclude=composer.json \
-	--exclude=composer.lock \
-	--exclude=translationfiles \
-	--exclude=translationtool.phar \
+	--exclude=composer* \
+	--exclude=translation* \
 	--exclude=node_modules \
 	--exclude=Makefile \
-	--exclude=package.json \
-	--exclude=package-lock.json \
+	--exclude=package*json \
 	--exclude=phpunit*xml \
 	--exclude=screenshots \
 	--exclude=tests \
-	--exclude=vendor/bin \
+	--include=vendor/js \
+	--exclude=vendor/* \
 	$(project_dir) $(sign_dir)
 	@echo "Signing…"
 	tar -czf $(build_dir)/$(app_name).tar.gz \
@@ -142,20 +134,6 @@ test: build download-models
 	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml
 
 clean: l10n-clean
-	rm -rf ./build
-	rm -f vendor/autoload.php
-	rm -rf vendor/bin/
-	rm -rf vendor/christophwurst/
-	rm -rf vendor/composer/
-	rm -rf vendor/doctrine/
-	rm -rf vendor/js
-	rm -rf vendor/myclabs/
-	rm -rf vendor/phar-io/
-	rm -rf vendor/phpdocumentor/
-	rm -rf vendor/phpspec/
-	rm -rf vendor/phpunit/
-	rm -rf vendor/sebastian/
-	rm -rf vendor/symfony/
-	rm -rf vendor/theseer/
-	rm -rf vendor/webmozart/
+	rm -rf build
+	rm -rf vendor
 	rm -rf node_modules

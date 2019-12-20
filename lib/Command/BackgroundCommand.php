@@ -69,7 +69,7 @@ class BackgroundCommand extends Command {
 			)
 			->addOption(
 				'max_image_area',
-				null,
+				'M',
 				InputOption::VALUE_REQUIRED,
 				'Caps maximum area (in pixels^2) of the image to be fed to neural network, effectively lowering needed memory. ' .
 				'Use this if face detection crashes randomly.'

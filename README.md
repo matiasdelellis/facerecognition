@@ -67,7 +67,7 @@ make
 
 ### Face analysis
 
-`occ face:background_job [-u user-id] [-t timeout]`
+`face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]`
 
 This command will do all the work. It is responsible for searching the images,
 analyzing them and clustering faces found in them in groups of similar people.
@@ -82,13 +82,17 @@ can be run every 15 minutes with timeout of `-t 900` (so, it will stop itself
 automatically after 15 minutes and cron will start it again), or once a day with
 timeout of 2 hours, like `-t 7200`.
 
-If `user-id` is supplied, it will just loop over files of a given user. Keep in
+If `USER_ID` is supplied, it will just loop over files of a given user. Keep in
 mind that each user must enable the analysis individually, and otherwise this
 command will ignore the user.
 
-If `timeout` is supplied it will stop after the indicated seconds, and continue
+If `TIMEOUT` is supplied it will stop after the indicated seconds, and continue
 in the next execution. Use this value in conjunction with the times of the
 scheduled task to distribute the system load during the day.
+
+If `MAX_IMAGE_AREA` is supplied caps the maximum area (in pixels^2) of the image
+to be fed to neural network, effectively lowering needed memory. Use this
+if face detection crashes randomly.
 
 ### Resetting faces
 

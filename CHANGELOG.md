@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.11] - 2019-12-20
+### Added
+- Add custom exclusion folder option beyond the .nomedia file. Issue #171
+- Add sidebar to folders which allows to enable/disable these.
+- Add support for encrypted storage. Issue #201
+- Add experimental support for shared storage. Issue #26
+- Add support to Nextcloud 18
+
+### Changed
+- Fix travis CI test.
+- General cleaning of a lot of code and doc.
+
+### Translations
+- Update Chinese language thanks to Jack Frost.
+- Update Spanish language thanks to Matias De lellis.
+
 ## [0.5.10] - 2019-12-06
 ### Added
 - Add a button to show all clusters with same person name.

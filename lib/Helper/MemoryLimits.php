@@ -79,7 +79,7 @@ class MemoryLimits {
 		}
 		fclose($fh);
 		$memKb = intval($mem);
-		return $memKb * 1024;
+		return intval($memKb * 1024);
 	}
 
 	/**

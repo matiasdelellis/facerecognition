@@ -62,8 +62,8 @@ class SettingService {
 	const DEFAULT_SHOW_NOT_GROUPED = 'false';
 
 	/** User setting what indicates if has the analysis enabled */
-	const USER_UNABLED_KEY = 'enabled';
-	const DEFAULT_USER_UNABLED = 'false';
+	const USER_ENABLED_KEY = 'enabled';
+	const DEFAULT_USER_ENABLED = 'false';
 
 	/** User setting that remember last images checked */
 	const STALE_IMAGES_LAST_CHECKED_KEY = 'stale_images_last_checked';
@@ -121,7 +121,7 @@ class SettingService {
 
 	public function getNeedRecreateClusters ($userId = null): bool {
 		$needRecreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, self::DEFAULT_USER_RECREATE_CLUSTERS);
-		return ($fullScanDone === 'true');
+		return ($needRecreate === 'true');
 	}
 
 	public function setNeedRecreateClusters (bool $needRecreate, $userId = null) {

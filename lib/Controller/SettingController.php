@@ -152,7 +152,7 @@ class SettingController extends Controller {
 				}
 				// Apply prundent limits.
 				if ($value < SettingService::MINIMUM_MEMORY_LIMITS) {
-					$value = SettingService::MINIMUM_MEMORY_LIMIT;
+					$value = SettingService::MINIMUM_MEMORY_LIMITS;
 					$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
 					$status = self::STATE_ERROR;
 				} else if ($value > SettingService::MAXIMUM_MEMORY_LIMITS) {

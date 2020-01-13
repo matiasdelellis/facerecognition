@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2019, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019,2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -25,22 +25,21 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\SettingService;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
-use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUser;
 use OCP\IL10N;
 
 class SettingController extends Controller {
 
-	/** @var IConfig */
-	private $config;
-
+	/** @var SettingService */
+	private $settingService;
 
 	/** @var \OCP\IL10N */
 	protected $l10n;
@@ -57,18 +56,19 @@ class SettingController extends Controller {
 	const STATE_ERROR = 3;
 
 	public function __construct ($appName,
-	                             IRequest     $request,
-	                             IConfig      $config,
-	                             IL10N        $l10n,
-	                             IUserManager $userManager,
+	                             IRequest       $request,
+	                             SettingService $setting,
+	                             IL10N          $l10n,
+	                             IUserManager   $userManager,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
-		$this->appName               = $appName;
-		$this->config                = $config;
-		$this->l10n                  = $l10n;
-		$this->userManager           = $userManager;
-		$this->userId                = $userId;
+
+		$this->appName         = $appName;
+		$this->settingService  = $setting;
+		$this->l10n            = $l10n;
+		$this->userManager     = $userManager;
+		$this->userId          = $userId;
 	}
 
 	/**
@@ -78,23 +78,23 @@ class SettingController extends Controller {
 	 * @return JSONResponse
 	 */
 	public function setUserValue($type, $value) {
-		// Apply the change of settings
-		$this->config->setUserValue($this->userId, $this->appName, $type, $value);
-
-		// Handles special cases when have to do something else according to the change
+		$status = self::STATE_SUCCESS;
 		switch ($type) {
 			case 'enabled':
-				if ($value === 'true') {
-					$this->config->setUserValue($this->userId, $this->appName, AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+				$enabled = ($value === 'true');
+				$this->settingService->setUserEnabled($enabled);
+				if ($enabled) {
+					$this->settingService->setUserFullScanDone(false);
 				}
 				break;
 			default:
+				$status = self::STATE_ERROR;
 				break;
 		}
 
 		// Response
 		$result = [
-			'status' => self::STATE_SUCCESS,
+			'status' => $status,
 			'value' => $value
 		];
 		return new JSONResponse($result);
@@ -106,18 +106,20 @@ class SettingController extends Controller {
 	 * @return JSONResponse
 	 */
 	public function getUserValue($type) {
-		$value = $this->config->getUserValue($this->userId, $this->appName, $type);
-		if ($value !== '') {
-			$result = [
-				'status' => self::STATE_OK,
-				'value' => $value
-			];
-		} else {
-			$result = [
-				'status' => self::STATE_FALSE,
-				'value' =>'nodata'
-			];
+		$status = self::STATE_OK;
+		$value ='nodata';
+		switch ($type) {
+			case 'enabled':
+				$value = $this->settingService->getUserEnabled();
+				break;
+			default:
+				$status = self::STATE_FALSE;
+				break;
 		}
+		$result = [
+			'status' => $status,
+			'value' => $value
+		];
 		return new JSONResponse($result);
 	}
 
@@ -131,49 +133,48 @@ class SettingController extends Controller {
 		$message = "";
 		switch ($type) {
 			case 'sensitivity':
-				$this->config->setAppValue('facerecognition', $type, $value);
+				$this->settingService->setSensitivity ($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
+					$this->settingService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
 			case 'min-confidence':
-				$this->config->setAppValue('facerecognition', $type, $value);
+				$this->settingService->setMinimumConfidence ($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->config->setUserValue($user->getUID(), 'facerecognition', 'recreate-clusters', 'true');
+					$this->settingService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
 			case 'memory-limits':
-				if (is_numeric ($value)) {
-					// Apply prundent limits.
-					if ($value < 1 * 1024 * 1024 * 1024) {
-						$value = 1 * 1024 * 1024 * 1024;
-						$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
-						$status = self::STATE_ERROR;
-					} else if ($value > 4 * 1024 * 1024 * 1024) {
-						$value = 4 * 1024 * 1024 * 1024;
-						$message = $this->l10n->t("We are not recommending using more than 4GB of RAM memory, as we see little to no benefit.");
-						$status = self::STATE_ERROR;
-					}
-					// Valid according to RAM of php.ini setting.
-					$memory = MemoryLimits::getAvailableMemory();
-					if ($value > $memory) {
-						$value = $memory;
-						$message = $this->l10n->t("According to your system you can not use more than %s GB of RAM", ($value / 1024 / 1024 / 1024));
-						$status = self::STATE_ERROR;
-					}
-					// If any validation error saves the value
-					if ($status !== self::STATE_ERROR) {
-						$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
-						$this->config->setAppValue('facerecognition', $type, $value);
-					}
-				} else {
+				if (!is_numeric ($value)) {
 					$status = self::STATE_ERROR;
 					$message = $this->l10n->t("The format seems to be incorrect.");
 					$value = '-1';
 				}
+				// Apply prundent limits.
+				if ($value < SettingService::MINIMUM_MEMORY_LIMITS) {
+					$value = SettingService::MINIMUM_MEMORY_LIMIT;
+					$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
+					$status = self::STATE_ERROR;
+				} else if ($value > SettingService::MAXIMUM_MEMORY_LIMITS) {
+					$value = SettingService::MAXIMUM_MEMORY_LIMITS;
+					$message = $this->l10n->t("We are not recommending using more than 4GB of RAM memory, as we see little to no benefit.");
+					$status = self::STATE_ERROR;
+				}
+				// Valid according to RAM of php.ini setting.
+				$memory = MemoryLimits::getAvailableMemory();
+				if ($value > $memory) {
+					$value = $memory;
+					$message = $this->l10n->t("According to your system you can not use more than %s GB of RAM", ($value / 1024 / 1024 / 1024));
+					$status = self::STATE_ERROR;
+				}
+				// If any validation error saves the value
+				if ($status !== self::STATE_ERROR) {
+					$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
+					$this->settingService->setMemoryLimits($value);
+				}
 				break;
 			case 'show-not-grouped':
-				$this->config->setAppValue('facerecognition', $type, $value);
+				$this->settingService->setShowNotGrouped($value == 'true' ? true : false);
 				break;
 			default:
 				break;
@@ -197,25 +198,25 @@ class SettingController extends Controller {
 		$status = self::STATE_OK;
 		switch ($type) {
 			case 'sensitivity':
-				$value = $this->config->getAppValue('facerecognition', $type, '0.5');
+				$value = $this->settingService->getSensitivity();
 				break;
 			case 'min-confidence':
-				$value = $this->config->getAppValue('facerecognition', $type, '0.9');
+				$value = $this->settingService->getMinimumConfidence();
 				break;
 			case 'memory-limits':
-				$value = $this->config->getAppValue('facerecognition', $type, '-1');
+				$value = $this->settingService->getMemoryLimits();
 				// If it was not configured, returns the default
 				// values used by the background task as a reference.
-				if ($value === '-1') {
+				if ($value == SettingService::DEFAULT_MEMORY_LIMITS) {
 					$memory = MemoryLimits::getAvailableMemory();
-					if ($memory > 4 * 1024 * 1024 * 1024)
-						$memory = 4 * 1024 * 1024 * 1024;
+					if ($memory > SettingService::MAXIMUM_MEMORY_LIMITS)
+						$memory = SettingService::MAXIMUM_MEMORY_LIMITS;
 					$value = $memory;
 					$status = self::STATE_FALSE;
 				}
 				break;
 			case 'show-not-grouped':
-				$value = $this->config->getAppValue('facerecognition', $type, 'false');
+				$value = $this->settingService->getShowNotGrouped();
 				break;
 			default:
 				break;

@@ -30,7 +30,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FaceManagementService;
 
 class ResetAllCommand extends Command {
 

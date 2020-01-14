@@ -29,7 +29,7 @@ use OCP\Files\Node;
 use OCP\ILogger;
 use OCP\IUserManager;
 
-use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Serive\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingService;
 

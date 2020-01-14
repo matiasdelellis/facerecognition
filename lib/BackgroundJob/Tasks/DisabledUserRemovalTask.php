@@ -30,7 +30,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
-use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FaceManagementService;
 
 /**
  * Task that, for each user, check if disabled the analysis,

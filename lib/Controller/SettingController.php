@@ -24,7 +24,6 @@
 namespace OCA\FaceRecognition\Controller;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
-use OCA\FaceRecognition\FaceManagementService;
 use OCA\FaceRecognition\Service\SettingService;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;

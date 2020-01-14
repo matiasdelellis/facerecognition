@@ -116,7 +116,16 @@ class SettingService {
 	}
 
 	public function setUserFullScanDone (bool $fullScanDone, $userId = null) {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $fullScanDone ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? "true" : "false");
+	}
+
+	public function getNeedRemoveStaleImages ($userId = null): bool {
+		$needRemoval = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, self::DEFAULT_STALE_IMAGES_REMOVAL_NEEDED);
+		return ($needRemoval === 'true');
+	}
+
+	public function setNeedRemoveStaleImages (bool $needRemoval, $userId = null) {
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? "true" : "false");
 	}
 
 	public function getNeedRecreateClusters ($userId = null): bool {

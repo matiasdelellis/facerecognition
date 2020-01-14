@@ -60,7 +60,7 @@ class Watcher {
 	private $personMapper;
 
 	/** @var SettingService */
-	private $senttingService;
+	private $settingService;
 
 	/** @var FileService */
 	private $fileService;

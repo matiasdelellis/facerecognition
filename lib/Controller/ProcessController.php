@@ -29,30 +29,30 @@ use OCP\AppFramework\Controller;
 
 use OCA\FaceRecognition\Db\ImageMapper;
 
-use OCA\FaceRecognition\Service\SettingService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 class ProcessController extends Controller {
 
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var SettingService */
-	private $settingService;
+	/** @var SettingsService */
+	private $settingsService;
 
 	/**  @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest       $request,
-	                            ImageMapper    $imageMapper,
-	                            SettingService $settingService,
+	                            IRequest        $request,
+	                            ImageMapper     $imageMapper,
+	                            SettingsService $settingsService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 
-		$this->imageMapper    = $imageMapper;
-		$this->settingService = $settingService;
-		$this->userId         = $UserId;
+		$this->imageMapper     = $imageMapper;
+		$this->settingsService = $settingsService;
+		$this->userId          = $UserId;
 	}
 
 	/**
@@ -60,7 +60,7 @@ class ProcessController extends Controller {
 	 */
 	public function index() {
 
-		$model = $this->settingService->getCurrentFaceModel();
+		$model = $this->settingsService->getCurrentFaceModel();
 
 		$totalImages = $this->imageMapper->countImages($model);
 		$processedImages = $this->imageMapper->countProcessedImages($model);

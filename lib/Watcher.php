@@ -31,7 +31,7 @@ use OCP\IUserManager;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
-use OCA\FaceRecognition\Service\SettingService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
@@ -59,8 +59,8 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
-	/** @var SettingService */
-	private $settingService;
+	/** @var SettingsService */
+	private $settingsService;
 
 	/** @var FileService */
 	private $fileService;
@@ -76,7 +76,7 @@ class Watcher {
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
-	 * @param SettingService $settingService
+	 * @param SettingsService $settingsService
 	 * @param FileService $fileService
 	 * @param FaceManagementService $faceManagementService
 	 */
@@ -85,7 +85,7 @@ class Watcher {
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
-	                            SettingService        $settingService,
+	                            SettingsService       $settingsService,
 	                            FileService           $fileService,
 	                            FaceManagementService $faceManagementService)
 	{
@@ -94,7 +94,7 @@ class Watcher {
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
 		$this->personMapper          = $personMapper;
-		$this->settingService        = $settingService;
+		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 		$this->faceManagementService = $faceManagementService;
 	}
@@ -122,7 +122,7 @@ class Watcher {
 			return;
 		}
 
-		$enabled = $this->settingService->getUserEnabled($owner);
+		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
 			return;
@@ -131,14 +131,14 @@ class Watcher {
 		if ($node->getName() === FileService::NOMEDIA_FILE) {
 			// If user added this file, it means all images in this and all child directories should be removed.
 			// Instead of doing that here, it's better to just add flag that image removal should be done.
-			$this->settingService->setNeedRemoveStaleImages(true, $owner);
+			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
 			return;
 		}
 
 		if ($node->getName() === FileService::FACERECOGNITION_SETTINGS_FILE) {
 			// This file can enable or disable the analysis, so I have to look for new files and forget others.
-			$this->settingService->setNeedRemoveStaleImages(true, $owner);
-			$this->settingService->setUserFullScanDone(false, $owner);
+			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
+			$this->settingsService->setUserFullScanDone(false, $owner);
 			return;
 		}
 
@@ -157,7 +157,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingService->getCurrentFaceModel());
+		$image->setModel($this->settingsService->getCurrentFaceModel());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId === null) {
@@ -199,7 +199,7 @@ class Watcher {
 		}
 
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
-		$enabled = $this->settingService->getUserEnabled($owner);
+		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
 			return;
@@ -209,14 +209,14 @@ class Watcher {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.
-			$this->settingService->setNeedRemoveStaleImages(true, $owner);
+			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
 			return;
 		}
 
 		if ($node->getName() === FileService::FACERECOGNITION_SETTINGS_FILE) {
 			// This file can enable or disable the analysis, so I have to look for new files and forget others.
-			$this->settingService->setNeedRemoveStaleImages(true, $owner);
-			$this->settingService->setUserFullScanDone(false, $owner);
+			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
+			$this->settingsService->setUserFullScanDone(false, $owner);
 			return;
 		}
 
@@ -229,7 +229,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingService->getCurrentFaceModel());
+		$image->setModel($this->settingsService->getCurrentFaceModel());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId !== null) {

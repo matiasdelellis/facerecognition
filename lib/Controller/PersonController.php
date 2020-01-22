@@ -44,7 +44,7 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-use OCA\FaceRecognition\Service\SettingService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 
 class PersonController extends Controller {
@@ -67,41 +67,41 @@ class PersonController extends Controller {
 	/** @var PersonMapper */
 	private $personMapper;
 
-	/** @var SettingService */
-	private $settingService;
+	/** @var SettingsService */
+	private $settingsService;
 
 	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest       $request,
-	                            IRootFolder    $rootFolder,
-	                            IUserSession   $userSession,
-	                            IURLGenerator  $urlGenerator,
-	                            FaceMapper     $faceMapper,
-	                            ImageMapper    $imageMapper,
-	                            PersonMapper   $personmapper,
-	                            SettingService $settingService,
+	                            IRequest        $request,
+	                            IRootFolder     $rootFolder,
+	                            IUserSession    $userSession,
+	                            IURLGenerator   $urlGenerator,
+	                            FaceMapper      $faceMapper,
+	                            ImageMapper     $imageMapper,
+	                            PersonMapper    $personmapper,
+	                            SettingsService $settingsService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 
-		$this->rootFolder     = $rootFolder;
-		$this->userSession    = $userSession;
-		$this->urlGenerator   = $urlGenerator;
-		$this->imageMapper    = $imageMapper;
-		$this->faceMapper     = $faceMapper;
-		$this->personMapper   = $personmapper;
-		$this->settingService = $settingService;
-		$this->userId         = $UserId;
+		$this->rootFolder      = $rootFolder;
+		$this->userSession     = $userSession;
+		$this->urlGenerator    = $urlGenerator;
+		$this->faceMapper      = $faceMapper;
+		$this->imageMapper     = $imageMapper;
+		$this->personMapper    = $personmapper;
+		$this->settingsService = $settingsService;
+		$this->userId          = $UserId;
 	}
 
 	/**
 	 * @NoAdminRequired
 	 */
 	public function index() {
-		$notGrouped = $this->settingService->getShowNotGrouped();
-		$userEnabled = $this->settingService->getUserEnabled($this->userId);
+		$notGrouped = $this->settingsService->getShowNotGrouped();
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
@@ -112,7 +112,7 @@ class PersonController extends Controller {
 
 		$persons = $this->personMapper->findAll($this->userId);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 			if ($notGrouped === 'false' && count($personFaces) <= 1)
 				continue;
 
@@ -152,7 +152,7 @@ class PersonController extends Controller {
 
 		$resp = [];
 		$faces = [];
-		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
+		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 			$fileUrl = $this->getRedirectToFileUrl($image->getFile());
@@ -174,8 +174,8 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function findByName(string $personName) {
-		$notGrouped = $this->settingService->getShowNotGrouped();
-		$userEnabled = $this->settingService->getUserEnabled($this->userId);
+		$notGrouped = $this->settingsService->getShowNotGrouped();
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
@@ -186,7 +186,7 @@ class PersonController extends Controller {
 
 		$persons = $this->personMapper->findByName($this->userId, $personName);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 			if ($notGrouped === 'false' && count($personFaces) <= 1)
 				continue;
 
@@ -254,7 +254,7 @@ class PersonController extends Controller {
 
 		if(!($file instanceof File)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->settingService->setNeedRemoveStaleImages(true, $this->userId);
+			$this->settingsService->setNeedRemoveStaleImages(true, $this->userId);
 			return NULL;
 		}
 

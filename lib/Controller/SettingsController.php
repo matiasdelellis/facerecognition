@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2019,2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019-2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -23,11 +23,6 @@
 
 namespace OCA\FaceRecognition\Controller;
 
-use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
-use OCA\FaceRecognition\Service\SettingService;
-
-use OCA\FaceRecognition\Helper\MemoryLimits;
-
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -35,10 +30,13 @@ use OCP\IUserManager;
 use OCP\IUser;
 use OCP\IL10N;
 
-class SettingController extends Controller {
+use OCA\FaceRecognition\Helper\MemoryLimits;
+use OCA\FaceRecognition\Service\SettingsService;
 
-	/** @var SettingService */
-	private $settingService;
+class SettingsController extends Controller {
+
+	/** @var SettingsService */
+	private $settingsService;
 
 	/** @var \OCP\IL10N */
 	protected $l10n;
@@ -55,16 +53,16 @@ class SettingController extends Controller {
 	const STATE_ERROR = 3;
 
 	public function __construct ($appName,
-	                             IRequest       $request,
-	                             SettingService $setting,
-	                             IL10N          $l10n,
-	                             IUserManager   $userManager,
+	                             IRequest        $request,
+	                             SettingsService $settingsService,
+	                             IL10N           $l10n,
+	                             IUserManager    $userManager,
 	                             $userId)
 	{
 		parent::__construct($appName, $request);
 
 		$this->appName         = $appName;
-		$this->settingService  = $setting;
+		$this->settingsService = $settingsService;
 		$this->l10n            = $l10n;
 		$this->userManager     = $userManager;
 		$this->userId          = $userId;
@@ -81,9 +79,9 @@ class SettingController extends Controller {
 		switch ($type) {
 			case 'enabled':
 				$enabled = ($value === 'true');
-				$this->settingService->setUserEnabled($enabled);
+				$this->settingsService->setUserEnabled($enabled);
 				if ($enabled) {
-					$this->settingService->setUserFullScanDone(false);
+					$this->settingsService->setUserFullScanDone(false);
 				}
 				break;
 			default:
@@ -109,7 +107,7 @@ class SettingController extends Controller {
 		$value ='nodata';
 		switch ($type) {
 			case 'enabled':
-				$value = $this->settingService->getUserEnabled();
+				$value = $this->settingsService->getUserEnabled();
 				break;
 			default:
 				$status = self::STATE_FALSE;
@@ -132,15 +130,15 @@ class SettingController extends Controller {
 		$message = "";
 		switch ($type) {
 			case 'sensitivity':
-				$this->settingService->setSensitivity ($value);
+				$this->settingsService->setSensitivity ($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->settingService->setNeedRecreateClusters(true, $user->getUID());
+					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
 			case 'min-confidence':
-				$this->settingService->setMinimumConfidence ($value);
+				$this->settingsService->setMinimumConfidence ($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->settingService->setNeedRecreateClusters(true, $user->getUID());
+					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
 			case 'memory-limits':
@@ -150,12 +148,12 @@ class SettingController extends Controller {
 					$value = '-1';
 				}
 				// Apply prundent limits.
-				if ($value < SettingService::MINIMUM_MEMORY_LIMITS) {
-					$value = SettingService::MINIMUM_MEMORY_LIMITS;
+				if ($value < SettingsService::MINIMUM_MEMORY_LIMITS) {
+					$value = SettingsService::MINIMUM_MEMORY_LIMITS;
 					$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
 					$status = self::STATE_ERROR;
-				} else if ($value > SettingService::MAXIMUM_MEMORY_LIMITS) {
-					$value = SettingService::MAXIMUM_MEMORY_LIMITS;
+				} else if ($value > SettingsService::MAXIMUM_MEMORY_LIMITS) {
+					$value = SettingsService::MAXIMUM_MEMORY_LIMITS;
 					$message = $this->l10n->t("We are not recommending using more than 4GB of RAM memory, as we see little to no benefit.");
 					$status = self::STATE_ERROR;
 				}
@@ -169,11 +167,11 @@ class SettingController extends Controller {
 				// If any validation error saves the value
 				if ($status !== self::STATE_ERROR) {
 					$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
-					$this->settingService->setMemoryLimits($value);
+					$this->settingsService->setMemoryLimits($value);
 				}
 				break;
 			case 'show-not-grouped':
-				$this->settingService->setShowNotGrouped($value == 'true' ? true : false);
+				$this->settingsService->setShowNotGrouped($value == 'true' ? true : false);
 				break;
 			default:
 				break;
@@ -197,25 +195,25 @@ class SettingController extends Controller {
 		$status = self::STATE_OK;
 		switch ($type) {
 			case 'sensitivity':
-				$value = $this->settingService->getSensitivity();
+				$value = $this->settingsService->getSensitivity();
 				break;
 			case 'min-confidence':
-				$value = $this->settingService->getMinimumConfidence();
+				$value = $this->settingsService->getMinimumConfidence();
 				break;
 			case 'memory-limits':
-				$value = $this->settingService->getMemoryLimits();
+				$value = $this->settingsService->getMemoryLimits();
 				// If it was not configured, returns the default
 				// values used by the background task as a reference.
-				if ($value == SettingService::DEFAULT_MEMORY_LIMITS) {
+				if ($value == SettingsService::DEFAULT_MEMORY_LIMITS) {
 					$memory = MemoryLimits::getAvailableMemory();
-					if ($memory > SettingService::MAXIMUM_MEMORY_LIMITS)
-						$memory = SettingService::MAXIMUM_MEMORY_LIMITS;
+					if ($memory > SettingsService::MAXIMUM_MEMORY_LIMITS)
+						$memory = SettingsService::MAXIMUM_MEMORY_LIMITS;
 					$value = $memory;
 					$status = self::STATE_FALSE;
 				}
 				break;
 			case 'show-not-grouped':
-				$value = $this->settingService->getShowNotGrouped();
+				$value = $this->settingsService->getShowNotGrouped();
 				break;
 			default:
 				break;

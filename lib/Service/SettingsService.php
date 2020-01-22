@@ -29,7 +29,7 @@ use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 use OCP\IConfig;
 
-class SettingService {
+class SettingsService {
 
 	/*
 	 * Settings keys and default values.

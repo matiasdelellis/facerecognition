@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2019, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019-2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -22,15 +22,15 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IConfig;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Task that, for each user, check if disabled the analysis,
@@ -38,28 +38,29 @@ use OCA\FaceRecognition\Service\FaceManagementService;
  */
 class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 
-	/** @var IConfig Config */
-	private $config;
-
 	/** @var ImageMapper Image mapper */
 	private $imageMapper;
 
 	/** @var FaceManagementService */
-	protected $faceManagementService;
+	private $faceManagementService;
+
+	/** @var SettingsService */
+	private $SettingsService;
 
 	/**
-	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FaceManagementService $faceManagementService
+	 * @param SettingsService $settingsService
 	 */
-	public function __construct (IConfig               $config,
-		                     ImageMapper           $imageMapper,
-		                     FaceManagementService $faceManagementService)
+	public function __construct (ImageMapper           $imageMapper,
+	                             FaceManagementService $faceManagementService,
+	                             SettingsService       $settingsService)
 	{
 		parent::__construct();
-		$this->config                = $config;
+
 		$this->imageMapper           = $imageMapper;
 		$this->faceManagementService = $faceManagementService;
+		$this->settingsService       = $settingsService;
 	}
 
 	/**
@@ -75,8 +76,6 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
 		// Check if we are called for one user only, or for all user in instance.
 		$eligable_users = array();
 		if (is_null($this->context->user)) {
@@ -89,8 +88,8 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 
 		// Reset user datas if needed.
 		foreach($eligable_users as $userId) {
-			$userEnabled = $this->config->getUserValue($userId, 'facerecognition', 'enabled', 'false');
-			$imageCount = $this->imageMapper->countUserImages($userId, $model);
+			$userEnabled = $this->settingsService->getUserEnabled($userId);
+			$imageCount = $this->imageMapper->countUserImages($userId, $this->settingsService->getCurrentFaceModel());
 			if ($userEnabled === 'false' && $imageCount > 0) {
 				// TODO: Check that the user really has information to remove.
 				$this->logInfo(sprintf('Removing data from user %s that disable analysis', $userId));

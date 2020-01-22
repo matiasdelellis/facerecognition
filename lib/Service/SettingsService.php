@@ -89,6 +89,14 @@ class SettingsService {
 	const HANDLE_SHARED_FILES_KEY = 'handle-shared-files';
 	const DEFAULT_HANDLE_SHARED_FILES = 'false';
 
+	/** Hidden setting that indicate minimum large of image to analyze */
+	const MINIMUM_IMAGE_SIZE_KEY = 'min_image_size';
+	const DEFAULT_MINIMUM_IMAGE_SIZE = '512';
+
+	/** Hidden setting that indicate maximum area of image to analyze */
+	const MAXIMUM_IMAGE_AREA_KEY = 'max_image_area';
+	const DEFAULT_MAXIMUM_IMAGE_AREA = '0';
+
 
 	/**
 	 * SettingsService
@@ -207,9 +215,17 @@ class SettingsService {
 	 * The next settings are advanced preferences that are not available in gui.
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
-	public function getHandleSharedFiles() {
+	public function getHandleSharedFiles(): bool {
 		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
 		return ($handle === 'true');
+	}
+
+	public function getMinimumImageSize(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_IMAGE_SIZE_KEY, self::DEFAULT_MINIMUM_IMAGE_SIZE));
+	}
+
+	public function getMaximumImageArea(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
 	}
 
 }

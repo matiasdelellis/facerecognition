@@ -76,8 +76,9 @@ class SettingsController extends Controller {
 	 */
 	public function setUserValue($type, $value) {
 		$status = self::STATE_SUCCESS;
+
 		switch ($type) {
-			case 'enabled':
+			case SettingsService::USER_ENABLED_KEY:
 				$enabled = ($value === 'true');
 				$this->settingsService->setUserEnabled($enabled);
 				if ($enabled) {
@@ -94,6 +95,7 @@ class SettingsController extends Controller {
 			'status' => $status,
 			'value' => $value
 		];
+
 		return new JSONResponse($result);
 	}
 
@@ -105,18 +107,21 @@ class SettingsController extends Controller {
 	public function getUserValue($type) {
 		$status = self::STATE_OK;
 		$value ='nodata';
+
 		switch ($type) {
-			case 'enabled':
+			case SettingsService::USER_ENABLED_KEY:
 				$value = $this->settingsService->getUserEnabled();
 				break;
 			default:
 				$status = self::STATE_FALSE;
 				break;
 		}
+
 		$result = [
 			'status' => $status,
 			'value' => $value
 		];
+
 		return new JSONResponse($result);
 	}
 
@@ -128,26 +133,27 @@ class SettingsController extends Controller {
 	public function setAppValue($type, $value) {
 		$status = self::STATE_SUCCESS;
 		$message = "";
+
 		switch ($type) {
-			case 'sensitivity':
-				$this->settingsService->setSensitivity ($value);
+			case SettingsService::SENSITIVITY_KEY:
+				$this->settingsService->setSensitivity($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
-			case 'min-confidence':
-				$this->settingsService->setMinimumConfidence ($value);
+			case SettingsService::MINIMUM_CONFIDENCE_KEY:
+				$this->settingsService->setMinimumConfidence($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
-			case 'memory-limits':
+			case SettingsService::MEMORY_LIMITS_KEY:
 				if (!is_numeric ($value)) {
 					$status = self::STATE_ERROR;
 					$message = $this->l10n->t("The format seems to be incorrect.");
 					$value = '-1';
 				}
-				// Apply prundent limits.
+				// Apply prudent limits.
 				if ($value < SettingsService::MINIMUM_MEMORY_LIMITS) {
 					$value = SettingsService::MINIMUM_MEMORY_LIMITS;
 					$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
@@ -170,10 +176,11 @@ class SettingsController extends Controller {
 					$this->settingsService->setMemoryLimits($value);
 				}
 				break;
-			case 'show-not-grouped':
-				$this->settingsService->setShowNotGrouped($value == 'true' ? true : false);
+			case SettingsService::SHOW_NOT_GROUPED_KEY:
+				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
 				break;
 			default:
+				$status = self::STATE_ERROR;
 				break;
 		}
 
@@ -183,6 +190,7 @@ class SettingsController extends Controller {
 			'message' => $message,
 			'value' => $value
 		];
+
 		return new JSONResponse($result);
 	}
 
@@ -191,16 +199,17 @@ class SettingsController extends Controller {
 	 * @return JSONResponse
 	 */
 	public function getAppValue($type) {
-		$value = 'nodata';
 		$status = self::STATE_OK;
+		$value = 'nodata';
+
 		switch ($type) {
-			case 'sensitivity':
+			case SettingsService::SENSITIVITY_KEY:
 				$value = $this->settingsService->getSensitivity();
 				break;
-			case 'min-confidence':
+			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
 				break;
-			case 'memory-limits':
+			case SettingsService::MEMORY_LIMITS_KEY:
 				$value = $this->settingsService->getMemoryLimits();
 				// If it was not configured, returns the default
 				// values used by the background task as a reference.
@@ -212,7 +221,7 @@ class SettingsController extends Controller {
 					$status = self::STATE_FALSE;
 				}
 				break;
-			case 'show-not-grouped':
+			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$value = $this->settingsService->getShowNotGrouped();
 				break;
 			default:

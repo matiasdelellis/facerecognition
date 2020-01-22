@@ -107,7 +107,7 @@ class SettingsService {
 	}
 
 	public function setUserEnabled (bool $enabled, $userId = null) {
-		 $this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? "true" : "false");
 	}
 
 	public function getUserFullScanDone ($userId = null): bool {
@@ -172,13 +172,13 @@ class SettingsService {
 		$this->config->setAppValue(Application::APP_NAME, self::MEMORY_LIMITS_KEY, strval($memoryLimits));
 	}
 
-	public function getShowNotGrouped (): bool {
+	public function getShowNotGrouped(): bool {
 		$show = $this->config->getAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, self::DEFAULT_SHOW_NOT_GROUPED);
 		return ($show === 'true');
 	}
 
-	public function setShowNotGrouped (bool $show) {
-		 $this->config->setAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, $show ? "true" : "false");
+	public function setShowNotGrouped(bool $show) {
+		$this->config->setAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, $show ? "true" : "false");
 	}
 
 }

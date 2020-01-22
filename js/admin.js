@@ -233,10 +233,7 @@ $(document).ready(function() {
             },
             success: function (data) {
                 if (data.status === state.OK) {
-                    if (data.value == 'true')
-                        $('#showNotGrouped').prop('checked', true);
-                    else
-                        $('#showNotGrouped').prop('checked', false);
+                    $('#showNotGrouped').prop('checked', data.value);
                 }
             }
         });

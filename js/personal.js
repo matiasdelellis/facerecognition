@@ -172,7 +172,7 @@ View.prototype = {
             loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
-        if (this._persons.isEnabled() === 'true') {
+        if (this._persons.isEnabled() === true) {
             context.enabled = true;
             context.clusters = this._persons.getAll();
         }

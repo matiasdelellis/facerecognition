@@ -1,12 +1,34 @@
 <?php
+/**
+ * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ *
+ * @author Matias De lellis <mati86dl@gmail.com>
+ *
+ * @license GNU AGPL version 3 or any later version
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
-use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\File;
 use OCP\IUserSession;
 use OCP\IURLGenerator;
+
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -22,60 +44,75 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
-use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
+use OCA\FaceRecognition\Service\SettingService;
+
 
 class PersonController extends Controller {
 
-	private $config;
+	/** @var IRootFolder */
 	private $rootFolder;
+
+	/** @var IUserSession */
 	private $userSession;
+
+	/** @var IURLGenerator */
 	private $urlGenerator;
+
+	/** @var FaceMapper */
 	private $faceMapper;
+
+	/** @var ImageMapper */
 	private $imageMapper;
+
+	/** @var PersonMapper */
 	private $personMapper;
+
+	/** @var SettingService */
+	private $settingService;
+
+	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest      $request,
-	                            IConfig       $config,
-	                            IRootFolder   $rootFolder,
-	                            IUserSession  $userSession,
-	                            IURLGenerator $urlGenerator,
-	                            FaceMapper    $faceMapper,
-	                            ImageMapper   $imageMapper,
-	                            PersonMapper  $personmapper,
+	                            IRequest       $request,
+	                            IRootFolder    $rootFolder,
+	                            IUserSession   $userSession,
+	                            IURLGenerator  $urlGenerator,
+	                            FaceMapper     $faceMapper,
+	                            ImageMapper    $imageMapper,
+	                            PersonMapper   $personmapper,
+	                            SettingService $settingService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
-		$this->config       = $config;
-		$this->rootFolder   = $rootFolder;
-		$this->userSession  = $userSession;
-		$this->urlGenerator = $urlGenerator;
-		$this->imageMapper  = $imageMapper;
-		$this->faceMapper   = $faceMapper;
-		$this->personMapper = $personmapper;
-		$this->userId       = $UserId;
+
+		$this->rootFolder     = $rootFolder;
+		$this->userSession    = $userSession;
+		$this->urlGenerator   = $urlGenerator;
+		$this->imageMapper    = $imageMapper;
+		$this->faceMapper     = $faceMapper;
+		$this->personMapper   = $personmapper;
+		$this->settingService = $settingService;
+		$this->userId         = $UserId;
 	}
 
 	/**
 	 * @NoAdminRequired
 	 */
 	public function index() {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$notGrouped = $this->config->getAppValue('facerecognition', 'show-not-grouped', 'false');
-		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
+		$notGrouped = $this->settingService->getShowNotGrouped();
+		$userEnabled = $this->settingService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
 		$resp['clusters'] = array();
 
-		if ($userEnabled !== 'true')
+		if (!$userEnabled)
 			return new DataResponse($resp);
 
 		$persons = $this->personMapper->findAll($this->userId);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
 			if ($notGrouped === 'false' && count($personFaces) <= 1)
 				continue;
 
@@ -111,13 +148,11 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function find(int $id) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
 		$person = $this->personMapper->find($this->userId, $id);
 
 		$resp = [];
 		$faces = [];
-		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 			$fileUrl = $this->getRedirectToFileUrl($image->getFile());
@@ -139,20 +174,19 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function findByName(string $personName) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$notGrouped = $this->config->getAppValue('facerecognition', 'show-not-grouped', 'false');
-		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
+		$notGrouped = $this->settingService->getShowNotGrouped();
+		$userEnabled = $this->settingService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
 		$resp['clusters'] = array();
 
-		if ($userEnabled !== 'true')
+		if (!$userEnabled)
 			return new DataResponse($resp);
 
 		$persons = $this->personMapper->findByName($this->userId, $personName);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $model);
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingService->getCurrentFaceModel());
 			if ($notGrouped === 'false' && count($personFaces) <= 1)
 				continue;
 
@@ -176,6 +210,7 @@ class PersonController extends Controller {
 			$cluster['faces'] = $faces;
 			$resp['clusters'][] = $cluster;
 		}
+
 		return new DataResponse($resp);
 	}
 
@@ -194,6 +229,11 @@ class PersonController extends Controller {
 		return new DataResponse($newPerson);
 	}
 
+	/**
+	 * Url to thumb face
+	 *
+	 * @param string $faceId face id to show
+	 */
 	private function getThumbUrl($faceId) {
 		$params = [];
 		$params['id'] = $faceId;
@@ -201,6 +241,11 @@ class PersonController extends Controller {
 		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 
+	/**
+	 * Redirects to the file list and highlight the given file id
+	 *
+	 * @param string $fileId file id to show
+	 */
 	private function getRedirectToFileUrl($fileId) {
 		$uid        = $this->userSession->getUser()->getUID();
 		$baseFolder = $this->rootFolder->getUserFolder($uid);
@@ -209,7 +254,7 @@ class PersonController extends Controller {
 
 		if(!($file instanceof File)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->config->setUserValue($this->userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			$this->settingService->setNeedRemoveStaleImages(true, $this->userId);
 			return NULL;
 		}
 

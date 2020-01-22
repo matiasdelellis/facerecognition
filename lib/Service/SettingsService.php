@@ -81,6 +81,15 @@ class SettingsService {
 	const USER_RECREATE_CLUSTERS_KEY = 'recreate-clusters';
 	const DEFAULT_USER_RECREATE_CLUSTERS = 'false';
 
+	/** Hidden setting that allows to analyze shared files */
+	const HANDLE_SHARED_FILES_KEY = 'handle-shared-files';
+	const DEFAULT_HANDLE_SHARED_FILES = 'false';
+
+
+	/**
+	 * SettingsService
+	 */
+
 	/** @var IConfig Config */
 	private $config;
 
@@ -179,6 +188,15 @@ class SettingsService {
 
 	public function setShowNotGrouped(bool $show) {
 		$this->config->setAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, $show ? "true" : "false");
+	}
+
+	/**
+	 * The next settings are advanced preferences that are not available in gui.
+	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
+	 */
+	public function getHandleSharedFiles() {
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
+		return ($handle === 'true');
 	}
 
 }

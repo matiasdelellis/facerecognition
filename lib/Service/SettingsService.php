@@ -81,6 +81,10 @@ class SettingsService {
 	const USER_RECREATE_CLUSTERS_KEY = 'recreate-clusters';
 	const DEFAULT_USER_RECREATE_CLUSTERS = 'false';
 
+	/** User setting that indicate that is forced to create clusters */
+	const FORCE_CREATE_CLUSTERS_KEY = 'force-create-clusters';
+	const DEFAULT_FORCE_CREATE_CLUSTERS = 'false';
+
 	/** Hidden setting that allows to analyze shared files */
 	const HANDLE_SHARED_FILES_KEY = 'handle-shared-files';
 	const DEFAULT_HANDLE_SHARED_FILES = 'false';
@@ -144,6 +148,15 @@ class SettingsService {
 
 	public function setNeedRecreateClusters (bool $needRecreate, $userId = null) {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? "true" : "false");
+	}
+
+	public function getForceCreateClusters ($userId = null): bool {
+		$forceCreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, self::DEFAULT_FORCE_CREATE_CLUSTERS);
+		return ($forceCreate === 'true');
+	}
+
+	public function setForceCreateClusters (bool $forceCreate, $userId = null) {
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? "true" : "false");
 	}
 
 	/*

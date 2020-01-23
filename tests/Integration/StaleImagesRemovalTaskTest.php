@@ -37,6 +37,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\SettingsService;
 
 use Test\TestCase;
 
@@ -122,7 +123,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	 */
 	private function doStaleImagesRemoval($contextUser = null) {
 		// Set config that stale image removal is needed
-		$this->config->setUserValue($this->user->getUID(), 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+		$this->config->setUserValue($this->user->getUID(), 'facerecognition', SettingsService::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 
 		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
 		$this->assertNotEquals("", $staleImagesRemovalTask->description());
@@ -143,6 +144,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		return new StaleImagesRemovalTask($this->config, $imageMapper, $faceMapper, $personMapper, $fileService);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		return new StaleImagesRemovalTask($imageMapper, $faceMapper, $personMapper, $fileService, $settingsService);
 	}
 }

@@ -106,6 +106,7 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 	private function createDisabledUserRemovalTask() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
-		return new DisabledUserRemovalTask($this->config, $imageMapper, $faceMgmtService);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		return new DisabledUserRemovalTask($imageMapper, $faceMgmtService, $settingsService);
 	}
 }

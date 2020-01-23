@@ -42,7 +42,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @param SettingsService $settingsService Settings service
 	 */
-	public function __construct(SettingsServive $settingsService)
+	public function __construct(SettingsService $settingsService)
 	{
 		parent::__construct();
 
@@ -62,7 +62,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$req = new Requirements($context->modelService, $this->settingsService->getCurrentFaceModel());
+		$model = $this->settingsService->getCurrentFaceModel();
+
+		$req = new Requirements($context->modelService, $model);
 
 		if (!$req->pdlibLoaded()) {
 			$error_message = "PDLib is not loaded. Cannot continue";

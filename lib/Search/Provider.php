@@ -26,6 +26,8 @@ namespace OCA\FaceRecognition\Search;
 
 use OCA\FaceRecognition\AppInfo\Application;
 
+use OCA\FaceRecognition\Db\ImageMapper;
+
 use OCA\FaceRecognition\Service\SettingsService;
 
 /**
@@ -37,13 +39,12 @@ class Provider extends \OCP\Search\Provider {
 	private $imageMapper;
 
 	/** @var SettingsService Settings service */
-	private $settigsService;
+	private $settingsService;
 
 	public function __construct() {
 		$app = new Application();
 		$container = $app->getContainer();
 
-		$this->app             = $app;
 		$this->imageMapper     = $container->query(\OCA\FaceRecognition\Db\ImageMapper::class);
 		$this->settingsService = $container->query(\OCA\FaceRecognition\Service\SettingsService::class);
 	}

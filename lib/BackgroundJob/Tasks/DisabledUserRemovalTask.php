@@ -45,7 +45,7 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	private $faceManagementService;
 
 	/** @var SettingsService */
-	private $SettingsService;
+	private $settingsService;
 
 	/**
 	 * @param ImageMapper $imageMapper Image mapper

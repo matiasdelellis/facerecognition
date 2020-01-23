@@ -244,9 +244,9 @@ class PersonController extends Controller {
 	/**
 	 * Redirects to the file list and highlight the given file id
 	 *
-	 * @param string $fileId file id to show
+	 * @param int $fileId file id to show
 	 */
-	private function getRedirectToFileUrl($fileId) {
+	private function getRedirectToFileUrl(int $fileId) {
 		$uid        = $this->userSession->getUser()->getUID();
 		$baseFolder = $this->rootFolder->getUserFolder($uid);
 		$files      = $baseFolder->getById($fileId);

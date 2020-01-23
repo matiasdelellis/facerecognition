@@ -48,9 +48,6 @@ class FileService {
 	/**  @var string|null */
 	private $userId;
 
-	/** @var IConfig Config */
-	private $config;
-
 	/** @var IRootFolder */
 	private $rootFolder;
 

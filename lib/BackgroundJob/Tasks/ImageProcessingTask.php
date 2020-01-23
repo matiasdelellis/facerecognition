@@ -117,6 +117,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var FileService */
 	private $fileService;
 
+	/** @var SettingsService */
+	private $settingsService;
+
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 

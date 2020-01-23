@@ -149,6 +149,14 @@ class SettingsService {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? "true" : "false");
 	}
 
+	public function getLastStaleImageChecked ($userId = null): int {
+		return intval($this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, self::DEFAULT_STALE_IMAGES_LAST_CHECKED));
+	}
+
+	public function setLastStaleImageChecked (int $lastCheck, $userId = null) {
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, $lastCheck);
+	}
+
 	public function getNeedRecreateClusters ($userId = null): bool {
 		$needRecreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, self::DEFAULT_USER_RECREATE_CLUSTERS);
 		return ($needRecreate === 'true');

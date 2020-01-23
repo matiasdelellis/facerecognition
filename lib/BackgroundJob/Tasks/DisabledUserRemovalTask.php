@@ -90,7 +90,7 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 		foreach($eligable_users as $userId) {
 			$userEnabled = $this->settingsService->getUserEnabled($userId);
 			$imageCount = $this->imageMapper->countUserImages($userId, $this->settingsService->getCurrentFaceModel());
-			if ($userEnabled === 'false' && $imageCount > 0) {
+			if (!$userEnabled && $imageCount > 0) {
 				// TODO: Check that the user really has information to remove.
 				$this->logInfo(sprintf('Removing data from user %s that disable analysis', $userId));
 				$this->faceManagementService->resetAllForUser($userId);

@@ -117,7 +117,8 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper, $fileService);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
 		$this->assertNotEquals("", $addMissingImagesTask->description());
 
 		// Set user for which to do scanning, if any
@@ -130,4 +131,5 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		$this->assertEquals(true, $generator->getReturn());
 	}
+
 }

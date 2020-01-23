@@ -79,7 +79,8 @@ class ResetAllTest extends IntegrationTestCase {
 
 		// Execute reset all
 		$userManager = $this->container->query('OCP\IUserManager');
-		$faceMgmtService = new FaceManagementService($this->config, $userManager, $faceMapper, $imageMapper, $personMapper);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $personMapper, $settingsService);
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		// Check that everything is gone

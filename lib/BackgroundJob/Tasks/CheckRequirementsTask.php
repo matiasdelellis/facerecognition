@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -21,29 +21,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IConfig;
+namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\Helper\MemoryLimits;
 use OCA\FaceRecognition\Helper\Requirements;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Check all requirements before we start engaging in lengthy background task.
  */
 class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
-	/** @var IConfig Config */
-	private $config;
+	/** @var SettingsService Settings service */
+	private $settingsService;
 
 	/**
-	 * @param IConfig $config Config
+	 * @param SettingsService $settingsService Settings service
 	 */
-	public function __construct(IConfig $config) {
+	public function __construct(SettingsServive $settingsService)
+	{
 		parent::__construct();
-		$this->config = $config;
+
+		$this->settingsService = $settingsService;
 	}
 
 	/**
@@ -58,9 +61,8 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
 
-		$req = new Requirements($context->modelService, $model);
+		$req = new Requirements($context->modelService, $this->settingsService->getCurrentFaceModel());
 
 		if (!$req->pdlibLoaded()) {
 			$error_message = "PDLib is not loaded. Cannot continue";
@@ -109,7 +111,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Apply admin setting limit.
-		$memorySetting = $this->config->getAppValue('facerecognition', 'memory-limits', '-1');
+		$memorySetting = $this->settingsService->getMemoryLimits();
 		if ($memorySetting > 0) {
 			if ($memorySetting > $memoryAvailable) {
 				$error_message =

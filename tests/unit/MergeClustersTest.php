@@ -47,7 +47,7 @@ class MergeClustersTest extends TestCase {
 		$settingsService = $this->getMockBuilder('OCA\FaceRecognition\Service\SettingsService')
 			->disableOriginalConstructor()
 			->getMock();
-		$this->createClusterTask = new CreateClustersTask($config, $personMapper, $imageMapper, $settingsService);
+		$this->createClusterTask = new CreateClustersTask($personMapper, $imageMapper, $settingsService);
 	}
 
 	/**

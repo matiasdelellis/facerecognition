@@ -31,7 +31,7 @@ use OCP\IUser;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
-use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;

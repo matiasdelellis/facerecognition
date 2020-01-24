@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -23,7 +23,6 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IConfig;
 use OCP\IUser;
 
 use OCP\Files\File;
@@ -32,12 +31,14 @@ use OCP\Files\Node;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
 use OCA\FaceRecognition\Service\FileService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Task that, for each user, crawls for all images in database,
@@ -45,11 +46,6 @@ use OCA\FaceRecognition\Service\FileService;
  * It should be executed rarely.
  */
 class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
-	const STALE_IMAGES_REMOVAL_NEEDED_KEY = "stale_images_removal_needed";
-	const STALE_IMAGES_LAST_CHECKED_KEY = "stale_images_last_checked";
-
-	/** @var IConfig Config */
-	private $config;
 
 	/** @var ImageMapper Image mapper */
 	private $imageMapper;
@@ -60,27 +56,32 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	/** @var PersonMapper Person mapper */
 	private $personMapper;
 
-	/** @var FileService */
+	/** @var FileService  File service*/
 	private $fileService;
 
+	/** @var SettingsService */
+	private $settingsService;
+
 	/**
-	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FaceMapper $faceMapper Face mapper
 	 * @param PersonMapper $personMapper Person mapper
 	 * @param FileService $fileService File Service
+	 * @param SettingsService $settingsService Settings Service
 	 */
-	public function __construct(IConfig      $config,
-	                            ImageMapper  $imageMapper,
-	                            FaceMapper   $faceMapper,
-	                            PersonMapper $personMapper,
-	                            FileService  $fileService) {
+	public function __construct(ImageMapper     $imageMapper,
+	                            FaceMapper      $faceMapper,
+	                            PersonMapper    $personMapper,
+	                            FileService     $fileService,
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
-		$this->config = $config;
-		$this->imageMapper  = $imageMapper;
-		$this->faceMapper   = $faceMapper;
-		$this->personMapper = $personMapper;
-		$this->fileService  = $fileService;
+
+		$this->imageMapper     = $imageMapper;
+		$this->faceMapper      = $faceMapper;
+		$this->personMapper    = $personMapper;
+		$this->fileService     = $fileService;
+		$this->settingsService = $settingsService;
 	}
 
 	/**
@@ -96,8 +97,6 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
 		// Check if we are called for one user only, or for all user in instance.
 		$staleRemovedImages = 0;
 		$eligable_users = array();
@@ -110,22 +109,21 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		}
 
 		foreach($eligable_users as $user) {
-			$staleImagesRemovalNeeded = $this->config->getUserValue(
-				$user, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'false');
-			if ($staleImagesRemovalNeeded === 'false') {
+			if (!$this->settingsService->getNeedRemoveStaleImages($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug(sprintf('Skipping stale images removal for user %s as there is no need for it', $user));
 				continue;
 			}
 
 			// Since method below can take long time, it is generator itself
-			$generator = $this->staleImagesRemovalForUser($user, $model);
+			$generator = $this->staleImagesRemovalForUser($user, $this->settingsService->getCurrentFaceModel());
 			foreach ($generator as $_) {
 				yield;
 			}
 			$staleRemovedImages += $generator->getReturn();
 
-			$this->config->setUserValue($user, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'false');
+			$this->settingsService->setNeedRemoveStaleImages(false, $user);
+
 			yield;
 		}
 
@@ -157,8 +155,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		// * There needs to be some (any!) ordering here, we used "id" for ordering key
 		// * New images will be processed, or some might be checked more than once, and that is OK
 		//   Important part is that we make continuous progess.
-		$lastChecked = intval($this->config->getUserValue(
-			$userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_LAST_CHECKED_KEY, '0'));
+
+		$lastChecked = $this->settingsService->getLastStaleImageChecked($userId);
 		$this->logDebug(sprintf('Last checked image id for user %s is %d', $userId, $lastChecked));
 		yield;
 
@@ -188,8 +186,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			}
 
 			// Remember last processed image
-			$this->config->setUserValue(
-				$userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_LAST_CHECKED_KEY, $image->id);
+			$this->settingsService->setLastStaleImageChecked($image->id, $userId);
 
 			// Yield from time to time
 			$processed++;
@@ -200,7 +197,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Remove this value when we are done, so next cleanup can start from 0
-		$this->config->deleteUserValue($userId, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_LAST_CHECKED_KEY);
+		$this->settingsService->setLastStaleImageChecked(0, $userId);
+
 		return $imagesRemoved;
 	}
 

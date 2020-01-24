@@ -47,6 +47,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 
 		$image = new Image();
 		$image->setUser($this->user->getUid());
@@ -57,7 +58,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$faceMapper->insertFace($face);
 
-		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $this->user);
+		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $this->user);
 
 		$personCount = $personMapper->countPersons($this->user->getUID());
 		$this->assertEquals(1, $personCount);
@@ -80,12 +81,12 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to create clusters for.
 	 * If not given, clusters for all users will be processed.
 	 */
-	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $contextUser = null) {
+	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $contextUser = null) {
 		if ($contextUser) {
 			$this->config->setUserValue($contextUser->getUID(), 'facerecognition', 'force-create-clusters', 'true');
 		}
 
-		$createClustersTask = new CreateClustersTask($this->config, $personMapper, $imageMapper, $faceMapper);
+		$createClustersTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);
 		$this->assertNotEquals("", $createClustersTask->description());
 
 		// Set user for which to do processing, if any

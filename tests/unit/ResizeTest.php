@@ -38,6 +38,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 use Test\TestCase;
 
@@ -55,16 +56,18 @@ class ResizeTest extends TestCase {
 		$config = $this->createMock(IConfig::class);
 		$modelService = $this->createMock(ModelService::class);
 		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config, $modelService);
+
 		$logger = $this->createMock(ILogger::class);
 		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 
 	public function testResize() {
-		$config = $this->createMock(IConfig::class);
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$fileService = $this->createMock(FileService::class);
-		$imageProcessingTask = new ImageProcessingTask($config, $imageMapper, $fileService);
+		$settingsService = $this->createMock(SettingsService::class);
+		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService);
 		$imageProcessingTask->setContext($this->context);
+
 		$image = new OCP_Image();
 
 		// Try when there is no change

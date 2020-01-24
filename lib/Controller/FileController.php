@@ -2,11 +2,7 @@
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
-use OCP\IConfig;
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
 use OCA\FaceRecognition\Db\Image;
@@ -20,51 +16,61 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\FileService;
 
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Service\SettingsService;
 
 class FileController extends Controller {
 
-	private $config;
-
+	/** @var ImageMapper */
 	private $imageMapper;
 
+	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var FaceMapper */
 	private $faceMapper;
 
+	/** @var FileService */
 	private $fileService;
 
+	/** @var SettingsService */
+	private $settingsService;
+
+	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest     $request,
-	                            IConfig      $config,
-	                            ImageMapper  $imageMapper,
-	                            PersonMapper $personMapper,
-	                            FaceMapper   $faceMapper,
-	                            FileService  $fileService,
+	                            IRequest        $request,
+	                            ImageMapper     $imageMapper,
+	                            PersonMapper    $personMapper,
+	                            FaceMapper      $faceMapper,
+	                            FileService     $fileService,
+	                            SettingsService $settingsService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
-		$this->config       = $config;
-		$this->imageMapper  = $imageMapper;
-		$this->personMapper = $personMapper;
-		$this->faceMapper   = $faceMapper;
-		$this->fileService  = $fileService;
-		$this->userId       = $UserId;
+
+		$this->imageMapper     = $imageMapper;
+		$this->personMapper    = $personMapper;
+		$this->faceMapper      = $faceMapper;
+		$this->fileService     = $fileService;
+		$this->settingsService = $settingsService;
+		$this->userId          = $UserId;
 	}
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * Get persons on file.
+	 *
+	 * @param string $fullpath of the file to get persons
+	 * @return JSONResponse
 	 */
 	public function getPersonsFromPath(string $fullpath) {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
 
 		$resp = array();
-		if ($userEnabled !== 'true') {
-			$resp['enabled'] = 'false';
-			return new DataResponse($resp);
+		if (!$this->settingsService->getUserEnabled($this->userId)) {
+			$resp['enabled'] = false;
+			return new JSONResponse($resp);
 		}
 
 		$file = $this->fileService->getFileByPath($fullpath);
@@ -72,7 +78,7 @@ class FileController extends Controller {
 		$fileId = $file->getId();
 		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
 
-		$resp['enabled'] = 'true';
+		$resp['enabled'] = true;
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($file);
 		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($file);
 		$resp['image_id'] = $image ? $image->getId() : 0;
@@ -82,7 +88,7 @@ class FileController extends Controller {
 
 		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
 		foreach ($persons as $person) {
-			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $model);
+			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $this->settingsService->getCurrentFaceModel());
 			if (!count($face))
 				continue;
 
@@ -94,19 +100,23 @@ class FileController extends Controller {
 			$resp['persons'][] = $facePerson;
 		}
 
-		return new DataResponse($resp);
+		return new JSONResponse($resp);
 	}
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * Get if folder if folder is enabled
+	 *
+	 * @param string $fullpath of the folder
+	 * @return JSONResponse
 	 */
 	public function getFolderOptions(string $fullpath) {
-		$userEnabled = $this->config->getUserValue($this->userId, 'facerecognition', 'enabled', 'false');
-
 		$resp = array();
-		if ($userEnabled !== 'true') {
-			$resp['enabled'] = 'false';
-			return new DataResponse($resp);
+
+		if (!$this->settingsService->getUserEnabled($this->userId)) {
+			$resp['enabled'] = false;
+			return new JSONResponse($resp);
 		}
 
 		$folder = $this->fileService->getFileByPath($fullpath);
@@ -116,11 +126,17 @@ class FileController extends Controller {
 		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($folder);
 		$resp['descendant_detection'] = $this->fileService->getDescendantDetection($folder);
 
-		return new DataResponse($resp);
+		return new JSONResponse($resp);
 	}
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * Apply option to folder to enabled or disable it.
+	 *
+	 * @param string $fullpath of the folder.
+	 * @param bool $detection
+	 * @return JSONResponse
 	 */
 	public function setFolderOptions(string $fullpath, bool $detection) {
 		$folder = $this->fileService->getFileByPath($fullpath);

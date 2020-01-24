@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -21,9 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition;
 
-use OCP\IConfig;
+namespace OCA\FaceRecognition\Service;
+
 use OCP\IUser;
 use OCP\IUserManager;
 
@@ -31,7 +31,7 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Background service. Both command and cron job are calling this service for long-running background operations.
@@ -43,9 +43,6 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
  * reason about them and test them independently. Other than that, they are really glorified functions.
  */
 class FaceManagementService {
-
-	/** @var IConfig */
-	private $config;
 
 	/** @var IUserManager */
 	private $userManager;
@@ -59,13 +56,20 @@ class FaceManagementService {
 	/** @var PersonMapper */
 	private $personMapper;
 
-	public function __construct(IConfig $config, IUserManager $userManager,
-			FaceMapper $faceMapper, ImageMapper $imageMapper, PersonMapper $personMapper) {
-		$this->config = $config;
-		$this->userManager = $userManager;
-		$this->faceMapper = $faceMapper;
-		$this->imageMapper = $imageMapper;
-		$this->personMapper = $personMapper;
+	/** @var SettingsService */
+	private $settingsService;
+
+	public function __construct(IUserManager    $userManager,
+	                            FaceMapper      $faceMapper,
+	                            ImageMapper     $imageMapper,
+	                            PersonMapper    $personMapper,
+	                            SettingsService $settingsService)
+	{
+		$this->userManager     = $userManager;
+		$this->faceMapper      = $faceMapper;
+		$this->imageMapper     = $imageMapper;
+		$this->personMapper    = $personMapper;
+		$this->settingsService = $settingsService;
 	}
 
 	/**
@@ -97,6 +101,7 @@ class FaceManagementService {
 		$this->faceMapper->deleteUserFaces($userId);
 		$this->personMapper->deleteUserPersons($userId);
 		$this->imageMapper->deleteUserImages($userId);
-		$this->config->deleteUserValue($userId, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY);
+		$this->settingsService->setUserFullScanDone(false, $userId);
 	}
+
 }

@@ -84,7 +84,7 @@ abstract class IntegrationTestCase extends TestCase {
 	}
 
 	public function tearDown() {
-		$faceMgmtService = $this->container->query('OCA\FaceRecognition\FaceManagementService');
+		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		$this->user->delete();

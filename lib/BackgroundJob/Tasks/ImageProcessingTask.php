@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -27,18 +27,19 @@ use OCP\Image as OCP_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\IConfig;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+
 use OCA\FaceRecognition\Helper\Requirements;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 use OCA\FaceRecognition\Service\FileService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Plain old PHP object holding all information
@@ -110,31 +111,32 @@ class ImageProcessingContext {
  * and for each found face - face descriptor is extracted.
  */
 class ImageProcessingTask extends FaceRecognitionBackgroundTask {
-	/** @var IConfig Config */
-	private $config;
-
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
 	/** @var FileService */
 	private $fileService;
 
+	/** @var SettingsService */
+	private $settingsService;
+
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
 	/**
-	 * @param IConfig $config
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService
+	 * @param SettingsService $settingsService
 	 */
-	public function __construct(IConfig     $config,
-	                            ImageMapper $imageMapper,
-	                            FileService $fileService)
+	public function __construct(ImageMapper     $imageMapper,
+	                            FileService     $fileService,
+	                            SettingsService $settingsService)
 	{
 		parent::__construct();
-		$this->config             = $config;
+
 		$this->imageMapper        = $imageMapper;
 		$this->fileService        = $fileService;
+		$this->settingsService    = $settingsService;
 		$this->maxImageAreaCached = null;
 	}
 
@@ -151,8 +153,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-		$requirements = new Requirements($context->modelService, $model);
+		$requirements = new Requirements($context->modelService, $this->settingsService->getCurrentFaceModel());
 
 		$images = $context->propertyBag['images'];
 
@@ -211,7 +212,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		if (empty($file)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->config->setUserValue($image->user, 'facerecognition', StaleImagesRemovalTask::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
+			$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
 			$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 			return null;
 		}
@@ -259,7 +260,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Ignore processing of images that are not large enough.
-		$minImageSize = intval($this->config->getAppValue('facerecognition', 'min_image_size', '512'));
+		$minImageSize = $this->settingsService->getMinimumImageSize();
 		if ((imagesx($image->resource()) < $minImageSize) || (imagesy($image->resource()) < $minImageSize)) {
 			return new ImageProcessingContext($imagePath, "", -1, true);
 		}
@@ -376,7 +377,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		// Check if admin persisted this setting in config and it is valid value
 		//
-		$maxImageArea = intval($this->config->getAppValue('facerecognition', 'max_image_area', 0));
+		$maxImageArea = $this->settingsService->getMaximumImageArea();
 		if ($maxImageArea > 0) {
 			return $maxImageArea;
 		}
@@ -388,6 +389,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// This reasoning and calculations are all based on analysis given here:
 		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
 		$maxImageArea = intval((0.75 * $allowedMemory) / 1024); // in pixels^2
+
 		return $maxImageArea;
 	}
 

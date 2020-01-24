@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * @copyright Copyright (c) 2019 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019-2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -25,9 +25,6 @@ declare(strict_types=1);
 
 namespace OCA\FaceRecognition\Service;
 
-use OCA\FaceRecognition\Helper\Requirements;
-
-use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -39,6 +36,9 @@ use OCP\Files\NotFoundException;
 
 use OCA\Files_Sharing\External\Storage as SharingExternalStorage;
 
+use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Service\SettingsService;
+
 class FileService {
 
 	const NOMEDIA_FILE = ".nomedia";
@@ -48,24 +48,24 @@ class FileService {
 	/**  @var string|null */
 	private $userId;
 
-	/** @var IConfig Config */
-	private $config;
-
 	/** @var IRootFolder */
 	private $rootFolder;
 
 	/** @var ITempManager */
 	private $tempManager;
 
+	/** @var SettingsService */
+	private $settingsService;
+
 	public function __construct($userId,
-	                            IConfig      $config,
-	                            IRootFolder  $rootFolder,
-	                            ITempManager $tempManager)
+	                            IRootFolder     $rootFolder,
+	                            ITempManager    $tempManager,
+	                            SettingsService $settingsService)
 	{
-		$this->userId      = $userId;
-		$this->config      = $config;
-		$this->rootFolder  = $rootFolder;
-		$this->tempManager = $tempManager;
+		$this->userId          = $userId;
+		$this->rootFolder      = $rootFolder;
+		$this->tempManager     = $tempManager;
+		$this->settingsService = $settingsService;
 	}
 
 	/**
@@ -196,8 +196,7 @@ class FileService {
 		if ($this->isUserFile($node)) {
 			return true;
 		} else if ($this->isSharedFile($node)) {
-			$handleSharedFiles = $this->config->getAppValue('facerecognition', 'handle-shared-files', 'false');
-			return ($handleSharedFiles === 'true');
+			return $this->settingsService->getHandleSharedFiles();
 		}
 		return false;
 	}

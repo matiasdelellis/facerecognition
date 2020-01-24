@@ -31,7 +31,7 @@ use OCP\IUser;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
-use OCA\FaceRecognition\FaceManagementService;
+use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
@@ -79,7 +79,8 @@ class ResetAllTest extends IntegrationTestCase {
 
 		// Execute reset all
 		$userManager = $this->container->query('OCP\IUserManager');
-		$faceMgmtService = new FaceManagementService($this->config, $userManager, $faceMapper, $imageMapper, $personMapper);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $personMapper, $settingsService);
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		// Check that everything is gone

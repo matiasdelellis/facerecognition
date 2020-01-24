@@ -164,7 +164,7 @@
 
         updateDisplay: function(fileInfo, data) {
             var html = "";
-            if (data.enabled === 'false') {
+            if (!data.enabled) {
                 html += this.getUserDisabledTemplate();
             }
             else if (!data.is_allowed) {

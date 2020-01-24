@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -23,7 +23,6 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IConfig;
 use OCP\IUser;
 
 use OCP\Files\File;
@@ -33,8 +32,9 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
 use OCA\FaceRecognition\Service\FileService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 /**
  * Task that, for each user, crawls for all images in filesystem and insert them in database.
@@ -44,27 +44,29 @@ use OCA\FaceRecognition\Service\FileService;
 class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	const FULL_IMAGE_SCAN_DONE_KEY = "full_image_scan_done";
 
-	/** @var IConfig Config */
-	private $config;
-
 	/** @var ImageMapper Image mapper */
 	private $imageMapper;
 
 	/** @var FileService */
 	private $fileService;
 
+	/** @var SettingsService Settings service */
+	private $settingsService;
+
 	/**
-	 * @param IConfig $config Config
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService File Service
+	 * @param SettingsService $settingsService Settings Service
 	 */
-	public function __construct(IConfig     $config,
-	                            ImageMapper $imageMapper,
-	                            FileService $fileService) {
+	public function __construct(ImageMapper     $imageMapper,
+	                            FileService     $fileService,
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
-		$this->config      = $config;
-		$this->imageMapper = $imageMapper;
-		$this->fileService = $fileService;
+
+		$this->imageMapper     = $imageMapper;
+		$this->fileService     = $fileService;
+		$this->settingsService = $settingsService;
 	}
 
 	/**
@@ -80,8 +82,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$model = intval($this->config->getAppValue('facerecognition', 'model', AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
-
 		// Check if we are called for one user only, or for all user in instance.
 		$insertedImages = 0;
 		$eligable_users = array();
@@ -94,22 +94,20 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		foreach($eligable_users as $user) {
-			$userEnabled = $this->config->getUserValue($user, 'facerecognition', 'enabled', 'false');
-			if ($userEnabled === 'false') {
+			if (!$this->settingsService->getUserEnabled($user)) {
 				// Completely skip this task for this user, seems that disable analysis
 				$this->logInfo('Skipping image scan for user ' . $user . ' that has disabled the analysis');
 				continue;
 			}
 
-			$fullImageScanDone = $this->config->getUserValue($user, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-			if ($fullImageScanDone === 'true') {
+			if ($this->settingsService->getUserFullScanDone($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug('Skipping full image scan for user ' . $user);
 				continue;
 			}
 
-			$insertedImages += $this->addMissingImagesForUser($user, $model);
-			$this->config->setUserValue($user, 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'true');
+			$insertedImages += $this->addMissingImagesForUser($user, $this->settingsService->getCurrentFaceModel());
+			$this->settingsService->setUserFullScanDone(true, $user);
 			yield;
 		}
 

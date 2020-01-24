@@ -34,13 +34,16 @@ use OCP\IUserManager;
 
 class Application extends App {
 
+	/** @var string */
+	public const APP_NAME = 'facerecognition';
+
 	/**
 	 * Application constructor.
 	 *
 	 * @param array $urlParams
 	 */
 	public function __construct(array $urlParams = []) {
-		parent::__construct('facerecognition', $urlParams);
+		parent::__construct(self::APP_NAME, $urlParams);
 
 		$this->connectWatcher();
 		$this->connectSearch();

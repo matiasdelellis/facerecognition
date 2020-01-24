@@ -59,7 +59,8 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$addMissingImagesTask = new AddMissingImagesTask($this->config, $imageMapper, $fileService);
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
 		$this->context->user = $this->user;
 		$generator = $addMissingImagesTask->execute($this->context);
 		foreach ($generator as $_) {
@@ -104,7 +105,8 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
 	private function createDisabledUserRemovalTask() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$faceMgmtService = $this->container->query('OCA\FaceRecognition\FaceManagementService');
-		return new DisabledUserRemovalTask($this->config, $imageMapper, $faceMgmtService);
+		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		return new DisabledUserRemovalTask($imageMapper, $faceMgmtService, $settingsService);
 	}
 }

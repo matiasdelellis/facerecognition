@@ -51,23 +51,23 @@ return ['routes' =>
 	],
 	// User settings
 	[
-		'name' => 'setting#setUserValue',
+		'name' => 'settings#setUserValue',
 		'url' => '/setuservalue',
 		'verb' => 'POST'
 	],
 	[
-		'name' => 'setting#getUserValue',
+		'name' => 'settings#getUserValue',
 		'url' => '/getuservalue',
 		'verb' => 'GET'
 	],
 	// App settings
 	[
-		'name' => 'setting#setAppValue',
+		'name' => 'settings#setAppValue',
 		'url' => '/setappvalue',
 		'verb' => 'POST'
 	],
 	[
-		'name' => 'setting#getAppValue',
+		'name' => 'settings#getAppValue',
 		'url' => '/getappvalue',
 		'verb' => 'GET'
 	],

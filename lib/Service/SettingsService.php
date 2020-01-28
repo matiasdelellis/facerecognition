@@ -32,6 +32,11 @@ use OCP\IConfig;
 class SettingsService {
 
 	/*
+	 * System
+	 */
+	const MINIMUM_SYSTEM_MEMORY_REQUERIMENTS = 1 * 1024 * 1024 * 1024;
+
+	/*
 	 * Settings keys and default values.
 	 */
 
@@ -53,7 +58,7 @@ class SettingsService {
 
 	/** Memory limit suggested for analysis */
 	const MEMORY_LIMITS_KEY = "memory-limits";
-	const MINIMUM_MEMORY_LIMITS = 1 * 1024 * 1024 * 1024;
+	const MINIMUM_MEMORY_LIMITS = 300 * 1024 * 1024; // 300 MB ensures a minimum area of 640x480px
 	const DEFAULT_MEMORY_LIMITS = '-1'; // It is dynamically configured according to hardware
 	const MAXIMUM_MEMORY_LIMITS = 4 * 1024 * 1024 * 1024;
 

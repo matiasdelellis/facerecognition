@@ -1,7 +1,10 @@
 <?php
 namespace OCA\FaceRecognition\Helper;
 
+use OCA\FaceRecognition\Helper\MemoryLimits;
+
 use OCA\FaceRecognition\Service\ModelService;
+use OCA\FaceRecognition\Service\SettingsService;
 
 class Requirements
 {
@@ -13,6 +16,11 @@ class Requirements
 		$this->modelService = $modelService;
 
 		$this->modelService->useModelVersion($model);
+	}
+
+	public function hasEnoughMemory() {
+		$memory = MemoryLimits::getSystemMemory();
+		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUERIMENTS);
 	}
 
 	public function pdlibLoaded() {

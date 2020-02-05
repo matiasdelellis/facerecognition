@@ -39,14 +39,8 @@ class MemoryLimits {
 	 * we don't know any better
 	 */
 	public static function getAvailableMemory(): int {
-		$availableMemory = -1;
 		// Try first to get from php.ini
-		try {
-			$ini_value = ini_get('memory_limit');
-			$availableMemory = MemoryLimits::returnBytes($ini_value);
-		} catch (\Exception $e) {
-			return -1;
-		}
+		$availableMemory = MemoryLimits::getPhpMemory();
 
 		// php.ini says that memory_limit is -1, which means unlimited.
 		// We need to get memory from system (if OS is supported here).
@@ -57,7 +51,23 @@ class MemoryLimits {
 				return -1;
 			$availableMemory = intval($systemMemory / 2);
 		}
+		return $availableMemory;
+	}
 
+	/**
+	 * Tries to get memory available to PHP reading value of "memory_limit".
+	 *
+	 * @return int Total memory available to PHP, in bytes, or negative if
+	 * we don't know any better or it is unlimited.
+	 */
+	public static function getPhpMemory(): int {
+		// Get from php.ini
+		try {
+			$ini_value = ini_get('memory_limit');
+			$availableMemory = MemoryLimits::returnBytes($ini_value);
+		} catch (\Exception $e) {
+			$availableMemory = -1;
+		}
 		return $availableMemory;
 	}
 

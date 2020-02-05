@@ -165,8 +165,6 @@ View.prototype = {
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
             showMoreButton: t('facerecognition', 'Show all groups with the same name'),
-            emptyMsg: t('facerecognition', 'Your friends have not been recognized yet'),
-            emptyHint: t('facerecognition', 'Please, be patient'),
             emptyMsg: t('facerecognition', 'The analysis is disabled'),
             emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
             loadingIcon: OC.imagePath('core', 'loading.gif')
@@ -175,6 +173,9 @@ View.prototype = {
         if (this._persons.isEnabled() === true) {
             context.enabled = true;
             context.clusters = this._persons.getAll();
+
+            context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
+            context.emptyHint = t('facerecognition', 'Please, be patient');
         }
 
         if (this._persons.getActive() !== undefined)

@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2017,2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -40,29 +40,57 @@ class MemoryLimits {
 	 */
 	public static function getAvailableMemory(): int {
 		// Try first to get from php.ini
-		try {
-			$value = MemoryLimits::returnBytes(ini_get('memory_limit'));
-			if ($value > 0) {
-				return $value;
-			}
-		} catch (\Exception $e) {
-			return -1;
-		}
+		$availableMemory = MemoryLimits::getPhpMemory();
 
 		// php.ini says that memory_limit is -1, which means unlimited.
 		// We need to get memory from system (if OS is supported here).
 		// Only linux is currently supported.
-		if (php_uname("s") === "Linux") {
-			$linuxMemory = MemoryLimits::getTotalMemoryLinux();
-			if ($linuxMemory <= 0) {
-				return -3;
-			}
-			return intval($linuxMemory / 2);
-		} else {
-			return -2;
+		if ($availableMemory < 0) {
+			$systemMemory = MemoryLimits::getSystemMemory();
+			if ($systemMemory < 0)
+				return -1;
+			$availableMemory = intval($systemMemory / 2);
 		}
+		return $availableMemory;
 	}
 
+	/**
+	 * Tries to get memory available to PHP reading value of "memory_limit".
+	 *
+	 * @return int Total memory available to PHP, in bytes, or negative if
+	 * we don't know any better or it is unlimited.
+	 */
+	public static function getPhpMemory(): int {
+		// Get from php.ini
+		try {
+			$ini_value = ini_get('memory_limit');
+			$availableMemory = MemoryLimits::returnBytes($ini_value);
+		} catch (\Exception $e) {
+			$availableMemory = -1;
+		}
+		return $availableMemory;
+	}
+
+	/**
+	 * @return int Total memory available on system, in bytes, or negative if
+	 * we don't know any better
+	 * Only linux is currently supported.
+	 */
+	public static function getSystemMemory(): int {
+		if (php_uname("s") !== "Linux")
+			return -1;
+
+		$linuxMemory = MemoryLimits::getTotalMemoryLinux();
+		if ($linuxMemory <= 0) {
+			return -2;
+		}
+		return $linuxMemory;
+	}
+
+	/**
+	 * @return int Total memory available on linux system, in bytes, or
+	 * zero if we don't know any better.
+	 */
 	private static function getTotalMemoryLinux(): int {
 		$fh = fopen('/proc/meminfo','r');
 		if ($fh === false) {
@@ -115,4 +143,5 @@ class MemoryLimits {
 
 		return $valInt;
 	}
+
 }

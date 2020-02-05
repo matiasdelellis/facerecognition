@@ -32,6 +32,12 @@ use OCP\IConfig;
 class SettingsService {
 
 	/*
+	 * System
+	 */
+	const MINIMUM_SYSTEM_MEMORY_REQUIREMENTS = 2 * 1024 * 1024 * 1024;
+	const MEMORY_AREA_RELATIONSHIP = 4 * 1024; // TODO: Move to models when implement others.
+
+	/*
 	 * Settings keys and default values.
 	 */
 
@@ -53,9 +59,9 @@ class SettingsService {
 
 	/** Memory limit suggested for analysis */
 	const MEMORY_LIMITS_KEY = "memory-limits";
-	const MINIMUM_MEMORY_LIMITS = 1 * 1024 * 1024 * 1024;
+	const MINIMUM_MEMORY_LIMITS = self::MEMORY_AREA_RELATIONSHIP * 640 * 480;
 	const DEFAULT_MEMORY_LIMITS = '-1'; // It is dynamically configured according to hardware
-	const MAXIMUM_MEMORY_LIMITS = 4 * 1024 * 1024 * 1024;
+	const MAXIMUM_MEMORY_LIMITS = 8 * 1024 * 1024 * 1024;
 
 	/** Show single persons on clustes view */
 	const SHOW_NOT_GROUPED_KEY = 'show-not-grouped';

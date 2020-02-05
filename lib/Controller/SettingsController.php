@@ -30,6 +30,8 @@ use OCP\IUserManager;
 use OCP\IUser;
 use OCP\IL10N;
 
+use OCP\Util as OCP_Util;
+
 use OCA\FaceRecognition\Helper\MemoryLimits;
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -156,18 +158,18 @@ class SettingsController extends Controller {
 				// Apply prudent limits.
 				if ($value < SettingsService::MINIMUM_MEMORY_LIMITS) {
 					$value = SettingsService::MINIMUM_MEMORY_LIMITS;
-					$message = $this->l10n->t("Recommended memory for analysis is at least 1GB of RAM.");
+					$message = $this->l10n->t("Recommended memory for analysis is at least %s of RAM.", OCP_Util::humanFileSize($value));
 					$status = self::STATE_ERROR;
 				} else if ($value > SettingsService::MAXIMUM_MEMORY_LIMITS) {
 					$value = SettingsService::MAXIMUM_MEMORY_LIMITS;
-					$message = $this->l10n->t("We are not recommending using more than 4GB of RAM memory, as we see little to no benefit.");
+					$message = $this->l10n->t("We are not recommending using more than %s of RAM memory, as we see little to no benefit.", OCP_Util::humanFileSize($value));
 					$status = self::STATE_ERROR;
 				}
 				// Valid according to RAM of php.ini setting.
 				$memory = MemoryLimits::getAvailableMemory();
 				if ($value > $memory) {
 					$value = $memory;
-					$message = $this->l10n->t("According to your system you can not use more than %s GB of RAM", ($value / 1024 / 1024 / 1024));
+					$message = $this->l10n->t("According to your system you can not use more than %s of RAM", OCP_Util::humanFileSize($value));
 					$status = self::STATE_ERROR;
 				}
 				// If any validation error saves the value

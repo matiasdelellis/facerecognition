@@ -20,7 +20,7 @@ class Requirements
 
 	public function hasEnoughMemory() {
 		$memory = MemoryLimits::getSystemMemory();
-		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUERIMENTS);
+		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS);
 	}
 
 	public function pdlibLoaded() {

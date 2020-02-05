@@ -34,7 +34,7 @@ class SettingsService {
 	/*
 	 * System
 	 */
-	const MINIMUM_SYSTEM_MEMORY_REQUERIMENTS = 2 * 1024 * 1024 * 1024;
+	const MINIMUM_SYSTEM_MEMORY_REQUIREMENTS = 2 * 1024 * 1024 * 1024;
 	const MEMORY_AREA_RELATIONSHIP = 4 * 1024; // TODO: Move to models when implement others.
 
 	/*

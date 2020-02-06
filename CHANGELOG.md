@@ -1,6 +1,27 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.12] - 2020-01-06
+### Bug fixes
+- Force cast to integer after multiplying by a number. Issue #199, #208
+- Fix initial view when enable analysis and still don't analyze anything. Issue #225 and others.
+- face-preview: Person photo is blank #226
+
+### Changed
+- Change the minimum memory requirement to 2GB. If you have less use Swap.
+- Change the minimum memory assigned for analysis to 1.2GB.
+- Change the maximum memory assigned for analysis to 8 GB.
+- Change the formula to calculate the area according to memory. Issue $220, #176, and others.
+- Implement a settings service where to handle everything a little more clean.
+- Move FaceManagementService together with the others services.
+- Test node binary needed to build handlebars templates. Issue #223 and #217
+- Fix some grammatical errors and typos. Issue 224 
+
+### Translations
+- Add German translation thanks to Mark Ziegler.
+- Update Chinese language thanks to Jack Frost.
+- Update Spanish language thanks to Matias De lellis.
+
 ## [0.5.11] - 2019-12-20
 ### Added
 - Add custom exclusion folder option beyond the .nomedia file. Issue #171

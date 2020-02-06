@@ -20,8 +20,12 @@ default: build
 # Some utils rules
 
 test-bin-deps:
-	@echo "Checking binaries needed to build the application"
-	@echo "Testing npm, curl, wget and bzip2. If one is missing, install it with the tools of your system."
+	@echo "================================================================================"
+	@echo "Checking binaries needed to build the application."
+	@echo "Testing node, npm, curl, wget and bzip2. If one is missing, install it with the"
+	@echo "tools of your system."
+	@echo "================================================================================"
+	node -v
 	npm -v
 	curl -V
 	wget -V

@@ -63,7 +63,7 @@
         getPersonRowTemplate: function(person) {
             var html = "<tr data-id='" + person.person_id + "'>";
             html += "    <td>";
-            html += "        <div class='face-preview' data-background-image='/index.php/apps/facerecognition/face/" + person.face.id + "/thumb/32' data-id='" + person.face.id + "' width='32' height='32'>";
+            html += "        <div class='face-preview' data-background-image='" + person.thumb_url + "' width='32' height='32'>";
             html += "    </td>";
             html += "    <td class='name'>" + person.name + "</td>";
             html += "    <td>";

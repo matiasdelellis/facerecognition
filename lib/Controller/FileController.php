@@ -5,6 +5,8 @@ use OCP\IRequest;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
 
+use OCP\IURLGenerator;
+
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
@@ -19,6 +21,9 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class FileController extends Controller {
+
+	/** @var IURLGenerator */
+	private $urlGenerator;
 
 	/** @var ImageMapper */
 	private $imageMapper;
@@ -39,6 +44,7 @@ class FileController extends Controller {
 	private $userId;
 
 	public function __construct($AppName,
+	                            IURLGenerator   $urlGenerator,
 	                            IRequest        $request,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personMapper,
@@ -49,6 +55,7 @@ class FileController extends Controller {
 	{
 		parent::__construct($AppName, $request);
 
+		$this->urlGenerator    = $urlGenerator;
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personMapper;
 		$this->faceMapper      = $faceMapper;
@@ -95,7 +102,11 @@ class FileController extends Controller {
 			$facePerson = array();
 			$facePerson['name'] = $person->getName();
 			$facePerson['person_id'] = $person->getId();
-			$facePerson['face'] = $face[0];
+			$facePerson['thumb_url'] = $this->getThumbUrl($face[0]->getId());
+			$facePerson['face_left'] = $face[0]->getLeft();
+			$facePerson['face_right'] = $face[0]->getRight();
+			$facePerson['face_top'] = $face[0]->getTop();
+			$facePerson['face_bottom'] = $face[0]->getBottom();
 
 			$resp['persons'][] = $facePerson;
 		}
@@ -143,6 +154,18 @@ class FileController extends Controller {
 		$this->fileService->setDescendantDetection($folder, $detection);
 
 		return $this->getFolderOptions($fullpath);
+	}
+
+	/**
+	 * Url to thumb face
+	 *
+	 * @param string $faceId face id to show
+	 */
+	private function getThumbUrl($faceId) {
+		$params = [];
+		$params['id'] = $faceId;
+		$params['size'] = 32;
+		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 
 }

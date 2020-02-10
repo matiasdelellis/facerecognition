@@ -203,17 +203,19 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @param string $userId User to drop fo unset relation.
 	 */
-	public function unsetPersonsRelationForUser(string $userId) {
+	public function unsetPersonsRelationForUser(string $userId, int $model) {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
 			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model')))
 			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("person", $qb->createNamedParameter(null))
 			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('model', $model)
 			->setParameter('user', $userId)
 			->execute();
 	}

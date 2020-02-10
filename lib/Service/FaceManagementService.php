@@ -116,7 +116,9 @@ class FaceManagementService {
 	 * @param string $user ID of user to execute resetting for
 	 */
 	public function resetClustersForUser(string $userId) {
-		$this->faceMapper->unsetPersonsRelationForUser($userId);
+		$model = $this->settingsService->getCurrentFaceModel();
+
+		$this->faceMapper->unsetPersonsRelationForUser($userId, $model);
 		$this->personMapper->deleteUserPersons($userId);
 	}
 

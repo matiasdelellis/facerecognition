@@ -103,6 +103,6 @@ is ideal if you want to start from scratch for any reason.
 
 You must specify if you wish to completely reset the database `[--all]` and all
 images must be analyzed again, or you can reset only the clustering of persons
-`[--clustering]` and only must clustering again.
+`[--clustering]` and only clustering needs to be done again.
 
 If `USER` is provided, it will just reset the information of a particular user.

@@ -94,13 +94,15 @@ If `MAX_IMAGE_AREA` is supplied caps the maximum area (in pixels^2) of the image
 to be fed to neural network, effectively lowering needed memory. Use this
 if face detection crashes randomly.
 
-### Resetting faces
+### Resetting information
 
-`occ face:reset_all [-u user-id]`
+`occ face:reset --all|--clustering [-u|--user_id USER_ID]`
 
-This command will completely wipe out all images, faces and cluster of persons.
-It is ideal if you want to start from scratch for any reason. Beware that all
-images will have to be analyzed again!
+This command can completely wipe out all images, faces and cluster of persons. It
+is ideal if you want to start from scratch for any reason.
 
-If `user-id` is provided, it will just reset all the information of a particular
-user.
+You must specify if you wish to completely reset the database `[--all]` and all
+images must be analyzed again, or you can reset only the clustering of persons
+`[--clustering]` and only must clustering again.
+
+If `USER` is provided, it will just reset the information of a particular user.

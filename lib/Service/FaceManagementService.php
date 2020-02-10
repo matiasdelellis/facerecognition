@@ -78,16 +78,8 @@ class FaceManagementService {
 	 * @param IUser|null $user Optional user to execute resetting for
 	 */
 	public function resetAll(IUser $user = null) {
-		$eligable_users = array();
-		if (is_null($user)) {
-			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligable_users) {
-				$eligable_users[] = $user->getUID();
-			});
-		} else {
-			$eligable_users[] = $user->getUID();
-		}
-
-		foreach($eligable_users as $user) {
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach($eligible_users as $user) {
 			$this->resetAllForUser($user);
 		}
 	}
@@ -101,7 +93,49 @@ class FaceManagementService {
 		$this->faceMapper->deleteUserFaces($userId);
 		$this->personMapper->deleteUserPersons($userId);
 		$this->imageMapper->deleteUserImages($userId);
+
 		$this->settingsService->setUserFullScanDone(false, $userId);
+	}
+
+	/**
+	 * Eliminate all faces relations with person.
+	 * If no user is given, resetting is executed for all users.
+	 *
+	 * @param IUser|null $user Optional user to execute resetting for
+	 */
+	public function resetClusters(IUser $user = null) {
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach($eligible_users as $user) {
+			$this->resetClustersForUser($user);
+		}
+	}
+
+	/**
+	 * Eliminate all faces relations with person.
+	 *
+	 * @param string $user ID of user to execute resetting for
+	 */
+	public function resetClustersForUser(string $userId) {
+		$this->faceMapper->unsetPersonsRelationForUser($userId);
+		$this->personMapper->deleteUserPersons($userId);
+	}
+
+	/**
+	 * Get an array with the eligibles users taking into account the user argument,
+	 * or all users.
+	 *
+	 * @param IUser|null $user Optional user to get specific user.
+	 */
+	private function getEligiblesUserId(IUser $user = null): array {
+		$eligible_users = array();
+		if (is_null($user)) {
+			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligible_users) {
+				$eligible_users[] = $user->getUID();
+			});
+		} else {
+			$eligible_users[] = $user->getUID();
+		}
+		return $eligible_users;
 	}
 
 }

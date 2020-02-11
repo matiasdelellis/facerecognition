@@ -95,7 +95,8 @@ class ResetCommand extends Command {
 		if (!is_null($userId)) {
 			$user = $this->userManager->get($userId);
 			if ($user === null) {
-				throw new \InvalidArgumentException("User with id <$userId> in unknown.");
+				$output->writeln("User with id <$userId> in unknown.");
+				return 1;
 			}
 		}
 

@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -32,7 +32,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 
-class ResetAllCommand extends Command {
+class ResetCommand extends Command {
 
 	/** @var FaceManagementService */
 	protected $faceManagementService;
@@ -54,7 +54,7 @@ class ResetAllCommand extends Command {
 
 	protected function configure() {
 		$this
-			->setName('face:reset_all')
+			->setName('face:reset')
 			->setDescription(
 				'Resets and deletes everything. Good for starting over. ' .
 				'BEWARE: Next runs of face:background_job will re-analyze all images.')
@@ -63,6 +63,20 @@ class ResetAllCommand extends Command {
 				'u',
 				InputOption::VALUE_REQUIRED,
 				'Resets data for a given user only. If not given, resets everything for all users.',
+				null
+			)
+			->addOption(
+				'all',
+				null,
+				InputOption::VALUE_NONE,
+				'Reset everything.',
+				null
+			)
+			->addOption(
+				'clustering',
+				null,
+				InputOption::VALUE_NONE,
+				'Just reset the clustering.',
 				null
 			);
 	}
@@ -81,15 +95,35 @@ class ResetAllCommand extends Command {
 		if (!is_null($userId)) {
 			$user = $this->userManager->get($userId);
 			if ($user === null) {
-				throw new \InvalidArgumentException("User with id <$userId> in unknown.");
+				$output->writeln("User with id <$userId> in unknown.");
+				return 1;
 			}
 		}
 
 		// Main thing
 		//
-		$this->faceManagementService->resetAll($user);
-		$output->writeln('Reset successfully done');
-
-		return 0;
+		if ($input->getOption('all')) {
+			$this->resetAll($user);
+			$output->writeln('Reset successfully done');
+			return 0;
+		}
+		else if ($input->getOption('clustering')) {
+			$this->resetClusters($user);
+			$output->writeln('Reset clustering done');
+			return 0;
+		}
+		else {
+			$output->writeln('You must specify that you want to reset');
+			return 1;
+		}
 	}
+
+	private function resetClusters($user) {
+		$this->faceManagementService->resetClusters($user);
+	}
+
+	private function resetAll($user) {
+		$this->faceManagementService->resetAll($user);
+	}
+
 }

@@ -36,7 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\DlibCnn5Model;
 use OCA\FaceRecognition\Service\SettingsService;
 
 use Test\TestCase;
@@ -51,7 +51,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
@@ -72,7 +72,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(2);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$this->doStaleImagesRemoval();

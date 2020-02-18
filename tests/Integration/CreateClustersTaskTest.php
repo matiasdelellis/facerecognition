@@ -34,7 +34,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\DlibCnn5Model;
 
 use Test\TestCase;
 
@@ -52,7 +52,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
@@ -66,12 +66,12 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$this->assertEquals(1, count($persons));
 		$personId = $persons[0]->getId();
 
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
-		$faces = $faceMapper->getFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faces = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 		$this->assertNotNull($faces[0]->getPerson());
-		$faces = $faceMapper->findFacesFromPerson($this->user->getUID(), $personId, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faces = $faceMapper->findFacesFromPerson($this->user->getUID(), $personId, DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 	}
 

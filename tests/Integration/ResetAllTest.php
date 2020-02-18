@@ -38,7 +38,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\DlibCnn5Model;
 
 use Test\TestCase;
 
@@ -55,16 +55,16 @@ class ResetAllTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$imageCount = $imageMapper->countUserImages($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $imageCount);
 
 		// Add one face to DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$faceMapper->insertFace($face);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
 
 		// Add one person to DB
@@ -84,9 +84,9 @@ class ResetAllTest extends IntegrationTestCase {
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		// Check that everything is gone
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$imageCount = $imageMapper->countUserImages($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $imageCount);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $faceCount);
 		$personCount = $personMapper->countPersons($this->user->getUID());
 		$this->assertEquals(0, $personCount);

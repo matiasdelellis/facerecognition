@@ -36,7 +36,6 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
 
 use Test\TestCase;
 

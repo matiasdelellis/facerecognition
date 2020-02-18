@@ -33,7 +33,7 @@ use OCP\Files\IRootFolder;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\Helper\Requirements;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\DlibCnn5Model;
 use OCA\FaceRecognition\Service\ModelService;
 
 use Test\TestCase;
@@ -58,7 +58,7 @@ class RequirementsTest extends TestCase {
 
 	public function testPdlibLoaded() {
 		$modelService = $this->createMock(ModelService::class);
-		$requirements = new Requirements($modelService, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$requirements = new Requirements($modelService, DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
 		$this->assertTrue($requirements->pdlibLoaded());
 	}
 }

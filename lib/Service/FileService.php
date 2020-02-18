@@ -264,7 +264,7 @@ class FileService {
 		$tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
 		$tempFile = $tempFolder . basename($fileUrl);
 
-		$fp = fopen(, 'w+');
+		$fp = fopen($tempFile, 'w+');
 		if ($fp === false) {
 			throw new \Exception('Could not open the file to write: ' . $tempFile);
 		}

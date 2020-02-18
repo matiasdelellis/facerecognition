@@ -33,14 +33,6 @@ use OCP\Migration\IRepairStep;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
 class RemoveFullImageScanDoneFlag implements IRepairStep {
-	/** Defines ID for default face model */
-	const DEFAULT_FACE_MODEL_ID = 1;
-
-	/** Defines name for default face model */
-	const DEFAULT_FACE_MODEL_NAME = 'Default';
-
-	/** Defines description for default face model */
-	const DEFAULT_FACE_MODEL_DESC = 'Main model, using dlib defaults: mmod_human_face_detector.dat, shape_predictor_5_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
 
 	/** @var IConfig Config */
 	private $config;

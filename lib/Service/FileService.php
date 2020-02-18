@@ -251,6 +251,99 @@ class FileService {
 		return $results;
 	}
 
+
+	/**
+	 * Download a file in a temporary folder
+	 *
+	 * @param string $fileUrl url to download.
+	 * @return string temp file downloaded.
+	 *
+	 * @throws \Exception
+	 */
+	public function downloaldFile(string $fileUrl): string {
+		$tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
+		$tempFile = $tempFolder . basename($fileUrl);
+
+		$fp = fopen($tempFile, 'w+');
+		$ch = curl_init($fileUrl);
+		curl_setopt_array($ch, [
+			CURLOPT_FILE => $fp,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_SSL_VERIFYHOST => 0,
+			CURLOPT_USERAGENT => 'Nextcloud Facerecognition Service',
+		]);
+
+		if(curl_exec($ch) === false) {
+		    throw new \Exception('Curl error: ' . curl_error($ch));
+		}
+
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($httpCode !== 200) {
+			$statusCodes = [
+				400 => 'Bad request',
+				401 => 'Unauthorized',
+				403 => 'Forbidden',
+				404 => 'Not Found',
+				500 => 'Internal Server Error',
+				502 => 'Bad Gateway',
+				503 => 'Service Unavailable',
+				504 => 'Gateway Timeout',
+			];
+
+			$message = 'Download failed';
+			if(isset($statusCodes[$httpCode])) {
+				$message .= ' - ' . $statusCodes[$httpCode] . ' (HTTP ' . $httpCode . ')';
+			} else {
+				$message .= ' - HTTP status code: ' . $httpCode;
+			}
+
+			$curlErrorMessage = curl_error($ch);
+			if(!empty($curlErrorMessage)) {
+				$message .= ' - curl error message: ' . $curlErrorMessage;
+			}
+			$message .= ' - URL: ' . htmlentities($fileUrl);
+
+			throw new \Exception($message);
+		}
+
+		curl_close($ch);
+		fclose($fp);
+
+		return $tempFile;
+	}
+
+	/**
+	 * Uncompressing the file with the bzip2-extension
+	 *
+	 * @param string $in
+	 * @param string $out
+	 *
+	 * @throws \Exception
+	 */
+	public function bunzip2 ($in, $out) {
+		if (!file_exists ($in) || !is_readable ($in))
+			throw new \Exception('The file '.$in.' not exists or is not readable');
+
+		if ((!file_exists ($out) && !is_writeable (dirname ($out)) || (file_exists($out) && !is_writable($out)) ))
+			throw new \Exception('The file '.$out.' exists or is not writable');
+
+		$in_file = bzopen ($in, "r");
+		$out_file = fopen ($out, "w");
+
+		while ($buffer = bzread ($in_file, 4096)) {
+			if($buffer === FALSE)
+				throw new \Exception('Read problem: ' . bzerrstr($in_file));
+			if(bzerrno($in_file) !== 0)
+				throw new \Exception('Compression problem: '. bzerrstr($in_file));
+
+			fwrite ($out_file, $buffer, 4096);
+		}
+
+		bzclose ($in_file);
+		fclose ($out_file);
+	}
+
 	/**
 	 * Create a temporary file and return the path
 	 */

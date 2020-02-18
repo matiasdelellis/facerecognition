@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\FaceRecognition\Service;
 
 use OCA\FaceRecognition\AppInfo\Application;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\DlibCnn5Model;
 
 use OCP\IConfig;
 
@@ -43,18 +43,18 @@ class SettingsService {
 
 	/** Current Model used to analyze */
 	const CURRENT_MODEL_KEY = 'model';
-	/* Default values is taked from AddDefaultFaceModel */
+	/* Default values is taked from DlibCnn5Model */
 
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
 	const MINIMUM_SENSITIVITY = '0.4';
-	const DEFAULT_SENSITIVITY = '0.5';
+	const DEFAULT_SENSITIVITY = '0.4';
 	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min-confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
-	const DEFAULT_MINIMUM_CONFIDENCE = '0.9';
+	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
 	const MAXIMUM_MINIMUM_CONFIDENCE = '1.0';
 
 	/** Memory limit suggested for analysis */
@@ -185,7 +185,7 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, DlibCnn5Model::DEFAULT_FACE_MODEL_ID));
 	}
 
 	public function setCurrentFaceModel($model) {

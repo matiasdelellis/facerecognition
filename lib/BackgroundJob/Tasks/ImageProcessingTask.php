@@ -38,6 +38,8 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Helper\Requirements;
 
+use OCA\FaceRecognition\Model\DlibCnn5Model;
+
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -120,6 +122,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var SettingsService */
 	private $settingsService;
 
+	/** @var  DlibCnn5Model */
+	protected $model;
+
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
@@ -127,16 +132,19 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
+	 * @param DlibCnn5Model $dlibCnn5Model Resnet Model
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+	                            DlibCnn5Model   $dlibCnn5Model)
 	{
 		parent::__construct();
 
 		$this->imageMapper        = $imageMapper;
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
+		$this->model              = $dlibCnn5Model;
 		$this->maxImageAreaCached = null;
 	}
 
@@ -153,26 +161,21 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$requirements = new Requirements($context->modelService, $this->settingsService->getCurrentFaceModel());
-
-		$images = $context->propertyBag['images'];
-
-		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModel());
-		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModel());
-		$fr = new \FaceRecognition($requirements->getFaceRecognitionModel());
-
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
+		$this->model->open();
+
+		$images = $context->propertyBag['images'];
 		foreach($images as $image) {
 			yield;
 
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$imageProcessingContext = $this->findFaces($cfd, $image);
+				$imageProcessingContext = $this->findFaces($this->model, $image);
 
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
-					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
+					$this->populateDescriptors($this->model, $imageProcessingContext);
 				}
 
 				if ($imageProcessingContext === null) {
@@ -202,11 +205,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If image should be skipped, returns null.
 	 * If there is any error, throws exception
 	 *
-	 * @param \CnnFaceDetection $cfd Face detection model
+	 * @param DlibCnn5Model $model Resnet model
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(\CnnFaceDetection $cfd, Image $image) {
+	private function findFaces(DlibCnn5Model $model, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -227,7 +230,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Detect faces from model
-		$facesFound = $cfd->detect($imageProcessingContext->getTempPath());
+		$facesFound = $model->detectFaces($imageProcessingContext->getTempPath());
 
 		// Convert from dictionary of faces to our Face Db Entity
 		$faces = array();
@@ -318,11 +321,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
-	 * @param \FaceLandmarkDetection $fld Landmark detection model
-	 * @param \FaceRecognition $fr Face recognition model
+	 * @param DlibCnn5Model $model Resnet model
 	 * @param ImageProcessingContext Image processing context
 	 */
-	private function populateDescriptors(\FaceLandmarkDetection $fld, \FaceRecognition $fr, ImageProcessingContext $imageProcessingContext) {
+	private function populateDescriptors(DlibCnn5Model $model, ImageProcessingContext $imageProcessingContext) {
 		$faces = $imageProcessingContext->getFaces();
 
 		foreach($faces as &$face) {
@@ -336,12 +338,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$normalizedFace->normalizeSize(1.0 / $imageProcessingContext->getRatio());
 
 			// We are getting face landmarks from already prepared (temp) image (resized and with orienation fixed).
-			$landmarks = $fld->detect($imageProcessingContext->getTempPath(), array(
+			$landmarks = $model->detectLandmarks($imageProcessingContext->getTempPath(), array(
 				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
 				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
 			$face->landmarks = $landmarks['parts'];
 
-			$descriptor = $fr->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
+			$descriptor = $model->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
 			$face->descriptor = $descriptor;
 		}
 	}

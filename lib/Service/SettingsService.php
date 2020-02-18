@@ -185,7 +185,7 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, DlibCnn5Model::DEFAULT_FACE_MODEL_ID));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, DlibCnn5Model::FACE_MODEL_ID));
 	}
 
 	public function setCurrentFaceModel($model) {

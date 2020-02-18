@@ -58,7 +58,7 @@ class RequirementsTest extends TestCase {
 
 	public function testPdlibLoaded() {
 		$modelService = $this->createMock(ModelService::class);
-		$requirements = new Requirements($modelService, DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$requirements = new Requirements($modelService, DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertTrue($requirements->pdlibLoaded());
 	}
 }

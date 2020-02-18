@@ -32,17 +32,19 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
 
+use OCA\FaceRecognition\Model\IModel;
 
-class DlibCnn5Model {
+
+class DlibCnn5Model implements IModel {
 
 	/** Defines ID for default face model */
-	const DEFAULT_FACE_MODEL_ID = 1;
+	const FACE_MODEL_ID = 1;
 
 	/** Defines name for default face model */
-	const DEFAULT_FACE_MODEL_NAME = 'Default';
+	const FACE_MODEL_NAME = 'Default';
 
 	/** Defines description for default face model */
-	const DEFAULT_FACE_MODEL_DESC = 'Main model, using dlib defaults: mmod_human_face_detector.dat, shape_predictor_5_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
+	const FACE_MODEL_DESC = 'Main model, using dlib defaults: mmod_human_face_detector.dat, shape_predictor_5_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
 
 	/*
 	 * Model files.
@@ -96,15 +98,29 @@ class DlibCnn5Model {
 	public function __construct(IDBConnection   $connection,
 	                            FileService     $fileService,
 	                            ModelService    $modelService,
-	                            SettingsService $settingsService) {
+	                            SettingsService $settingsService)
+	{
 		$this->connection       = $connection;
 		$this->fileService      = $fileService;
 		$this->modelService     = $modelService;
 		$this->settingsService  = $settingsService;
 	}
 
+
+	public function getModelId(): int {
+		return self::FACE_MODEL_ID;
+	}
+
+	public function getModelName(): string {
+		return self::FACE_MODEL_NAME;
+	}
+
+	public function getModelDescription(): string {
+		return self::FACE_MODEL_DESC;
+	}
+
 	public function isInstalled(): bool {
-		$requirements = new Requirements($this->modelService, self::DEFAULT_FACE_MODEL_ID);
+		$requirements = new Requirements($this->modelService, self::FACE_MODEL_ID);
 		return $requirements->modelFilesPresent();
 	}
 
@@ -120,7 +136,7 @@ class DlibCnn5Model {
 		}
 
 		/* Still not installed but it is necessary to get the model folders */
-		$this->modelService->useModelVersion(self::DEFAULT_FACE_MODEL_ID);
+		$this->modelService->useModelVersion(self::FACE_MODEL_ID);
 
 		/* Download and install models */
 		$detectorModelBz2 = $this->fileService->downloaldFile(self::FACE_MODEL_BZ2_URLS[self::MODEL_DETECTOR]);
@@ -140,7 +156,7 @@ class DlibCnn5Model {
 		$query = $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
 			->from('facerecog_models')
 			->where($qb->expr()->eq('id', $qb->createParameter('id')))
-			->setParameter('id', self::DEFAULT_FACE_MODEL_ID);
+			->setParameter('id', self::FACE_MODEL_ID);
 		$resultStatement = $query->execute();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
@@ -149,7 +165,7 @@ class DlibCnn5Model {
 			$query = $this->connection->getQueryBuilder();
 			$query->insert('facerecog_models')
 			->values([
-				'id' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_ID),
+				'id' => $query->createNamedParameter(self::FACE_MODEL_ID),
 				'name' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_NAME),
 				'description' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_DESC)
 			])
@@ -159,13 +175,13 @@ class DlibCnn5Model {
 
 	public function setDefault() {
 		// Use default model, if it is not set already.
-		if ($this->settingsService->getCurrentFaceModel() !== self::DEFAULT_FACE_MODEL_ID) {
-			$this->settingsService->setCurrentFaceModel(self::DEFAULT_FACE_MODEL_ID);
+		if ($this->settingsService->getCurrentFaceModel() !== self::FACE_MODEL_ID) {
+			$this->settingsService->setCurrentFaceModel(self::FACE_MODEL_ID);
 		}
 	}
 
 	public function open() {
-		$this->modelService->useModelVersion(self::DEFAULT_FACE_MODEL_ID);
+		$this->modelService->useModelVersion(self::FACE_MODEL_ID);
 
 		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_PREDICTOR]));

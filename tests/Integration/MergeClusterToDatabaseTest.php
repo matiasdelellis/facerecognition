@@ -132,12 +132,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		$this->assertFaces([null => [$face->getId()]]);
 
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
-		$faces = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$faces = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 		$this->assertNull($faces[0]->getPerson());
-		$faces = $faceMapper->findFacesFromPerson($this->user->getUID(), $person->getId(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$faces = $faceMapper->findFacesFromPerson($this->user->getUID(), $person->getId(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals(0, count($faces));
 	}
 
@@ -584,7 +584,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(DlibCnn5Model::FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		return $image;
@@ -642,11 +642,11 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		// Check total faces in DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals($totalFaces, $faceCount);
 
 		// Check those faces have given persons
-		$facesDb = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$facesDb = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals($totalFaces, count($facesDb));
 		foreach($facesDb as $faceDb) {
 			foreach ($personToFaces as $person=>$faces) {
@@ -666,7 +666,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 				continue;
 			}
 
-			$facesFromPerson = $faceMapper->findFacesFromPerson($this->user->getUID(), $person, DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+			$facesFromPerson = $faceMapper->findFacesFromPerson($this->user->getUID(), $person, DlibCnn5Model::FACE_MODEL_ID);
 			$this->assertEquals(count($faces), count($facesFromPerson));
 
 			usort($facesFromPerson, function($f1, $f2) {

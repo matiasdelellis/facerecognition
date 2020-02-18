@@ -99,7 +99,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 
 		// Check exact values for face boundaries (might need to update when we bump dlib/pdlib versions)
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$face = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID)[0];
+		$face = $faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID)[0];
 		$face = $faceMapper->find($face->getId());
 		$this->assertEquals(60, $face->getTop());
 		$this->assertEquals(136, $face->getBottom());
@@ -126,7 +126,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user)));
 
 		// Check image fields after processing
-		$images = $imageMapper->findImages($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID);
+		$images = $imageMapper->findImages($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID);
 		$this->assertEquals(1, count($images));
 		$image = $imageMapper->find($this->user->getUID(), $images[0]->getId());
 		$this->assertTrue(is_null($image->getError()) xor $expectingError);
@@ -135,7 +135,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->assertNotNull($image->getLastProcessedTime());
 
 		// Check number of found faces
-		$this->assertEquals($expectedFacesCount, count($faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals($expectedFacesCount, count($faceMapper->getFaces($this->user->getUID(), DlibCnn5Model::FACE_MODEL_ID)));
 
 		return $image;
 	}
@@ -205,7 +205,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 *
 	 */
 	private function doFakeInstallModels() {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', DlibCnn5Model::DEFAULT_FACE_MODEL_ID));
+		$model = intval($this->config->getAppValue('facerecognition', 'model', DlibCnn5Model::FACE_MODEL_ID));
 
 		$appManager = $this->container->query('OCP\App\IAppManager');
 		$cacheModelsPath = $appManager->getAppPath('facerecognition') . '/vendor/models/1/';

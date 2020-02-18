@@ -60,14 +60,18 @@ class SetupCommand extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$this->logger = $output;
 
+		$this->logger->writeln('We will install the model 1');
+
 		if ($this->model->isInstalled()) {
 			$this->logger->writeln('Model 1 files are already installed');
 			return 0;
 		}
 
 		$this->model->install();
-
 		$this->logger->writeln('Install models successfully done');
+
+		$this->model->setDefault();
+		$this->logger->writeln('The new model was configured as default');
 
 		return 0;
 	}

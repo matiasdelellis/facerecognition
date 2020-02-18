@@ -1,8 +1,9 @@
 <?php
 /**
  * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
- * @author Matias De lellis <mati86dl@gmail.com>
+ * @author Branko Kokanovic <branko@kokanovic.org>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -131,6 +132,9 @@ class DlibCnn5Model {
 		$resnetModelBz2 = $this->fileService->downloaldFile(self::FACE_MODEL_BZ2_URLS[self::MODEL_RESNET]);
 		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_RESNET]));
 
+		/* Clean temporary files */
+		$this->fileService->clean();
+
 		// Insert on database and enable it
 		$qb = $this->connection->getQueryBuilder();
 		$query = $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
@@ -151,8 +155,10 @@ class DlibCnn5Model {
 			])
 			->execute();
 		}
+	}
 
-		// Use default model, if it is not set already
+	public function setDefault() {
+		// Use default model, if it is not set already.
 		if ($this->settingsService->getCurrentFaceModel() !== self::DEFAULT_FACE_MODEL_ID) {
 			$this->settingsService->setCurrentFaceModel(self::DEFAULT_FACE_MODEL_ID);
 		}

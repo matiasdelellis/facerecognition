@@ -166,8 +166,8 @@ class DlibCnn5Model implements IModel {
 			$query->insert('facerecog_models')
 			->values([
 				'id' => $query->createNamedParameter(self::FACE_MODEL_ID),
-				'name' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_NAME),
-				'description' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_DESC)
+				'name' => $query->createNamedParameter(self::FACE_MODEL_NAME),
+				'description' => $query->createNamedParameter(self::FACE_MODEL_DESC)
 			])
 			->execute();
 		}

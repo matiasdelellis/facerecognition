@@ -66,7 +66,7 @@ class ResizeTest extends TestCase {
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$fileService = $this->createMock(FileService::class);
 		$settingsService = $this->createMock(SettingsService::class);
-		$dlibCnn5Model = $this->container->query(DlibCnn5Model:class);
+		$dlibCnn5Model = $this->container->query(DlibCnn5Model::class);
 		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $dlibCnn5Model);
 
 		$imageProcessingTask->setContext($this->context);

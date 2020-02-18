@@ -72,7 +72,7 @@ interface IModel {
 	 * Detect faces on image.
 	 *
 	 * @param string $imagePath Image path to analyze
-	 * @return indexed array, where values are assoc arrays with "top", "bottom", "left" and "right" values
+	 * @return array where values are assoc arrays with "top", "bottom", "left" and "right" values
 	 */
 	public function detectFaces(string $imagePath): array;
 
@@ -80,8 +80,8 @@ interface IModel {
 	 * Detect Landmarks of face within the rectangle of image
 	 *
 	 * @param string $imagePath Image path to analyze
-	 * @param assoc arrays with "top", "bottom", "left" and "right" values
-	 * @return array landmarks of face in image that will depend specifically on the model
+	 * @param array $rect with "top", "bottom", "left" and "right" values
+	 * @return array where values are landmarks of face in image that will depend specifically on the model
 	 */
 	public function detectLandmarks(string $imagePath, array $rect): array;
 
@@ -89,8 +89,8 @@ interface IModel {
 	 * Get a descriptor of the face found
 	 *
 	 * @param string $imagePath Image path to analyze
-	 * @param array landmarks of face in image that will depend specifically on the model
-	 * @return array of a descriptor that will depend specifically on the model.
+	 * @param array $landmarks of face in image that will depend specifically on the model
+	 * @return array where values are an descriptor that will depend specifically on the model
 	 */
 	public function computeDescriptor(string $imagePath, array $landmarks): array;
 

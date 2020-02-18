@@ -264,8 +264,16 @@ class FileService {
 		$tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
 		$tempFile = $tempFolder . basename($fileUrl);
 
-		$fp = fopen($tempFile, 'w+');
+		$fp = fopen(, 'w+');
+		if ($fp === false) {
+			throw new \Exception('Could not open the file to write: ' . $tempFile);
+		}
+
 		$ch = curl_init($fileUrl);
+		if ($ch === false) {
+			throw new \Exception('Curl error: ' . curl_error($ch));
+		}
+
 		curl_setopt_array($ch, [
 			CURLOPT_FILE => $fp,
 			CURLOPT_FOLLOWLOCATION => true,
@@ -274,8 +282,8 @@ class FileService {
 			CURLOPT_USERAGENT => 'Nextcloud Facerecognition Service',
 		]);
 
-		if(curl_exec($ch) === false) {
-		    throw new \Exception('Curl error: ' . curl_error($ch));
+		if (curl_exec($ch) === false) {
+			throw new \Exception('Curl error: ' . curl_error($ch));
 		}
 
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -331,8 +339,11 @@ class FileService {
 		$in_file = bzopen ($in, "r");
 		$out_file = fopen ($out, "w");
 
+		if ($out_file === false)
+			throw new \Exception('Could not open the file to write: ' . $out_file);
+
 		while ($buffer = bzread ($in_file, 4096)) {
-			if($buffer === FALSE)
+			if($buffer === false)
 				throw new \Exception('Read problem: ' . bzerrstr($in_file));
 			if(bzerrno($in_file) !== 0)
 				throw new \Exception('Compression problem: '. bzerrstr($in_file));

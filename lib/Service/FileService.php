@@ -329,18 +329,19 @@ class FileService {
 	 *
 	 * @throws \Exception
 	 */
-	public function bunzip2 ($in, $out) {
-		if (!file_exists ($in) || !is_readable ($in))
-			throw new \Exception('The file '.$in.' not exists or is not readable');
+	public function bunzip2(string $inputFile, string $outputFile) {
+		if (!file_exists ($inputFile) || !is_readable ($inputFile))
+			throw new \Exception('The file ' . $inputFile . ' not exists or is not readable');
 
-		if ((!file_exists ($out) && !is_writeable (dirname ($out)) || (file_exists($out) && !is_writable($out)) ))
-			throw new \Exception('The file '.$out.' exists or is not writable');
+		if ((!file_exists($outputFile) && !is_writeable(dirname($outputFile))) ||
+		    (file_exists($outputFile) && !is_writable($outputFile)))
+			throw new \Exception('The file ' . $outputFile . ' exists or is not writable');
 
-		$in_file = bzopen ($in, "r");
-		$out_file = fopen ($out, "w");
+		$in_file = bzopen ($inputFile, "r");
+		$out_file = fopen ($outputFile, "w");
 
 		if ($out_file === false)
-			throw new \Exception('Could not open the file to write: ' . $out_file);
+			throw new \Exception('Could not open the file to write: ' . $outputFile);
 
 		while ($buffer = bzread ($in_file, 4096)) {
 			if($buffer === false)

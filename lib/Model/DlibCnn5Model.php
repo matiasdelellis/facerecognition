@@ -126,10 +126,10 @@ class DlibCnn5Model {
 		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_DETECTOR]));
 
 		$predictorModelBz2 = $this->fileService->downloaldFile(self::FACE_MODEL_BZ2_URLS[self::MODEL_PREDICTOR]);
-		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_PREDICTOR]));
+		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_PREDICTOR]));
 
 		$resnetModelBz2 = $this->fileService->downloaldFile(self::FACE_MODEL_BZ2_URLS[self::MODEL_RESNET]);
-		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_RESNET]));
+		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getModelPath(self::FACE_MODEL_FILES[self::MODEL_RESNET]));
 
 		// Insert on database and enable it
 		$qb = $this->connection->getQueryBuilder();
@@ -150,9 +150,6 @@ class DlibCnn5Model {
 				'description' => $query->createNamedParameter(self::DEFAULT_FACE_MODEL_DESC)
 			])
 			->execute();
-			$output->info("Inserted missing default face model.");
-		} else {
-			$output->info("Default face model already existed, no need to add it again.");
 		}
 
 		// Use default model, if it is not set already

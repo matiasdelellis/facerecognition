@@ -27,31 +27,26 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use OCA\FaceRecognition\Model\DlibCnn5Model;
-use OCA\FaceRecognition\Model\DlibCnn68Model;
+use OCA\FaceRecognition\Model\DlibCnnModel;
+
+use OCA\FaceRecognition\Model\ModelManager;
 
 class SetupCommand extends Command {
 
-	/** @var  DlibCnn5Model */
-	protected $dlibCnn5Model;
-
-	/** @var  DlibCnn68Model */
-	protected $dlibCnn68Model;
+	/** @var ModelManager */
+	protected $modelManager;
 
 	/** @var OutputInterface */
 	protected $logger;
 
 	/**
-	 * @param DlibCnn5Model $model
-	 * @param DlibCnn68Model $model
+	 * @param ModelManager
 	 */
-	public function __construct(DlibCnn5Model  $dlibCnn5Model,
-	                            DlibCnn68Model $dlibCnn68Model)
+	public function __construct(ModelManager $modelManager)
 	{
 		parent::__construct();
 
-		$this->dlibCnn5Model  = $dlibCnn5Model;
-		$this->dlibCnn68Model = $dlibCnn68Model;
+		$this->modelManager = $modelManager;
 	}
 
 	protected function configure() {
@@ -80,17 +75,7 @@ class SetupCommand extends Command {
 			$modelId = 1;
 		}
 
-		switch ($modelId) {
-			case 1:
-				$model = $this->dlibCnn5Model;
-				break;
-			case 2:
-				$model = $this->dlibCnn68Model;
-				break;
-			default:
-				$model = null;
-				break;
-		}
+		$model = $this->modelManager->getModel($modelId);
 
 		if (is_null($model)) {
 			$this->logger->writeln('Invalid model Id');

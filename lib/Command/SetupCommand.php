@@ -28,28 +28,43 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\DlibCnn68Model;
 
 class SetupCommand extends Command {
 
 	/** @var  DlibCnn5Model */
-	protected $model;
+	protected $dlibCnn5Model;
+
+	/** @var  DlibCnn68Model */
+	protected $dlibCnn68Model;
 
 	/** @var OutputInterface */
 	protected $logger;
 
 	/**
 	 * @param DlibCnn5Model $model
+	 * @param DlibCnn68Model $model
 	 */
-	public function __construct(DlibCnn5Model $model) {
+	public function __construct(DlibCnn5Model  $dlibCnn5Model,
+	                            DlibCnn68Model $dlibCnn68Model)
+	{
 		parent::__construct();
 
-		$this->model = $model;
+		$this->dlibCnn5Model  = $dlibCnn5Model;
+		$this->dlibCnn68Model = $dlibCnn68Model;
 	}
 
 	protected function configure() {
 		$this
 			->setName('face:setup')
-			->setDescription('Download and Setup the model 1 used for the analysis');
+			->setDescription('Download and Setup the model 1 used for the analysis')
+			->addOption(
+				'model',
+				'm',
+				InputOption::VALUE_REQUIRED,
+				'The identifier number of the model to install',
+				null
+			);
 	}
 
 	/**
@@ -60,17 +75,41 @@ class SetupCommand extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$this->logger = $output;
 
-		$this->logger->writeln('We will install the model 1');
+		$modelId = $input->getOption('model');
+		if (is_null($modelId)) {
+			$modelId = 1;
+		}
 
-		if ($this->model->isInstalled()) {
-			$this->logger->writeln('Model 1 files are already installed');
+		switch ($modelId) {
+			case 1:
+				$model = $this->dlibCnn5Model;
+				break;
+			case 2:
+				$model = $this->dlibCnn68Model;
+				break;
+			default:
+				$model = null;
+				break;
+		}
+
+		if (is_null($model)) {
+			$this->logger->writeln('Invalid model Id');
+			return 1;
+		}
+
+		$this->logger->writeln('We will install the model '. $model->getId());
+
+		if ($model->isInstalled()) {
+			$this->logger->writeln('Model ' . $model->getId() . ' files are already installed');
+			$model->setDefault();
+			$this->logger->writeln('This model was configured as default');
 			return 0;
 		}
 
-		$this->model->install();
-		$this->logger->writeln('Install models successfully done');
+		$model->install();
+		$this->logger->writeln('Install model ' . $model->getId() .  ' successfully done');
 
-		$this->model->setDefault();
+		$model->setDefault();
 		$this->logger->writeln('The new model was configured as default');
 
 		return 0;

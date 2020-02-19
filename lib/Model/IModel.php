@@ -31,17 +31,17 @@ interface IModel {
 	/**
 	 * @return int model id
 	 */
-	public function getModelId(): int;
+	public function getId(): int;
 
 	/**
 	 * @return string model name
 	 */
-	public function getModelName(): string;
+	public function getName(): string;
 
 	/**
 	 * @return string model description
 	 */
-	public function getModelDescription(): string;
+	public function getDescription(): string;
 
 	/**
 	 * @return bool if model is installed

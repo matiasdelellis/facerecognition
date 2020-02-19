@@ -36,7 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -66,8 +66,8 @@ class ResizeTest extends TestCase {
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$fileService = $this->createMock(FileService::class);
 		$settingsService = $this->createMock(SettingsService::class);
-		$dlibCnn5Model = $this->createMock(DlibCnn5Model::class);
-		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $dlibCnn5Model);
+		$modelManager = $this->createMock(ModelManager::class);
+		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $modelManager);
 
 		$imageProcessingTask->setContext($this->context);
 

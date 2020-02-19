@@ -37,6 +37,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use Test\TestCase;
 
@@ -152,8 +153,8 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		$dlibCnn5Model =  $this->container->query('OCA\FaceRecognition\Model\DlibCnn5Model');
-		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $dlibCnn5Model);
+		$modelManager =  $this->container->query('OCA\FaceRecognition\Model\ModelManager');
+		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $modelManager);
 		$this->assertNotEquals("", $imageProcessingTask->description());
 
 		// Set user for which to do processing, if any

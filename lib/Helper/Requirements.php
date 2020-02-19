@@ -38,9 +38,9 @@ class Requirements
 		$landmarkDetection = $this->getLandmarksDetectionModel();
 		$faceRecognition = $this->getFaceRecognitionModel();
 
-		if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
+/*		if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
 			return false;
-		} else {
+		} else*/ {
 			return true;
 		}
 	}

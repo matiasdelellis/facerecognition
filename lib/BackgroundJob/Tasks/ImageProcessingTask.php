@@ -38,7 +38,8 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Helper\Requirements;
 
-use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\DlibCnnModel;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -117,13 +118,16 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	protected $imageMapper;
 
 	/** @var FileService */
-	private $fileService;
+	protected $fileService;
 
 	/** @var SettingsService */
-	private $settingsService;
+	protected $settingsService;
 
-	/** @var  DlibCnn5Model */
-	protected $model;
+	/** @var ModelManager */
+	protected $modelManager;
+
+	/** @var  DlibCnnModel */
+	private $model;
 
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
@@ -132,19 +136,21 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
-	 * @param DlibCnn5Model $dlibCnn5Model Resnet Model
+	 * @param ModelManager $modelManager Model manager
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
-	                            DlibCnn5Model   $dlibCnn5Model)
+	                            ModelManager    $modelManager)
 	{
 		parent::__construct();
 
 		$this->imageMapper        = $imageMapper;
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
-		$this->model              = $dlibCnn5Model;
+		$this->modelManager       = $modelManager;
+
+		$this->model              = null;
 		$this->maxImageAreaCached = null;
 	}
 
@@ -163,6 +169,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
+		// Get current model.
+		$modelVersion = $this->settingsService->getCurrentFaceModel();
+		$this->model = $this->modelManager->getModel($modelVersion);
+
+		// Open model.
 		$this->model->open();
 
 		$images = $context->propertyBag['images'];
@@ -205,11 +216,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If image should be skipped, returns null.
 	 * If there is any error, throws exception
 	 *
-	 * @param DlibCnn5Model $model Resnet model
+	 * @param DlibCnnModel $model Resnet model
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(DlibCnn5Model $model, Image $image) {
+	private function findFaces(DlibCnnModel $model, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -321,10 +332,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
-	 * @param DlibCnn5Model $model Resnet model
+	 * @param DlibCnnModel $model Resnet model
 	 * @param ImageProcessingContext Image processing context
 	 */
-	private function populateDescriptors(DlibCnn5Model $model, ImageProcessingContext $imageProcessingContext) {
+	private function populateDescriptors(DlibCnnModel $model, ImageProcessingContext $imageProcessingContext) {
 		$faces = $imageProcessingContext->getFaces();
 
 		foreach($faces as &$face) {

@@ -39,9 +39,16 @@ class DlibCnnModel implements IModel {
 	/*
 	 * Model files.
 	 */
-	const MODEL_DETECTOR = 0;
-	const MODEL_PREDICTOR = 1;
-	const MODEL_RESNET = 2;
+	const FACE_MODEL_ID = -1;
+	const FACE_MODEL_NAME = "";
+	const FACE_MODEL_DESC = "";
+
+	const FACE_MODEL_BZ2_URLS = array();
+	const FACE_MODEL_FILES = array();
+
+	const I_MODEL_DETECTOR = 0;
+	const I_MODEL_PREDICTOR = 1;
+	const I_MODEL_RESNET = 2;
 
 	/** @var \CnnFaceDetection */
 	private $cfd;
@@ -66,7 +73,7 @@ class DlibCnnModel implements IModel {
 
 
 	/**
-	 * DlibCnn5Model __construct.
+	 * DlibCnnModel __construct.
 	 *
 	 * @param IDBConnection $connection
 	 * @param FileService $fileService
@@ -116,14 +123,14 @@ class DlibCnnModel implements IModel {
 		$this->modelService->useModelVersion($this->getId());
 
 		/* Download and install models */
-		$detectorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::MODEL_DETECTOR]);
-		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_DETECTOR]));
+		$detectorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_DETECTOR]);
+		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 
-		$predictorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::MODEL_PREDICTOR]);
-		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_PREDICTOR]));
+		$predictorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
+		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 
-		$resnetModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::MODEL_RESNET]);
-		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_RESNET]));
+		$resnetModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
+		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 
 		/* Clean temporary files */
 		$this->fileService->clean();
@@ -160,9 +167,9 @@ class DlibCnnModel implements IModel {
 	public function open() {
 		$this->modelService->useModelVersion($this->getId());
 
-		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_DETECTOR]));
-		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_PREDICTOR]));
-		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::MODEL_RESNET]));
+		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
+		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
 	public function detectFaces(string $imagePath): array {

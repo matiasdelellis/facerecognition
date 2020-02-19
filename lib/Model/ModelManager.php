@@ -53,9 +53,10 @@ class ModelManager {
 	}
 
 	/**
-	 * @return DlibCnnModel
+	 * @param int $version model version
+	 * @return DlibCnnModel|null
 	 */
-	public function getModel(int $version): DlibCnnModel {
+	public function getModel(int $version): ?DlibCnnModel {
 		switch ($version) {
 			case 1:
 				$model = $this->dlibCnn5Model;

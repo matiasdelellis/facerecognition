@@ -52,11 +52,11 @@ class SetupCommand extends Command {
 	protected function configure() {
 		$this
 			->setName('face:setup')
-			->setDescription('Download and Setup the model 1 used for the analysis')
+			->setDescription('Download and Setup the model used for the analysis')
 			->addOption(
 				'model',
 				'm',
-				InputOption::VALUE_REQUIRED,
+				InputOption::VALUE_OPTIONAL,
 				'The identifier number of the model to install',
 				null
 			);
@@ -76,23 +76,26 @@ class SetupCommand extends Command {
 		}
 
 		$model = $this->modelManager->getModel($modelId);
-
 		if (is_null($model)) {
 			$this->logger->writeln('Invalid model Id');
 			return 1;
 		}
 
-		$this->logger->writeln('We will install the model '. $model->getId());
+		$modelDescription = $model->getId() . ' (' . $model->getName(). ')';
+
+		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 
 		if ($model->isInstalled()) {
-			$this->logger->writeln('Model ' . $model->getId() . ' files are already installed');
+			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
+
 			$model->setDefault();
 			$this->logger->writeln('This model was configured as default');
+
 			return 0;
 		}
 
 		$model->install();
-		$this->logger->writeln('Install model ' . $model->getId() .  ' successfully done');
+		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
 
 		$model->setDefault();
 		$this->logger->writeln('The new model was configured as default');

@@ -69,6 +69,11 @@ interface IModel {
 	public function open();
 
 	/**
+	 * Get a linear relationship between the area of an image and the memory consumed during the analysis
+	 */
+	public function getMemoryAreaRelation(): int;
+
+	/**
 	 * Detect faces on image.
 	 *
 	 * @param string $imagePath Image path to analyze

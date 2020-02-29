@@ -43,6 +43,9 @@ class DlibCnnModel implements IModel {
 	const FACE_MODEL_NAME = "";
 	const FACE_MODEL_DESC = "";
 
+	/** Relationship between image size and memory consumed */
+	const MEMORY_AREA_RELATIONSHIP = -1;
+
 	const FACE_MODEL_BZ2_URLS = array();
 	const FACE_MODEL_FILES = array();
 
@@ -168,6 +171,10 @@ class DlibCnnModel implements IModel {
 		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+	}
+
+	public function getMemoryAreaRelation(): int {
+		return static::MEMORY_AREA_RELATIONSHIP;
 	}
 
 	public function detectFaces(string $imagePath): array {

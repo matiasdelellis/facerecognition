@@ -37,6 +37,9 @@ class DlibCnn68Model extends DlibCnnModel implements IModel {
 	/** Defines description for default face model */
 	const FACE_MODEL_DESC = 'Alternative default model, using dlib: mmod_human_face_detector.dat, shape_predictor_68_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
 
+	/** Relationship between image size and memory consumed */
+	const MEMORY_AREA_RELATIONSHIP = 4 * 1024;
+
 	/*
 	 * Model files.
 	 */

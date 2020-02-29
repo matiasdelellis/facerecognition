@@ -43,6 +43,9 @@ class DlibHogModel implements IModel {
 	const FACE_MODEL_NAME = "DlibHog";
 	const FACE_MODEL_DESC = "Dlib HOG Model which needs lower requirements";
 
+	/** Relationship between image size and memory consumed */
+	const MEMORY_AREA_RELATIONSHIP = 1 * 1024;
+
 	const FACE_MODEL_BZ2_URLS = [
 		'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
 		'https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2'
@@ -168,6 +171,10 @@ class DlibHogModel implements IModel {
 
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+	}
+
+	public function getMemoryAreaRelation(): int {
+		return self::MEMORY_AREA_RELATIONSHIP;
 	}
 
 	public function detectFaces(string $imagePath): array {

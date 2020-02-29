@@ -279,7 +279,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			return new ImageProcessingContext($imagePath, "", -1, true);
 		}
 
-		$maxImageArea = $this->getMaxImageArea();
+		$maxImageArea = $this->getMaxImageArea($this->model);
 		$ratio = $this->resizeImage($image, $maxImageArea);
 
 		$tempfile = $this->fileService->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
@@ -362,23 +362,25 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Obtains max image area lazily (from cache, or calculates it and puts it to cache)
 	 *
+	 * @param IModel $model Resnet model
 	 * @return int Max image area (in pixels^2)
 	 */
-	private function getMaxImageArea(): int {
+	private function getMaxImageArea(IModel $model): int {
 		if (!is_null($this->maxImageAreaCached)) {
 			return $this->maxImageAreaCached;
 		}
 
-		$this->maxImageAreaCached = $this->calculateMaxImageArea();
+		$this->maxImageAreaCached = $this->calculateMaxImageArea($model);
 		return $this->maxImageAreaCached;
 	}
 
 	/**
 	 * Calculates max image area. This is separate function, as there are several levels of user overrides.
 	 *
+	 * @param IModel $model Resnet model
 	 * @return int Max image area (in pixels^2)
 	 */
-	private function calculateMaxImageArea(): int {
+	private function calculateMaxImageArea(IModel $model): int {
 		// First check if we are provided value from command line
 		//
 		if (
@@ -402,7 +404,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
 		// This reasoning and calculations are all based on analysis given here:
 		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
-		$maxImageArea = intval(($allowedMemory) / SettingsService::MEMORY_AREA_RELATIONSHIP); // TODO: Maybe another helper.
+		$maxImageArea = intval(($allowedMemory) / $model->getMemoryAreaRelation()); // TODO: Maybe another helper.
 
 		return $maxImageArea;
 	}

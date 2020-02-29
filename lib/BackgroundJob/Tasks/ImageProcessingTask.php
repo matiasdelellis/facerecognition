@@ -38,7 +38,7 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Helper\Requirements;
 
-use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
+use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FileService;
@@ -126,7 +126,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ModelManager */
 	protected $modelManager;
 
-	/** @var  DlibCnnModel */
+	/** @var IModel */
 	private $model;
 
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
@@ -216,11 +216,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If image should be skipped, returns null.
 	 * If there is any error, throws exception
 	 *
-	 * @param DlibCnnModel $model Resnet model
+	 * @param IModel $model Resnet model
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(DlibCnnModel $model, Image $image) {
+	private function findFaces(IModel $model, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -332,10 +332,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
-	 * @param DlibCnnModel $model Resnet model
+	 * @param IModel $model Resnet model
 	 * @param ImageProcessingContext Image processing context
 	 */
-	private function populateDescriptors(DlibCnnModel $model, ImageProcessingContext $imageProcessingContext) {
+	private function populateDescriptors(IModel $model, ImageProcessingContext $imageProcessingContext) {
 		$faces = $imageProcessingContext->getFaces();
 
 		foreach($faces as &$face) {

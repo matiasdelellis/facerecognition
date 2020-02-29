@@ -72,7 +72,7 @@ interface IModel {
 	 * Detect faces on image.
 	 *
 	 * @param string $imagePath Image path to analyze
-	 * @return array where values are assoc arrays with "top", "bottom", "left" and "right" values
+	 * @return array where values are assoc arrays with "top", "bottom", "left", "right" and "detection_confidence" values
 	 */
 	public function detectFaces(string $imagePath): array;
 

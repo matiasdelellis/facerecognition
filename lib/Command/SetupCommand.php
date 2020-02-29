@@ -27,7 +27,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
+use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\ModelManager;
 
@@ -83,8 +83,12 @@ class SetupCommand extends Command {
 
 		$modelDescription = $model->getId() . ' (' . $model->getName(). ')';
 
-		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
+		if (!$model->meetDependencies()) {
+			$this->logger->writeln('You do not meet the dependencies to install the model ' . $modelDescription);
+			return 1;
+		}
 
+		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 		if ($model->isInstalled()) {
 			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
 

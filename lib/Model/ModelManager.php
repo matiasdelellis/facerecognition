@@ -28,10 +28,12 @@ use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 
-use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
+use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn68Model;
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
+
+use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
 class ModelManager {
 
@@ -44,28 +46,37 @@ class ModelManager {
 	/** @var DlibCnn68Model */
 	private $dlibCnn68Model;
 
+	/** @var DlibHogModel */
+	private $dlibHogModel;
+
 	/**
-	 * @param DlibCnn5Model $model
-	 * @param DlibCnn68Model $model
+	 * @param DlibCnn5Model $dlibCnn5Model
+	 * @param DlibCnn68Model $dlibCnn68Model
+	 * @param DlibHogModel $dlibHogModel
 	 */
 	public function __construct(DlibCnn5Model  $dlibCnn5Model,
-	                            DlibCnn68Model $dlibCnn68Model)
+	                            DlibCnn68Model $dlibCnn68Model,
+	                            DlibHogModel   $dlibHogModel)
 	{
 		$this->dlibCnn5Model  = $dlibCnn5Model;
 		$this->dlibCnn68Model = $dlibCnn68Model;
+		$this->dlibHogModel   = $dlibHogModel;
 	}
 
 	/**
 	 * @param int $version model version
 	 * @return DlibCnnModel|null
 	 */
-	public function getModel(int $version): ?DlibCnnModel {
+	public function getModel(int $version): ?IModel {
 		switch ($version) {
 			case 1:
 				$model = $this->dlibCnn5Model;
 				break;
 			case 2:
 				$model = $this->dlibCnn68Model;
+				break;
+			case 3:
+				$model = $this->dlibHogModel;
 				break;
 			default:
 				$model = null;

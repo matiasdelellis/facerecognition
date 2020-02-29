@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FaceRecognition\Model\DlibCnnModel;
+namespace OCA\FaceRecognition\Model\DlibHogModel;
 
 use OCP\IDBConnection;
 
@@ -34,24 +34,27 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Model\IModel;
 
-class DlibCnnModel implements IModel {
+class DlibHogModel implements IModel {
 
 	/*
 	 * Model files.
 	 */
-	const FACE_MODEL_ID = -1;
-	const FACE_MODEL_NAME = "";
-	const FACE_MODEL_DESC = "";
+	const FACE_MODEL_ID = 3;
+	const FACE_MODEL_NAME = "DlibHog";
+	const FACE_MODEL_DESC = "Dlib HOG Model which needs lower requirements";
 
-	const FACE_MODEL_BZ2_URLS = array();
-	const FACE_MODEL_FILES = array();
+	const FACE_MODEL_BZ2_URLS = [
+		'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
+		'https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2'
+	];
 
-	const I_MODEL_DETECTOR = 0;
-	const I_MODEL_PREDICTOR = 1;
-	const I_MODEL_RESNET = 2;
+	const FACE_MODEL_FILES = [
+		'shape_predictor_5_face_landmarks.dat',
+		'dlib_face_recognition_resnet_model_v1.dat'
+	];
 
-	/** @var \CnnFaceDetection */
-	private $cfd;
+	const I_MODEL_PREDICTOR = 0;
+	const I_MODEL_RESNET = 1;
 
 	/** @var \FaceLandmarkDetection */
 	private $fld;
@@ -109,7 +112,8 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function meetDependencies(): bool {
-		return extension_loaded('pdlib');
+		return extension_loaded('pdlib') &&
+		       version_compare(phpversion('pdlib'), '1.0.1', '>=');
 	}
 
 	public function install() {
@@ -121,9 +125,6 @@ class DlibCnnModel implements IModel {
 		$this->modelService->useModelVersion($this->getId());
 
 		/* Download and install models */
-		$detectorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_DETECTOR]);
-		$this->fileService->bunzip2($detectorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
-
 		$predictorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
 		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 
@@ -165,13 +166,14 @@ class DlibCnnModel implements IModel {
 	public function open() {
 		$this->modelService->useModelVersion($this->getId());
 
-		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
 	public function detectFaces(string $imagePath): array {
-		return $this->cfd->detect($imagePath);
+		$faces_detected = dlib_face_detection($imagePath);
+		// To improve clustering a confidence value is needed, which this model does not provide
+		return array_map (function (array $face) { $face['detection_confidence'] = 1.0; return $face; }, $faces_detected);
 	}
 
 	public function detectLandmarks(string $imagePath, array $rect): array {

@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FaceRecognition\Model;
+namespace OCA\FaceRecognition\Model\DlibCnnModel;
 
 use OCP\IDBConnection;
 

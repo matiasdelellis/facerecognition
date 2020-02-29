@@ -28,12 +28,15 @@ use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 
-use OCA\FaceRecognition\Model\DlibCnnModel;
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
 
-use OCA\FaceRecognition\Model\DlibCnn68Model;
-use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn68Model;
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
 
 class ModelManager {
+
+	/** Defines ID for default face model */
+	const DEFAULT_FACE_MODEL_ID = 1;
 
 	/** @var DlibCnn5Model */
 	private $dlibCnn5Model;

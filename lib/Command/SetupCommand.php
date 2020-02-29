@@ -27,7 +27,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use OCA\FaceRecognition\Model\DlibCnnModel;
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
 
 use OCA\FaceRecognition\Model\ModelManager;
 

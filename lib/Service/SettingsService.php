@@ -25,7 +25,8 @@ declare(strict_types=1);
 namespace OCA\FaceRecognition\Service;
 
 use OCA\FaceRecognition\AppInfo\Application;
-use OCA\FaceRecognition\Model\DlibCnn5Model;
+
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCP\IConfig;
 
@@ -43,7 +44,7 @@ class SettingsService {
 
 	/** Current Model used to analyze */
 	const CURRENT_MODEL_KEY = 'model';
-	/* Default values is taked from DlibCnn5Model */
+	/* Default values is taked from ModelManager */
 
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
@@ -185,7 +186,7 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, DlibCnn5Model::FACE_MODEL_ID));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, ModelManager::DEFAULT_FACE_MODEL_ID));
 	}
 
 	public function setCurrentFaceModel($model) {

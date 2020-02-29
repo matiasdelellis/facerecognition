@@ -38,7 +38,7 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Helper\Requirements;
 
-use OCA\FaceRecognition\Model\DlibCnnModel;
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FileService;

@@ -53,7 +53,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 
 		// Install models needed to test
 		$model = $this->container->query('OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model');
-		$this->install();
+		$model->install();
 
 	}
 

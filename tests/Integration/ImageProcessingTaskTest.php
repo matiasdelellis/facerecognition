@@ -211,8 +211,6 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$cacheModelsPath = $appManager->getAppPath('facerecognition') . '/vendor/models/1/';
 
 		$modelService = $this->container->query('OCA\FaceRecognition\Service\ModelService');
-		$modelService->useModelVersion($model);
-
 		$modelsPath = $modelService->getFileModelPath($model, '');
 
 		// Simulate Install models

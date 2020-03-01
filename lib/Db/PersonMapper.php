@@ -85,23 +85,36 @@ class PersonMapper extends QBMapper {
 	 * Returns count of persons (clusters) found for a given user.
 	 *
 	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
 	 * @param bool $onlyInvalid True if client wants count of invalid persons only,
 	 *  false if client want count of all persons
 	 * @return int Count of persons
 	 */
-	public function countPersons(string $userId, bool $onlyInvalid=false): int {
+	public function countPersons(string $userId, int $modelId, bool $onlyInvalid=false): int {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
 		$qb = $this->db->getQueryBuilder();
-		$qb = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('user', $qb->createParameter('user')));
+		$qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')');
+
 		if ($onlyInvalid) {
 			$qb = $qb
 				->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
 				->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL);
 		}
-		$query = $qb->setParameter('user', $userId);
-		$resultStatement = $query->execute();
+
+		$qb = $qb
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
+
+		$resultStatement = $qb->execute();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 

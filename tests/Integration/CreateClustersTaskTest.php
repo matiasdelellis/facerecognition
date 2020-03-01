@@ -60,7 +60,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 
 		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $this->user);
 
-		$personCount = $personMapper->countPersons($this->user->getUID());
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));

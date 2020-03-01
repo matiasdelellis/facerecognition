@@ -48,12 +48,30 @@ class PersonMapper extends QBMapper {
 		return $person;
 	}
 
-	public function findByName(string $userId, string $personName): array {
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @param string $personName name of the person to find
+	 * @return Person[]
+	 */
+	public function findByName(string $userId, int $modelId, string $personName): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')))
+			->andwhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')));
+
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name')
+		$qb->select('id', 'name', 'is_valid')
 			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)))
-			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('person_name', $personName);
+
 		return $this->findEntities($qb);
 	}
 

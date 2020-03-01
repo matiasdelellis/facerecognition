@@ -186,9 +186,11 @@ class PersonController extends Controller {
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
-		$persons = $this->personMapper->findByName($this->userId, $personName);
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
 			if ($notGrouped === 'false' && count($personFaces) <= 1)
 				continue;
 

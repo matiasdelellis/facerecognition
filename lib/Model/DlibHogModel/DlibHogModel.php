@@ -93,8 +93,6 @@ class DlibHogModel implements IModel {
 		$this->fileService      = $fileService;
 		$this->modelService     = $modelService;
 		$this->settingsService  = $settingsService;
-
-		$this->modelService->useModelVersion($this->getId());
 	}
 
 	public function getId(): int {
@@ -110,9 +108,9 @@ class DlibHogModel implements IModel {
 	}
 
 	public function isInstalled(): bool {
-		if (!$this->modelService->modelFileExists(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
+		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
 			return false;
-		if (!$this->modelService->modelFileExists(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]))
+		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]))
 			return false;
 		return true;
 	}
@@ -127,12 +125,15 @@ class DlibHogModel implements IModel {
 			return;
 		}
 
+		// Create main folder where install models.
+		$this->modelService->prepareModelFolder($this->getId());
+
 		/* Download and install models */
 		$predictorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
-		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 
 		$resnetModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
-		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 
 		/* Clean temporary files */
 		$this->fileService->clean();
@@ -167,8 +168,8 @@ class DlibHogModel implements IModel {
 	}
 
 	public function open() {
-		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
-		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
 	public function getMemoryAreaRelation(): int {

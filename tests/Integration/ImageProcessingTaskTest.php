@@ -213,7 +213,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$modelService = $this->container->query('OCA\FaceRecognition\Service\ModelService');
 		$modelService->useModelVersion($model);
 
-		$modelsPath = $modelService->getModelPath('');
+		$modelsPath = $modelService->getFileModelPath($model, '');
 
 		// Simulate Install models
 		$models = array_diff(scandir($cacheModelsPath), array('..', '.'));

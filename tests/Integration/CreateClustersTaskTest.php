@@ -34,7 +34,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
-use OCA\FaceRecognition\Model\DlibCnn5Model;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use Test\TestCase;
 

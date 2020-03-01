@@ -49,38 +49,40 @@ class ModelService {
 		$this->appData    = $appData;
 		$this->rootFolder = $rootFolder;
 
+		// Construct root folder for models
 		$this->prepareAppDataFolders();
-	}
 
-	/**
-	 * @return void
-	 */
-	public function useModelVersion (int $version) {
-		try {
-			$this->appData->getFolder('/models/' . $version);
-		} catch (NotFoundException $e) {
-			$this->appData->newFolder('/models/' . $version);
-		}
-
+		/// Get this folder.
 		$instanceId = $this->config->getSystemValue('instanceid', null);
 		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
 		$dataDir = $this->config->getSystemValue('datadirectory', null);
 
-		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/' . $version . '/';
+		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getModelPath(string $file): string {
-		return $this->modelsFolder . $file;
+	public function getFileModelPath(int $modelId, string $file): string {
+		return $this->modelsFolder . $modelId . '/' . $file;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function modelFileExists(string $file): bool {
-		return file_exists($this->getModelPath($file));
+	public function modelFileExists(int $modelId, string $file): bool {
+		return file_exists($this->getFileModelPath($modelId, $file));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function prepareModelFolder(int $modelId) {
+		try {
+			$this->appData->getFolder('/models/' . $modelId);
+		} catch (NotFoundException $e) {
+			$this->appData->newFolder('/models/' . $modelId);
+		}
 	}
 
 	/**

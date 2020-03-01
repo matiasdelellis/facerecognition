@@ -57,14 +57,28 @@ class PersonMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	public function findAll(string $userId): array {
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @return Person[]
+	 */
+	public function findAll(string $userId, int $modelId): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name', 'is_valid')
 			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
 
-		$person = $this->findEntities($qb);
-		return $person;
+		return $this->findEntities($qb);
 	}
 
 	/**

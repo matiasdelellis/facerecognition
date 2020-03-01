@@ -52,7 +52,9 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->config->setAppValue('facerecognition', 'max_image_area', 100 * 100);
 
 		// Install models needed to test
-		$this->doFakeInstallModels();
+		$model = $this->container->query('OCA\FaceRecognition\Model\Model\DlibCnn5Model');
+		$this->install();
+
 	}
 
 	public function tearDown() {
@@ -198,28 +200,6 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		}
 
 		$this->assertEquals(true, $generator->getReturn());
-	}
-
-	/**
-	 * Helper method to install models
-	 *
-	 */
-	private function doFakeInstallModels() {
-		$model = intval($this->config->getAppValue('facerecognition', 'model', ModelManager::DEFAULT_FACE_MODEL_ID));
-
-		$appManager = $this->container->query('OCP\App\IAppManager');
-		$cacheModelsPath = $appManager->getAppPath('facerecognition') . '/vendor/models/1/';
-
-		$modelService = $this->container->query('OCA\FaceRecognition\Service\ModelService');
-		$modelsPath = $modelService->getFileModelPath($model, '');
-
-		// Simulate Install models
-		$models = array_diff(scandir($cacheModelsPath), array('..', '.'));
-		foreach ($models as $file) {
-			if (file_exists($modelsPath . $file))
-				continue;
-			symlink ($cacheModelsPath . $file, $modelsPath . $file);
-		}
 	}
 
 }

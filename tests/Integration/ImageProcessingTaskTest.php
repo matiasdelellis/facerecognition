@@ -52,7 +52,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->config->setAppValue('facerecognition', 'max_image_area', 100 * 100);
 
 		// Install models needed to test
-		$model = $this->container->query('OCA\FaceRecognition\Model\Model\DlibCnn5Model');
+		$model = $this->container->query('OCA\FaceRecognition\Model\DlibCnn5Model\DlibCnn5Model');
 		$this->install();
 
 	}

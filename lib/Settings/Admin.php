@@ -42,11 +42,11 @@ class Admin implements ISettings {
 	public $settingsService;
 
 	/** @var IL10N */
-	protected $l;
+	protected $l10n;
 
 	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
-	                            IL10N           $l)
+	                            IL10N           $l10n)
 	{
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
@@ -63,7 +63,7 @@ class Admin implements ISettings {
 
 	public function getForm() {
 
-		$meetDependencies = TRUE;
+		$meetDependencies = true;
 		$modelVersion = $this->settingsService->getCurrentFaceModel();
 		$resume = "";
 
@@ -76,7 +76,7 @@ class Admin implements ISettings {
 
 		if (!$model->meetDependencies()) {
 			$resume .= $this->l10n->t("It seems that you do not meet the dependencies to use the current model.");
-			$meetDependencies = FALSE;
+			$meetDependencies = false;
 		}
 
 		$params = [

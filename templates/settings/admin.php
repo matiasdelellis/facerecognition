@@ -62,10 +62,9 @@
 		<br>
 		<h3>
 			<?php p($l->t('Configuration information'));?>
-			<span class="status success<?php if(!($_['pdlib-loaded'] && $_['model-present'])):?> error<?php endif;?>"></span>
+			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
 		</h3>
-		<p><label>Pdlib Version: </label><?php p($_['pdlib-version']);?></p>
-		<p><label>Models Version: </label><?php p($_['model-version']);?></p>
+		<p><?php p($l->t('Current Model:'));?> <em><?php p($_['model-version']);?></em></p>
 		<p><span><?php p($_['resume']); ?></span></p>
 		<br>
 		<h3>

@@ -26,8 +26,6 @@ namespace OCA\FaceRecognition\Model\DlibCnnModel;
 
 use OCP\IDBConnection;
 
-use OCA\FaceRecognition\Helper\Requirements;
-
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -92,6 +90,8 @@ class DlibCnnModel implements IModel {
 		$this->fileService      = $fileService;
 		$this->modelService     = $modelService;
 		$this->settingsService  = $settingsService;
+
+		$this->modelService->useModelVersion($this->getId());
 	}
 
 	public function getId(): int {
@@ -107,8 +107,13 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function isInstalled(): bool {
-		$requirements = new Requirements($this->modelService, $this->getId());
-		return $requirements->modelFilesPresent();
+		if (!$this->modelService->modelFileExists(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]))
+			return false;
+		if (!$this->modelService->modelFileExists(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
+			return false;
+		if (!$this->modelService->modelFileExists(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]))
+			return false;
+		return true;
 	}
 
 	public function meetDependencies(): bool {
@@ -119,9 +124,6 @@ class DlibCnnModel implements IModel {
 		if ($this->isInstalled()) {
 			return;
 		}
-
-		/* Still not installed but it is necessary to get the model folders */
-		$this->modelService->useModelVersion($this->getId());
 
 		/* Download and install models */
 		$detectorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_DETECTOR]);
@@ -166,8 +168,6 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function open() {
-		$this->modelService->useModelVersion($this->getId());
-
 		$this->cfd = new \CnnFaceDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getModelPath(static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));

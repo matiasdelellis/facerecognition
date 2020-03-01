@@ -53,7 +53,7 @@ class ModelService {
 	}
 
 	/**
-	 * @return none
+	 * @return void
 	 */
 	public function useModelVersion (int $version) {
 		try {
@@ -70,14 +70,21 @@ class ModelService {
 	}
 
 	/**
-	 * @return String
+	 * @return string
 	 */
 	public function getModelPath(string $file): string {
 		return $this->modelsFolder . $file;
 	}
 
 	/**
-	 * @return none
+	 * @return bool
+	 */
+	public function modelFileExists(string $file): bool {
+		return file_exists($this->getModelPath($file));
+	}
+
+	/**
+	 * @return void
 	 */
 	private function prepareAppDataFolders() {
 		try {

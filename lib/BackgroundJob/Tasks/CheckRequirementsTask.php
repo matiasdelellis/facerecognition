@@ -30,7 +30,9 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
-use OCA\FaceRecognition\Helper\Requirements;
+
+use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -38,16 +40,23 @@ use OCA\FaceRecognition\Service\SettingsService;
  * Check all requirements before we start engaging in lengthy background task.
  */
 class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
+
+	/** @var ModelManager Model Manader */
+	private $modelManager;
+
 	/** @var SettingsService Settings service */
 	private $settingsService;
 
 	/**
+	 * @param ModelManager $modelManager Model Manager
 	 * @param SettingsService $settingsService Settings service
 	 */
-	public function __construct(SettingsService $settingsService)
+	public function __construct(ModelManager    $modelManager,
+	                            SettingsService $settingsService)
 	{
 		parent::__construct();
 
+		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
 	}
 
@@ -64,27 +73,28 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$model = $this->settingsService->getCurrentFaceModel();
+		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$req = new Requirements($context->modelService, $model);
-
-		if (!$req->pdlibLoaded()) {
-			$error_message = "PDLib is not loaded. Cannot continue";
-			$this->logInfo($error_message);
-			return false;
-		}
-
-		if (!$req->modelFilesPresent()) {
+		$model = $this->modelManager->getModel($modelId);
+		if (!$model) {
 			$error_message =
-				"Files of model with ID " . $model . " are not present in models/ directory.\n" .
+				"Seems that you don't have any model installed\n" .
 				"Please contact administrator to change models you are using for face recognition\n" .
-				"or reinstall them with the 'occ face:setup' command. \n" .
+				"or reinstall them with the 'occ face:setup --model' command. \n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}
 
-		if (!$req->hasEnoughMemory()) {
+		if (!$model->meetDependencies()) {
+			$error_message = "Seems that you don't meet the dependencies to use the model " . $modelId .": " . $model->getName();
+			// Document models on wiki and print link here.
+			$this->logInfo($error_message);
+			return false;
+		}
+
+		$systemMemory = MemoryLimits::getSystemMemory();
+		if ($systemMemory < SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) {
 			$error_message =
 				"Your system does not meet the minimum of memory requirements.\n" .
 				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n";

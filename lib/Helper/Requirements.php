@@ -1,78 +1,8 @@
 <?php
 namespace OCA\FaceRecognition\Helper;
 
-use OCA\FaceRecognition\Helper\MemoryLimits;
-
-use OCA\FaceRecognition\Service\ModelService;
-use OCA\FaceRecognition\Service\SettingsService;
-
 class Requirements
 {
-	/** @var ModelService */
-	protected $modelService;
-
-	public function __construct(ModelService $modelService,
-	                            int          $model) {
-		$this->modelService = $modelService;
-
-		$this->modelService->useModelVersion($model);
-	}
-
-	public function hasEnoughMemory() {
-		$memory = MemoryLimits::getSystemMemory();
-		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS);
-	}
-
-	public function pdlibLoaded() {
-		return extension_loaded('pdlib');
-	}
-
-	public function pdlibVersion() {
-		if (!$this->pdlibLoaded())
-			return '0.0';
-		return phpversion ('pdlib');
-	}
-
-	public function modelFilesPresent(): bool {
-		$faceDetection = $this->getFaceDetectionModel();
-		$landmarkDetection = $this->getLandmarksDetectionModel();
-		$faceRecognition = $this->getFaceRecognitionModel();
-
-/*		if (($faceDetection === NULL) || ($landmarkDetection === NULL) || ($faceRecognition === NULL)) {
-			return false;
-		} else*/ {
-			return true;
-		}
-	}
-
-	public function getFaceRecognitionModel() {
-		return $this->getModel1File('dlib_face_recognition_resnet_model_v1.dat');
-	}
-
-	public function getLandmarksDetectionModel() {
-		return $this->getModel1File('shape_predictor_5_face_landmarks.dat');
-	}
-
-	public function getFaceDetectionModel() {
-		return $this->getModel1File('mmod_human_face_detector.dat');
-	}
-
-	/**
-	 * Common getter to full path, for all files from model with ID = 1
-	 *
-	 * @param string $file File to check
-	 * @return string|null Full path to file, or NULL if file is not found
-	 */
-	private function getModel1File(string $file) {
-		$fullPath = $this->modelService->getModelPath($file);
-
-		if (file_exists($fullPath)) {
-			return $fullPath;
-		} else {
-			return NULL;
-		}
-	}
-
 	/**
 	 * Determines if FaceRecognition can work with a givem image type. This is determined as
 	 * intersection of types that are supported in Nextcloud and types that are supported in DLIB.

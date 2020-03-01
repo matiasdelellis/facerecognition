@@ -65,7 +65,7 @@ class ModelManager {
 
 	/**
 	 * @param int $version model version
-	 * @return DlibCnnModel|null
+	 * @return IModel|null
 	 */
 	public function getModel(int $version): ?IModel {
 		switch ($version) {

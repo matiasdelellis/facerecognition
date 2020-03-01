@@ -25,18 +25,18 @@ declare(strict_types=1);
 namespace OCA\FaceRecognition\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\Settings\ISettings;
 use OCP\IL10N;
+use OCP\Settings\ISettings;
 
-use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Model\ModelManager;
 
-use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class Admin implements ISettings {
 
-	/** @var ModelService */
-	public $modelService;
+	/** @var ModelManager */
+	public $modelManager;
 
 	/** @var SettingsService */
 	public $settingsService;
@@ -44,13 +44,13 @@ class Admin implements ISettings {
 	/** @var IL10N */
 	protected $l;
 
-	public function __construct(ModelService    $modelService,
+	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
 	                            IL10N           $l)
 	{
-		$this->modelService    = $modelService;
+		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
-		$this->l               = $l;
+		$this->l10n            = $l10n;
 	}
 
 	public function getPriority() {
@@ -63,32 +63,25 @@ class Admin implements ISettings {
 
 	public function getForm() {
 
-		$pdlibLoaded = TRUE;
-		$pdlibVersion = '0.0';
+		$meetDependencies = TRUE;
 		$modelVersion = $this->settingsService->getCurrentFaceModel();
-		$modelPresent = TRUE;
 		$resume = "";
 
-		$req = new Requirements($this->modelService, $modelVersion);
+		$model = $this->modelManager->getModel($modelVersion);
 
-		if ($req->pdlibLoaded()) {
-			$pdlibVersion = $req->pdlibVersion();
-		}
-		else {
-			$resume .= 'The PHP extension PDlib is not loaded. Please configure this. ';
-			$pdlibLoaded = FALSE;
+		if (!$model) {
+			$resume = $this->l10n->t("It seems you don't have any model installed.");
+			// TODO: Document models and add link here.
 		}
 
-		if (!$req->modelFilesPresent()) {
-			$resume .= 'The files of the models version ' . $modelVersion . ' were not found. ';
-			$modelPresent = FALSE;
+		if (!$model->meetDependencies()) {
+			$resume .= $this->l10n->t("It seems that you do not meet the dependencies to use the current model.");
+			$meetDependencies = FALSE;
 		}
 
 		$params = [
-			'pdlib-loaded' => $pdlibLoaded,
-			'pdlib-version' => $pdlibVersion,
+			'meet-dependencies' => $meetDependencies,
 			'model-version' => $modelVersion,
-			'model-present' => $modelPresent,
 			'resume' => $resume,
 		];
 

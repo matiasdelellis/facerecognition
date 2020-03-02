@@ -23,6 +23,9 @@ env:
     - DB=mysql CORE_BRANCH=stable17
     - DB=pgsql CORE_BRANCH=stable17
     - DB=sqlite CORE_BRANCH=stable17
+    - DB=mysql CORE_BRANCH=stable18
+    - DB=pgsql CORE_BRANCH=stable18
+    - DB=sqlite CORE_BRANCH=stable18
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)
@@ -51,7 +54,9 @@ before_script:
   - cd apps/$APP_NAME
 
 script:
-  - ../../occ face:setup
+  # Install models here is useless but they are a test of themselves.
+  - ../../occ face:setup --model 3
+  - ../../occ face:setup --model
   - make test
 
   # Create coverage report

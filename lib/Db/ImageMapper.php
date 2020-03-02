@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2017-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -42,9 +42,8 @@ class ImageMapper extends QBMapper {
 	/**
 	 * @param string $userId Id of user
 	 * @param int $imageId Id of Image to get
-	 * @return Image
 	 */
-	public function find(string $userId, int $imageId): Image {
+	public function find(string $userId, int $imageId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName(), 'i')

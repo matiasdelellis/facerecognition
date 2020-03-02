@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2018-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -41,9 +41,8 @@ class PersonMapper extends QBMapper {
 	/**
 	 * @param string $userId ID of the user
 	 * @param int $personId ID of the person
-	 * @return Person
 	 */
-	public function find(string $userId, int $personId): Person {
+	public function find(string $userId, int $personId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from($this->getTableName(), 'p')

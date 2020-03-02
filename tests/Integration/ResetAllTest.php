@@ -73,11 +73,6 @@ class ResetAllTest extends IntegrationTestCase {
 		$person->setUser($this->user->getUID());
 		$person->setName('foo');
 		$person = $personMapper->insert($person);
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
-		$this->assertEquals(0, $personCount);
-
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, true);
-		$this->assertEquals(1, $personCount);
 
 		// Relate the Person to the Face and validate person
 		$person->setIsValid(true);

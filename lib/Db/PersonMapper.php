@@ -38,14 +38,18 @@ class PersonMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $personId ID of the person
+	 * @return Person
+	 */
 	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
-		$person = $this->findEntity($qb);
-		return $person;
+		return $this->findEntity($qb);
 	}
 
 	/**
@@ -144,21 +148,21 @@ class PersonMapper extends QBMapper {
 	 * and return an array with that.
 	 *
 	 * @param string $userId ID of the user that clusters belong to
+	 * @param int $modelId ID of the model that clusters belgon to
 	 * @param int $fileId ID of file image for which to searh persons.
 	 *
-	 * @return array of persons
+	 * @return Person[] Array of persons on that file
 	 */
-	public function findFromFile(string $userId, int $fileId): array {
+	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id', 'name');
 		$qb->from($this->getTableName(), 'p')
 			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
 			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
-		$persons = $this->findEntities($qb);
-
-		return $persons;
+		return $this->findEntities($qb);
 	}
 
 	/**
@@ -182,20 +186,6 @@ class PersonMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('image_id', $imageId)
 			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL)
-			->execute();
-	}
-
-	/**
-	 * Updates one face with $faceId to database to person ID $personId.
-	 *
-	 * @param int $faceId ID of the face
-	 * @param int|null $personId ID of the person
-	 */
-	private function updateFace(int $faceId, $personId) {
-		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_faces')
-			->set("person", $qb->createNamedParameter($personId))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
 			->execute();
 	}
 
@@ -378,6 +368,20 @@ class PersonMapper extends QBMapper {
 				->execute();
 		}
 		return $orphaned;
+	}
+
+	/**
+	 * Updates one face with $faceId to database to person ID $personId.
+	 *
+	 * @param int $faceId ID of the face
+	 * @param int|null $personId ID of the person
+	 */
+	private function updateFace(int $faceId, $personId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('facerecog_faces')
+			->set("person", $qb->createNamedParameter($personId))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->execute();
 	}
 
 	/**

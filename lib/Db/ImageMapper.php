@@ -39,22 +39,33 @@ class ImageMapper extends QBMapper {
 		$this->faceMapper = $faceMapper;
 	}
 
+	/**
+	 * @param string $userId Id of user
+	 * @param int $imageId Id of Image to get
+	 * @return Image
+	 */
 	public function find(string $userId, int $imageId): Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName(), 'i')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($imageId)));
-		$image = $this->findEntity($qb);
-		return $image;
+		return $this->findEntity($qb);
 	}
 
-	public function findFromFile(string $userId, int $fileId) {
+	/**
+	 * @param string $userId Id of user
+	 * @param int $modelId Id of model
+	 * @param int $fileId Id of file to get Image
+	 * @return Image[]|null
+	 */
+	public function findFromFile(string $userId, int $modelId, int $fileId): ?Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
-		   ->from($this->getTableName(), 'i')
-		   ->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-		   ->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
+			->from($this->getTableName(), 'i')
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andwhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
 
 		try {
 			return $this->findEntity($qb);

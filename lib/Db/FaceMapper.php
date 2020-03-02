@@ -157,6 +157,7 @@ class FaceMapper extends QBMapper {
 
 	/**
 	 * Finds all faces contained in one image
+	 * Note that this is independent of any Model
 	 *
 	 * @param int $imageId Image for which to find all faces for
 	 */
@@ -170,9 +171,12 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Removes all faces contained in one image.
+	 * Note that this is independent of any Model
+	 *
 	 * @param int $imageId Image for which to delete faces for
 	 */
-	public function removeFaces(int $imageId) {
+	public function removeFromImage(int $imageId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))

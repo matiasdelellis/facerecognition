@@ -171,7 +171,7 @@ class Watcher {
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
-			$this->faceMapper->removeFaces($imageId);
+			$this->faceMapper->removeFromImage($imageId);
 
 			// If any person is now without faces, remove those (empty) persons
 			foreach ($facesToRemove as $faceToRemove) {
@@ -239,7 +239,7 @@ class Watcher {
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
-			$this->faceMapper->removeFaces($imageId);
+			$this->faceMapper->removeFromImage($imageId);
 
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);

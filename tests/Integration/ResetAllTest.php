@@ -56,7 +56,7 @@ class ResetAllTest extends IntegrationTestCase {
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
-		$imageMapper->insert($image);
+		$image = $imageMapper->insert($image);
 		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $imageCount);
 

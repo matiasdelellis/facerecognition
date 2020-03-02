@@ -57,7 +57,7 @@ class ImageMapper extends QBMapper {
 	 * @param string $userId Id of user
 	 * @param int $modelId Id of model
 	 * @param int $fileId Id of file to get Image
-	 * @return Image[]|null
+	 * @return Image|null
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): ?Image {
 		$qb = $this->db->getQueryBuilder();

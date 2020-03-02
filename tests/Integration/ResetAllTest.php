@@ -60,25 +60,25 @@ class ResetAllTest extends IntegrationTestCase {
 		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $imageCount);
 
+		// Add one person to DB
+		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
+		$person = new Person();
+		$person->setUser($this->user->getUID());
+		$person->setIsValid(true);
+		$person->setName('foo');
+		$person = $personMapper->insert($person);
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
+
 		// Add one face to DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
+		$face->setPerson($person->getId());
 		$face = $faceMapper->insertFace($face);
 		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
 
-		// Add one invalid (non clustered) person to DB
-		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$person = new Person();
-		$person->setUser($this->user->getUID());
-		$person->setName('foo');
-		$person = $personMapper->insert($person);
-
-		// Relate the Person to the Face and validate person
-		$person->setIsValid(true);
-		$personMapper->update($person);
-		$face->setPerson($person->getId());
-		$faceMapper->update($face);
+		// Check faces with all correct relationships
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 

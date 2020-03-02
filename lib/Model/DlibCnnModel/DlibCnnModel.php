@@ -161,13 +161,6 @@ class DlibCnnModel implements IModel {
 		}
 	}
 
-	public function setDefault() {
-		// Use default model, if it is not set already.
-		if ($this->settingsService->getCurrentFaceModel() !== $this->getId()) {
-			$this->settingsService->setCurrentFaceModel($this->getId());
-		}
-	}
-
 	public function open() {
 		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));

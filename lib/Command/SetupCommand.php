@@ -92,7 +92,7 @@ class SetupCommand extends Command {
 		if ($model->isInstalled()) {
 			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
 
-			$model->setDefault();
+			$this->modelManager->setDefault($modelId);
 			$this->logger->writeln('This model was configured as default');
 
 			return 0;
@@ -101,7 +101,7 @@ class SetupCommand extends Command {
 		$model->install();
 		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
 
-		$model->setDefault();
+		$this->modelManager->setDefault($modelId);
 		$this->logger->writeln('The new model was configured as default');
 
 		return 0;

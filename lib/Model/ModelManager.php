@@ -23,12 +23,12 @@
 
 namespace OCA\FaceRecognition\Model;
 
-use OCP\IConfig;
-use OCP\Files\IAppData;
-use OCP\Files\IRootFolder;
-use OCP\Files\NotFoundException;
+use OCP\IUser;
+use OCP\IUserManager;
 
 use OCA\FaceRecognition\Model\IModel;
+
+use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn68Model;
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
@@ -40,6 +40,12 @@ class ModelManager {
 	/** Defines ID for default face model */
 	const DEFAULT_FACE_MODEL_ID = 1;
 
+	/** @var IUserManager */
+	private $userManager;
+
+	/** @var SettingsService */
+	private $settingsService;
+
 	/** @var DlibCnn5Model */
 	private $dlibCnn5Model;
 
@@ -50,17 +56,24 @@ class ModelManager {
 	private $dlibHogModel;
 
 	/**
+	 * @patam IUserManager $userManager
+	 * @param SettingsService $settingsService
 	 * @param DlibCnn5Model $dlibCnn5Model
 	 * @param DlibCnn68Model $dlibCnn68Model
 	 * @param DlibHogModel $dlibHogModel
 	 */
-	public function __construct(DlibCnn5Model  $dlibCnn5Model,
-	                            DlibCnn68Model $dlibCnn68Model,
-	                            DlibHogModel   $dlibHogModel)
+	public function __construct(IUserManager    $userManager,
+	                            SettingsService $settingsService,
+	                            DlibCnn5Model   $dlibCnn5Model,
+	                            DlibCnn68Model  $dlibCnn68Model,
+	                            DlibHogModel    $dlibHogModel)
 	{
-		$this->dlibCnn5Model  = $dlibCnn5Model;
-		$this->dlibCnn68Model = $dlibCnn68Model;
-		$this->dlibHogModel   = $dlibHogModel;
+		$this->userManager     = $userManager;
+		$this->settingsService = $settingsService;
+
+		$this->dlibCnn5Model   = $dlibCnn5Model;
+		$this->dlibCnn68Model  = $dlibCnn68Model;
+		$this->dlibHogModel    = $dlibHogModel;
 	}
 
 	/**
@@ -83,6 +96,26 @@ class ModelManager {
 				break;
 		}
 		return $model;
+	}
+
+	/**
+	 * Set default model to use
+	 * @param int $version model version
+	 * @return bool true if successful. False otherwise
+	 */
+	public function setDefault(int $version): bool {
+		$model = $this->getModel($version);
+		if (is_null($model) || !$model->isInstalled() || !$model->meetDependencies())
+			return false;
+
+		if ($this->settingsService->getCurrentFaceModel() !== $model->getId()) {
+			$this->settingsService->setCurrentFaceModel($model->getId());
+		}
+		$this->userManager->callForAllUsers(function (IUser $user) {
+			$this->settingsService->setUserFullScanDone(false, $user->getUID());
+		});
+
+		return true;
 	}
 
 }

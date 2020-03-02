@@ -59,11 +59,6 @@ interface IModel {
 	public function install();
 
 	/**
-	 * Set as default model to use.
-	 */
-	public function setDefault();
-
-	/**
 	 * Open the model
 	 */
 	public function open();

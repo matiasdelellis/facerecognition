@@ -250,6 +250,9 @@ class FaceMapper extends QBMapper {
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])
 			->execute();
+
 		$face->setId((int) $qb->getLastInsertId());
+
+		return $face;
 	}
 }

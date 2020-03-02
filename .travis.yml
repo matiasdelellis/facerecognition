@@ -55,7 +55,7 @@ before_script:
 
 script:
   # Install models here is useless but they are a test of themselves.
-  - ../../occ face:setup --model 3
+  - ../../occ face:setup --model 3 || true
   - ../../occ face:setup --model
   - make test
 

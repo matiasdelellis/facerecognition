@@ -125,7 +125,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->doImageProcessing($imgData);
 
 		// Check that there is no unprocessed images
-		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 
 		// Check image fields after processing
 		$images = $imageMapper->findImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
@@ -166,7 +166,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$view->file_put_contents("foo1.jpg", $imgData);
 		// Scan it, so it is in database, ready to be processed
 		$this->doMissingImageScan($this->user);
-		$this->context->propertyBag['images'] = $imageMapper->findImagesWithoutFaces($this->user);
+		$this->context->propertyBag['images'] = $imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($this->context->propertyBag['images']));
 
 		// Since this task returns generator, iterate until it is done

@@ -102,7 +102,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		// invalidation and face removal when image is removed.
 
 		// We should find 2 images now - foo1.jpg, foo2.png
-		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 
 		// We should not delete anything this time
 		$this->doStaleImagesRemoval();
@@ -112,7 +112,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$view->file_put_contents("dir_nomedia/.nomedia", "content");
 		$this->doStaleImagesRemoval();
 		$this->assertEquals(1, $this->context->propertyBag['StaleImagesRemovalTask_staleRemovedImages']);
-		$this->assertEquals(1, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(1, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
 
 	/**

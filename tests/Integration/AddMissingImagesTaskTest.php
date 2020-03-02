@@ -64,7 +64,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		$this->doMissingImageScan();
 
 		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
-		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
 
 	/**
@@ -78,7 +78,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		$this->doMissingImageScan($this->user);
 
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 	}
 
@@ -102,7 +102,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		// We should find 3 images only - foo2.jpg, foo3.png and dir/foo5.bmp
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$this->assertEquals(3, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(3, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 		$this->assertEquals(3, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 	}
 

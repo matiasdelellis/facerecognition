@@ -23,10 +23,10 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
-use OCP\IDBConnection;
-
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Service\SettingsService;
+
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
@@ -35,20 +35,23 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
  * Shuffles found images and outputs them to context->propertyBag.
  */
 class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
-	/** @var IDBConnection DB connection*/
-	protected $connection;
+
+	/** @var SettingsService Settings service */
+	private $settingsService;
 
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
 	/**
-	 * @param IDBConnection $connection DB connection
+	 * @param SettingsService $settingsService Settings service
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
-	public function __construct(IDBConnection $connection, ImageMapper $imageMapper) {
+	public function __construct(SettingsService $settingsService,
+	                            ImageMapper     $imageMapper)
+	{
 		parent::__construct();
-		$this->connection = $connection;
-		$this->imageMapper = $imageMapper;
+		$this->settingsService = $settingsService;
+		$this->imageMapper     = $imageMapper;
 	}
 
 	/**
@@ -64,7 +67,9 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user);
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user, $modelId);
 		yield;
 
 		shuffle($images);

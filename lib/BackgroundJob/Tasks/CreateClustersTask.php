@@ -195,6 +195,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$currentClusters = $this->getCurrentClusters($faces);
 		$newClusters = $this->getNewClusters($faces);
 		$this->logInfo(count($newClusters) . ' persons found after clustering');
+
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);

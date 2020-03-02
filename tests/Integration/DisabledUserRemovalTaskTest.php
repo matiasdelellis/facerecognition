@@ -69,7 +69,7 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 		// invalidation and face removal when image is removed.
 
 		// We should find 2 images now - foo1.jpg, foo2.png
-		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 
 		// Disable analysis for user
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'false');
@@ -78,7 +78,7 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 		$this->doDisabledUserRemoval();
 
 		// Now it must be empty
-		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
 
 	/**

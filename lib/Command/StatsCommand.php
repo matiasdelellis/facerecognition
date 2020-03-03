@@ -86,6 +86,12 @@ class StatsCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'Get stats for a given user only. If not given, get stats for all users.',
 				null
+			)->addOption(
+				'json',
+				'j',
+				InputOption::VALUE_NONE,
+				'Print in a json format, useful to analyze it with another tool.',
+				null
 			);
 	}
 
@@ -113,6 +119,18 @@ class StatsCommand extends Command {
 			});
 		}
 
+		if ($input->getOption('json')) {
+			$this->printJsonStats($output, $users);
+		}
+		else {
+			$this->printTabledStats($output, $users);
+		}
+
+		return 0;
+	}
+
+	private function printTabledStats(OutputInterface $output, array $users) {
+
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$stats = array();
@@ -128,8 +146,23 @@ class StatsCommand extends Command {
 		$table = new Table($output);
 		$table->setHeaders(['User', 'Images', 'Faces', 'Persons'])->setRows($stats);
 		$table->render();
+	}
 
-		return 0;
+	private function printJsonStats(OutputInterface $output, array $users) {
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$stats = array();
+		foreach ($users as $user) {
+			$stats[] = array(
+				'user'    => $user,
+				'images'  => $this->imageMapper->countUserImages($user, $modelId),
+				'faces'   => $this->faceMapper->countFaces($user, $modelId),
+				'persons' => $this->personMapper->countPersons($user, $modelId)
+			);
+		}
+
+		$output->writeln(json_encode($stats));
 	}
 
 }

@@ -106,7 +106,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->assertEquals(66, $face->getTop());
 		$this->assertEquals(129, $face->getBottom());
 		$this->assertEquals(54, $face->getLeft());
-		$this->assertEquals(122, $face->getRight());
+		$this->assertEquals(116, $face->getRight());
 	}
 
 	/**

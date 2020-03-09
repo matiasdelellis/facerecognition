@@ -172,7 +172,7 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function detectFaces(string $imagePath): array {
-		return $this->cfd->detect($imagePath);
+		return $this->cfd->detect($imagePath, 0);
 	}
 
 	public function detectLandmarks(string $imagePath, array $rect): array {

@@ -103,7 +103,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$face = $faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)[0];
 		$face = $faceMapper->find($face->getId());
-		$this->assertEquals(60, $face->getTop());
+		$this->assertEquals(66, $face->getTop());
 		$this->assertEquals(136, $face->getBottom());
 		$this->assertEquals(47, $face->getLeft());
 		$this->assertEquals(122, $face->getRight());

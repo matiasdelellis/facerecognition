@@ -49,7 +49,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$this->originalMinImageSize = intval($this->config->getAppValue('facerecognition', 'min_image_size', '512'));
 		$this->originalMaxImageArea = intval($this->config->getAppValue('facerecognition', 'max_image_area', 0));
 		$this->config->setAppValue('facerecognition', 'min_image_size', 1);
-		$this->config->setAppValue('facerecognition', 'max_image_area', 100 * 100);
+		$this->config->setAppValue('facerecognition', 'max_image_area', 200 * 200);
 
 		// Install models needed to test
 		$model = $this->container->query('OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model');

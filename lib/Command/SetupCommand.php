@@ -23,6 +23,7 @@
 namespace OCA\FaceRecognition\Command;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -72,7 +73,9 @@ class SetupCommand extends Command {
 
 		$modelId = $input->getOption('model');
 		if (is_null($modelId)) {
-			$modelId = 1;
+			$this->logger->writeln('You must indicate the ID of the model to install');
+			$this->dumpModels();
+			return 0;
 		}
 
 		$model = $this->modelManager->getModel($modelId);
@@ -105,6 +108,17 @@ class SetupCommand extends Command {
 		$this->logger->writeln('The new model was configured as default');
 
 		return 0;
+	}
+
+	private function dumpModels () {
+		$table = new Table($this->logger);
+		$table->setHeaders(['Id', 'Name', 'Description']);
+
+		$models = $this->modelManager->getAllModels();
+		foreach ($models as $model) {
+			$table->addRow([$model->getId(), $model->getName(), $model->getDescription()]);
+		}
+		$table->render();
 	}
 
 }

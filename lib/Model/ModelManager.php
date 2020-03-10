@@ -99,6 +99,17 @@ class ModelManager {
 	}
 
 	/**
+	 * @return IModel[]
+	 */
+	public function getAllModels(): array {
+		return [
+			$this->dlibCnn5Model,
+			$this->dlibCnn68Model,
+			$this->dlibHogModel
+		];
+	}
+
+	/**
 	 * Set default model to use
 	 * @param int $version model version
 	 * @return bool true if successful. False otherwise

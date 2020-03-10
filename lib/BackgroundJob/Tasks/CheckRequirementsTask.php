@@ -30,6 +30,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
+use OCA\FaceRecognition\Helper\Requirements;
 
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
@@ -73,6 +74,21 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
+		if (!Requirements::pdlibLoaded()) {
+			$error_message = "The PDlib PHP extension is not loaded. Cannot continue without it.";
+			$this->logInfo($error_message);
+			return false;
+		}
+
+		if (!Requirements::hasEnoughMemory()) {
+			$error_message =
+				"Your system does not meet the minimum of memory requirements.\n" .
+				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n";
+				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details";
+			$this->logInfo($error_message);
+			return false;
+		}
+
 		$model = $this->modelManager->getCurrentModel();
 		if (!$model) {
 			$error_message =
@@ -87,16 +103,6 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		if (!$model->meetDependencies()) {
 			$error_message = "Seems that you don't meet the dependencies to use the model " . $model->getId() .": " . $model->getName();
 			// Document models on wiki and print link here.
-			$this->logInfo($error_message);
-			return false;
-		}
-
-		$systemMemory = MemoryLimits::getSystemMemory();
-		if ($systemMemory < SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) {
-			$error_message =
-				"Your system does not meet the minimum of memory requirements.\n" .
-				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n";
-				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details";
 			$this->logInfo($error_message);
 			return false;
 		}

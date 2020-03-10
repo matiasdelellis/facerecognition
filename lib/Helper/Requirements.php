@@ -1,8 +1,21 @@
 <?php
 namespace OCA\FaceRecognition\Helper;
 
+use OCA\FaceRecognition\Helper\MemoryLimits;
+
+use OCA\FaceRecognition\Service\SettingsService;
+
 class Requirements
 {
+	public static function hasEnoughMemory() {
+		$memory = MemoryLimits::getSystemMemory();
+		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS);
+	}
+
+	public static function pdlibLoaded() {
+		return extension_loaded('pdlib');
+	}
+
 	/**
 	 * Determines if FaceRecognition can work with a givem image type. This is determined as
 	 * intersection of types that are supported in Nextcloud and types that are supported in DLIB.

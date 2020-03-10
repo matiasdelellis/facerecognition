@@ -126,7 +126,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		$this->logInfo(sprintf('Finding missing images for user %s', $userId));
 		$this->fileService->setupFS($userId);
 
-		$userFolder = $this->context->rootFolder->getUserFolder($userId);
+		$userFolder = $this->fileService->getUserFolder($userId);
 		return $this->parseUserFolder($userId, $model, $userFolder);
 	}
 

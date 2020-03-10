@@ -79,6 +79,15 @@ class FileService {
 	}
 
 	/**
+	 * Get root user folder
+	 * @param string $userId
+	 * @return Folder
+	 */
+	public function getUserFolder($fileId, $userId = null): Folder {
+		return $this->rootFolder->getUserFolder($this->userId ?? $userId);
+	}
+
+	/**
 	 * Get a Node from userFolder
 	 * @param int $id the id of the Node
 	 * @param string $userId

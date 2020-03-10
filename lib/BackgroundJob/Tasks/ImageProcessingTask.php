@@ -168,8 +168,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
 		// Get current model.
-		$modelVersion = $this->settingsService->getCurrentFaceModel();
-		$this->model = $this->modelManager->getModel($modelVersion);
+		$this->model = $this->modelManager->getCurrentModel();
 
 		// Open model.
 		$this->model->open();

@@ -64,12 +64,11 @@ class Admin implements ISettings {
 	public function getForm() {
 
 		$meetDependencies = true;
-		$modelVersion = $this->settingsService->getCurrentFaceModel();
 		$resume = "";
 
-		$model = $this->modelManager->getModel($modelVersion);
+		$model = $this->modelManager->getCurrentModel();
 
-		if (!$model) {
+		if (is_null($model)) {
 			$resume = $this->l10n->t("It seems you don't have any model installed.");
 			// TODO: Document models and add link here.
 		}
@@ -81,7 +80,7 @@ class Admin implements ISettings {
 
 		$params = [
 			'meet-dependencies' => $meetDependencies,
-			'model-version' => $modelVersion,
+			'model-version' => is_null($model) ? "-1" : $model->getId(),
 			'resume' => $resume,
 		];
 

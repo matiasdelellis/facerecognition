@@ -99,6 +99,14 @@ class ModelManager {
 	}
 
 	/**
+	 * @return IModel|null
+	 */
+	public function getCurrentModel(): ?IModel {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		return $this->getModel($modelId);
+	}
+
+	/**
 	 * @return IModel[]
 	 */
 	public function getAllModels(): array {

@@ -73,9 +73,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$modelId = $this->settingsService->getCurrentFaceModel();
-
-		$model = $this->modelManager->getModel($modelId);
+		$model = $this->modelManager->getCurrentModel();
 		if (!$model) {
 			$error_message =
 				"Seems that you don't have any model installed\n" .
@@ -87,7 +85,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		}
 
 		if (!$model->meetDependencies()) {
-			$error_message = "Seems that you don't meet the dependencies to use the model " . $modelId .": " . $model->getName();
+			$error_message = "Seems that you don't meet the dependencies to use the model " . $model->getId() .": " . $model->getName();
 			// Document models on wiki and print link here.
 			$this->logInfo($error_message);
 			return false;

@@ -91,26 +91,28 @@ class SetupCommand extends Command {
 			return 1;
 		}
 
-		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 		if ($model->isInstalled()) {
 			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
-
 			$this->modelManager->setDefault($modelId);
-			$this->logger->writeln('This model was configured as default');
+			$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
 
 			return 0;
 		}
 
+		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 		$model->install();
 		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
 
 		$this->modelManager->setDefault($modelId);
-		$this->logger->writeln('The new model was configured as default');
+		$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
 
 		return 0;
 	}
 
-	private function dumpModels () {
+	/**
+	 * Print list of models
+	 */
+	private function dumpModels() {
 		$table = new Table($this->logger);
 		$table->setHeaders(['Id', 'Name', 'Description']);
 

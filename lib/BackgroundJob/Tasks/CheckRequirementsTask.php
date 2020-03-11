@@ -92,7 +92,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$model = $this->modelManager->getCurrentModel();
 		if (is_null($model)) {
 			$error_message =
-				"Seems that don't have any model installed\n" .
+				"Seems there are no installed models.\n" .
 				"Please contact administrator to change models you are using for face recognition\n" .
 				"or reinstall them with the 'occ face:setup --model' command. \n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
@@ -127,6 +127,12 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			$this->logInfo($error_message);
 			return false;
 		}
+
+		$systemMemory = MemoryLimits::getSystemMemory();
+		$this->logDebug("System memory: " . ($systemMemory > 0 ? $systemMemory : "Unknown"));
+
+		$phpMemory = MemoryLimits::getPhpMemory();
+		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
 
 		return true;
 	}

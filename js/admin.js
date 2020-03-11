@@ -95,6 +95,9 @@ $(document).ready(function() {
                     $('#save-image-area').hide();
                 }
                 else {
+                    var suggestedImageArea = parseInt(data.value);
+                    $('#image-area-range').val(suggestedImageArea);
+                    $('#image-area-value').html(getFourByThreeRelation(suggestedImageArea));
                     var message = t('facerecognition', 'The change could not be applied.');
                     message += " - " + data.message;
                     OC.Notification.showTemporary(message);

@@ -173,18 +173,17 @@ class ImageMapper extends QBMapper {
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
 	 * @param int $modelId Model Id to get images for.
 	 */
-	public function findImagesWithoutFaces(IUser $user = null, int $modelId) {
+	public function findImagesWithoutFaces(IUser $user = null, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
+		$qb
 			->select(['id', 'user', 'file', 'model'])
 			->from($this->getTableName())
-			->where($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
 			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
 			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
-			$query->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
+			$qb->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
 		}
-
 		return $this->findEntities($qb);
 	}
 

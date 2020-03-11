@@ -60,6 +60,13 @@
 
 .ui-slider {
     vertical-align: middle;
+    width: 40%;
+}
+
+.settings-ranged > label:first-child {
+    display: inline-block;
+    width: 25%;
+    text-align: right;
 }
 
 .span-highlighted {

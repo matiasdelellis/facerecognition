@@ -54,6 +54,11 @@ interface IModel {
 	public function meetDependencies(): bool;
 
 	/**
+	 * Obtain the maximum image area recommended by the model.
+	 */
+	public function getMaximumArea(): int;
+
+	/**
 	 * Install the model.
 	 */
 	public function install();
@@ -62,11 +67,6 @@ interface IModel {
 	 * Open the model
 	 */
 	public function open();
-
-	/**
-	 * Get a linear relationship between the area of an image and the memory consumed during the analysis
-	 */
-	public function getMemoryAreaRelation(): int;
 
 	/**
 	 * Detect faces on image.

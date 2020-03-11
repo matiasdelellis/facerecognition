@@ -90,9 +90,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		}
 
 		$model = $this->modelManager->getCurrentModel();
-		if (!$model) {
+		if (is_null($model)) {
 			$error_message =
-				"Seems that you don't have any model installed\n" .
+				"Seems that don't have any model installed\n" .
 				"Please contact administrator to change models you are using for face recognition\n" .
 				"or reinstall them with the 'occ face:setup --model' command. \n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
@@ -101,59 +101,32 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		}
 
 		if (!$model->meetDependencies()) {
-			$error_message = "Seems that you don't meet the dependencies to use the model " . $model->getId() .": " . $model->getName();
+			$error_message = "Seems that don't meet the dependencies to use the model " . $model->getId() .": " . $model->getName();
 			// Document models on wiki and print link here.
 			$this->logInfo($error_message);
 			return false;
 		}
 
-		// Determine the system memory with some considerations.
-		$memoryAvailable = MemoryLimits::getAvailableMemory();
-		if ($memoryAvailable <= 0) {
-			// We cannot determine amount of memory to give to face recognition CNN.
-			// We will hardcode it here to the minimum memory settings.
-			$this->logDebug("Cannot detect amount of memory given to PHP process. Using " . OCP_Util::humanFileSize(SettingsService::MINIMUM_MEMORY_LIMITS). " for image processing");
-			$memoryAvailable = SettingsService::MINIMUM_MEMORY_LIMITS;
-		}
-
-		// Apply some prudent limits.
-		if ($memoryAvailable < SettingsService::MINIMUM_MEMORY_LIMITS) {
+		$imageArea = $this->settingsService->getAnalysisImageArea();
+		if ($imageArea < 0) {
 			$error_message =
-				"\n" .
-				"Seems that you have only " . OCP_Util::humanFileSize($memoryAvailable). " of memory given to PHP.\n" .
-				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_MEMORY_LIMITS) .  ". You need to change your memory_limit in php.ini.\n" .
-				"Check https://secure.php.net/manual/en/ini.core.php#ini.memory-limit for details.\n" .
-				"If you already set this to unlimited, it seems your system is not having enough RAM memory.";
+				"Seems that still don't configured the image area used for analysis.\n" .
+				"Please contact administrator to configure it in the admin panel to continue.\n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}
 
-		$this->logDebug(sprintf('Found %s available to PHP.', OCP_Util::humanFileSize($memoryAvailable)));
-
-		// No point going above 4GB ("4GB should be enough for everyone")
-		if ($memoryAvailable > SettingsService::MAXIMUM_MEMORY_LIMITS) {
-			$this->logDebug('Capping used memory to maximum of ' . OCP_Util::humanFileSize(SettingsService::MAXIMUM_MEMORY_LIMITS));
-			$memoryAvailable = SettingsService::MAXIMUM_MEMORY_LIMITS;
+		$maxImageArea = $model->getMaximumArea();
+		if ($imageArea > $maxImageArea) {
+			$error_message =
+				"There are inconsistencies between the configured image area (" . $imageArea. " pixels^2) which is\n" .
+				"greater that the maximum allowed by the model (". $maxImageArea . " pixels^2).\n" .
+				"Please contact administrator to configure it in the admin panel to continue.\n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
+			$this->logInfo($error_message);
+			return false;
 		}
-
-		// Apply admin setting limit.
-		$memorySetting = $this->settingsService->getMemoryLimits();
-		if ($memorySetting > 0) {
-			if ($memorySetting > $memoryAvailable) {
-				$error_message =
-					"\n" .
-					"Seems that you configured " . OCP_Util::humanFileSize($memorySetting) . " of memory on FaceRecognition settings,\n" .
-					"however, this exceeds detected as maximum for PHP: " . OCP_Util::humanFileSize($memoryAvailable) . ".\n" .
-					"We will ignore the FaceRecognition settings, and we will limit to that.";
-				$this->logInfo($error_message);
-			}
-			else {
-				$this->logInfo("Applying the memory limit to " . OCP_Util::humanFileSize($memorySetting) . " configured in settings.");
-				$memoryAvailable = $memorySetting;
-			}
-		}
-
-		$context->propertyBag['memory'] = $memoryAvailable;
 
 		return true;
 	}

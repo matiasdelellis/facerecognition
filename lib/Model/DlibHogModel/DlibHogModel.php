@@ -26,6 +26,8 @@ namespace OCA\FaceRecognition\Model\DlibHogModel;
 
 use OCP\IDBConnection;
 
+use OCA\FaceRecognition\Helper\MemoryLimits;
+
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -120,6 +122,10 @@ class DlibHogModel implements IModel {
 		       version_compare(phpversion('pdlib'), '1.0.1', '>=');
 	}
 
+	public function getMaximumArea(): int {
+		return intval(MemoryLimits::getAvailableMemory()/self::MEMORY_AREA_RELATIONSHIP);
+	}
+
 	public function install() {
 		if ($this->isInstalled()) {
 			return;
@@ -163,10 +169,6 @@ class DlibHogModel implements IModel {
 	public function open() {
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
-	}
-
-	public function getMemoryAreaRelation(): int {
-		return self::MEMORY_AREA_RELATIONSHIP;
 	}
 
 	public function detectFaces(string $imagePath): array {

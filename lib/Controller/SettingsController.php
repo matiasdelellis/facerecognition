@@ -33,9 +33,16 @@ use OCP\IL10N;
 use OCP\Util as OCP_Util;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
+
+use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Model\ModelManager;
+
 use OCA\FaceRecognition\Service\SettingsService;
 
 class SettingsController extends Controller {
+
+	/** @var ModelManager */
+	private $modelManager;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -56,6 +63,7 @@ class SettingsController extends Controller {
 
 	public function __construct ($appName,
 	                             IRequest        $request,
+	                             ModelManager    $modelManager,
 	                             SettingsService $settingsService,
 	                             IL10N           $l10n,
 	                             IUserManager    $userManager,
@@ -64,6 +72,7 @@ class SettingsController extends Controller {
 		parent::__construct($appName, $request);
 
 		$this->appName         = $appName;
+		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
 		$this->l10n            = $l10n;
 		$this->userManager     = $userManager;
@@ -137,6 +146,42 @@ class SettingsController extends Controller {
 		$message = "";
 
 		switch ($type) {
+			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
+				if (!is_numeric ($value)) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The format seems to be incorrect.");
+					$value = '-1';
+					break;
+				}
+				$model = $this->modelManager->getCurrentModel();
+				if (is_null($model)) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("Seems you haven't set up any analysis model yet");
+					$value = '-1';
+					break;
+				}
+				// Apply prudent limits.
+				if ($value > 0 && $value < SettingsService::MINIMUM_ANALYSIS_IMAGE_AREA) {
+					$value = SettingsService::MINIMUM_ANALYSIS_IMAGE_AREA;
+					$message = $this->l10n->t("The minimum recommended area is %s", $this->getFourByThreeRelation($value));
+					$status = self::STATE_ERROR;
+				} else if ($value > SettingsService::MAXIMUM_ANALYSIS_IMAGE_AREA) {
+					$value = SettingsService::MAXIMUM_ANALYSIS_IMAGE_AREA;
+					$message = $this->l10n->t("The maximum recommended area is %s", $this->getFourByThreeRelation($value));
+					$status = self::STATE_ERROR;
+				}
+				$maxImageArea = $model->getMaximumArea();
+				if ($value > $maxImageArea) {
+					$value = $maxImageArea;
+					$message = $this->l10n->t("The model does not recommend an area greater than %s", $this->getFourByThreeRelation($value));
+					$status = self::STATE_ERROR;
+				}
+				// If any validation error saves the value
+				if ($status !== self::STATE_ERROR) {
+					$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
+					$this->settingsService->setAnalysisImageArea($value);
+				}
+				break;
 			case SettingsService::SENSITIVITY_KEY:
 				$this->settingsService->setSensitivity($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
@@ -148,35 +193,6 @@ class SettingsController extends Controller {
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
-				break;
-			case SettingsService::MEMORY_LIMITS_KEY:
-				if (!is_numeric ($value)) {
-					$status = self::STATE_ERROR;
-					$message = $this->l10n->t("The format seems to be incorrect.");
-					$value = '-1';
-				}
-				// Apply prudent limits.
-				if ($value < SettingsService::MINIMUM_MEMORY_LIMITS) {
-					$value = SettingsService::MINIMUM_MEMORY_LIMITS;
-					$message = $this->l10n->t("Recommended memory for analysis is at least %s of RAM.", OCP_Util::humanFileSize($value));
-					$status = self::STATE_ERROR;
-				} else if ($value > SettingsService::MAXIMUM_MEMORY_LIMITS) {
-					$value = SettingsService::MAXIMUM_MEMORY_LIMITS;
-					$message = $this->l10n->t("We are not recommending using more than %s of RAM memory, as we see little to no benefit.", OCP_Util::humanFileSize($value));
-					$status = self::STATE_ERROR;
-				}
-				// Valid according to RAM of php.ini setting.
-				$memory = MemoryLimits::getAvailableMemory();
-				if ($value > $memory) {
-					$value = $memory;
-					$message = $this->l10n->t("According to your system you can not use more than %s of RAM", OCP_Util::humanFileSize($value));
-					$status = self::STATE_ERROR;
-				}
-				// If any validation error saves the value
-				if ($status !== self::STATE_ERROR) {
-					$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
-					$this->settingsService->setMemoryLimits($value);
-				}
 				break;
 			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
@@ -211,17 +227,8 @@ class SettingsController extends Controller {
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
 				break;
-			case SettingsService::MEMORY_LIMITS_KEY:
-				$value = $this->settingsService->getMemoryLimits();
-				// If it was not configured, returns the default
-				// values used by the background task as a reference.
-				if ($value == SettingsService::DEFAULT_MEMORY_LIMITS) {
-					$memory = MemoryLimits::getAvailableMemory();
-					if ($memory > SettingsService::MAXIMUM_MEMORY_LIMITS)
-						$memory = SettingsService::MAXIMUM_MEMORY_LIMITS;
-					$value = $memory;
-					$status = self::STATE_FALSE;
-				}
+			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
+				$value = $this->settingsService->getAnalysisImageArea();
 				break;
 			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$value = $this->settingsService->getShowNotGrouped();
@@ -237,6 +244,17 @@ class SettingsController extends Controller {
 		];
 
 		return new JSONResponse($result);
+	}
+
+	/**
+	 * Get an approximate image size with 4x3 ratio
+	 * @param int area
+	 * @return string area
+	 */
+	private function getFourByThreeRelation(int $area): string {
+		$width = intval(sqrt($area * 4 / 3));
+		$height = intval($width * 3  / 4);
+		return $width . 'x' . $height;
 	}
 
 }

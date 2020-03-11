@@ -26,6 +26,8 @@ namespace OCA\FaceRecognition\Model\DlibCnnModel;
 
 use OCP\IDBConnection;
 
+use OCA\FaceRecognition\Helper\MemoryLimits;
+
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -118,6 +120,10 @@ class DlibCnnModel implements IModel {
 		return extension_loaded('pdlib');
 	}
 
+	public function getMaximumArea(): int {
+		return intval(MemoryLimits::getAvailableMemory()/static::MEMORY_AREA_RELATIONSHIP);
+	}
+
 	public function install() {
 		if ($this->isInstalled()) {
 			return;
@@ -165,10 +171,6 @@ class DlibCnnModel implements IModel {
 		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
-	}
-
-	public function getMemoryAreaRelation(): int {
-		return static::MEMORY_AREA_RELATIONSHIP;
 	}
 
 	public function detectFaces(string $imagePath): array {

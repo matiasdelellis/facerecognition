@@ -276,7 +276,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			return new ImageProcessingContext($imagePath, "", -1, true);
 		}
 
-		$maxImageArea = $this->getMaxImageArea($this->model);
+		$maxImageArea = $this->getMaxImageArea();
 		$ratio = $this->resizeImage($image, $maxImageArea);
 
 		$tempfile = $this->fileService->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
@@ -359,51 +359,33 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Obtains max image area lazily (from cache, or calculates it and puts it to cache)
 	 *
-	 * @param IModel $model Resnet model
 	 * @return int Max image area (in pixels^2)
 	 */
-	private function getMaxImageArea(IModel $model): int {
+	private function getMaxImageArea(): int {
+		// First check if is cached
+		//
 		if (!is_null($this->maxImageAreaCached)) {
 			return $this->maxImageAreaCached;
 		}
 
-		$this->maxImageAreaCached = $this->calculateMaxImageArea($model);
-		return $this->maxImageAreaCached;
-	}
+		// Get this setting on main app_config.
+		// Note that this option has lower and upper limits and validations
+		$this->maxImageAreaCached = $this->settingsService->getAnalysisImageArea();
 
-	/**
-	 * Calculates max image area. This is separate function, as there are several levels of user overrides.
-	 *
-	 * @param IModel $model Resnet model
-	 * @return int Max image area (in pixels^2)
-	 */
-	private function calculateMaxImageArea(IModel $model): int {
-		// First check if we are provided value from command line
-		//
-		if (
-			(array_key_exists('max_image_area', $this->context->propertyBag)) &&
-			(!is_null($this->context->propertyBag['max_image_area']))
-		) {
-				return $this->context->propertyBag['max_image_area'];
-		}
-
-		// Check if admin persisted this setting in config and it is valid value
+		// Check if admin override it in config and it is valid value
 		//
 		$maxImageArea = $this->settingsService->getMaximumImageArea();
 		if ($maxImageArea > 0) {
-			return $maxImageArea;
+			$this->maxImageAreaCached = $maxImageArea;
+		}
+		// Also check if we are provided value from command line.
+		//
+		if ((array_key_exists('max_image_area', $this->context->propertyBag)) &&
+		    (!is_null($this->context->propertyBag['max_image_area']))) {
+			$this->maxImageAreaCached = $this->context->propertyBag['max_image_area'];
 		}
 
-		// Calculate it from memory
-		//
-		$allowedMemory = $this->context->propertyBag['memory'];
-
-		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
-		// This reasoning and calculations are all based on analysis given here:
-		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
-		$maxImageArea = intval(($allowedMemory) / $model->getMemoryAreaRelation()); // TODO: Maybe another helper.
-
-		return $maxImageArea;
+		return $this->maxImageAreaCached;
 	}
 
 }

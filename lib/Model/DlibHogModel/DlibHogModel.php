@@ -185,4 +185,14 @@ class DlibHogModel implements IModel {
 		return $this->fr->computeDescriptor($imagePath, $landmarks);
 	}
 
+	public function isMimeTypeSupported(string $mimeType): bool {
+		$mimeTypesSupport = [
+			'image/jpeg',
+			'image/png',
+			'image/bmp',
+			'image/gif'
+		];
+		return in_array($mimeType, $mimeTypesSupport, true);
+	}
+
 }

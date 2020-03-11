@@ -94,4 +94,12 @@ interface IModel {
 	 */
 	public function computeDescriptor(string $imagePath, array $landmarks): array;
 
+	/**
+	 * Determine if the model can work with a certain type of file
+	 *
+	 * @param string $mimeType MIME type to check if it supported
+	 * @return true if MIME type is supported, false otherwise
+	 */
+	public function isMimeTypeSupported(string $mimeType): bool;
+
 }

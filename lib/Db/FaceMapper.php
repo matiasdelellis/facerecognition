@@ -36,13 +36,12 @@ class FaceMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
-	public function find (int $faceId): Face {
+	public function find (int $faceId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
 			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
-		$faces = $this->findEntity($qb);
-		return $faces;
+		return $this->findEntity($qb);
 	}
 
 	/**
@@ -83,7 +82,7 @@ class FaceMapper extends QBMapper {
 	 * @return Face Oldest face, if any is found
 	 * @throws DoesNotExistException If there is no faces in database without person for a given user and model.
 	 */
-	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): Face {
+	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model) {
 		$qb = $this->db->getQueryBuilder();
 		$qb
 			->select('f.id', 'f.creation_time')
@@ -106,16 +105,14 @@ class FaceMapper extends QBMapper {
 
 	public function getFaces(string $userId, $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
-			->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
+		$qb->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$faces = $this->findEntities($qb);
-		return $faces;
+		return $this->findEntities($qb);
 	}
 
 	public function findFacesFromPerson(string $userId, int $personId, int $model, $limit = null, $offset = null): array {
@@ -157,6 +154,7 @@ class FaceMapper extends QBMapper {
 
 	/**
 	 * Finds all faces contained in one image
+	 * Note that this is independent of any Model
 	 *
 	 * @param int $imageId Image for which to find all faces for
 	 */
@@ -170,9 +168,12 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Removes all faces contained in one image.
+	 * Note that this is independent of any Model
+	 *
 	 * @param int $imageId Image for which to delete faces for
 	 */
-	public function removeFaces(int $imageId) {
+	public function removeFromImage(int $imageId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
@@ -249,6 +250,9 @@ class FaceMapper extends QBMapper {
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])
 			->execute();
+
 		$face->setId((int) $qb->getLastInsertId());
+
+		return $face;
 	}
 }

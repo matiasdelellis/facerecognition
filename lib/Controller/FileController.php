@@ -83,7 +83,9 @@ class FileController extends Controller {
 		$file = $this->fileService->getFileByPath($fullpath);
 
 		$fileId = $file->getId();
-		$image = $this->imageMapper->findFromFile($this->userId, $fileId);
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$image = $this->imageMapper->findFromFile($this->userId, $modelId, $fileId);
 
 		$resp['enabled'] = true;
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($file);
@@ -93,7 +95,7 @@ class FileController extends Controller {
 		$resp['error'] = $image ? $image->getError() : null;
 		$resp['persons'] = array();
 
-		$persons = $this->personMapper->findFromFile($this->userId, $fileId);
+		$persons = $this->personMapper->findFromFile($this->userId, $modelId, $fileId);
 		foreach ($persons as $person) {
 			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $this->settingsService->getCurrentFaceModel());
 			if (!count($face))

@@ -36,7 +36,8 @@ use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
-use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -115,10 +116,16 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	protected $imageMapper;
 
 	/** @var FileService */
-	private $fileService;
+	protected $fileService;
 
 	/** @var SettingsService */
-	private $settingsService;
+	protected $settingsService;
+
+	/** @var ModelManager */
+	protected $modelManager;
+
+	/** @var IModel */
+	private $model;
 
 	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
@@ -127,16 +134,21 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
+	 * @param ModelManager $modelManager Model manager
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+	                            ModelManager    $modelManager)
 	{
 		parent::__construct();
 
 		$this->imageMapper        = $imageMapper;
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
+		$this->modelManager       = $modelManager;
+
+		$this->model              = null;
 		$this->maxImageAreaCached = null;
 	}
 
@@ -153,26 +165,25 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		$requirements = new Requirements($context->modelService, $this->settingsService->getCurrentFaceModel());
-
-		$images = $context->propertyBag['images'];
-
-		$cfd = new \CnnFaceDetection($requirements->getFaceDetectionModel());
-		$fld = new \FaceLandmarkDetection($requirements->getLandmarksDetectionModel());
-		$fr = new \FaceRecognition($requirements->getFaceRecognitionModel());
-
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
+		// Get current model.
+		$this->model = $this->modelManager->getCurrentModel();
+
+		// Open model.
+		$this->model->open();
+
+		$images = $context->propertyBag['images'];
 		foreach($images as $image) {
 			yield;
 
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$imageProcessingContext = $this->findFaces($cfd, $image);
+				$imageProcessingContext = $this->findFaces($this->model, $image);
 
 				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
-					$this->populateDescriptors($fld, $fr, $imageProcessingContext);
+					$this->populateDescriptors($this->model, $imageProcessingContext);
 				}
 
 				if ($imageProcessingContext === null) {
@@ -202,11 +213,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * If image should be skipped, returns null.
 	 * If there is any error, throws exception
 	 *
-	 * @param \CnnFaceDetection $cfd Face detection model
+	 * @param IModel $model Resnet model
 	 * @param Image $image Image to find faces on
 	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(\CnnFaceDetection $cfd, Image $image) {
+	private function findFaces(IModel $model, Image $image) {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -227,7 +238,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Detect faces from model
-		$facesFound = $cfd->detect($imageProcessingContext->getTempPath());
+		$facesFound = $model->detectFaces($imageProcessingContext->getTempPath());
 
 		// Convert from dictionary of faces to our Face Db Entity
 		$faces = array();
@@ -318,11 +329,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
-	 * @param \FaceLandmarkDetection $fld Landmark detection model
-	 * @param \FaceRecognition $fr Face recognition model
+	 * @param IModel $model Resnet model
 	 * @param ImageProcessingContext Image processing context
 	 */
-	private function populateDescriptors(\FaceLandmarkDetection $fld, \FaceRecognition $fr, ImageProcessingContext $imageProcessingContext) {
+	private function populateDescriptors(IModel $model, ImageProcessingContext $imageProcessingContext) {
 		$faces = $imageProcessingContext->getFaces();
 
 		foreach($faces as &$face) {
@@ -336,12 +346,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$normalizedFace->normalizeSize(1.0 / $imageProcessingContext->getRatio());
 
 			// We are getting face landmarks from already prepared (temp) image (resized and with orienation fixed).
-			$landmarks = $fld->detect($imageProcessingContext->getTempPath(), array(
+			$landmarks = $model->detectLandmarks($imageProcessingContext->getTempPath(), array(
 				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
 				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
 			$face->landmarks = $landmarks['parts'];
 
-			$descriptor = $fr->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
+			$descriptor = $model->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
 			$face->descriptor = $descriptor;
 		}
 	}
@@ -352,46 +362,30 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @return int Max image area (in pixels^2)
 	 */
 	private function getMaxImageArea(): int {
+		// First check if is cached
+		//
 		if (!is_null($this->maxImageAreaCached)) {
 			return $this->maxImageAreaCached;
 		}
 
-		$this->maxImageAreaCached = $this->calculateMaxImageArea();
-		return $this->maxImageAreaCached;
-	}
+		// Get this setting on main app_config.
+		// Note that this option has lower and upper limits and validations
+		$this->maxImageAreaCached = $this->settingsService->getAnalysisImageArea();
 
-	/**
-	 * Calculates max image area. This is separate function, as there are several levels of user overrides.
-	 *
-	 * @return int Max image area (in pixels^2)
-	 */
-	private function calculateMaxImageArea(): int {
-		// First check if we are provided value from command line
-		//
-		if (
-			(array_key_exists('max_image_area', $this->context->propertyBag)) &&
-			(!is_null($this->context->propertyBag['max_image_area']))
-		) {
-				return $this->context->propertyBag['max_image_area'];
-		}
-
-		// Check if admin persisted this setting in config and it is valid value
+		// Check if admin override it in config and it is valid value
 		//
 		$maxImageArea = $this->settingsService->getMaximumImageArea();
 		if ($maxImageArea > 0) {
-			return $maxImageArea;
+			$this->maxImageAreaCached = $maxImageArea;
+		}
+		// Also check if we are provided value from command line.
+		//
+		if ((array_key_exists('max_image_area', $this->context->propertyBag)) &&
+		    (!is_null($this->context->propertyBag['max_image_area']))) {
+			$this->maxImageAreaCached = $this->context->propertyBag['max_image_area'];
 		}
 
-		// Calculate it from memory
-		//
-		$allowedMemory = $this->context->propertyBag['memory'];
-
-		// Based on amount on memory PHP have, we will determine maximum amount of image size that we need to scale to.
-		// This reasoning and calculations are all based on analysis given here:
-		// https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection
-		$maxImageArea = intval(($allowedMemory) / SettingsService::MEMORY_AREA_RELATIONSHIP); // TODO: Maybe another helper.
-
-		return $maxImageArea;
+		return $this->maxImageAreaCached;
 	}
 
 }

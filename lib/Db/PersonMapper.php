@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2018-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -38,56 +38,104 @@ class PersonMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_persons', '\OCA\FaceRecognition\Db\Person');
 	}
 
-	public function find(string $userId, int $personId): Person {
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $personId ID of the person
+	 */
+	public function find(string $userId, int $personId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
-		$person = $this->findEntity($qb);
-		return $person;
+		return $this->findEntity($qb);
 	}
 
-	public function findByName(string $userId, string $personName): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name')
-			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)))
-			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
-		return $this->findEntities($qb);
-	}
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @param string $personName name of the person to find
+	 * @return Person[]
+	 */
+	public function findByName(string $userId, int $modelId, string $personName): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')))
+			->andwhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')));
 
-	public function findAll(string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name', 'is_valid')
 			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('person_name', $personName);
 
-		$person = $this->findEntities($qb);
-		return $person;
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @return Person[]
+	 */
+	public function findAll(string $userId, int $modelId): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name', 'is_valid')
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
+
+		return $this->findEntities($qb);
 	}
 
 	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *
 	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
 	 * @param bool $onlyInvalid True if client wants count of invalid persons only,
 	 *  false if client want count of all persons
 	 * @return int Count of persons
 	 */
-	public function countPersons(string $userId, bool $onlyInvalid=false): int {
+	public function countPersons(string $userId, int $modelId, bool $onlyInvalid=false): int {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
 		$qb = $this->db->getQueryBuilder();
-		$qb = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('user', $qb->createParameter('user')));
+		$qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')');
+
 		if ($onlyInvalid) {
 			$qb = $qb
 				->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
 				->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL);
 		}
-		$query = $qb->setParameter('user', $userId);
-		$resultStatement = $query->execute();
+
+		$qb = $qb
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
+
+		$resultStatement = $qb->execute();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -99,21 +147,21 @@ class PersonMapper extends QBMapper {
 	 * and return an array with that.
 	 *
 	 * @param string $userId ID of the user that clusters belong to
+	 * @param int $modelId ID of the model that clusters belgon to
 	 * @param int $fileId ID of file image for which to searh persons.
 	 *
-	 * @return array of persons
+	 * @return Person[] Array of persons on that file
 	 */
-	public function findFromFile(string $userId, int $fileId): array {
+	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id', 'name');
 		$qb->from($this->getTableName(), 'p')
 			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
 			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
-		$persons = $this->findEntities($qb);
-
-		return $persons;
+		return $this->findEntities($qb);
 	}
 
 	/**
@@ -137,20 +185,6 @@ class PersonMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('image_id', $imageId)
 			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL)
-			->execute();
-	}
-
-	/**
-	 * Updates one face with $faceId to database to person ID $personId.
-	 *
-	 * @param int $faceId ID of the face
-	 * @param int|null $personId ID of the person
-	 */
-	private function updateFace(int $faceId, $personId) {
-		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_faces')
-			->set("person", $qb->createNamedParameter($personId))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
 			->execute();
 	}
 
@@ -333,6 +367,20 @@ class PersonMapper extends QBMapper {
 				->execute();
 		}
 		return $orphaned;
+	}
+
+	/**
+	 * Updates one face with $faceId to database to person ID $personId.
+	 *
+	 * @param int $faceId ID of the face
+	 * @param int|null $personId ID of the person
+	 */
+	private function updateFace(int $faceId, $personId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('facerecog_faces')
+			->set("person", $qb->createNamedParameter($personId))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->execute();
 	}
 
 	/**

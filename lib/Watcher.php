@@ -1,7 +1,7 @@
 <?php
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017-2019 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
@@ -115,10 +115,16 @@ class Watcher {
 			return;
 		}
 
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		if ($modelId === SettingsService::FALLBACK_CURRENT_MODEL) {
+			$this->logger->debug("Skipping inserting file since there are no configured model");
+			return;
+		}
+
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
+				"Skipping inserting file " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
 			return;
 		}
 
@@ -143,6 +149,7 @@ class Watcher {
 		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+			// The file is not an image or the model does not support it
 			return;
 		}
 
@@ -157,7 +164,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingsService->getCurrentFaceModel());
+		$image->setModel($modelId);
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId === null) {
@@ -171,7 +178,7 @@ class Watcher {
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
-			$this->faceMapper->removeFaces($imageId);
+			$this->faceMapper->removeFromImage($imageId);
 
 			// If any person is now without faces, remove those (empty) persons
 			foreach ($facesToRemove as $faceToRemove) {
@@ -198,6 +205,12 @@ class Watcher {
 			return;
 		}
 
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		if ($modelId === SettingsService::FALLBACK_CURRENT_MODEL) {
+			$this->logger->debug("Skipping deleting file since there are no configured model");
+			return;
+		}
+
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
@@ -221,6 +234,7 @@ class Watcher {
 		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+			// The file is not an image or the model does not support it
 			return;
 		}
 
@@ -229,7 +243,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingsService->getCurrentFaceModel());
+		$image->setModel($modelId);
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId !== null) {
@@ -239,7 +253,7 @@ class Watcher {
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
-			$this->faceMapper->removeFaces($imageId);
+			$this->faceMapper->removeFromImage($imageId);
 
 			$image->setId($imageId);
 			$this->imageMapper->delete($image);

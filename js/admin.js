@@ -23,9 +23,9 @@ $(document).ready(function() {
                     var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
                     desc = t('facerecognition', 'Analyzing images');
                     desc += ' - ';
-                    desc += n('facerecognition', '1 image detected', '{totalImages} images detected', progress.totalImages, {totalImages: progress.totalImages});
+                    desc += n('facerecognition', '1 image detected', '%n images detected', progress.totalImages, {totalImages: progress.totalImages});
                     desc += ' - ';
-                    desc += n('facerecognition', '1 image in queue', '{queuedImages} images in queue', queuedImages, {queuedImages: queuedImages});
+                    desc += n('facerecognition', '1 image in queue', '%n images in queue', queuedImages, {queuedImages: queuedImages});
                     desc += ' - ';
                     desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', {estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
                 }
@@ -42,6 +42,70 @@ $(document).ready(function() {
             }
         });
     }
+
+
+    /*
+     * ImageArea
+     */
+    function getImageArea() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'analysis_image_area',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    var imageArea = parseInt(data.value);
+                    $('#image-area-range').val(imageArea);
+                    $('#image-area-value').html(getFourByThreeRelation(imageArea));
+                }
+            }
+        });
+    }
+
+    $('#image-area-range').on('input', function() {
+        $('#image-area-value').html(getFourByThreeRelation(this.value));
+        $('#restore-image-area').show();
+        $('#save-image-area').show();
+    });
+
+    $('#restore-image-area').on('click', function(event) {
+        event.preventDefault();
+        getImageArea();
+
+        $('#restore-image-area').hide();
+        $('#save-image-area').hide();
+    });
+
+    $('#save-image-area').on('click', function(event) {
+        event.preventDefault();
+        var imageArea = $('#image-area-range').val().toString();
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'analysis_image_area',
+                'value': imageArea
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                    $('#restore-image-area').hide();
+                    $('#save-image-area').hide();
+                }
+                else {
+                    var suggestedImageArea = parseInt(data.value);
+                    $('#image-area-range').val(suggestedImageArea);
+                    $('#image-area-value').html(getFourByThreeRelation(suggestedImageArea));
+                    var message = t('facerecognition', 'The change could not be applied.');
+                    message += " - " + data.message;
+                    OC.Notification.showTemporary(message);
+                }
+            }
+        });
+    });
+
 
     /*
      * Sensitivity
@@ -151,75 +215,6 @@ $(document).ready(function() {
         });
     });
 
-    /*
-     * MemoryLimits
-     */
-    function getMemoryLimits() {
-        $.ajax({
-            type: 'GET',
-            url: OC.generateUrl('apps/facerecognition/getappvalue'),
-            data: {
-                'type': 'memory-limits',
-            },
-            success: function (data) {
-                var memory = OC.Util.humanFileSize(data.value, false);
-                if (data.status === state.OK) {
-                    $('#memory-limits-text').val(memory);
-                }
-                $('#memory-limits-value').html(memory);
-            }
-        });
-    }
-
-    $('#memory-limits-text').on('input', function() {
-        var memory = OC.Util.computerFileSize (this.value);
-        $('#restore-memory-limits').show();
-        if (memory !== null) {
-            var human = OC.Util.humanFileSize(memory, false);
-            $('#memory-limits-value').html(human);
-            $('#save-memory-limits').show();
-        } else {
-            $('#memory-limits-value').html("...");
-            $('#save-memory-limits').hide();
-        }
-    });
-
-    $('#restore-memory-limits').on('click', function(event) {
-        event.preventDefault();
-        getMemoryLimits();
-
-        $('#restore-memory-limits').hide();
-        $('#save-memory-limits').hide();
-    });
-
-    $('#save-memory-limits').on('click', function(event) {
-        event.preventDefault();
-        var memoryInput = $('#memory-limits-text').val().toString();
-        var memory = OC.Util.computerFileSize(memoryInput);
-        $.ajax({
-            type: 'POST',
-            url: OC.generateUrl('apps/facerecognition/setappvalue'),
-            data: {
-                'type': 'memory-limits',
-                'value': memory
-            },
-            success: function (data) {
-                if (data.status === state.SUCCESS) {
-                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
-                    var memory = OC.Util.humanFileSize(data.value, false);
-                    $('#memory-limits-text').val(memory);
-                    $('#restore-memory-limits').hide();
-                    $('#save-memory-limits').hide();
-                }
-                else {
-                    var message = t('facerecognition', 'The change could not be applied.');
-                    message += " - " + data.message;
-                    OC.Notification.showTemporary(message);
-                }
-            }
-        });
-    });
-
 
     /*
      * Show not clustered people
@@ -256,14 +251,21 @@ $(document).ready(function() {
         });
     })
 
+    function getFourByThreeRelation(area) {
+        var width = Math.sqrt(area * 4 / 3);
+        var height = (width * 3  / 4);
+        return Math.floor(width) + 'x' + Math.floor(height);
+    }
+
 
     /*
      * Get initial values.
      */
+    getImageArea();
     getSensitivity();
     getMinConfidence();
-    getMemoryLimits();
     getNotGrouped();
+
     checkProgress();
 
     /*

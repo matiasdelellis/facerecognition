@@ -79,6 +79,15 @@ class FileService {
 	}
 
 	/**
+	 * Get root user folder
+	 * @param string $userId
+	 * @return Folder
+	 */
+	public function getUserFolder($userId = null): Folder {
+		return $this->rootFolder->getUserFolder($this->userId ?? $userId);
+	}
+
+	/**
 	 * Get a Node from userFolder
 	 * @param int $id the id of the Node
 	 * @param string $userId
@@ -249,6 +258,111 @@ class FileService {
 			}
 		}
 		return $results;
+	}
+
+
+	/**
+	 * Download a file in a temporary folder
+	 *
+	 * @param string $fileUrl url to download.
+	 * @return string temp file downloaded.
+	 *
+	 * @throws \Exception
+	 */
+	public function downloaldFile(string $fileUrl): string {
+		$tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
+		$tempFile = $tempFolder . basename($fileUrl);
+
+		$fp = fopen($tempFile, 'w+');
+		if ($fp === false) {
+			throw new \Exception('Could not open the file to write: ' . $tempFile);
+		}
+
+		$ch = curl_init($fileUrl);
+		if ($ch === false) {
+			throw new \Exception('Curl error: ' . curl_error($ch));
+		}
+
+		curl_setopt_array($ch, [
+			CURLOPT_FILE => $fp,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_SSL_VERIFYHOST => 0,
+			CURLOPT_USERAGENT => 'Nextcloud Facerecognition Service',
+		]);
+
+		if (curl_exec($ch) === false) {
+			throw new \Exception('Curl error: ' . curl_error($ch));
+		}
+
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($httpCode !== 200) {
+			$statusCodes = [
+				400 => 'Bad request',
+				401 => 'Unauthorized',
+				403 => 'Forbidden',
+				404 => 'Not Found',
+				500 => 'Internal Server Error',
+				502 => 'Bad Gateway',
+				503 => 'Service Unavailable',
+				504 => 'Gateway Timeout',
+			];
+
+			$message = 'Download failed';
+			if(isset($statusCodes[$httpCode])) {
+				$message .= ' - ' . $statusCodes[$httpCode] . ' (HTTP ' . $httpCode . ')';
+			} else {
+				$message .= ' - HTTP status code: ' . $httpCode;
+			}
+
+			$curlErrorMessage = curl_error($ch);
+			if(!empty($curlErrorMessage)) {
+				$message .= ' - curl error message: ' . $curlErrorMessage;
+			}
+			$message .= ' - URL: ' . htmlentities($fileUrl);
+
+			throw new \Exception($message);
+		}
+
+		curl_close($ch);
+		fclose($fp);
+
+		return $tempFile;
+	}
+
+	/**
+	 * Uncompressing the file with the bzip2-extension
+	 *
+	 * @param string $in
+	 * @param string $out
+	 *
+	 * @throws \Exception
+	 */
+	public function bunzip2(string $inputFile, string $outputFile) {
+		if (!file_exists ($inputFile) || !is_readable ($inputFile))
+			throw new \Exception('The file ' . $inputFile . ' not exists or is not readable');
+
+		if ((!file_exists($outputFile) && !is_writeable(dirname($outputFile))) ||
+		    (file_exists($outputFile) && !is_writable($outputFile)))
+			throw new \Exception('The file ' . $outputFile . ' exists or is not writable');
+
+		$in_file = bzopen ($inputFile, "r");
+		$out_file = fopen ($outputFile, "w");
+
+		if ($out_file === false)
+			throw new \Exception('Could not open the file to write: ' . $outputFile);
+
+		while ($buffer = bzread ($in_file, 4096)) {
+			if($buffer === false)
+				throw new \Exception('Read problem: ' . bzerrstr($in_file));
+			if(bzerrno($in_file) !== 0)
+				throw new \Exception('Compression problem: '. bzerrstr($in_file));
+
+			fwrite ($out_file, $buffer, 4096);
+		}
+
+		bzclose ($in_file);
+		fclose ($out_file);
 	}
 
 	/**

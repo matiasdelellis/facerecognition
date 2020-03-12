@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -26,31 +26,19 @@ namespace OCA\FaceRecognition\BackgroundJob;
 use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserManager;
-use OCP\App\IAppManager;
-use OCP\Files\IRootFolder;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\Service\ModelService;
 
 /**
  * Simple class holding all information that tasks might need, so they can do their job.
  * It can also serve as a temporary storage of information flowing from one task to another.
  */
 class FaceRecognitionContext {
-	/** @var IAppManager */
-	public $appManager;
-
 	/** @var IUserManager */
 	public $userManager;
 
-	/** @var IRootFolder */
-	public $rootFolder;
-
 	/** @var IConfig */
 	public $config;
-
-	/** @var ModelService */
-	public $modelService;
 
 	/** @var FaceRecognitionLogger */
 	public $logger;
@@ -67,16 +55,10 @@ class FaceRecognitionContext {
 	/** @var bool True if we are running from command, false if we are running as background job */
 	private $isRunningThroughCommand;
 
-	public function __construct(IAppManager  $appManager,
-	                            IUserManager $userManager,
-	                            IRootFolder  $rootFolder,
-	                            IConfig      $config,
-	                            ModelService $modelService) {
-		$this->appManager = $appManager;
+	public function __construct(IUserManager $userManager,
+	                            IConfig      $config) {
 		$this->userManager = $userManager;
-		$this->rootFolder = $rootFolder;
 		$this->config = $config;
-		$this->modelService = $modelService;
 		$this->isRunningThroughCommand = false;
 	}
 

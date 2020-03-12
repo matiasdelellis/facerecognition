@@ -25,7 +25,8 @@ declare(strict_types=1);
 namespace OCA\FaceRecognition\Service;
 
 use OCA\FaceRecognition\AppInfo\Application;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCP\IConfig;
 
@@ -35,7 +36,6 @@ class SettingsService {
 	 * System
 	 */
 	const MINIMUM_SYSTEM_MEMORY_REQUIREMENTS = 2 * 1024 * 1024 * 1024;
-	const MEMORY_AREA_RELATIONSHIP = 4 * 1024; // TODO: Move to models when implement others.
 
 	/*
 	 * Settings keys and default values.
@@ -43,25 +43,25 @@ class SettingsService {
 
 	/** Current Model used to analyze */
 	const CURRENT_MODEL_KEY = 'model';
-	/* Default values is taked from AddDefaultFaceModel */
+	const FALLBACK_CURRENT_MODEL = -1;
+
+	/** Image area that used used for analysis */
+	const ANALYSIS_IMAGE_AREA_KEY = "analysis_image_area";
+	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*680;
+	const DEFAULT_ANALYSIS_IMAGE_AREA = -1; // It is dynamically configured according to hardware
+	const MAXIMUM_ANALYSIS_IMAGE_AREA = 3840*2160;
 
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
 	const MINIMUM_SENSITIVITY = '0.4';
-	const DEFAULT_SENSITIVITY = '0.5';
+	const DEFAULT_SENSITIVITY = '0.4';
 	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min-confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
-	const DEFAULT_MINIMUM_CONFIDENCE = '0.9';
+	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
 	const MAXIMUM_MINIMUM_CONFIDENCE = '1.0';
-
-	/** Memory limit suggested for analysis */
-	const MEMORY_LIMITS_KEY = "memory-limits";
-	const MINIMUM_MEMORY_LIMITS = self::MEMORY_AREA_RELATIONSHIP * 640 * 480;
-	const DEFAULT_MEMORY_LIMITS = '-1'; // It is dynamically configured according to hardware
-	const MAXIMUM_MEMORY_LIMITS = 8 * 1024 * 1024 * 1024;
 
 	/** Show single persons on clustes view */
 	const SHOW_NOT_GROUPED_KEY = 'show-not-grouped';
@@ -101,7 +101,7 @@ class SettingsService {
 
 	/** Hidden setting that indicate maximum area of image to analyze */
 	const MAXIMUM_IMAGE_AREA_KEY = 'max_image_area';
-	const DEFAULT_MAXIMUM_IMAGE_AREA = '0';
+	const DEFAULT_MAXIMUM_IMAGE_AREA = '-1';
 
 
 	/**
@@ -185,11 +185,19 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, self::FALLBACK_CURRENT_MODEL));
 	}
 
-	public function setCurrentFaceModel($model) {
-		$this->config->setAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, $model);
+	public function setCurrentFaceModel(int $model) {
+		$this->config->setAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, strval($model));
+	}
+
+	public function getAnalysisImageArea(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, self::DEFAULT_ANALYSIS_IMAGE_AREA));
+	}
+
+	public function setAnalysisImageArea(int $imageArea) {
+		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
 	}
 
 	public function getSensitivity(): float {
@@ -206,14 +214,6 @@ class SettingsService {
 
 	public function setMinimumConfidence($confidence) {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
-	}
-
-	public function getMemoryLimits(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::MEMORY_LIMITS_KEY, self::DEFAULT_MEMORY_LIMITS));
-	}
-
-	public function setMemoryLimits(int $memoryLimits) {
-		$this->config->setAppValue(Application::APP_NAME, self::MEMORY_LIMITS_KEY, strval($memoryLimits));
 	}
 
 	public function getShowNotGrouped(): bool {

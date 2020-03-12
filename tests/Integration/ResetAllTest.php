@@ -38,7 +38,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use Test\TestCase;
 
@@ -55,26 +55,31 @@ class ResetAllTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
-		$imageMapper->insert($image);
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
+		$image = $imageMapper->insert($image);
+		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $imageCount);
-
-		// Add one face to DB
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
-		$faceMapper->insertFace($face);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
-		$this->assertEquals(1, $faceCount);
 
 		// Add one person to DB
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$person = new Person();
 		$person->setUser($this->user->getUID());
-		$person->setName('foo');
 		$person->setIsValid(true);
-		$personMapper->insert($person);
-		$personCount = $personMapper->countPersons($this->user->getUID());
+		$person->setName('foo');
+		$person = $personMapper->insert($person);
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
+
+		// Add one face to DB
+		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
+		$face->setPerson($person->getId());
+		$face = $faceMapper->insertFace($face);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(1, $faceCount);
+
+		// Check faces with all correct relationships
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 
 		// Execute reset all
@@ -84,11 +89,11 @@ class ResetAllTest extends IntegrationTestCase {
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		// Check that everything is gone
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $imageCount);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $faceCount);
-		$personCount = $personMapper->countPersons($this->user->getUID());
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
 	}
 }

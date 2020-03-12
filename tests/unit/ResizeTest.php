@@ -36,6 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -50,12 +51,9 @@ class ResizeTest extends TestCase {
 	 * {@inheritDoc}
 	 */
 	public function setUp() {
-		$appManager = $this->createMock(IAppManager::class);
 		$userManager = $this->createMock(IUserManager::class);
-		$rootFolder = $this->createMock(IRootFolder::class);
 		$config = $this->createMock(IConfig::class);
-		$modelService = $this->createMock(ModelService::class);
-		$this->context = new FaceRecognitionContext($appManager, $userManager, $rootFolder, $config, $modelService);
+		$this->context = new FaceRecognitionContext($userManager, $config);
 
 		$logger = $this->createMock(ILogger::class);
 		$this->context->logger = new FaceRecognitionLogger($logger);
@@ -65,7 +63,9 @@ class ResizeTest extends TestCase {
 		$imageMapper = $this->createMock(ImageMapper::class);
 		$fileService = $this->createMock(FileService::class);
 		$settingsService = $this->createMock(SettingsService::class);
-		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService);
+		$modelManager = $this->createMock(ModelManager::class);
+		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $modelManager);
+
 		$imageProcessingTask->setContext($this->context);
 
 		$image = new OCP_Image();

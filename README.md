@@ -65,6 +65,14 @@ make
 
 ## Commands
 
+### Configure models
+
+`face:setup -m|--model [MODEL_ID]`
+
+This command is responsible for installing pretrained models. You must supply
+`MODEL_ID` indicating the model to install. If not supplied, it will list all
+available models.
+
 ### Face analysis
 
 `face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]`
@@ -98,11 +106,30 @@ if face detection crashes randomly.
 
 `occ face:reset --all|--clustering [-u|--user_id USER_ID]`
 
-This command can completely wipe out all images, faces and cluster of persons. It
-is ideal if you want to start from scratch for any reason.
+This command can completely wipe out all images, faces and cluster of persons.
+It is ideal if you want to start from scratch for any reason.
 
 You must specify if you wish to completely reset the database `[--all]` and all
 images must be analyzed again, or you can reset only the clustering of persons
 `[--clustering]` and only clustering needs to be done again.
 
-If `USER` is provided, it will just reset the information of a particular user.
+If `USER_ID` is provided, it will just reset the information of a particular
+user.
+
+### Statistics
+
+`face:stats [-u|--user_id USER_ID] [-j|--json]`
+
+This command return a summary of the number of images, faces and persons found.
+
+If `USER_ID` is provided, just return the stats for the given user.
+
+If use the `--json` argument, it prints the stats in a json format more suitable
+to parse with other tools.
+
+### Progress
+
+`face:progress`
+
+This command just return the progress of the analysis and an estimated time to
+complete.

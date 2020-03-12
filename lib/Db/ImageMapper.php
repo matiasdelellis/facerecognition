@@ -1,7 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
- * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
+ * @copyright Copyright (c) 2017-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
  *
@@ -39,22 +39,31 @@ class ImageMapper extends QBMapper {
 		$this->faceMapper = $faceMapper;
 	}
 
-	public function find(string $userId, int $imageId): Image {
+	/**
+	 * @param string $userId Id of user
+	 * @param int $imageId Id of Image to get
+	 */
+	public function find(string $userId, int $imageId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName(), 'i')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($imageId)));
-		$image = $this->findEntity($qb);
-		return $image;
+		return $this->findEntity($qb);
 	}
 
-	public function findFromFile(string $userId, int $fileId) {
+	/**
+	 * @param string $userId Id of user
+	 * @param int $modelId Id of model
+	 * @param int $fileId Id of file to get Image
+	 */
+	public function findFromFile(string $userId, int $modelId, int $fileId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
-		   ->from($this->getTableName(), 'i')
-		   ->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-		   ->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
+			->from($this->getTableName(), 'i')
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andwhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($fileId)));
 
 		try {
 			return $this->findEntity($qb);
@@ -162,20 +171,20 @@ class ImageMapper extends QBMapper {
 
 	/**
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
+	 * @param int $modelId Model Id to get images for.
 	 */
-	public function findImagesWithoutFaces(IUser $user = null) {
+	public function findImagesWithoutFaces(IUser $user = null, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
+		$qb
 			->select(['id', 'user', 'file', 'model'])
 			->from($this->getTableName())
 			->where($qb->expr()->eq('is_processed',  $qb->createParameter('is_processed')))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
 			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
-			$query->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
+			$qb->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($user->getUID())));
 		}
-
-		$images = $this->findEntities($qb);
-		return $images;
+		return $this->findEntities($qb);
 	}
 
 	public function findImages(string $userId, int $model): array {

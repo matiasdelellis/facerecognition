@@ -36,7 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
-use OCA\FaceRecognition\Migration\AddDefaultFaceModel;
+use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\SettingsService;
 
 use Test\TestCase;
@@ -51,7 +51,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
@@ -72,7 +72,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(2);
-		$image->setModel(AddDefaultFaceModel::DEFAULT_FACE_MODEL_ID);
+		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$this->doStaleImagesRemoval();
@@ -102,7 +102,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		// invalidation and face removal when image is removed.
 
 		// We should find 2 images now - foo1.jpg, foo2.png
-		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 
 		// We should not delete anything this time
 		$this->doStaleImagesRemoval();
@@ -112,7 +112,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$view->file_put_contents("dir_nomedia/.nomedia", "content");
 		$this->doStaleImagesRemoval();
 		$this->assertEquals(1, $this->context->propertyBag['StaleImagesRemovalTask_staleRemovedImages']);
-		$this->assertEquals(1, count($imageMapper->findImagesWithoutFaces($this->user)));
+		$this->assertEquals(1, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
 
 	/**

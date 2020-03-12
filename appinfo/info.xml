@@ -38,17 +38,16 @@
 		<nextcloud min-version="16" max-version="18"/>
 	</dependencies>
 	<repair-steps>
-		<install>
-			<step>OCA\FaceRecognition\Migration\AddDefaultFaceModel</step>
-		</install>
 		<uninstall>
 			<step>OCA\FaceRecognition\Migration\RemoveFullImageScanDoneFlag</step>
 		</uninstall>
 	</repair-steps>
 	<commands>
 		<command>OCA\FaceRecognition\Command\BackgroundCommand</command>
+		<command>OCA\FaceRecognition\Command\ProgressCommand</command>
 		<command>OCA\FaceRecognition\Command\ResetCommand</command>
 		<command>OCA\FaceRecognition\Command\SetupCommand</command>
+		<command>OCA\FaceRecognition\Command\StatsCommand</command>
 	</commands>
 	<settings>
 		<admin>OCA\FaceRecognition\Settings\Admin</admin>

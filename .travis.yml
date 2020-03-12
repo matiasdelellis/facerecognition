@@ -51,7 +51,9 @@ before_script:
   - cd apps/$APP_NAME
 
 script:
-  - ../../occ face:setup
+  # Install models here is useless but they are a test of themselves.
+  - ../../occ face:setup --model 3 || true
+  - ../../occ face:setup --model 1
   - make test
 
   # Create coverage report

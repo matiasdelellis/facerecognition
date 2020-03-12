@@ -43,7 +43,7 @@ class SettingsService {
 
 	/** Current Model used to analyze */
 	const CURRENT_MODEL_KEY = 'model';
-	/* Default values is taked from ModelManager */
+	const FALLBACK_CURRENT_MODEL = -1;
 
 	/** Image area that used used for analysis */
 	const ANALYSIS_IMAGE_AREA_KEY = "analysis_image_area";
@@ -185,7 +185,7 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, ModelManager::DEFAULT_FACE_MODEL_ID));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, self::FALLBACK_CURRENT_MODEL));
 	}
 
 	public function setCurrentFaceModel(int $model) {

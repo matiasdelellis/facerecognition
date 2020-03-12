@@ -37,7 +37,7 @@ use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
 class ModelManager {
 
-	/** Defines ID for default face model */
+	/** There is no default model. This is used by tests */
 	const DEFAULT_FACE_MODEL_ID = 1;
 
 	/** @var IUserManager */

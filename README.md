@@ -69,9 +69,9 @@ make
 
 `face:setup -m|--model [MODEL_ID]`
 
-This command is responsible for installing the trained models. You must supply
-`MODEL_ID` indicating the model to install. If not supplied list all available
-models.
+This command is responsible for installing pretrained models. You must supply
+`MODEL_ID` indicating the model to install. If not supplied, it will list all
+available models.
 
 ### Face analysis
 
@@ -122,7 +122,7 @@ user.
 
 This command return a summary of the number of images, faces and persons found.
 
-If `USER_ID` is provided, just return the stats of the given user.
+If `USER_ID` is provided, just return the stats for the given user.
 
 If use the `--json` argument, it prints the stats in a json format more suitable
 to parse with other tools.

@@ -115,7 +115,7 @@ class PersonController extends Controller {
 		$persons = $this->personMapper->findAll($this->userId, $modelId);
 		foreach ($persons as $person) {
 			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-			if ($notGrouped === 'false' && count($personFaces) <= 1)
+			if ($notGrouped === false && count($personFaces) <= 1)
 				continue;
 
 			$limit = 14;
@@ -176,7 +176,6 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function findByName(string $personName) {
-		$notGrouped = $this->settingsService->getShowNotGrouped();
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -191,8 +190,6 @@ class PersonController extends Controller {
 		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($persons as $person) {
 			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-			if ($notGrouped === 'false' && count($personFaces) <= 1)
-				continue;
 
 			$faces = [];
 			foreach ($personFaces as $personFace) {

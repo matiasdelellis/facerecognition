@@ -29,6 +29,9 @@ use OCP\Files\Node;
 use OCP\ILogger;
 use OCP\IUserManager;
 
+use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Model\ModelManager;
+
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -59,6 +62,9 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var ModelManager */
+	private $modelManager;
+
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -76,6 +82,7 @@ class Watcher {
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
+	 * @param ModelManager $modelManager
 	 * @param SettingsService $settingsService
 	 * @param FileService $fileService
 	 * @param FaceManagementService $faceManagementService
@@ -85,6 +92,7 @@ class Watcher {
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
+	                            ModelManager          $modelManager,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService,
 	                            FaceManagementService $faceManagementService)
@@ -93,6 +101,7 @@ class Watcher {
 		$this->userManager           = $userManager;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
+		$this->modelManager          = $modelManager;
 		$this->personMapper          = $personMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
@@ -115,10 +124,16 @@ class Watcher {
 			return;
 		}
 
+		$model = $this->modelManager->getCurrentModel();
+		if (is_null($model)) {
+			$this->logger->debug("Skipping inserting file since there are no configured model");
+			return;
+		}
+
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
+				"Skipping inserting file " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
 			return;
 		}
 
@@ -143,6 +158,7 @@ class Watcher {
 		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+			// The file is not an image or the model does not support it
 			return;
 		}
 
@@ -157,7 +173,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingsService->getCurrentFaceModel());
+		$image->setModel($model->getId());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId === null) {
@@ -198,6 +214,12 @@ class Watcher {
 			return;
 		}
 
+		$model = $this->modelManager->getCurrentModel();
+		if (is_null($model)) {
+			$this->logger->debug("Skipping deleting file since there are no configured model");
+			return;
+		}
+
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
@@ -221,6 +243,7 @@ class Watcher {
 		}
 
 		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+			// The file is not an image or the model does not support it
 			return;
 		}
 
@@ -229,7 +252,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($this->settingsService->getCurrentFaceModel());
+		$image->setModel($model->getId());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId !== null) {

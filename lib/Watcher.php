@@ -1,7 +1,7 @@
 <?php
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2019 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
@@ -28,9 +28,6 @@ use OCP\Files\Folder;
 use OCP\Files\Node;
 use OCP\ILogger;
 use OCP\IUserManager;
-
-use OCA\FaceRecognition\Model\IModel;
-use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
@@ -62,9 +59,6 @@ class Watcher {
 	/** @var PersonMapper */
 	private $personMapper;
 
-	/** @var ModelManager */
-	private $modelManager;
-
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -82,7 +76,6 @@ class Watcher {
 	 * @param FaceMapper $faceMapper
 	 * @param ImageMapper $imageMapper
 	 * @param PersonMapper $personMapper
-	 * @param ModelManager $modelManager
 	 * @param SettingsService $settingsService
 	 * @param FileService $fileService
 	 * @param FaceManagementService $faceManagementService
@@ -92,7 +85,6 @@ class Watcher {
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
-	                            ModelManager          $modelManager,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService,
 	                            FaceManagementService $faceManagementService)
@@ -102,7 +94,6 @@ class Watcher {
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
 		$this->personMapper          = $personMapper;
-		$this->modelManager          = $modelManager;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 		$this->faceManagementService = $faceManagementService;
@@ -124,16 +115,10 @@ class Watcher {
 			return;
 		}
 
-		$model = $this->modelManager->getCurrentModel();
-		if (is_null($model)) {
-			$this->logger->debug("Skipping inserting file since there are no configured model");
-			return;
-		}
-
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(
-				"Skipping inserting file " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
+				"Skipping inserting image " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
 			return;
 		}
 
@@ -157,8 +142,7 @@ class Watcher {
 			return;
 		}
 
-		if (!$model->isMimeTypeSupported($node->getMimeType())) {
-			// The file is not an image or the model does not support it
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
@@ -173,7 +157,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($model->getId());
+		$image->setModel($this->settingsService->getCurrentFaceModel());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId === null) {
@@ -214,12 +198,6 @@ class Watcher {
 			return;
 		}
 
-		$model = $this->modelManager->getCurrentModel();
-		if (is_null($model)) {
-			$this->logger->debug("Skipping deleting file since there are no configured model");
-			return;
-		}
-
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
@@ -242,8 +220,7 @@ class Watcher {
 			return;
 		}
 
-		if (!$model->isMimeTypeSupported($node->getMimeType())) {
-			// The file is not an image or the model does not support it
+		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
 			return;
 		}
 
@@ -252,7 +229,7 @@ class Watcher {
 		$image = new Image();
 		$image->setUser($owner);
 		$image->setFile($node->getId());
-		$image->setModel($model->getId());
+		$image->setModel($this->settingsService->getCurrentFaceModel());
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId !== null) {

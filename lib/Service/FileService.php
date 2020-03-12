@@ -83,7 +83,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Folder
 	 */
-	public function getUserFolder($fileId, $userId = null): Folder {
+	public function getUserFolder($userId = null): Folder {
 		return $this->rootFolder->getUserFolder($this->userId ?? $userId);
 	}
 

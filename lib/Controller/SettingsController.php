@@ -248,8 +248,8 @@ class SettingsController extends Controller {
 
 	/**
 	 * Get an approximate image size with 4x3 ratio
-	 * @param int area
-	 * @return string area
+	 * @param int $area area in pixels^2
+	 * @return string
 	 */
 	private function getFourByThreeRelation(int $area): string {
 		$width = intval(sqrt($area * 4 / 3));

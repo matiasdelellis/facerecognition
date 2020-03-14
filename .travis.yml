@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 
 sudo: false
 
@@ -26,7 +26,8 @@ env:
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)
-  - sudo sh -c 'echo "deb [trusted=yes] http://repo.delellis.com.ar xenial main" > /etc/apt/sources.list.d/20-pdlib.list'
+  - sudo sh -c 'echo "deb https://repo.delellis.com.ar bionic bionic" > /etc/apt/sources.list.d/20-pdlib.list'
+  - wget -qO - https://repo.delellis.com.ar/repo.gpg.key | sudo apt-key add -
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
   - sudo apt update
   - sudo apt-get install libdlib-dev

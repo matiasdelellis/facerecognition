@@ -59,6 +59,8 @@ class DlibHogModel implements IModel {
 	const I_MODEL_PREDICTOR = 0;
 	const I_MODEL_RESNET = 1;
 
+	const PREFERRED_MIMETYPE = 'image/png';
+
 	/** @var \FaceLandmarkDetection */
 	private $fld;
 
@@ -124,6 +126,10 @@ class DlibHogModel implements IModel {
 
 	public function getMaximumArea(): int {
 		return intval(MemoryLimits::getAvailableMemory()/self::MEMORY_AREA_RELATIONSHIP);
+	}
+
+	public function getPreferredMimeType(): string {
+		return static::PREFERRED_MIMETYPE;
 	}
 
 	public function install() {

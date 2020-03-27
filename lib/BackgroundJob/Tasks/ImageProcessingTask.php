@@ -27,6 +27,7 @@ use OCP\Image as OCP_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\ITempManager;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -36,6 +37,8 @@ use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Helper\TempImage;
+
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
@@ -43,75 +46,12 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 /**
- * Plain old PHP object holding all information
- * that are needed to process all faces from one image
- */
-class ImageProcessingContext {
-	/** @var string Path to the image being processed */
-	private $imagePath;
-
-	/** @var string Path to temporary, resized image */
-	private $tempPath;
-
-	/** @var float Ratio of resized image, when scaling it */
-	private $ratio;
-
-	/** @var array<Face> All found faces in image */
-	private $faces;
-
-	/**
-	 * @var bool True if detection should be skipped, but image should be marked as processed.
-	 * If this is set, $tempPath and $ratio will be invalid and $faces should be empty array.
-	 */
-	private $skipDetection;
-
-	public function __construct(string $imagePath, string $tempPath, float $ratio, bool $skipDetection) {
-		$this->imagePath = $imagePath;
-		$this->tempPath = $tempPath;
-		$this->ratio = $ratio;
-		$this->faces = array();
-		$this->skipDetection = $skipDetection;
-	}
-
-	public function getImagePath(): string {
-		return $this->imagePath;
-	}
-
-	public function getTempPath(): string {
-		return $this->tempPath;
-	}
-
-	public function getRatio(): float {
-		return $this->ratio;
-	}
-
-	public function getSkipDetection(): bool {
-		return $this->skipDetection;
-	}
-
-	/**
-	 * Gets all faces
-	 *
-	 * @return Face[] Array of faces
-	 */
-	public function getFaces(): array {
-		return $this->faces;
-	}
-
-	/**
-	 * @param array<Face> $faces Array of faces to set
-	 */
-	public function setFaces($faces) {
-		$this->faces = $faces;
-	}
-}
-
-/**
  * Taks that get all images that are still not processed and processes them.
  * Processing image means that each image is prepared, faces extracted form it,
  * and for each found face - face descriptor is extracted.
  */
 class ImageProcessingTask extends FaceRecognitionBackgroundTask {
+
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
@@ -124,6 +64,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ModelManager */
 	protected $modelManager;
 
+	/** @var ITempManager */
+	private $tempManager;
+
 	/** @var IModel */
 	private $model;
 
@@ -135,11 +78,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
 	 * @param ModelManager $modelManager Model manager
+	 * @param ITempManager $tempManager Temp manager,
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
-	                            ModelManager    $modelManager)
+	                            ModelManager    $modelManager,
+	                            ITempManager    $tempManager)
 	{
 		parent::__construct();
 
@@ -147,6 +92,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
 		$this->modelManager       = $modelManager;
+		$this->tempManager        = $tempManager;
 
 		$this->model              = null;
 		$this->maxImageAreaCached = null;
@@ -180,19 +126,19 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$imageProcessingContext = $this->findFaces($this->model, $image);
+				$tempImage = $this->findFaces($image);
 
-				if (($imageProcessingContext !== null) && ($imageProcessingContext->getSkipDetection() === false)) {
+				if (($tempImage !== null) && ($tempImage->getSkipped() === false)) {
 					$this->populateDescriptors($this->model, $imageProcessingContext);
 				}
 
-				if ($imageProcessingContext === null) {
+				if ($tempImage === null) {
 					continue;
 				}
 
 				$endMillis = round(microtime(true) * 1000);
 				$duration = max($endMillis - $startMillis, 0);
-				$this->imageMapper->imageProcessed($image, $imageProcessingContext->getFaces(), $duration);
+				$this->imageMapper->imageProcessed($image, $tempImage->getFaces(), $duration);
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");
@@ -200,8 +146,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->logInfo('Faces found: 0. Image will be skipped because of the following error: ' . $e->getMessage());
 				$this->logDebug($e);
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
-			} finally {
-				$this->fileService->clean();
 			}
 		}
 
@@ -215,9 +159,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param IModel $model Resnet model
 	 * @param Image $image Image to find faces on
-	 * @return ImageProcessingContext|null Generated context that hold all information needed later for this image
+	 * @return TempImage|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(IModel $model, Image $image) {
+	private function findFaces(Image $image): TempImage {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -231,109 +175,46 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$imagePath = $this->fileService->getLocalFile($file);
 
 		$this->logInfo('Processing image ' . $imagePath);
-		$imageProcessingContext = $this->prepareImage($imagePath);
-		if ($imageProcessingContext->getSkipDetection() === true) {
+
+		$tempImage = new TempImage($imagePath,
+		                           $this->model->getPreferredMimeType(),
+		                           $this->getMaxImageArea(),
+		                           $this->settingsService->getMinimumImageSize(),
+		                           $this->context->logger->getLogger(),
+		                           $this->tempManager);
+
+		$tempImagePath = $tempImage->getTempImage();
+
+		if ($tempImagePath === null && $tempImage->getSkipDetection() === true) {
 			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-			return $imageProcessingContext;
+			return $tempImage;
 		}
 
 		// Detect faces from model
-		$facesFound = $model->detectFaces($imageProcessingContext->getTempPath());
+		$facesFound = $this->model->detectFaces($tempImagePath);
 
 		// Convert from dictionary of faces to our Face Db Entity
 		$faces = array();
 		foreach ($facesFound as $faceFound) {
 			$face = Face::fromModel($image->getId(), $faceFound);
-			$face->normalizeSize($imageProcessingContext->getRatio());
+			$face->normalizeSize($tempImage->getRatio());
 			$faces[] = $face;
 		}
+		$tempImage->setFaces($faces);
 
-		$imageProcessingContext->setFaces($faces);
 		$this->logInfo('Faces found: ' . count($faces));
 
-		return $imageProcessingContext;
-	}
-
-	/**
-	 * Given an image, it will rotate, scale and save image to temp location, ready to be consumed by pdlib.
-	 *
-	 * @param string $imagePath Path to image on disk
-	 *
-	 * @return ImageProcessingContext Generated context that hold all information needed later for this image.
-	 */
-	private function prepareImage(string $imagePath) {
-		$image = new OCP_Image(null, $this->context->logger->getLogger(), $this->context->config);
-		$image->loadFromFile($imagePath);
-		$image->fixOrientation();
-
-		if (!$image->valid()) {
-			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
-		}
-
-		// Ignore processing of images that are not large enough.
-		$minImageSize = $this->settingsService->getMinimumImageSize();
-		if ((imagesx($image->resource()) < $minImageSize) || (imagesy($image->resource()) < $minImageSize)) {
-			return new ImageProcessingContext($imagePath, "", -1, true);
-		}
-
-		$maxImageArea = $this->getMaxImageArea();
-		$ratio = $this->resizeImage($image, $maxImageArea);
-
-		$tempfile = $this->fileService->getTemporaryFile(pathinfo($imagePath, PATHINFO_EXTENSION));
-		$image->save($tempfile);
-
-		return new ImageProcessingContext($imagePath, $tempfile, $ratio, false);
-	}
-
-	/**
-	 * Resizes the image to reach max image area, but preserving ratio.
-	 * Stolen and adopted from OC_Image->resize() (difference is that this returns ratio of resize.)
-	 *
-	 * @param Image $image Image to resize
-	 * @param int $maxImageArea The maximum size of image we can handle (in pixels^2).
-	 *
-	 * @return float Ratio of resize. 1 if there was no resize
-	 */
-	public function resizeImage(OCP_Image $image, int $maxImageArea): float {
-		if (!$image->valid()) {
-			$message = "Image is not valid, probably cannot be loaded";
-			$this->logInfo($message);
-			throw new \RuntimeException($message);
-		}
-
-		$widthOrig = imagesx($image->resource());
-		$heightOrig = imagesy($image->resource());
-		if (($widthOrig <= 0) || ($heightOrig <= 0)) {
-			$message = "Image is having non-positive width or height, cannot continue";
-			$this->logInfo($message);
-			throw new \RuntimeException($message);
-		}
-
-		$areaRatio = $maxImageArea / ($widthOrig * $heightOrig);
-		$scaleFactor = sqrt($areaRatio);
-
-		$newWidth = intval(round($widthOrig * $scaleFactor));
-		$newHeight = intval(round($heightOrig * $scaleFactor));
-
-		$success = $image->preciseResize($newWidth, $newHeight);
-		if ($success === false) {
-			throw new \RuntimeException("Error during image resize");
-		}
-
-		$this->logDebug(sprintf('Image scaled from %dx%d to %dx%d (since max image area is %d pixels^2)',
-			$widthOrig, $heightOrig, $newWidth, $newHeight, $maxImageArea));
-
-		return 1 / $scaleFactor;
+		return $tempImage;
 	}
 
 	/**
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
 	 * @param IModel $model Resnet model
-	 * @param ImageProcessingContext Image processing context
+	 * @param TempImage processing context
 	 */
-	private function populateDescriptors(IModel $model, ImageProcessingContext $imageProcessingContext) {
-		$faces = $imageProcessingContext->getFaces();
+	private function populateDescriptors(IModel $model, TempImage $tempImage) {
+		$faces = $tempImage->getFaces();
 
 		foreach($faces as &$face) {
 			// For each face, we want to detect landmarks and compute descriptors.
@@ -343,15 +224,15 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			// But, since our face coordinates are already changed to align to original image,
 			// we need to fix them up to align them to temp image here.
 			$normalizedFace = clone $face;
-			$normalizedFace->normalizeSize(1.0 / $imageProcessingContext->getRatio());
+			$normalizedFace->normalizeSize(1.0 / $tempImage->getRatio());
 
 			// We are getting face landmarks from already prepared (temp) image (resized and with orienation fixed).
-			$landmarks = $model->detectLandmarks($imageProcessingContext->getTempPath(), array(
+			$landmarks = $model->detectLandmarks($tempImage->getTempPath(), array(
 				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
 				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
 			$face->landmarks = $landmarks['parts'];
 
-			$descriptor = $model->computeDescriptor($imageProcessingContext->getTempPath(), $landmarks);
+			$descriptor = $model->computeDescriptor($tempImage->getTempPath(), $landmarks);
 			$face->descriptor = $descriptor;
 		}
 	}

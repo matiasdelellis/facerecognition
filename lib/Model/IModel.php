@@ -59,6 +59,13 @@ interface IModel {
 	public function getMaximumArea(): int;
 
 	/**
+	 * Get the Mime Type preferred by the model
+	 *
+	 * @return string mimetype
+	 */
+	public function getPreferredMimeType(): string;
+
+	/**
 	 * Install the model.
 	 */
 	public function install();

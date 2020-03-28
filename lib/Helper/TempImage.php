@@ -42,9 +42,6 @@ class TempImage extends Image {
 	/** @var int */
 	private $maxImageArea;
 
-	/** @var \OCP\ILogger */
-	private $logger;
-
 	/** @var ITempManager */
 	private $tempManager;
 
@@ -56,9 +53,6 @@ class TempImage extends Image {
 
 	/** @var bool */
 	private $skipped = false;
-
-	/** @var array<Face> All found faces in image */
-	private $faces;
 
 	public function __construct(string $imagePath,
 	                            string $preferredMimeType,

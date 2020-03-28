@@ -27,7 +27,6 @@ use OCP\Image as OCP_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\ITempManager;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -64,9 +63,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ModelManager */
 	protected $modelManager;
 
-	/** @var ITempManager */
-	private $tempManager;
-
 	/** @var IModel */
 	private $model;
 
@@ -78,13 +74,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
 	 * @param ModelManager $modelManager Model manager
-	 * @param ITempManager $tempManager Temp manager,
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
-	                            ModelManager    $modelManager,
-	                            ITempManager    $tempManager)
+	                            ModelManager    $modelManager)
 	{
 		parent::__construct();
 
@@ -92,7 +86,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
 		$this->modelManager       = $modelManager;
-		$this->tempManager        = $tempManager;
 
 		$this->model              = null;
 		$this->maxImageAreaCached = null;
@@ -179,23 +172,15 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$tempImage = new TempImage($imagePath,
 		                           $this->model->getPreferredMimeType(),
 		                           $this->getMaxImageArea(),
-		                           $this->settingsService->getMinimumImageSize(),
-		                           $this->context->logger->getLogger(),
-		                           $this->tempManager);
-
-		$tempImagePath = $tempImage->getTempImage();
+		                           $this->settingsService->getMinimumImageSize());
 
 		if ($tempImage->getSkipped() === true) {
 			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
 			return $tempImage;
 		}
 
-		if ($tempImagePath === null) {
-			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-			return $tempImage;
-		}
-
 		// Detect faces from model
+		$tempImagePath = $tempImage->getTempPath();
 		$facesFound = $this->model->detectFaces($tempImagePath);
 
 		// Convert from dictionary of faces to our Face Db Entity

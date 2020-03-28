@@ -34,6 +34,9 @@ class TempImage extends Image {
 	private $imagePath;
 
 	/** @var string */
+	private $tempPath;
+
+	/** @var string */
 	private $preferredMimeType;
 
 	/** @var int */
@@ -52,26 +55,26 @@ class TempImage extends Image {
 	private $ratio = -1.0;
 
 	/** @var bool */
-	private $skippedDetection = false;
+	private $skipped = false;
 
 	/** @var array<Face> All found faces in image */
 	private $faces;
 
-	public function __construct(string       $imagePath,
-	                            string       $preferredMimeType,
-	                            int          $maxImageArea,
-	                            int          $minImageSide,
-	                            ILogger      $logger,
-	                            ITempManager $tempManager)
+	public function __construct(string $imagePath,
+	                            string $preferredMimeType,
+	                            int    $maxImageArea,
+	                            int    $minImageSide)
 	{
-		parent::__construct(null, $logger, null);
+		parent::__construct();
 
 		$this->imagePath         = $imagePath;
 		$this->preferredMimeType = $preferredMimeType;
 		$this->maxImageArea      = $maxImageArea;
 		$this->minImageSide      = $minImageSide;
-		$this->logger            = $logger;
-		$this->tempManager       = $tempManager;
+
+		$this->tempManager       = \OC::$server->getTempManager();
+
+		$this->prepareImage();
 	}
 
 	public function __destruct() {
@@ -79,30 +82,12 @@ class TempImage extends Image {
 	}
 
 	/**
-	 * Obtain a temporary image according to the imposed restrictions.
+	 * Get the path of temporary image
 	 *
-	 * @return string|null  path of resized image
+	 * @return string
 	 */
-	public function getTempImage(): ?string {
-		$this->loadFromFile($this->imagePath);
-		$this->fixOrientation();
-
-		if (!$this->valid()) {
-			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
-		}
-
-		if ((imagesx($this->resource()) < $this->minImageSide) ||
-		    (imagesy($this->resource()) < $this->minImageSide)) {
-			$this->skippedDetection = true;
-			return null;
-		}
-
-		$this->ratio = $this->resizeImage();
-
-		$tempFile = $this->tempManager->getTemporaryFile();
-		$this->save($tempFile, $this->preferredMimeType);
-
-		return $tempFile;
+	public function getTempPath(): string {
+		return $this->tempPath;
 	}
 
 	/**
@@ -119,13 +104,14 @@ class TempImage extends Image {
 	 * @return bool
 	 */
 	public function getSkipped(): bool {
-		return $this->skippedDetection;
+		return $this->skipped;
 	}
 	/**
 	 * Gets all faces
 	 *
 	 * @return Face[] Array of faces
 	 */
+
 	public function getFaces(): array {
 		return $this->faces;
 	}
@@ -135,6 +121,30 @@ class TempImage extends Image {
 	 */
 	public function setFaces(array $faces) {
 		$this->faces = $faces;
+	}
+
+	/**
+	 * Obtain a temporary image according to the imposed restrictions.
+	 *
+	 */
+	private function prepareImage() {
+		$this->loadFromFile($this->imagePath);
+		$this->fixOrientation();
+
+		if (!$this->valid()) {
+			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+		}
+
+		if ((imagesx($this->resource()) < $this->minImageSide) ||
+		    (imagesy($this->resource()) < $this->minImageSide)) {
+			$this->skipped = true;
+			return;
+		}
+
+		$this->ratio = $this->resizeImage();
+		$this->tempPath = $this->tempManager->getTemporaryFile();
+
+		$this->save($this->tempPath, $this->preferredMimeType);
 	}
 
 	/**
@@ -148,7 +158,6 @@ class TempImage extends Image {
 
 		if (($widthOrig <= 0) || ($heightOrig <= 0)) {
 			$message = "Image is having non-positive width or height, cannot continue";
-			$this->logger->info($message);
 			throw new \RuntimeException($message);
 		}
 

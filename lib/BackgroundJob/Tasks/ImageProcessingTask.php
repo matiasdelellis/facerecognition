@@ -129,7 +129,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$tempImage = $this->findFaces($image);
 
 				if (($tempImage !== null) && ($tempImage->getSkipped() === false)) {
-					$this->populateDescriptors($this->model, $imageProcessingContext);
+					$this->populateDescriptors($this->model, $tempImage);
 				}
 
 				if ($tempImage === null) {
@@ -161,7 +161,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * @param Image $image Image to find faces on
 	 * @return TempImage|null Generated context that hold all information needed later for this image
 	 */
-	private function findFaces(Image $image): TempImage {
+	private function findFaces(Image $image): ?TempImage {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
 
@@ -185,7 +185,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$tempImagePath = $tempImage->getTempImage();
 
-		if ($tempImagePath === null && $tempImage->getSkipDetection() === true) {
+		if ($tempImage->getSkipped() === true) {
+			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
+			return $tempImage;
+		}
+
+		if ($tempImagePath === null) {
 			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
 			return $tempImage;
 		}
@@ -211,7 +216,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
 	 *
 	 * @param IModel $model Resnet model
-	 * @param TempImage processing context
+	 * @param TempImage $tempImage processing context
 	 */
 	private function populateDescriptors(IModel $model, TempImage $tempImage) {
 		$faces = $tempImage->getFaces();

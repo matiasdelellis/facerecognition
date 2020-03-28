@@ -74,7 +74,7 @@ class TempImage extends Image {
 		$this->tempManager       = $tempManager;
 	}
 
-	function __destruct() {
+	public function __destruct() {
 		$this->tempManager->clean();
 	}
 
@@ -99,8 +99,8 @@ class TempImage extends Image {
 
 		$this->ratio = $this->resizeImage();
 
-		$tempfile = $this->tempManager->getTemporaryFile();
-		$this->save($tempfile, $this->preferredMimeType);
+		$tempFile = $this->tempManager->getTemporaryFile();
+		$this->save($tempFile, $this->preferredMimeType);
 
 		return $tempFile;
 	}
@@ -158,7 +158,7 @@ class TempImage extends Image {
 		$newWidth = intval(round($widthOrig * $scaleFactor));
 		$newHeight = intval(round($heightOrig * $scaleFactor));
 
-		$success = $image->preciseResize($newWidth, $newHeight);
+		$success = $this->preciseResize($newWidth, $newHeight);
 		if ($success === false) {
 			throw new \RuntimeException("Error during image resize");
 		}

@@ -119,19 +119,50 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
-				$tempImage = $this->findFaces($image);
+				// Get an temp Image to process this image.
+				$tempImage = $this->getTempImage($image);
 
-				if (($tempImage !== null) && ($tempImage->getSkipped() === false)) {
-					$this->populateDescriptors($this->model, $tempImage);
-				}
-
-				if ($tempImage === null) {
+				if (is_null($tempImage)) {
+					// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
+					$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
+					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 					continue;
 				}
 
+				if ($tempImage->getSkipped() === true) {
+					$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
+					$this->imageMapper->imageProcessed($image, array(), 0);
+					continue;
+				}
+
+				// Get faces in the temporary image
+				$tempImagePath = $tempImage->getTempPath();
+				$rawFaces = $this->model->detectFaces($tempImagePath);
+
+				$this->logInfo('Faces found: ' . count($rawFaces));
+
+				$faces = array();
+				foreach ($rawFaces as $rawFace) {
+					// Get landmarks of face from model
+					$landmarks = $this->model->detectLandmarks($tempImage->getTempPath(), $rawFace);
+					// Get descriptor of face from model
+					$descriptor = $this->model->computeDescriptor($tempImage->getTempPath(), $landmarks);
+
+					// Convert from dictionary of faces to our Face Db Entity
+					$face = Face::fromModel($image->getId(), $rawFace);
+					$face->normalizeSize($tempImage->getRatio());
+
+					// Save Landmarks and descriptor
+					$face->landmarks = $this->getNormalizedLandmarks($landmarks['parts'], $tempImage->getRatio());
+					$face->descriptor = $descriptor;
+
+					$faces[] = $face;
+				}
+
+				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
 				$duration = max($endMillis - $startMillis, 0);
-				$this->imageMapper->imageProcessed($image, $tempImage->getFaces(), $duration);
+				$this->imageMapper->imageProcessed($image, $faces, $duration);
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");
@@ -146,22 +177,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	}
 
 	/**
-	 * Given an image, it finds all faces on it.
-	 * If image should be skipped, returns null.
-	 * If there is any error, throws exception
+	 * Given an image, build a temporary image to perform the analysis
 	 *
-	 * @param IModel $model Resnet model
-	 * @param Image $image Image to find faces on
-	 * @return TempImage|null Generated context that hold all information needed later for this image
+	 * return TempImage|null
 	 */
-	private function findFaces(Image $image): ?TempImage {
+	private function getTempImage(Image $image): ?TempImage {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
 		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
-
 		if (empty($file)) {
-			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
-			$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
 			return null;
 		}
 
@@ -174,57 +197,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		                           $this->getMaxImageArea(),
 		                           $this->settingsService->getMinimumImageSize());
 
-		if ($tempImage->getSkipped() === true) {
-			$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-			return $tempImage;
-		}
-
-		// Detect faces from model
-		$tempImagePath = $tempImage->getTempPath();
-		$facesFound = $this->model->detectFaces($tempImagePath);
-
-		// Convert from dictionary of faces to our Face Db Entity
-		$faces = array();
-		foreach ($facesFound as $faceFound) {
-			$face = Face::fromModel($image->getId(), $faceFound);
-			$face->normalizeSize($tempImage->getRatio());
-			$faces[] = $face;
-		}
-		$tempImage->setFaces($faces);
-
-		$this->logInfo('Faces found: ' . count($faces));
-
 		return $tempImage;
-	}
-
-	/**
-	 * Gets all face descriptors in a given image processing context. Populates "descriptor" in array of faces.
-	 *
-	 * @param IModel $model Resnet model
-	 * @param TempImage $tempImage processing context
-	 */
-	private function populateDescriptors(IModel $model, TempImage $tempImage) {
-		$faces = $tempImage->getFaces();
-
-		foreach($faces as &$face) {
-			// For each face, we want to detect landmarks and compute descriptors.
-			// We use already resized image (from temp, used to detect faces) for this.
-			// (better would be to work with original image, but that will require
-			// another orientation fix and another save to the temp)
-			// But, since our face coordinates are already changed to align to original image,
-			// we need to fix them up to align them to temp image here.
-			$normalizedFace = clone $face;
-			$normalizedFace->normalizeSize(1.0 / $tempImage->getRatio());
-
-			// We are getting face landmarks from already prepared (temp) image (resized and with orienation fixed).
-			$landmarks = $model->detectLandmarks($tempImage->getTempPath(), array(
-				"left" => $normalizedFace->left, "top" => $normalizedFace->top,
-				"bottom" => $normalizedFace->bottom, "right" => $normalizedFace->right));
-			$face->landmarks = $landmarks['parts'];
-
-			$descriptor = $model->computeDescriptor($tempImage->getTempPath(), $landmarks);
-			$face->descriptor = $descriptor;
-		}
 	}
 
 	/**
@@ -257,6 +230,22 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		return $this->maxImageAreaCached;
+	}
+
+	/**
+	 * Helper method, to normalize landmarks sizes back to original dimensions, based on ratio
+	 *
+	 */
+	private function getNormalizedLandmarks(array $rawLandmarks, float $ratio): array {
+		$landmarks = [];
+		foreach ($rawLandmarks as $rawLandmark) {
+			$landmark = [];
+			$landmark['x'] = intval(round($rawLandmark['x']*$ratio));
+			$landmark['y'] = intval(round($rawLandmark['y']*$ratio));
+
+			$landmarks[] = $landmark;
+		}
+		return $landmarks;
 	}
 
 }

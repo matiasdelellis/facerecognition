@@ -106,22 +106,6 @@ class TempImage extends Image {
 	public function getSkipped(): bool {
 		return $this->skipped;
 	}
-	/**
-	 * Gets all faces
-	 *
-	 * @return Face[] Array of faces
-	 */
-
-	public function getFaces(): array {
-		return $this->faces;
-	}
-
-	/**
-	 * @param array<Face> $faces Array of faces to set
-	 */
-	public function setFaces(array $faces) {
-		$this->faces = $faces;
-	}
 
 	/**
 	 * Obtain a temporary image according to the imposed restrictions.

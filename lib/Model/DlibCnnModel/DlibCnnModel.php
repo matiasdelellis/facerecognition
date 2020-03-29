@@ -53,6 +53,8 @@ class DlibCnnModel implements IModel {
 	const I_MODEL_PREDICTOR = 1;
 	const I_MODEL_RESNET = 2;
 
+	const PREFERRED_MIMETYPE = 'image/png';
+
 	/** @var \CnnFaceDetection */
 	private $cfd;
 
@@ -122,6 +124,10 @@ class DlibCnnModel implements IModel {
 
 	public function getMaximumArea(): int {
 		return intval(MemoryLimits::getAvailableMemory()/static::MEMORY_AREA_RELATIONSHIP);
+	}
+
+	public function getPreferredMimeType(): string {
+		return static::PREFERRED_MIMETYPE;
 	}
 
 	public function install() {

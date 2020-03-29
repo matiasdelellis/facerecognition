@@ -1,6 +1,31 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.13] - 2020-03-29
+### Added
+- Add face:reset --all|--clustering command. Details in README.md file.
+- Add face:stats command. Details in README.md file.
+- Add face:progress command. Details in README.md file.
+- Multiple model support was implemented. Details on Wiki.
+- Allow to change the model using the face:setup command.
+- Allow configure the supported mimetype. Details on Wiki.
+
+### Changed
+- Change to use area of the images instead of memory as the main parameter.
+- Don't upsampling image on CNN, better pass a bigger picture.
+- Don't install any model by default, just dump list of models.
+- Better message and print system/php memory as debug.
+- Test: Move to new repo that use reprepro and use bionic.
+
+### Bug fixes
+- Fix show not grouped on main view.
+
+### Translations
+- Add Portuguese (Brazil) thanks to Marcelo Rovani.
+- Update Chinese language thanks to Jack Frost.
+- Update German language thanks to Mark Ziegler.
+- Update Spanish language thanks to Matias De lellis.
+
 ## [0.5.12] - 2020-01-06
 ### Bug fixes
 - Force cast to integer after multiplying by a number. Issue #199, #208

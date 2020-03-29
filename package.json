@@ -9,7 +9,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "handlebars": "^4.5.1",
+    "handlebars": "^4.7.3",
     "lozad": "^1.14.0"
   },
   "devDependencies": {},

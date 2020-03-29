@@ -36,7 +36,6 @@ use OCP\Files\NotFoundException;
 
 use OCA\Files_Sharing\External\Storage as SharingExternalStorage;
 
-use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class FileService {
@@ -252,7 +251,7 @@ class FileService {
 				$results = $this->getPicturesFromFolder($node, $results);
 			}
 			else if ($node instanceof File) {
-				if (Requirements::isImageTypeSupported($node->getMimeType())) {
+				if ($this->settingsService->isAllowedMimetype($node->getMimeType())) {
 					$results[] = $node;
 				}
 			}

@@ -103,6 +103,10 @@ class SettingsService {
 	const MAXIMUM_IMAGE_AREA_KEY = 'max_image_area';
 	const DEFAULT_MAXIMUM_IMAGE_AREA = '-1';
 
+	/** System setting to enable mimetypes */
+	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
+	private $allowedMimetypes = ['image/jpeg', 'image/png'];
+	private $cachedAllowedMimetypes = false;
 
 	/**
 	 * SettingsService
@@ -240,6 +244,21 @@ class SettingsService {
 
 	public function getMaximumImageArea(): int {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
+	}
+
+	/**
+	 * System settings that must be configured according to the server configuration.
+	 */
+	public function isAllowedMimetype(string $mimetype): bool {
+		if (!$this->cachedAllowedMimetypes) {
+			$systemMimetypes = $this->config->getSystemValue(self::SYSTEM_ENABLED_MIMETYPES, $this->allowedMimetypes);
+			$this->allowedMimetypes = array_merge($this->allowedMimetypes, $systemMimetypes);
+			$this->allowedMimetypes = array_unique($this->allowedMimetypes);
+
+			$this->cachedAllowedMimetypes = true;
+		}
+
+		return in_array($mimetype, $this->allowedMimetypes);
 	}
 
 }

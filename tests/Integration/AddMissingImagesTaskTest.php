@@ -96,13 +96,14 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		$view->mkdir('dir');
 		$view->file_put_contents("dir/foo4.txt", "content");
 		$view->file_put_contents("dir/foo5.bmp", "content");
+		$view->file_put_contents("dir/foo6.png", "content");
 		$view->mkdir('dir_nomedia');
 		$view->file_put_contents("dir_nomedia/.nomedia", "content");
 		$view->file_put_contents("dir_nomedia/foo7.jpg", "content");
 
 		$this->doMissingImageScan($this->user);
 
-		// We should find 3 images only - foo2.jpg, foo3.png and dir/foo5.bmp
+		// We should find 3 images only - foo2.jpg, foo3.png and dir/foo6.png. BMP mimetype (foo5.bmp) is not enabled by default.
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$this->assertEquals(3, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
 		$this->assertEquals(3, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);

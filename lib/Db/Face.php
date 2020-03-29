@@ -139,18 +139,6 @@ class Face extends Entity implements JsonSerializable {
 	}
 
 	/**
-	 * Helper method, to normalize face sizes back to original dimensions, based on ratio
-	 *
-	 * @param float $ratio Ratio of image resize
-	 */
-	public function normalizeSize($ratio) {
-		$this->left =   intval(round($this->left * $ratio));
-		$this->right =  intval(round($this->right * $ratio));
-		$this->top =    intval(round($this->top * $ratio));
-		$this->bottom = intval(round($this->bottom * $ratio));
-	}
-
-	/**
 	 * Gets face width
 	 *
 	 * @return int Face width

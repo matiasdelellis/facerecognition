@@ -144,16 +144,17 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$faces = array();
 				foreach ($rawFaces as $rawFace) {
 					// Get landmarks of face from model
-					$landmarks = $this->model->detectLandmarks($tempImage->getTempPath(), $rawFace);
+					$rawLandmarks = $this->model->detectLandmarks($tempImage->getTempPath(), $rawFace);
 					// Get descriptor of face from model
-					$descriptor = $this->model->computeDescriptor($tempImage->getTempPath(), $landmarks);
+					$descriptor = $this->model->computeDescriptor($tempImage->getTempPath(), $rawLandmarks);
 
-					// Convert from dictionary of faces to our Face Db Entity
-					$face = Face::fromModel($image->getId(), $rawFace);
-					$face->normalizeSize($tempImage->getRatio());
+					// Normalize face and landmarks from model to original size
+					$normFace = $this->getNormalizedFace($rawFace, $tempImage->getRatio());
+					$normLandmarks = $this->getNormalizedLandmarks($rawLandmarks['parts'], $tempImage->getRatio());
 
-					// Save Landmarks and descriptor
-					$face->landmarks = $this->getNormalizedLandmarks($landmarks['parts'], $tempImage->getRatio());
+					// Convert from dictionary of faces to our Face Db Entity and put Landmarks and descriptor
+					$face = Face::fromModel($image->getId(), $normFace);
+					$face->landmarks = $normLandmarks;
 					$face->descriptor = $descriptor;
 
 					$faces[] = $face;
@@ -233,6 +234,20 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	}
 
 	/**
+	 * Helper method, to normalize face sizes back to original dimensions, based on ratio
+	 *
+	 */
+	private function getNormalizedFace(array $rawFace, float $ratio): array {
+		$face = [];
+		$face['left'] = intval(round(max($rawFace['left'], 0)*$ratio));
+		$face['right'] = intval(round($rawFace['right']*$ratio));
+		$face['top'] = intval(round(max($rawFace['top'], 0)*$ratio));
+		$face['bottom'] = intval(round($rawFace['bottom']*$ratio));
+		$face['detection_confidence'] = $rawFace['detection_confidence'];
+		return $face;
+	}
+
+	/**
 	 * Helper method, to normalize landmarks sizes back to original dimensions, based on ratio
 	 *
 	 */
@@ -242,7 +257,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$landmark = [];
 			$landmark['x'] = intval(round($rawLandmark['x']*$ratio));
 			$landmark['y'] = intval(round($rawLandmark['y']*$ratio));
-
 			$landmarks[] = $landmark;
 		}
 		return $landmarks;

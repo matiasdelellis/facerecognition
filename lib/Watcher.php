@@ -40,8 +40,6 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-use OCA\FaceRecognition\Helper\Requirements;
-
 class Watcher {
 
 	/** @var ILogger Logger */
@@ -148,7 +146,7 @@ class Watcher {
 			return;
 		}
 
-		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+		if (!$this->settingsService->isAllowedMimetype($node->getMimeType())) {
 			// The file is not an image or the model does not support it
 			return;
 		}
@@ -233,7 +231,7 @@ class Watcher {
 			return;
 		}
 
-		if (!Requirements::isImageTypeSupported($node->getMimeType())) {
+		if (!$this->settingsService->isAllowedMimetype($node->getMimeType())) {
 			// The file is not an image or the model does not support it
 			return;
 		}

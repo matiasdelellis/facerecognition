@@ -71,10 +71,6 @@ class TempImage extends Image {
 		$this->prepareImage();
 	}
 
-	public function __destruct() {
-		$this->tempManager->clean();
-	}
-
 	/**
 	 * Get the path of temporary image
 	 *
@@ -99,6 +95,13 @@ class TempImage extends Image {
 	 */
 	public function getSkipped(): bool {
 		return $this->skipped;
+	}
+
+	/**
+	 * Clean temporary files
+	 */
+	public function clean() {
+		$this->tempManager->clean();
 	}
 
 	/**

@@ -282,6 +282,22 @@ class ImageMapper extends QBMapper {
 	}
 
 	/**
+	 * Resets all image with error from that user and prepares it to be processed again
+	 *
+	 * @param string $userId User to reset errors
+	 */
+	public function resetErrors(string $userId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+			->set("error", $qb->createNamedParameter(null))
+			->set("last_processed_time", $qb->createNamedParameter(null))
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->isNotNull('error'))
+			->execute();
+	}
+
+	/**
 	 * Deletes all images from that user.
 	 *
 	 * @param string $userId User to drop images from table.

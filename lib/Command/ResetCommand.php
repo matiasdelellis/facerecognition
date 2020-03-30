@@ -73,6 +73,13 @@ class ResetCommand extends Command {
 				null
 			)
 			->addOption(
+				'image-errors',
+				null,
+				InputOption::VALUE_NONE,
+				'Reset errors in images to re-analyze again',
+				null
+			)
+			->addOption(
 				'clustering',
 				null,
 				InputOption::VALUE_NONE,
@@ -107,6 +114,11 @@ class ResetCommand extends Command {
 			$output->writeln('Reset successfully done');
 			return 0;
 		}
+		else if ($input->getOption('image-errors')) {
+			$this->resetImageErrors($user);
+			$output->writeln('Reset image errors done');
+			return 0;
+		}
 		else if ($input->getOption('clustering')) {
 			$this->resetClusters($user);
 			$output->writeln('Reset clustering done');
@@ -120,6 +132,10 @@ class ResetCommand extends Command {
 
 	private function resetClusters($user) {
 		$this->faceManagementService->resetClusters($user);
+	}
+
+	private function resetImageErrors($user) {
+		$this->faceManagementService->resetImageErrors($user);
 	}
 
 	private function resetAll($user) {

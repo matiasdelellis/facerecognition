@@ -98,6 +98,20 @@ class FaceManagementService {
 	}
 
 	/**
+	 * Reset error in images in order to re-analyze again.
+	 * If no user is given, resetting is executed for all users.
+	 *
+	 * @param IUser|null $user Optional user to execute resetting for
+	 */
+	public function resetImageErrors(IUser $user = null) {
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach($eligible_users as $userId) {
+			$this->imageMapper->resetErrors($userId);
+			$this->settingsService->setUserFullScanDone(false, $userId);
+		}
+	}
+
+	/**
 	 * Eliminate all faces relations with person.
 	 * If no user is given, resetting is executed for all users.
 	 *

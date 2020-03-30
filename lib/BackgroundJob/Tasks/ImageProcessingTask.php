@@ -173,7 +173,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
 				// Clean temporary image.
-				$tempImage->clean();
+				if (isset($tempImage)) {
+					$tempImage->clean();
+				}
 				// If there are temporary files from external files, they must also be cleaned.
 				$this->fileService->clean();
 			}

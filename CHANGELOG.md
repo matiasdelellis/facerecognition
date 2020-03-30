@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.14] - 2020-03-30
+### Bug fixes
+- Fix image will be skipped due 'Unable to open file: /tmp/oc_tmp_###'. Issue #242
+
 ## [0.5.13] - 2020-03-29
 ### Added
 - Add face:reset --all|--clustering command. Details in README.md file.

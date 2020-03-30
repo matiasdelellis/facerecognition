@@ -58,7 +58,7 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(158, imagesx($image->resource()));
 		$this->assertEquals(158, imagesy($image->resource()));
 
-		unset($tempImage);
+		$tempImage->clean();
 		$this->assertFalse(file_exists($tempPath));
 
 		// Try image with double scaling up
@@ -78,7 +78,7 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(158*2, imagesx($image->resource()));
 		$this->assertEquals(158*2, imagesy($image->resource()));
 
-		unset($tempImage);
+		$tempImage->clean();
 		$this->assertFalse(file_exists($tempPath));
 
 		// Try a file smaller than the minimum
@@ -91,7 +91,6 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(-1.0, $tempImage->getRatio());
 		$this->assertEquals(158, imagesx($tempImage->resource()));
 		$this->assertEquals(158, imagesy($tempImage->resource()));
-
 	}
 
 }

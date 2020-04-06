@@ -33,6 +33,7 @@ use OCP\ITempManager;
 
 use OCP\Files\IHomeStorage;
 use OCP\Files\NotFoundException;
+use OCP\Files\StorageNotAvailableException;
 
 use OCA\Files_Sharing\External\Storage as SharingExternalStorage;
 
@@ -141,17 +142,21 @@ class FileService {
 	 * analysis, false otherwise
 	 */
 	public function getDescendantDetection(Folder $folder): bool {
-		if ($folder->nodeExists(FileService::NOMEDIA_FILE)) {
-			return false;
-		}
-		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
-			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
-			$settings = json_decode($file->getContent(), true);
-			if ($settings === null || !array_key_exists('detection', $settings))
-				return true;
-
-			if ($settings['detection'] === 'off')
+		try {
+			if ($folder->nodeExists(FileService::NOMEDIA_FILE)) {
 				return false;
+			}
+			if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
+				$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
+				$settings = json_decode($file->getContent(), true);
+				if ($settings === null || !array_key_exists('detection', $settings))
+					return true;
+
+				if ($settings['detection'] === 'off')
+					return false;
+			}
+		} catch (StorageNotAvailableException $e) {
+			return false;
 		}
 
 		return true;
@@ -184,17 +189,25 @@ class FileService {
 	}
 
 	/**
-	 * Returns if the file is inside a shared storage.
+	 * Returns if the file is inside a native home storage.
 	 */
-	public function isSharedFile(Node $node): bool {
-		return $node->getStorage()->instanceOfStorage(SharingExternalStorage::class);
+	public function isUserFile(Node $node): bool {
+		return (($node->getMountPoint()->getMountType() === '') &&
+		        ($node->getStorage()->instanceOfStorage(IHomeStorage::class)));
 	}
 
 	/**
-	 * Returns if the file is inside HomeStorage.
+	 * Returns if the file is inside a shared mount storage.
 	 */
-	public function isUserFile(Node $node): bool {
-		return $node->getStorage()->instanceOfStorage(IHomeStorage::class);
+	public function isSharedFile(Node $node): bool {
+		return ($node->getMountPoint()->getMountType() === 'shared');
+	}
+
+	/**
+	 * Returns if the file is inside a external mount storage.
+	 */
+	public function isExternalFile(Node $node): bool {
+		return ($node->getMountPoint()->getMountType() === 'external');
 	}
 
 	/**
@@ -205,6 +218,8 @@ class FileService {
 			return true;
 		} else if ($this->isSharedFile($node)) {
 			return $this->settingsService->getHandleSharedFiles();
+		} else if ($this->isExternalFile($node)) {
+			return $this->settingsService->getHandleExternalFiles();
 		}
 		return false;
 	}

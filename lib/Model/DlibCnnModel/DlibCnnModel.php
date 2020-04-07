@@ -45,6 +45,7 @@ class DlibCnnModel implements IModel {
 
 	/** Relationship between image size and memory consumed */
 	const MEMORY_AREA_RELATIONSHIP = -1;
+	const MINIMUM_MEMORY_REQUIREMENTS = -1;
 
 	const FACE_MODEL_BZ2_URLS = array();
 	const FACE_MODEL_FILES = array();
@@ -119,7 +120,8 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function meetDependencies(): bool {
-		return extension_loaded('pdlib');
+		return ((extension_loaded('pdlib')) &&
+		        (MemoryLimits::getAvailableMemory() >= static::MINIMUM_MEMORY_REQUIREMENTS));
 	}
 
 	public function getMaximumArea(): int {

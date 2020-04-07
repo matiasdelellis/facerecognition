@@ -47,7 +47,7 @@ class SettingsService {
 
 	/** Image area that used used for analysis */
 	const ANALYSIS_IMAGE_AREA_KEY = "analysis_image_area";
-	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*680;
+	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*480;
 	const DEFAULT_ANALYSIS_IMAGE_AREA = -1; // It is dynamically configured according to hardware
 	const MAXIMUM_ANALYSIS_IMAGE_AREA = 3840*2160;
 

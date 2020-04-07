@@ -40,6 +40,7 @@ class DlibCnn5Model extends DlibCnnModel implements IModel {
 
 	/** Relationship between image size and memory consumed */
 	const MEMORY_AREA_RELATIONSHIP = 1 * 1024;
+	const MINIMUM_MEMORY_REQUIREMENTS = 1 * 1024 * 1024 * 1024;
 
 	/*
 	 * Model files.

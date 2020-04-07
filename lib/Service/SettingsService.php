@@ -95,6 +95,10 @@ class SettingsService {
 	const HANDLE_SHARED_FILES_KEY = 'handle-shared-files';
 	const DEFAULT_HANDLE_SHARED_FILES = 'false';
 
+	/** Hidden setting that allows to analyze external files */
+	const HANDLE_EXTERNAL_FILES_KEY = 'handle-external-files';
+	const DEFAULT_HANDLE_EXTERNAL_FILES = 'false';
+
 	/** Hidden setting that indicate minimum large of image to analyze */
 	const MINIMUM_IMAGE_SIZE_KEY = 'min_image_size';
 	const DEFAULT_MINIMUM_IMAGE_SIZE = '512';
@@ -235,6 +239,11 @@ class SettingsService {
 	 */
 	public function getHandleSharedFiles(): bool {
 		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
+		return ($handle === 'true');
+	}
+
+	public function getHandleExternalFiles(): bool {
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_EXTERNAL_FILES_KEY, self::DEFAULT_HANDLE_EXTERNAL_FILES);
 		return ($handle === 'true');
 	}
 

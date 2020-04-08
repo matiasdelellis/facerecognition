@@ -42,6 +42,7 @@ class DlibCnnModel implements IModel {
 	const FACE_MODEL_ID = -1;
 	const FACE_MODEL_NAME = "";
 	const FACE_MODEL_DESC = "";
+	const FACE_MODEL_DOC = "";
 
 	/** Relationship between image size and memory consumed */
 	const MEMORY_AREA_RELATIONSHIP = -1;
@@ -107,6 +108,10 @@ class DlibCnnModel implements IModel {
 
 	public function getDescription(): string {
 		return static::FACE_MODEL_DESC;
+	}
+
+	public function getDocumentation(): string {
+		return static::FACE_MODEL_DOC;
 	}
 
 	public function isInstalled(): bool {

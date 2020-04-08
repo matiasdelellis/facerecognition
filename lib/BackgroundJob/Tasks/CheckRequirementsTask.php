@@ -75,7 +75,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 
 		if (!Requirements::pdlibLoaded()) {
-			$error_message = "The PDlib PHP extension is not loaded. Cannot continue without it.";
+			$error_message =
+				"The PDlib PHP extension is not loaded. Cannot continue without it." .
+				"Please read the documentation again about how to install the application: https://github.com/matiasdelellis/facerecognition/wiki/Installation";
 			$this->logInfo($error_message);
 			return false;
 		}
@@ -83,8 +85,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		if (!Requirements::hasEnoughMemory()) {
 			$error_message =
 				"Your system does not meet the minimum of memory requirements.\n" .
-				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n";
-				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details";
+				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n" .
+				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details\n\n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}
@@ -93,16 +96,18 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		if (is_null($model)) {
 			$error_message =
 				"Seems there are no installed models.\n" .
-				"Please contact administrator to change models you are using for face recognition\n" .
-				"or reinstall them with the 'occ face:setup --model' command. \n\n" .
+				"Please read the documentation about this: https://github.com/matiasdelellis/facerecognition/wiki/Models#install-models\n" .
+				"and install them with the 'occ face:setup --model MODEL_ID' command.\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}
 
 		if (!$model->meetDependencies()) {
-			$error_message = "Seems that don't meet the dependencies to use the model " . $model->getId() .": " . $model->getName();
-			// Document models on wiki and print link here.
+			$error_message =
+				"Seems that don't meet the dependencies to use the model " . $model->getId() . ": " . $model->getName() . "\n".
+				"Please read the documentation for this model to continue: " . $model->getDocumentation() . "\n\n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
 		}
@@ -110,8 +115,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$imageArea = $this->settingsService->getAnalysisImageArea();
 		if ($imageArea < 0) {
 			$error_message =
-				"Seems that still don't configured the image area used for analysis.\n" .
-				"Please contact administrator to configure it in the admin panel to continue.\n" .
+				"Seems that still don't configured the image area used for temporary files.\n" .
+				"Please read the documentation about this: https://github.com/matiasdelellis/facerecognition/wiki/Settings#temporary-files\n" .
+				"and then configure it in the admin panel to continue\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;
@@ -122,7 +128,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			$error_message =
 				"There are inconsistencies between the configured image area (" . $imageArea. " pixels^2) which is\n" .
 				"greater that the maximum allowed by the model (". $maxImageArea . " pixels^2).\n" .
-				"Please contact administrator to configure it in the admin panel to continue.\n" .
+				"Please check and fix it in the admin panel to continue.\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;

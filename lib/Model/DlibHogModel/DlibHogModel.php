@@ -40,8 +40,9 @@ class DlibHogModel implements IModel {
 	 * Model files.
 	 */
 	const FACE_MODEL_ID = 3;
-	const FACE_MODEL_NAME = "DlibHog";
-	const FACE_MODEL_DESC = "Dlib HOG Model which needs lower requirements";
+	const FACE_MODEL_NAME = 'DlibHog';
+	const FACE_MODEL_DESC = 'DDlib HOG Model which needs lower requirements';
+	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition/wiki/Models#model-3';
 
 	/** This model practically does not consume memory. Directly set the limits. */
 	const MAXIMUM_IMAGE_AREA = SettingsService::MAXIMUM_ANALYSIS_IMAGE_AREA;
@@ -110,6 +111,10 @@ class DlibHogModel implements IModel {
 
 	public function getDescription(): string {
 		return static::FACE_MODEL_DESC;
+	}
+
+	public function getDocumentation(): string {
+		return static::FACE_MODEL_DOC;
 	}
 
 	public function isInstalled(): bool {

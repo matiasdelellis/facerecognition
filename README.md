@@ -36,46 +36,61 @@ Finally the user can use the application in three ways
  3. In the side panel of the file application, a 'Persons' tab is added where
     you can see a list of your friends in the photo, and rename them.
 
-## Installation
+## Installation, configuration and usage
 
 #### Requirements
 
- * Nextcloud 14+
+ * Nextcloud 16+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
+ * 2GB of RAM
 
-Everything is AGPL or Creative Commons. :wink:
+#### Installation
 
-#### Manual installation on Ubuntu
+Ideally once you meet the requirements, you can install and enable it from the
+nextcloud app store. For details and advanced information read the documentation
+about [installation](https://github.com/matiasdelellis/facerecognition/wiki/Installation).
 
-```
-sudo apt-get update
-sudo apt-get install git-core composer
-cd nextcloud/apps/   # or whatever is your path to nextcloud
-git clone https://github.com/matiasdelellis/facerecognition.git
-cd facerecognition/
-make
-```
+#### Configuration
 
-If you have it manually installed and want to update to latest from `master`:
-```
-cd nextcloud/apps/facerecognition/
-git pull
-make
-```
+Before proceeding to analyze the images, you must properly install and configure
+the pretrained models using the `occ face:setup` command. For details and
+advanced information read the documentation about [models](https://github.com/matiasdelellis/facerecognition/wiki/Models#install-models).
 
-## Commands
+Then you must indicate the size of the images used in the temporary files from
+the Nextcloud settings panel. This configuration will depend on your
+installation and has a direct impact on memory consumption. For details and
+advanced information read the documentation about [Temporary files](https://github.com/matiasdelellis/facerecognition/wiki/Settings#temporary-files).
 
-### Configure models
+#### Test the application
 
-`face:setup -m|--model [MODEL_ID]`
+We recommend test the application intensively before proceeding to analyze the
+real data of the users. For this you can create a new user in your Nextcloud
+instance and upload some photos from the internet. Then you must run the
+`occ face:background_job -u new_user -t 900` command for this user and evaluate
+the result. For details and advanced information read the documentation of this
+command below.
+
+#### Schedule background job
+
+The application is designed to run as a scheduled task. This allows analyze the
+photos and showing the results to the user progressively. You can read about
+some ways to configure it within our documentation about [Schedule Background Task](https://github.com/matiasdelellis/facerecognition/wiki/Schedule-Background-Task).
+
+## occ commands
+
+The application add commands to the [Nexcloud's command-line interface](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html).
+
+#### Configure models
+
+`occ face:setup -m|--model [MODEL_ID]`
 
 This command is responsible for installing pretrained models. You must supply
 `MODEL_ID` indicating the model to install. If not supplied, it will list all
 available models.
 
-### Face analysis
+#### Face analysis
 
-`face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]`
+`occ face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]`
 
 This command will do all the work. It is responsible for searching the images,
 analyzing them and clustering faces found in them in groups of similar people.
@@ -102,7 +117,7 @@ If `MAX_IMAGE_AREA` is supplied caps the maximum area (in pixels^2) of the image
 to be fed to neural network, effectively lowering needed memory. Use this
 if face detection crashes randomly.
 
-### Resetting information
+#### Resetting information
 
 `occ face:reset --all|--clustering|--image-errors [-u|--user_id USER_ID]`
 
@@ -117,9 +132,9 @@ images that had errors `[--image-errors]` to try to analyze them again.
 If `USER_ID` is provided, it will just reset the information of a particular
 user.
 
-### Statistics
+#### Statistics
 
-`face:stats [-u|--user_id USER_ID] [-j|--json]`
+`occ face:stats [-u|--user_id USER_ID] [-j|--json]`
 
 This command return a summary of the number of images, faces and persons found.
 
@@ -128,9 +143,9 @@ If `USER_ID` is provided, just return the stats for the given user.
 If use the `--json` argument, it prints the stats in a json format more suitable
 to parse with other tools.
 
-### Progress
+#### Progress
 
-`face:progress`
+`occ face:progress`
 
 This command just return the progress of the analysis and an estimated time to
 complete.

@@ -125,7 +125,7 @@ class ResetCommand extends Command {
 			return 0;
 		}
 		else {
-			$output->writeln('You must specify that you want to reset');
+			$output->writeln('You must specify what you want to reset');
 			return 1;
 		}
 	}

@@ -44,6 +44,11 @@ interface IModel {
 	public function getDescription(): string;
 
 	/**
+	 * @return string model documentation link
+	 */
+	public function getDocumentation(): string;
+
+	/**
 	 * @return bool if model is installed
 	 */
 	public function isInstalled(): bool;

@@ -40,11 +40,13 @@ class DlibHogModel implements IModel {
 	 * Model files.
 	 */
 	const FACE_MODEL_ID = 3;
-	const FACE_MODEL_NAME = "DlibHog";
-	const FACE_MODEL_DESC = "Dlib HOG Model which needs lower requirements";
+	const FACE_MODEL_NAME = 'DlibHog';
+	const FACE_MODEL_DESC = 'DDlib HOG Model which needs lower requirements';
+	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition/wiki/Models#model-3';
 
-	/** Relationship between image size and memory consumed */
-	const MEMORY_AREA_RELATIONSHIP = 1 * 1024;
+	/** This model practically does not consume memory. Directly set the limits. */
+	const MAXIMUM_IMAGE_AREA = SettingsService::MAXIMUM_ANALYSIS_IMAGE_AREA;
+	const MINIMUM_MEMORY_REQUIREMENTS = 128 * 1024 * 1024;
 
 	const FACE_MODEL_BZ2_URLS = [
 		'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
@@ -111,6 +113,10 @@ class DlibHogModel implements IModel {
 		return static::FACE_MODEL_DESC;
 	}
 
+	public function getDocumentation(): string {
+		return static::FACE_MODEL_DOC;
+	}
+
 	public function isInstalled(): bool {
 		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
 			return false;
@@ -120,12 +126,13 @@ class DlibHogModel implements IModel {
 	}
 
 	public function meetDependencies(): bool {
-		return extension_loaded('pdlib') &&
-		       version_compare(phpversion('pdlib'), '1.0.1', '>=');
+		return ((extension_loaded('pdlib')) &&
+		        (version_compare(phpversion('pdlib'), '1.0.1', '>=')) &&
+		        (MemoryLimits::getAvailableMemory() >= static::MINIMUM_MEMORY_REQUIREMENTS));
 	}
 
 	public function getMaximumArea(): int {
-		return intval(MemoryLimits::getAvailableMemory()/self::MEMORY_AREA_RELATIONSHIP);
+		return intval(self::MAXIMUM_IMAGE_AREA);
 	}
 
 	public function getPreferredMimeType(): string {

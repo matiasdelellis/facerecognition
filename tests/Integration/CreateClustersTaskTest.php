@@ -83,7 +83,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 */
 	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $contextUser = null) {
 		if ($contextUser) {
-			$this->config->setUserValue($contextUser->getUID(), 'facerecognition', 'force-create-clusters', 'true');
+			$this->config->setUserValue($contextUser->getUID(), 'facerecognition', 'force_create_clusters', 'true');
 		}
 
 		$createClustersTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);

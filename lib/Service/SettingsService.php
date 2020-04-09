@@ -46,8 +46,8 @@ class SettingsService {
 	const FALLBACK_CURRENT_MODEL = -1;
 
 	/** Image area that used used for analysis */
-	const ANALYSIS_IMAGE_AREA_KEY = "analysis_image_area";
-	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*680;
+	const ANALYSIS_IMAGE_AREA_KEY = 'analysis_image_area';
+	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*480;
 	const DEFAULT_ANALYSIS_IMAGE_AREA = -1; // It is dynamically configured according to hardware
 	const MAXIMUM_ANALYSIS_IMAGE_AREA = 3840*2160;
 
@@ -58,13 +58,13 @@ class SettingsService {
 	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Minimum confidence used to try to clustring faces */
-	const MINIMUM_CONFIDENCE_KEY = 'min-confidence';
+	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
 	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
 	const MAXIMUM_MINIMUM_CONFIDENCE = '1.0';
 
 	/** Show single persons on clustes view */
-	const SHOW_NOT_GROUPED_KEY = 'show-not-grouped';
+	const SHOW_NOT_GROUPED_KEY = 'show_not_grouped';
 	const DEFAULT_SHOW_NOT_GROUPED = 'false';
 
 	/** User setting what indicates if has the analysis enabled */
@@ -84,19 +84,19 @@ class SettingsService {
 	const DEFAULT_FULL_IMAGE_SCAN_DONE = 'false';
 
 	/** User setting that indicate that need to recreate clusters */
-	const USER_RECREATE_CLUSTERS_KEY = 'recreate-clusters';
+	const USER_RECREATE_CLUSTERS_KEY = 'recreate_clusters';
 	const DEFAULT_USER_RECREATE_CLUSTERS = 'false';
 
 	/** User setting that indicate that is forced to create clusters */
-	const FORCE_CREATE_CLUSTERS_KEY = 'force-create-clusters';
+	const FORCE_CREATE_CLUSTERS_KEY = 'force_create_clusters';
 	const DEFAULT_FORCE_CREATE_CLUSTERS = 'false';
 
 	/** Hidden setting that allows to analyze shared files */
-	const HANDLE_SHARED_FILES_KEY = 'handle-shared-files';
+	const HANDLE_SHARED_FILES_KEY = 'handle_shared_files';
 	const DEFAULT_HANDLE_SHARED_FILES = 'false';
 
 	/** Hidden setting that allows to analyze external files */
-	const HANDLE_EXTERNAL_FILES_KEY = 'handle-external-files';
+	const HANDLE_EXTERNAL_FILES_KEY = 'handle_external_files';
 	const DEFAULT_HANDLE_EXTERNAL_FILES = 'false';
 
 	/** Hidden setting that indicate minimum large of image to analyze */

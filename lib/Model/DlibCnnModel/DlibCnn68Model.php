@@ -28,17 +28,21 @@ use OCA\FaceRecognition\Model\IModel;
 
 class DlibCnn68Model extends DlibCnnModel implements IModel {
 
-	/** Defines ID for default face model */
+	/** Defines ID for the face model */
 	const FACE_MODEL_ID = 2;
 
-	/** Defines name for default face model */
+	/** Defines name for the face model */
 	const FACE_MODEL_NAME = 'DlibCnn68';
 
-	/** Defines description for default face model */
+	/** Defines description for the face model */
 	const FACE_MODEL_DESC = 'Alternative default model, using dlib: mmod_human_face_detector.dat, shape_predictor_68_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
+
+	/** Defines documentation for the face model */
+	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition/wiki/Models#model-2';
 
 	/** Relationship between image size and memory consumed */
 	const MEMORY_AREA_RELATIONSHIP = 1 * 1024;
+	const MINIMUM_MEMORY_REQUIREMENTS = 1 * 1024 * 1024 * 1024;
 
 	/*
 	 * Model files.

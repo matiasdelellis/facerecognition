@@ -87,7 +87,10 @@ class SetupCommand extends Command {
 		$modelDescription = $model->getId() . ' (' . $model->getName(). ')';
 
 		if (!$model->meetDependencies()) {
-			$this->logger->writeln('You do not meet the dependencies to install the model ' . $modelDescription);
+			$error_message =
+				'You do not meet the dependencies to install the model ' . $modelDescription .
+				'Please read the documentation for this model to continue: ' .$model->getDocumentation();
+			$this->logger->writeln($error_message);
 			return 1;
 		}
 
@@ -114,11 +117,18 @@ class SetupCommand extends Command {
 	 */
 	private function dumpModels() {
 		$table = new Table($this->logger);
-		$table->setHeaders(['Id', 'Name', 'Description']);
+		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
+
+		$currentModel = $this->modelManager->getCurrentModel()->getId();
 
 		$models = $this->modelManager->getAllModels();
 		foreach ($models as $model) {
-			$table->addRow([$model->getId(), $model->getName(), $model->getDescription()]);
+			$table->addRow([
+				$model->getId(),
+				($model->getId() === $currentModel) ? '*' : '',
+				$model->getName(),
+				$model->getDescription()
+			]);
 		}
 		$table->render();
 	}

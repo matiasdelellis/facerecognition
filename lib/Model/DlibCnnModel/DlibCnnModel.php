@@ -42,9 +42,11 @@ class DlibCnnModel implements IModel {
 	const FACE_MODEL_ID = -1;
 	const FACE_MODEL_NAME = "";
 	const FACE_MODEL_DESC = "";
+	const FACE_MODEL_DOC = "";
 
 	/** Relationship between image size and memory consumed */
 	const MEMORY_AREA_RELATIONSHIP = -1;
+	const MINIMUM_MEMORY_REQUIREMENTS = -1;
 
 	const FACE_MODEL_BZ2_URLS = array();
 	const FACE_MODEL_FILES = array();
@@ -108,6 +110,10 @@ class DlibCnnModel implements IModel {
 		return static::FACE_MODEL_DESC;
 	}
 
+	public function getDocumentation(): string {
+		return static::FACE_MODEL_DOC;
+	}
+
 	public function isInstalled(): bool {
 		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]))
 			return false;
@@ -119,7 +125,8 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function meetDependencies(): bool {
-		return extension_loaded('pdlib');
+		return ((extension_loaded('pdlib')) &&
+		        (MemoryLimits::getAvailableMemory() >= static::MINIMUM_MEMORY_REQUIREMENTS));
 	}
 
 	public function getMaximumArea(): int {

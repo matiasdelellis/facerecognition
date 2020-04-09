@@ -1,4 +1,26 @@
 <?php
+/**
+ * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ *
+ * @author Matias De lellis <mati86dl@gmail.com>
+ *
+ * @license GNU AGPL version 3 or any later version
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\Image as OCP_Image;
@@ -17,25 +39,40 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Service\SettingsService;
+
 class FaceController extends Controller {
 
+	/** @var IRootFolder */
 	private $rootFolder;
+
+	/** @var FaceMapper */
 	private $faceMapper;
+
+	/** @var ImageMapper */
 	private $imageMapper;
+
+	/** @var SettingsService */
+	private $settingsService;
+
+	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest    $request,
-	                            IRootFolder $rootFolder,
-	                            FaceMapper  $faceMapper,
-	                            ImageMapper $imageMapper,
+	                            IRequest        $request,
+	                            IRootFolder     $rootFolder,
+	                            FaceMapper      $faceMapper,
+	                            ImageMapper     $imageMapper,
+	                            SettingsService $settingsService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
-		$this->rootFolder = $rootFolder;
-		$this->faceMapper = $faceMapper;
-		$this->imageMapper = $imageMapper;
-		$this->userId = $UserId;
+
+		$this->rootFolder      = $rootFolder;
+		$this->faceMapper      = $faceMapper;
+		$this->imageMapper     = $imageMapper;
+		$this->settingsService = $settingsService;
+		$this->userId          = $UserId;
 	}
 
 	/**
@@ -70,7 +107,7 @@ class FaceController extends Controller {
 		$w += $padding*2;
 		$h += $padding*2;
 
-		if (true) {
+		if ($this->settingsService->getOfuscateFaces()) {
 			$this->hipsterize($img, $face);
 		}
 

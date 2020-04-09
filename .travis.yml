@@ -11,6 +11,7 @@ services:
 php:
   - 7.1
   - 7.2
+  - 7.3
 
 env:
   global:
@@ -23,6 +24,9 @@ env:
     - DB=mysql CORE_BRANCH=stable17
     - DB=pgsql CORE_BRANCH=stable17
     - DB=sqlite CORE_BRANCH=stable17
+    - DB=mysql CORE_BRANCH=stable18
+    - DB=pgsql CORE_BRANCH=stable18
+    - DB=sqlite CORE_BRANCH=stable18
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)

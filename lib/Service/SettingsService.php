@@ -108,8 +108,8 @@ class SettingsService {
 	const DEFAULT_MAXIMUM_IMAGE_AREA = '-1';
 
 	/** Hidden setting that allows obfuscate that faces for security */
-	const OFUSCATE_FACE_THUMBS_KEY = 'ofuscate_faces';
-	const DEFAULT_OFUSCATE_FACE_THUMBS = 'false';
+	const OBFUSCATE_FACE_THUMBS_KEY = 'obfuscate_faces';
+	const DEFAULT_OBFUSCATE_FACE_THUMBS = 'false';
 
 	/** System setting to enable mimetypes */
 	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
@@ -259,13 +259,13 @@ class SettingsService {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
 	}
 
-	public function getOfuscateFaces(): bool {
-		$ofuscate = $this->config->getAppValue(Application::APP_NAME, self::OFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OFUSCATE_FACE_THUMBS);
-		return ($ofuscate === 'true');
+	public function getObfuscateFaces(): bool {
+		$obfuscate = $this->config->getAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OBFUSCATE_FACE_THUMBS);
+		return ($obfuscate === 'true');
 	}
 
-	public function setOfuscateFaces(bool $ofuscate) {
-		$this->config->setAppValue(Application::APP_NAME, self::OFUSCATE_FACE_THUMBS_KEY, $ofuscate ? 'true' : 'false');
+	public function setObfuscateFaces(bool $obfuscate) {
+		$this->config->setAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, $obfuscate ? 'true' : 'false');
 	}
 
 	/**

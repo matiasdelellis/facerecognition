@@ -280,7 +280,7 @@ var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
         type: 'POST',
         url: OC.generateUrl('apps/facerecognition/setappvalue'),
         data: {
-            'type': 'ofuscate_faces',
+            'type': 'obfuscate_faces',
             'value': 'toggle'
         },
         success: function (data) {

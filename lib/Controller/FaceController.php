@@ -107,7 +107,7 @@ class FaceController extends Controller {
 		$w += $padding*2;
 		$h += $padding*2;
 
-		if ($this->settingsService->getOfuscateFaces()) {
+		if ($this->settingsService->getObfuscateFaces()) {
 			$this->hipsterize($img, $face);
 		}
 
@@ -122,7 +122,6 @@ class FaceController extends Controller {
 		return $resp;
 	}
 
-	/** @scrutinizer ignore-unused */
 	private function hipsterize(&$image, &$face) {
 		$imgResource = $image->resource();
 

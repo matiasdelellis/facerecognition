@@ -56,7 +56,11 @@ vendor/js/lozad.js: npm-deps
 	mkdir -p vendor/js
 	cp node_modules/lozad/dist/lozad.js -f vendor/js/lozad.js
 
-javascript-deps: vendor/js/handlebars.js vendor/js/lozad.js
+vendor/js/egg.js:
+	mkdir -p vendor/js
+	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O vendor/js/egg.js
+
+javascript-deps: vendor/js/handlebars.js vendor/js/lozad.js vendor/js/egg.js
 
 vendor-deps: composer javascript-deps
 

@@ -271,6 +271,23 @@ persons.load().done(function () {
     OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
 });
 
+var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
+    if (!OC.isUserAdmin()) {
+        OC.Notification.showTemporary(t('facerecognition', 'You must be administrator to configure this feature'));
+        return;
+    }
+    $.ajax({
+        type: 'POST',
+        url: OC.generateUrl('apps/facerecognition/setappvalue'),
+        data: {
+            'type': 'obfuscate_faces',
+            'value': 'toggle'
+        },
+        success: function (data) {
+            location.reload();
+        }
+    });
+}).listen();
 
 }); // $(document).ready(function () {
 })(OC, window, jQuery); // (function (OC, window, $, undefined) {

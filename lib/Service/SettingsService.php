@@ -107,6 +107,10 @@ class SettingsService {
 	const MAXIMUM_IMAGE_AREA_KEY = 'max_image_area';
 	const DEFAULT_MAXIMUM_IMAGE_AREA = '-1';
 
+	/** Hidden setting that allows obfuscate that faces for security */
+	const OBFUSCATE_FACE_THUMBS_KEY = 'obfuscate_faces';
+	const DEFAULT_OBFUSCATE_FACE_THUMBS = 'false';
+
 	/** System setting to enable mimetypes */
 	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
 	private $allowedMimetypes = ['image/jpeg', 'image/png'];
@@ -253,6 +257,15 @@ class SettingsService {
 
 	public function getMaximumImageArea(): int {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
+	}
+
+	public function getObfuscateFaces(): bool {
+		$obfuscate = $this->config->getAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OBFUSCATE_FACE_THUMBS);
+		return ($obfuscate === 'true');
+	}
+
+	public function setObfuscateFaces(bool $obfuscate) {
+		$this->config->setAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, $obfuscate ? 'true' : 'false');
 	}
 
 	/**

@@ -38,7 +38,7 @@ class FaceMapper extends QBMapper {
 
 	public function find (int $faceId) {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'descriptor')
+		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		return $this->findEntity($qb);

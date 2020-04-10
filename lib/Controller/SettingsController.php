@@ -197,6 +197,9 @@ class SettingsController extends Controller {
 			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
 				break;
+			case SettingsService::OBFUSCATE_FACE_THUMBS_KEY:
+				$this->settingsService->setObfuscateFaces(!$this->settingsService->getObfuscateFaces());
+				break;
 			default:
 				$status = self::STATE_ERROR;
 				break;

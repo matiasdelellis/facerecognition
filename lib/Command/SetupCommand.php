@@ -86,11 +86,11 @@ class SetupCommand extends Command {
 
 		$modelDescription = $model->getId() . ' (' . $model->getName(). ')';
 
-		if (!$model->meetDependencies()) {
-			$error_message =
-				'You do not meet the dependencies to install the model ' . $modelDescription .
-				'Please read the documentation for this model to continue: ' .$model->getDocumentation();
-			$this->logger->writeln($error_message);
+		$error_message = "";
+		if (!$model->meetDependencies($error_message)) {
+			$this->logger->writeln('You do not meet the dependencies to install the model ' . $modelDescription);
+			$this->logger->writeln('Summary: ' . $error_message);
+			$this->logger->writeln('Please read the documentation for this model to continue: ' .$model->getDocumentation());
 			return 1;
 		}
 

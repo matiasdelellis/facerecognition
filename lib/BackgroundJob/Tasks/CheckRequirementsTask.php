@@ -103,9 +103,11 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			return false;
 		}
 
-		if (!$model->meetDependencies()) {
+		$model_message = ''
+		if (!$model->meetDependencies($model_message)) {
 			$error_message =
 				"Seems that don't meet the dependencies to use the model " . $model->getId() . ": " . $model->getName() . "\n".
+				"Resume: " . $model_message . "\n" .
 				"Please read the documentation for this model to continue: " . $model->getDocumentation() . "\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);

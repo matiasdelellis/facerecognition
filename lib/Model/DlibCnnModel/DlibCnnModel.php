@@ -124,9 +124,16 @@ class DlibCnnModel implements IModel {
 		return true;
 	}
 
-	public function meetDependencies(): bool {
-		return ((extension_loaded('pdlib')) &&
-		        (MemoryLimits::getAvailableMemory() >= static::MINIMUM_MEMORY_REQUIREMENTS));
+	public function meetDependencies(string &$error_message): bool {
+		if (!extension_loaded('pdlib')) {
+			$error_message = "The PDlib PHP extension is not loaded";
+			return false;
+		}
+		if (MemoryLimits::getAvailableMemory() < static::MINIMUM_MEMORY_REQUIREMENTS) {
+			$error_message = "Your system does not meet the minimum memory requirements";
+			return false;
+		}
+		return true;
 	}
 
 	public function getMaximumArea(): int {

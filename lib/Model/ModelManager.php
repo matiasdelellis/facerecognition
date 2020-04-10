@@ -123,8 +123,9 @@ class ModelManager {
 	 * @return bool true if successful. False otherwise
 	 */
 	public function setDefault(int $version): bool {
+		$error_message = '';
 		$model = $this->getModel($version);
-		if (is_null($model) || !$model->isInstalled() || !$model->meetDependencies())
+		if (is_null($model) || !$model->isInstalled() || !$model->meetDependencies($error_message))
 			return false;
 
 		if ($this->settingsService->getCurrentFaceModel() !== $model->getId()) {

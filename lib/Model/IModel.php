@@ -56,7 +56,7 @@ interface IModel {
 	/**
 	 * @return bool if meet dependencies to run the model
 	 */
-	public function meetDependencies(): bool;
+	public function meetDependencies(string &$error_message): bool;
 
 	/**
 	 * Obtain the maximum image area recommended by the model.

@@ -73,8 +73,10 @@ class Admin implements ISettings {
 			// TODO: Document models and add link here.
 		}
 
-		if (!$model->meetDependencies()) {
+		$error_message = '';
+		if (!$model->meetDependencies($error_message)) {
 			$resume .= $this->l10n->t("It seems that you do not meet the dependencies to use the current model.");
+			// TODO: Apply message
 			$meetDependencies = false;
 		}
 

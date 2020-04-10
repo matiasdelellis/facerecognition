@@ -264,6 +264,10 @@ class SettingsService {
 		return ($ofuscate === 'true');
 	}
 
+	public function setOfuscateFaces(bool $ofuscate) {
+		$this->config->setAppValue(Application::APP_NAME, self::OFUSCATE_FACE_THUMBS_KEY, $ofuscate ? 'true' : 'false');
+	}
+
 	/**
 	 * System settings that must be configured according to the server configuration.
 	 */

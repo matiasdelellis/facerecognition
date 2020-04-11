@@ -33,7 +33,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="sensitivity-range"><?php p($l->t('More sensitivity, more groups'));?></label>
-			<span><input type="range" id="sensitivity-range" min="0.4" max="0.6" value="0.5" step="0.01" class="ui-slider"></span>
+			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider"></span>
 			<label for="sensitivity-range"><?php p($l->t('Less sensitivity, less groups'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -48,7 +48,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="min-confidence-range"><?php p($l->t('Less minimum confidence'));?></label>
-			<span><input type="range" id="min-confidence-range" min="0.0" max="1.0" value="0.5" step="0.01" class="ui-slider"></span>
+			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider"></span>
 			<label for="min-confidence-range"><?php p($l->t('Highest minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>

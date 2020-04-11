@@ -53,7 +53,7 @@ class SettingsService {
 
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
-	const MINIMUM_SENSITIVITY = '0.4';
+	const MINIMUM_SENSITIVITY = '0.2';
 	const DEFAULT_SENSITIVITY = '0.4';
 	const MAXIMUM_SENSITIVITY = '0.6';
 
@@ -61,7 +61,7 @@ class SettingsService {
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
 	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
-	const MAXIMUM_MINIMUM_CONFIDENCE = '1.0';
+	const MAXIMUM_MINIMUM_CONFIDENCE = '1.1';
 
 	/** Show single persons on clustes view */
 	const SHOW_NOT_GROUPED_KEY = 'show_not_grouped';

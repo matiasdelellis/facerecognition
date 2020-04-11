@@ -169,7 +169,7 @@ $(document).ready(function() {
             type: 'GET',
             url: OC.generateUrl('apps/facerecognition/getappvalue'),
             data: {
-                'type': 'min-confidence',
+                'type': 'min_confidence',
             },
             success: function (data) {
                 if (data.status === state.OK) {
@@ -202,7 +202,7 @@ $(document).ready(function() {
             type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setappvalue'),
             data: {
-                'type': 'min-confidence',
+                'type': 'min_confidence',
                 'value': confidence
             },
             success: function (data) {
@@ -224,7 +224,7 @@ $(document).ready(function() {
             type: 'GET',
             url: OC.generateUrl('apps/facerecognition/getappvalue'),
             data: {
-                'type': 'show-not-grouped',
+                'type': 'show_not_grouped',
             },
             success: function (data) {
                 if (data.status === state.OK) {
@@ -241,7 +241,7 @@ $(document).ready(function() {
             type: 'POST',
             url: OC.generateUrl('apps/facerecognition/setappvalue'),
             data: {
-                'type': 'show-not-grouped',
+                'type': 'show_not_grouped',
                 'value': checked
             },
             error: function () {

@@ -2,7 +2,7 @@ OC.L10N.register(
     "facerecognition",
     {
     "The analysis is finished" : "Анализа је завршена",
-    "_1 image was analyzed_::_{totalImages} images were analyzed_" : ["1 слика је анализирана","{totalImages} слике су анализиране","{totalImages} слика су анализиране"],
+    "_%n image was analyzed_::_%n images were analyzed_" : ["%n слика је анализирана","%n слике су анализиране","%n слика су анализиране"],
     "Analyzing images" : "Анализирам слике",
     "Ends approximately {estimatedFinalize}" : "Завршиће се одокативно {estimatedFinalize}",
     "The analysis is not started yet" : "Анализа још није започела",

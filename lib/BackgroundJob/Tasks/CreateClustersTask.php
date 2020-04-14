@@ -232,19 +232,38 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$sensitivity = $this->settingsService->getSensitivity();
 		$min_confidence = $this->settingsService->getMinimumConfidence();
 		$edges = array();
-		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
-			$face1 = $faces[$i];
-			if ($face1->confidence < $min_confidence) {
-				$edges[] = array($i, $i); // fixme: Should we create an single group? o just ignore.
-				continue;
-			}
-			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
-				$face2 = $faces[$j];
-				// todo: can't this distance be a method in $face1->distance($face2)?
-				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
 
-				if ($distance < $sensitivity) {
-					$edges[] = array($i, $j);
+		if (version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+			for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+				$face1 = $faces[$i];
+				if ($face1->confidence < $min_confidence) {
+					$edges[] = array($i, $i);
+					continue;
+				}
+				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+					$face2 = $faces[$j];
+					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
+
+					if ($distance < $sensitivity) {
+						$edges[] = array($i, $j);
+					}
+				}
+			}
+		} else {
+			for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+				$face1 = $faces[$i];
+				if ($face1->confidence < $min_confidence) {
+					$edges[] = array($i, $i);
+					continue;
+				}
+				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+					$face2 = $faces[$j];
+					// todo: can't this distance be a method in $face1->distance($face2)?
+					$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
+
+					if ($distance < $sensitivity) {
+						$edges[] = array($i, $j);
+					}
 				}
 			}
 		}

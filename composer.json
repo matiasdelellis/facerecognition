@@ -20,6 +20,6 @@
     },
     "require-dev": {
         "christophwurst/nextcloud": "^16.0",
-        "phpunit/phpunit": "6.4"
+        "phpunit/phpunit": "^7.0"
     }
 }

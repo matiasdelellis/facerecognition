@@ -12,4 +12,8 @@
     }
 })()
 
-OC.Plugins.register('OCA.Files.FileList', OCA.Facerecognition.FileListPlugin)
+window.addEventListener('DOMContentLoaded', () => {
+    if (OCA.Files && OCA.Files.Sidebar) {
+        OC.Plugins.register('OCA.Files.FileList', OCA.Facerecognition.FileListPlugin)
+    }
+})

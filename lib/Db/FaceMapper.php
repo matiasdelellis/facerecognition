@@ -31,6 +31,8 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
+use OCA\FaceRecognition\Helper\Euclidean;
+
 class FaceMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
@@ -129,6 +131,49 @@ class FaceMapper extends QBMapper {
 
 		$faces = $this->findEntities($qb);
 		return $faces;
+	}
+
+	public function findRepresentativeFromPerson(string $userId, int $personId, float $sensitivity, int $model) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.image', 'f.person', 'f.descriptor')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+		$faces = $this->findEntities($qb);
+
+		$facesCount = array();
+		$euclidean = new Euclidean();
+		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+			$face1 = $faces[$i];
+			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+				$face2 = $faces[$j];
+				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
+				if ($distance < $sensitivity) {
+					if (!array_key_exists($i, $facesCount)) {
+						$facesCount[$i] = 1;
+					} else {
+						$facesCount[$i] = $facesCount[$i]+1;
+					}
+					if (!array_key_exists($j, $facesCount)) {
+						$facesCount[$j] = 1;
+					} else {
+						$facesCount[$j] = $facesCount[$j]+1;
+					}
+				}
+			}
+		}
+
+		$bestFaceId = -1;
+		$bestFaceCount = -1;
+		foreach ($facesCount as $faceId => $faceCount) {
+			if ($faceCount > $bestFaceCount) {
+				$bestFaceId = $faceId;
+				$bestFaceCount = $faceCount;
+			}
+		}
+		return $faces[$bestFaceId];
 	}
 
 	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {

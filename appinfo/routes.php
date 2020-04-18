@@ -7,6 +7,12 @@ return ['routes' =>
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
+	// Get a similar clusters by Id.
+	[
+		'name' => 'person#findSimilar',
+		'url'  => '/clusters/similar/{id}',
+		'verb' => 'GET'
+	],
 	// Get all clusters filtered by Name.
 	[
 		'name' => 'person#findByName',

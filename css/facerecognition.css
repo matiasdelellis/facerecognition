@@ -39,7 +39,7 @@
  * Rename dialog
  */
 
-#fr-dialog-content-input {
+#fr-rename-dialog-content-input {
     width: 80%;
     margin: 6px;
 }
@@ -47,6 +47,7 @@
 .face-preview-dialog {
     background-color: rgba(210, 210, 210, .75);
     border-radius: 25px;
+    margin: 2px;
     height: 50px;
     width: 50px;
 }

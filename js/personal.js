@@ -124,8 +124,9 @@ Persons.prototype = {
 /*
  * View.
  */
-var View = function (persons) {
+var View = function (persons, similar) {
     this._persons = persons;
+    this._similar = similar;
 };
 
 View.prototype = {
@@ -155,6 +156,63 @@ View.prototype = {
                 self.reload();
             }
         });
+    },
+    renamePerson: function (personId, personName, faceUrl) {
+        var self = this;
+        FrDialogs.rename(
+            personName,
+            faceUrl,
+            function(result, name) {
+                if (result === true && name) {
+                    self._persons.renameCluster (personId, name).done(function() {
+                        self._persons.unsetActive();
+                        self.renderContent();
+                        if (true) {
+                            self._similar.loadSimilar(personId, name).done(function() {
+                                if (self._similar.hasSuggestion()) {
+                                    self.suggestPerson(self._similar.getSuggestion(), name);
+                                } else {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                                }
+                            });
+                        }
+                    }).fail(function () {
+                        OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                    });
+                }
+            }
+        );
+    },
+    suggestPerson: function (suggestion, personName) {
+        var self = this;
+        FrDialogs.suggestPersonName(
+            personName,
+            this._persons.getById(suggestion.id).faces,
+            function(accepted, close) {
+                if (accepted === true) {
+                    self._persons.renameCluster (suggestion.id, personName).done(function() {
+                        self._persons.unsetActive();
+                        self.renderContent();
+                        self._similar.loadSimilar(suggestion.id, personName).done(function() {
+                            if (self._similar.hasSuggestion()) {
+                                self.suggestPerson(self._similar.getSuggestion(), personName);
+                            } else {
+                                OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                            }
+                        });
+                    }).fail(function () {
+                        OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                    });
+                } else if (close === false) {
+                    self._similar.rejectSuggestion(suggestion);
+                    if (self._similar.hasSuggestion()) {
+                        self.suggestPerson(self._similar.getSuggestion(), personName);
+                    } else {
+                        OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                    }
+                }
+            }
+        );
     },
     renderContent: function () {
         this._persons.sortBySize();
@@ -224,20 +282,7 @@ View.prototype = {
         $('#facerecognition .icon-rename').click(function () {
             var id = $(this).parent().data('id');
             var person = self._persons.getById(id);
-            FrDialogs.rename(
-                person.name,
-                person.faces[0]['thumb-url'],
-                function(result, value) {
-                    if (result === true && value) {
-                        self._persons.renameCluster (id, value).done(function () {
-                            self._persons.unsetActive();
-                            self.renderContent();
-                        }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                        });
-                    }
-                }
-            );
+            self.renamePerson(id, person.name, person.faces[0]['thumb-url']);
         });
 
         $('#facerecognition #show-more-clusters').click(function () {
@@ -260,8 +305,9 @@ View.prototype = {
  * Main app.
  */
 var persons = new Persons(OC.generateUrl('/apps/facerecognition'));
+var similar = new Similar(OC.generateUrl('/apps/facerecognition'));
 
-var view = new View(persons);
+var view = new View(persons, similar);
 
 view.renderContent();
 

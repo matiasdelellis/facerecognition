@@ -46,7 +46,6 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
-
 class PersonController extends Controller {
 
 	/** @var IRootFolder */
@@ -168,6 +167,39 @@ class PersonController extends Controller {
 		$resp['name'] = $person->getName();
 		$resp['id'] = $person->getId();
 		$resp['faces'] = $faces;
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 */
+	public function findSimilar(int $id) {
+		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+			return new DataResponse(array());
+		}
+		$sensitivity = $this->settingsService->getSensitivity();
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$mainPerson = $this->personMapper->find($this->userId, $id);
+		$mainFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $id, $sensitivity, $modelId);
+
+		$resp = array();
+		$persons = $this->personMapper->findAll($this->userId, $modelId);
+		foreach ($persons as $cmpPerson) {
+			if ($mainPerson->getName() === $cmpPerson->getName())
+				continue;
+
+			$cmpFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $cmpPerson->getId(), $sensitivity, $modelId);
+			$distance = dlib_vector_length($mainFace->descriptor, $cmpFace->descriptor);
+			if ($distance < ($sensitivity + 0.1)) {
+				$similar = array();
+				$similar['id'] = $cmpPerson->getId();
+				$similar['name'] = $cmpPerson->getName();
+				$similar['thumb-url'] = $this->getThumbUrl($cmpFace->getId());
+				$resp[] = $similar;
+			}
+		}
 
 		return new DataResponse($resp);
 	}

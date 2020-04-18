@@ -26,7 +26,7 @@ const FrDialogs = {
 
 	rename: function (name, thumbUrl, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-dialog-content';
+			var dialogName = 'fr-rename-dialog-content';
 			var dialogId = '#' + dialogName;
 			var $dlg = $tmpl.octemplate({
 				dialog_name: dialogName,
@@ -85,6 +85,66 @@ const FrDialogs = {
 
 			input.focus();
 			input.select();
+		});
+	},
+	suggestPersonName: function (name, faces, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-suggest-dialog-content';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Suggestions'),
+				message: t('facerecognition', 'Is it {personName}? Or a different person?', {personName: name}),
+				type: 'none'
+			});
+
+			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
+			for (var face of faces) {
+				var thumb = $('<img class="face-preview-dialog" src="' + face['thumb-url'] + '" width="50" height="50"/>');
+				div.append(thumb);
+			}
+			$dlg.append(div);
+
+			$('body').append($dlg);
+
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'I don\'t know'),
+				click: function () {
+					if (callback !== undefined) {
+						$(dialogId).ocdialog('close');
+					}
+					callback(false, false);
+				},
+				defaultButton: false
+			},{
+				text: t('facerecognition', 'Yes'),
+				click: function () {
+					if (callback !== undefined) {
+						$(dialogId).ocdialog('close');
+					}
+					callback(true, false);
+				},
+				defaultButton: true
+			}];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false, true);
+					}
+				}
+			});
 		});
 	},
 	_getMessageTemplate: function () {

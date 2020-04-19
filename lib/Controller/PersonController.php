@@ -175,9 +175,10 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function findSimilar(int $id) {
-		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+		$deviation = $this->settingsService->getDeviation();
+		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=') || ($deviation === 0.0))
 			return new DataResponse(array());
-		}
+
 		$sensitivity = $this->settingsService->getSensitivity();
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
@@ -192,7 +193,7 @@ class PersonController extends Controller {
 
 			$cmpFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $cmpPerson->getId(), $sensitivity, $modelId);
 			$distance = dlib_vector_length($mainFace->descriptor, $cmpFace->descriptor);
-			if ($distance < ($sensitivity + 0.1)) {
+			if ($distance < ($sensitivity + $deviation)) {
 				$similar = array();
 				$similar['id'] = $cmpPerson->getId();
 				$similar['name'] = $cmpPerson->getName();

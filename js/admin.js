@@ -106,7 +106,6 @@ $(document).ready(function() {
         });
     });
 
-
     /*
      * Sensitivity
      */
@@ -156,6 +155,60 @@ $(document).ready(function() {
                     OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
                     $('#restore-sensitivity').hide();
                     $('#save-sensitivity').hide();
+                }
+            }
+        });
+    });
+
+    /*
+     * Deviation
+     */
+    function getDeviation() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'deviation',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    var deviation = parseFloat(data.value);
+                    $('#deviation-range').val(deviation);
+                    $('#deviation-value').html(deviation);
+                }
+            }
+        });
+    }
+
+    $('#deviation-range').on('input', function() {
+        $('#deviation-value').html(this.value);
+        $('#restore-deviation').show();
+        $('#save-deviation').show();
+    });
+
+    $('#restore-deviation').on('click', function(event) {
+        event.preventDefault();
+        getDeviation();
+
+        $('#restore-deviation').hide();
+        $('#save-deviation').hide();
+    });
+
+    $('#save-deviation').on('click', function(event) {
+        event.preventDefault();
+        var deviation = $('#deviation-range').val().toString();
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'deviation',
+                'value': deviation
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved.'));
+                    $('#restore-deviation').hide();
+                    $('#save-deviation').hide();
                 }
             }
         });
@@ -263,6 +316,7 @@ $(document).ready(function() {
      */
     getImageArea();
     getSensitivity();
+    getDeviation();
     getMinConfidence();
     getNotGrouped();
 

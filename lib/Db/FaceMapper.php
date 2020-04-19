@@ -31,8 +31,6 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-use OCA\FaceRecognition\Helper\Euclidean;
-
 class FaceMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
@@ -134,6 +132,9 @@ class FaceMapper extends QBMapper {
 	}
 
 	public function findRepresentativeFromPerson(string $userId, int $personId, float $sensitivity, int $model) {
+		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+			return null;
+		}
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.image', 'f.person', 'f.descriptor')
 			->from($this->getTableName(), 'f')
@@ -144,12 +145,11 @@ class FaceMapper extends QBMapper {
 		$faces = $this->findEntities($qb);
 
 		$facesCount = array();
-		$euclidean = new Euclidean();
 		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 			$face1 = $faces[$i];
 			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
 				$face2 = $faces[$j];
-				$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
+				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
 				if ($distance < $sensitivity) {
 					if (!array_key_exists($i, $facesCount)) {
 						$facesCount[$i] = 1;

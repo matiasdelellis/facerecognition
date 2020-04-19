@@ -188,6 +188,9 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
+			case SettingsService::DEVIATION_KEY:
+				$this->settingsService->setDeviation($value);
+				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$this->settingsService->setMinimumConfidence($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
@@ -226,6 +229,9 @@ class SettingsController extends Controller {
 		switch ($type) {
 			case SettingsService::SENSITIVITY_KEY:
 				$value = $this->settingsService->getSensitivity();
+				break;
+			case SettingsService::DEVIATION_KEY:
+				$value = $this->settingsService->getDeviation();
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();

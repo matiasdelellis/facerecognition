@@ -167,15 +167,15 @@ View.prototype = {
                     self._persons.renameCluster (personId, name).done(function() {
                         self._persons.unsetActive();
                         self.renderContent();
-                        if (true) {
-                            self._similar.loadSimilar(personId, name).done(function() {
+                        self._similar.loadSimilar(personId, name).done(function() {
+                            if (self._similar.isEnabled()) {
                                 if (self._similar.hasSuggestion()) {
                                     self.suggestPerson(self._similar.getSuggestion(), name);
                                 } else {
                                     OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
                                 }
-                            });
-                        }
+                            }
+                        });
                     }).fail(function () {
                         OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                     });

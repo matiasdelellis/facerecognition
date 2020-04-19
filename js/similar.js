@@ -1,22 +1,29 @@
 var Similar = function (baseUrl) {
 	this._baseUrl = baseUrl;
+	this._enabled = false;
 	this._similarClusters = [];
 	this._similarRejected = [];
 	this._similarName = undefined;
 };
 
 Similar.prototype = {
+	isEnabled: function () {
+		return this._enabled;
+	},
 	loadSimilar: function (clusterId, clusterName) {
 		if (this._similarName != clusterName) {
-			this._similarClusters = [];
-			this._similarRejected = [];
-			this._similarName = undefined;
+			this.resetSuggestions();
 		}
 		var self = this;
 		var deferred = $.Deferred();
-		$.get(this._baseUrl+'/clusters/similar/'+clusterId).done(function (similarClusters) {
-			self.concatNewClusters(similarClusters);
-			self._similarName = clusterName;
+		$.get(this._baseUrl+'/clusters/similar/'+clusterId).done(function (response) {
+			self._enabled = response.enabled;
+			if (!self._enabled) {
+				self.resetSuggestions();
+			} else {
+				self.concatNewClusters(response.suggestions);
+				self._similarName = clusterName;
+			}
 			deferred.resolve();
 		}).fail(function () {
 			deferred.reject();
@@ -40,5 +47,10 @@ Similar.prototype = {
 				self._similarClusters.push(newCluster);
 			}
 		});
+	},
+	resetSuggestions: function () {
+		this._similarClusters = [];
+		this._similarRejected = [];
+		this._similarName = undefined;
 	},
 };

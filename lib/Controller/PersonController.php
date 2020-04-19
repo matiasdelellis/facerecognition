@@ -176,8 +176,15 @@ class PersonController extends Controller {
 	 */
 	public function findSimilar(int $id) {
 		$deviation = $this->settingsService->getDeviation();
-		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=') || ($deviation === 0.0))
-			return new DataResponse(array());
+
+		$enabled = (version_compare(phpversion('pdlib'), '1.0.2', '>=') && ($deviation > 0.0));
+
+		$resp = array();
+		$resp['enabled'] = $enabled;
+		$resp['suggestions'] = array();
+
+		if (!$enabled)
+			return new DataResponse($resp);
 
 		$sensitivity = $this->settingsService->getSensitivity();
 		$modelId = $this->settingsService->getCurrentFaceModel();
@@ -185,7 +192,7 @@ class PersonController extends Controller {
 		$mainPerson = $this->personMapper->find($this->userId, $id);
 		$mainFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $id, $sensitivity, $modelId);
 
-		$resp = array();
+		$suggestions = array();
 		$persons = $this->personMapper->findAll($this->userId, $modelId);
 		foreach ($persons as $cmpPerson) {
 			if ($mainPerson->getName() === $cmpPerson->getName())
@@ -198,9 +205,11 @@ class PersonController extends Controller {
 				$similar['id'] = $cmpPerson->getId();
 				$similar['name'] = $cmpPerson->getName();
 				$similar['thumb-url'] = $this->getThumbUrl($cmpFace->getId());
-				$resp[] = $similar;
+				$suggestions[] = $similar;
 			}
 		}
+
+		$resp['suggestions'] = $suggestions;
 
 		return new DataResponse($resp);
 	}

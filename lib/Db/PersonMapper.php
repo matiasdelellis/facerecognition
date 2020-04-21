@@ -103,6 +103,24 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 *  Find a person that contains a face.
+	 *
+	 * @param string $userId ID of the user
+	 * @param int $faceId ID of the face that belongs to the wanted person
+	 * @return Person
+	 */
+	public function findFromFace(string $userId, int $faceId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('p.id', 'p.name', 'p.is_valid')
+		   ->from($this->getTableName(), 'p')
+		   ->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
+		   ->where($qb->expr()->eq('p.user',  $qb->createNamedParameter($userId)))
+		   ->andWhere($qb->expr()->eq('f.id', $qb->createNamedParameter($faceId)));
+
+		return $this->findEntity($qb);
+	}
+
+	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *
 	 * @param string $userId ID of the user

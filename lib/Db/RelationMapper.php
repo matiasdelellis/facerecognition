@@ -53,23 +53,17 @@ class RelationMapper extends QBMapper {
 		return ($row !== false);
 	}
 
-	/*public function findFromPerson(string $userId, int $personId, int $model, int $state = null): array {
+	public function findFromPerson(string $userId, int $personId, int $state): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('r.id', 'r.face1', 'r.face1', 'r.state')
-			->from($this->getTableName(), 'r')
-			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
+		   ->from($this->getTableName(), 'r')
+		   ->innerJoin('r', 'facerecog_faces' ,'f', $qb->expr()->orX($qb->expr()->eq('r.face1', 'f.id'), $qb->expr()->eq('r.face2', 'f.id')))
+		   ->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
+		   ->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+		   ->andWhere($qb->expr()->eq('p.id', $qb->createNamedParameter($personId)))
+		   ->andWhere($qb->expr()->eq('r.state', $qb->createNamedParameter($state)));
 
-		if (!is_null($state)) {
-			$qb->andWhere($qb->expr()->eq('state', $qb->createNamedParameter($state)));
-		}
-
-		$relations = $this->findEntities($qb);
-
-		return $relations;
-	}*/
+		return $this->findEntities($qb);
+	}
 
 }

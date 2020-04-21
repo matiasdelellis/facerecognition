@@ -44,6 +44,9 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Db\Relation;
+use OCA\FaceRecognition\Db\RelationMapper;
+
 use OCA\FaceRecognition\Service\SettingsService;
 
 class PersonController extends Controller {
@@ -66,6 +69,9 @@ class PersonController extends Controller {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var RelationMapper */
+	private $relationMapper;
+
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -80,6 +86,7 @@ class PersonController extends Controller {
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personmapper,
+	                            RelationMapper  $relationMapper,
 	                            SettingsService $settingsService,
 	                            $UserId)
 	{
@@ -91,6 +98,7 @@ class PersonController extends Controller {
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personmapper;
+		$this->relationMapper  = $relationMapper;
 		$this->settingsService = $settingsService;
 		$this->userId          = $UserId;
 	}
@@ -186,25 +194,23 @@ class PersonController extends Controller {
 		if (!$enabled)
 			return new DataResponse($resp);
 
-		$sensitivity = $this->settingsService->getSensitivity();
-		$modelId = $this->settingsService->getCurrentFaceModel();
-
 		$mainPerson = $this->personMapper->find($this->userId, $id);
-		$mainFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $id, $sensitivity, $modelId);
 
 		$suggestions = array();
-		$persons = $this->personMapper->findAll($this->userId, $modelId);
-		foreach ($persons as $cmpPerson) {
-			if ($mainPerson->getName() === $cmpPerson->getName())
-				continue;
-
-			$cmpFace = $this->faceMapper->findRepresentativeFromPerson($this->userId, $cmpPerson->getId(), $sensitivity, $modelId);
-			$distance = dlib_vector_length($mainFace->descriptor, $cmpFace->descriptor);
-			if ($distance < ($sensitivity + $deviation)) {
+		$relations = $this->relationMapper->findFromPerson($this->userId, $id, RELATION::PROPOSED);
+		foreach ($relations as $relation) {
+			$person1 = $this->personMapper->findFromFace($this->userId, $relation->getFace1());
+			if (($person1->getId() !== $id) && ($mainPerson->getName() !== $person1->getName())) {
 				$similar = array();
-				$similar['id'] = $cmpPerson->getId();
-				$similar['name'] = $cmpPerson->getName();
-				$similar['thumb-url'] = $this->getThumbUrl($cmpFace->getId());
+				$similar['id'] = $person1->getId();
+				$similar['name'] = $person1->getName();
+				$suggestions[] = $similar;
+			}
+			$person2 = $this->personMapper->findFromFace($this->userId, $relation->getFace2());
+			if (($person2->getId() !== $id) && ($mainPerson->getName() !== $person2->getName())) {
+				$similar = array();
+				$similar['id'] = $person2->getId();
+				$similar['name'] = $person2->getName();
 				$suggestions[] = $similar;
 			}
 		}

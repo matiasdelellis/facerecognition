@@ -32,6 +32,9 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Db\Relation;
+use OCA\FaceRecognition\Db\RelationMapper;
+
 use OCA\FaceRecognition\Helper\Euclidean;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -48,6 +51,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	/** @var FaceMapper Face mapper*/
 	private $faceMapper;
 
+	/** @var RelationMapper Relation mapper*/
+	private $relationMapper;
+
 	/** @var SettingsService Settings service*/
 	private $settingsService;
 
@@ -60,6 +66,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	public function __construct(PersonMapper    $personMapper,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
+	                            RelationMapper  $relationMapper,
 	                            SettingsService $settingsService)
 	{
 		parent::__construct();
@@ -67,6 +74,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->personMapper    = $personMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
+		$this->relationMapper  = $relationMapper;
 		$this->settingsService = $settingsService;
 	}
 
@@ -207,8 +215,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$this->logInfo('Deleted ' . $orphansDeleted . ' persons without faces');
 		}
 
-		// Prevents not create/recreate the clusters unnecessarily.
+		// Fill relation table with new clusters.
+		$this->fillFaceRelationsFromPersons($userId);
 
+		// Prevents not create/recreate the clusters unnecessarily.
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
 		$this->settingsService->setForceCreateClusters(false, $userId);
 	}
@@ -228,7 +238,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 	private function getNewClusters(array $faces): array {
 		// Create edges for chinese whispers
-		$euclidean = new Euclidean();
 		$sensitivity = $this->settingsService->getSensitivity();
 		$min_confidence = $this->settingsService->getMinimumConfidence();
 		$edges = array();
@@ -250,6 +259,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				}
 			}
 		} else {
+			$euclidean = new Euclidean();
 			for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
 				$face1 = $faces[$i];
 				if ($face1->confidence < $min_confidence) {
@@ -343,4 +353,39 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		}
 		return $result;
 	}
+
+	private function fillFaceRelationsFromPersons(string $userId) {
+		$deviation = $this->settingsService->getDeviation();
+		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=') || ($deviation === 0.0))
+			return;
+
+		$sensitivity = $this->settingsService->getSensitivity();
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		// Get the representative faces of each person
+		$mainFaces = array();
+		$persons = $this->personMapper->findAll($userId, $modelId);
+		foreach ($persons as $person) {
+			$mainFaces[] = $this->faceMapper->findRepresentativeFromPerson($userId, $person->getId(), $sensitivity, $modelId);
+		}
+
+		// Get similar faces taking into account the deviation and insert new relations
+		for ($i = 0, $face_count1 = count($mainFaces); $i < $face_count1; $i++) {
+			$face1 = $mainFaces[$i];
+			for ($j = $i+1, $face_count2 = count($mainFaces); $j < $face_count2; $j++) {
+				$face2 = $mainFaces[$j];
+				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
+				if ($distance < ($sensitivity + $deviation)) {
+					$relation = new Relation();
+					$relation->setFace1($face1->getId());
+					$relation->setFace2($face2->getId());
+					$relation->setState(RELATION::PROPOSED);
+					if (!$this->relationMapper->exists($relation)) {
+						$this->relationMapper->insert($relation);
+					}
+				}
+			}
+		}
+	}
+
 }

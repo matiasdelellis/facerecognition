@@ -198,7 +198,7 @@ class ImageMapper extends QBMapper {
 		return $images;
 	}
 
-	public function findImagesFromPerson(string $userId, string $name, int $model): array {
+	public function findFromPersonLike(string $userId, int $model, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'i.file')
 			->from($this->getTableName(), 'i')
@@ -212,8 +212,10 @@ class ImageMapper extends QBMapper {
 		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
 		$qb->setParameter('query', $query);
 
-		$images = $this->findEntities($qb);
-		return $images;
+		$qb->setFirstResult($offset);
+		$qb->setMaxResults($limit);
+
+		return $this->findEntities($qb);
 	}
 
 	/**

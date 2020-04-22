@@ -33,7 +33,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 /**
  * Provide search results from the 'facerecognition' app
  */
-class Provider extends \OCP\Search\Provider {
+class Provider extends \OCP\Search\PagedProvider {
 
 	/** @var ImageMapper Image mapper */
 	private $imageMapper;
@@ -50,11 +50,12 @@ class Provider extends \OCP\Search\Provider {
 	}
 
 	/**
-	 *
 	 * @param string $query
-	 * @return \OCP\Search\Result
-	*/
-	function search($query) {
+	 * @param int|null $page
+	 * @param int|null $size
+	 * @return \OCP\Search\Result\Image
+	 */
+	function searchPaged($query, $page, $size) {
 
 		$userId = \OC::$server->getUserSession()->getUser()->getUID();
 		$ownerView = new \OC\Files\View('/'. $userId . '/files');
@@ -63,7 +64,7 @@ class Provider extends \OCP\Search\Provider {
 
 		$searchresults = array();
 
-		$results = $this->imageMapper->findImagesFromPerson ($userId, $query, $model);
+		$results = $this->imageMapper->findFromPersonLike($userId, $model, $query, ($page - 1) * $size, $size);
 		foreach($results as $result) {
 			$fileId = $result->getFile();
 			try {
@@ -72,7 +73,6 @@ class Provider extends \OCP\Search\Provider {
 				continue;
 			}
 			$fileInfo = $ownerView->getFileInfo($path);
-			//$searchresults[] = new \OCA\FaceRecognition\Search\Result($returnData);
 			$searchresults[] = new \OC\Search\Result\Image($fileInfo);
 		}
 

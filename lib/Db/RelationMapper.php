@@ -80,8 +80,8 @@ class RelationMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
 		   ->from($this->getTableName(), 'r')
-		   ->where('r.face1 IN (' . $sub1->getSQL() . ')')
-		   ->orWhere('r.face2 IN (' . $sub2->getSQL() . ')')
+		   ->where('((r.face1 IN (' . $sub1->getSQL() . ')) AND (r.face2 IN (' . $sub2->getSQL() . ')))')
+		   ->orWhere('((r.face2 IN (' . $sub1->getSQL() . ')) AND (r.face1 IN (' . $sub2->getSQL() . ')))')
 		   ->setParameter('person1', $personId1)
 		   ->setParameter('person2', $personId2);
 

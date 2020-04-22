@@ -32,6 +32,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class FaceMapper extends QBMapper {
+
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
@@ -42,6 +43,31 @@ class FaceMapper extends QBMapper {
 			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		return $this->findEntity($qb);
+	}
+
+	/**
+	 * Based on a given fileId, takes all faces that belong to that file
+	 * and return an array with that.
+	 *
+	 * @param string $userId ID of the user that faces belong to
+	 * @param int $modelId ID of the model that faces belgon to
+	 * @param int $fileId ID of file for which to search faces.
+	 *
+	 * @return array Array of faces on that file
+	 */
+	public function findFromFile(string $userId, int $modelId, int $fileId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'left', 'right', 'top', 'bottom', 'person')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model_id')))
+			->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('file_id', $fileId)
+			->orderBy('confidence', 'DESC');
+		return $this->findEntities($qb);
 	}
 
 	/**
@@ -127,27 +153,6 @@ class FaceMapper extends QBMapper {
 		$qb->setMaxResults($limit);
 		$qb->setFirstResult($offset);
 
-		$faces = $this->findEntities($qb);
-		return $faces;
-	}
-
-	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'left', 'right', 'top', 'bottom')
-			->from($this->getTableName(), 'f')
-			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
-			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('person', $qb->createParameter('person')))
-			->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
-			->setParameter('user', $userId)
-			->setParameter('person', $personId)
-			->setParameter('file_id', $fileId)
-			->setParameter('model', $model)
-			->setParameter('is_valid', true)
-			->orderBy('confidence', 'DESC');
 		$faces = $this->findEntities($qb);
 		return $faces;
 	}

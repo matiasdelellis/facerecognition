@@ -143,28 +143,6 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
-	 * Based on a given fileId, takes all person that belong to that image
-	 * and return an array with that.
-	 *
-	 * @param string $userId ID of the user that clusters belong to
-	 * @param int $modelId ID of the model that clusters belgon to
-	 * @param int $fileId ID of file image for which to searh persons.
-	 *
-	 * @return Person[] Array of persons on that file
-	 */
-	public function findFromFile(string $userId, int $modelId, int $fileId): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('p.id', 'name');
-		$qb->from($this->getTableName(), 'p')
-			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('p.id', 'f.person'))
-			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('i.id', 'f.image'))
-			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
-		return $this->findEntities($qb);
-	}
-
-	/**
 	 * Based on a given image, takes all faces that belong to that image
 	 * and invalidates all person that those faces belongs to.
 	 *

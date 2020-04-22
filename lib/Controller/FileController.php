@@ -95,20 +95,18 @@ class FileController extends Controller {
 		$resp['error'] = $image ? $image->getError() : null;
 		$resp['persons'] = array();
 
-		$persons = $this->personMapper->findFromFile($this->userId, $modelId, $fileId);
-		foreach ($persons as $person) {
-			$face = $this->faceMapper->getPersonOnFile($this->userId, $person->getId(), $fileId, $this->settingsService->getCurrentFaceModel());
-			if (!count($face))
-				continue;
+		$faces = $this->faceMapper->findFromFile($this->userId, $modelId, $fileId);
+		foreach ($faces as $face) {
+			$person = $this->personMapper->find($this->userId, $face->getPerson());
 
 			$facePerson = array();
 			$facePerson['name'] = $person->getName();
 			$facePerson['person_id'] = $person->getId();
-			$facePerson['thumb_url'] = $this->getThumbUrl($face[0]->getId());
-			$facePerson['face_left'] = $face[0]->getLeft();
-			$facePerson['face_right'] = $face[0]->getRight();
-			$facePerson['face_top'] = $face[0]->getTop();
-			$facePerson['face_bottom'] = $face[0]->getBottom();
+			$facePerson['thumb_url'] = $this->getThumbUrl($face->getId());
+			$facePerson['face_left'] = $face->getLeft();
+			$facePerson['face_right'] = $face->getRight();
+			$facePerson['face_top'] = $face->getTop();
+			$facePerson['face_bottom'] = $face->getBottom();
 
 			$resp['persons'][] = $facePerson;
 		}

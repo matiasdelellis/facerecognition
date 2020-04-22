@@ -53,7 +53,7 @@ class Provider extends \OCP\Search\PagedProvider {
 	 * @param string $query
 	 * @param int|null $page
 	 * @param int|null $size
-	 * @return \OCP\Search\Result\Image
+	 * @return \OCP\Search\Result[]
 	 */
 	function searchPaged($query, $page, $size) {
 

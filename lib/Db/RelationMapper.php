@@ -41,8 +41,8 @@ class RelationMapper extends QBMapper {
 		$query = $qb
 			->select(['id'])
 			->from($this->getTableName())
-			->where($qb->expr()->eq('face1', $qb->createParameter('face1')))
-			->andWhere($qb->expr()->eq('face2', $qb->createParameter('face2')))
+			->where($qb->expr()->andX($qb->expr()->eq('face1', $qb->createParameter('face1')), $qb->expr()->eq('face2', $qb->createParameter('face2'))))
+			->orWhere($qb->expr()->andX($qb->expr()->eq('face2', $qb->createParameter('face1')), $qb->expr()->eq('face1', $qb->createParameter('face2'))))
 			->setParameter('face1', $relation->getFace1())
 			->setParameter('face2', $relation->getFace2());
 

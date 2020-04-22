@@ -131,6 +131,51 @@ class FaceMapper extends QBMapper {
 		return $faces;
 	}
 
+	public function findRepresentativeFromPerson(string $userId, int $personId, float $sensitivity, int $model) {
+		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+			return null;
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.image', 'f.person', 'f.descriptor')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+		$faces = $this->findEntities($qb);
+
+		$facesCount = array();
+		for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+			$face1 = $faces[$i];
+			for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+				$face2 = $faces[$j];
+				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
+				if ($distance < $sensitivity) {
+					if (!array_key_exists($i, $facesCount)) {
+						$facesCount[$i] = 1;
+					} else {
+						$facesCount[$i] = $facesCount[$i]+1;
+					}
+					if (!array_key_exists($j, $facesCount)) {
+						$facesCount[$j] = 1;
+					} else {
+						$facesCount[$j] = $facesCount[$j]+1;
+					}
+				}
+			}
+		}
+
+		$bestFaceId = -1;
+		$bestFaceCount = -1;
+		foreach ($facesCount as $faceId => $faceCount) {
+			if ($faceCount > $bestFaceCount) {
+				$bestFaceId = $faceId;
+				$bestFaceCount = $faceCount;
+			}
+		}
+		return $faces[$bestFaceId];
+	}
+
 	public function getPersonOnFile(string $userId, int $personId, int $fileId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'left', 'right', 'top', 'bottom')

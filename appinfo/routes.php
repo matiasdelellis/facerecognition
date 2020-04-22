@@ -37,6 +37,18 @@ return ['routes' =>
 		'url'  => '/file',
 		'verb' => 'GET'
 	],
+	// Get proposed relations on an person.
+	[
+		'name' => 'relation#findByPerson',
+		'url'  => '/relation/{personId}',
+		'verb' => 'GET'
+	],
+	// Change an relation of an person.
+	[
+		'name' => 'relation#updateByPersons',
+		'url'  => '/relation/{personId}',
+		'verb' => 'PUT'
+	],
 	// Get folder preferences
 	[
 		'name' => 'file#getFolderOptions',

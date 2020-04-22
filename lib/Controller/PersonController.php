@@ -46,7 +46,6 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
-
 class PersonController extends Controller {
 
 	/** @var IRootFolder */
@@ -222,7 +221,7 @@ class PersonController extends Controller {
 	 * @param string $name
 	 */
 	public function updateName($id, $name) {
-		$person = $this->personMapper->find ($this->userId, $id);
+		$person = $this->personMapper->find($this->userId, $id);
 		$person->setName($name);
 		$this->personMapper->update($person);
 

@@ -41,6 +41,21 @@
 		</p>
 		<br>
 		<h3>
+			<?php p($l->t('Deviation for suggestions'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('The deviation is numerically added to the sensitivity to compare the clusters obtained by that sensitivity and suggest renaming similar clusters.'));?>
+			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Deviation"></a>
+		</p>
+		<p class="settings-ranged">
+			<label for="deviation-range"><?php p($l->t('Less deviation'));?></label>
+			<span><input type="range" id="deviation-range" min="0.0" max="0.2" value="0.0" step="0.01" class="ui-slider"></span>
+			<label for="deviation-range"><?php p($l->t('Highest deviation'));?></label>
+			<span id="deviation-value"class="span-highlighted">...</span>
+			<a id="restore-deviation" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-deviation" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
 			<?php p($l->t('Minimum confidence'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('The minimum confidence determines how reliable must be a face detection to try to group it. Blurred or misaligned faces would have a confidence closer to 0.0, and the best images close to 1.0.'));?>

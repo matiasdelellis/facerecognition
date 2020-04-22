@@ -57,6 +57,12 @@ class SettingsService {
 	const DEFAULT_SENSITIVITY = '0.4';
 	const MAXIMUM_SENSITIVITY = '0.6';
 
+	/** Deviation used to suggestions */
+	const DEVIATION_KEY = 'deviation';
+	const MINIMUM_DEVIATION = '0.0';
+	const DEFAULT_DEVIATION = '0.0';
+	const MAXIMUM_DEVIATION = '0.2';
+
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
@@ -218,6 +224,14 @@ class SettingsService {
 
 	public function setSensitivity($sensitivity) {
 		$this->config->setAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, $sensitivity);
+	}
+
+	public function getDeviation(): float {
+		return floatval($this->config->getAppValue(Application::APP_NAME, self::DEVIATION_KEY, self::DEFAULT_DEVIATION));
+	}
+
+	public function setDeviation($deviation) {
+		$this->config->setAppValue(Application::APP_NAME, self::DEVIATION_KEY, $deviation);
 	}
 
 	public function getMinimumConfidence(): float {

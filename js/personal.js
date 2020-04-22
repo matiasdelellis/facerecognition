@@ -99,7 +99,7 @@ Persons.prototype = {
     getAll: function () {
         return this._clusters;
     },
-    renameCluster: function (clusterId, personName) {
+    updateCluster: function (clusterId, personName) {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: personName };
@@ -108,24 +108,28 @@ Persons.prototype = {
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._clusters.forEach(function (cluster) {
-                if (cluster.id === clusterId) {
-                    cluster.name = personName;
-                }
-            });
+            self.renameCluster(clusterId, personName);
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    renameCluster: function (clusterId, personName) {
+        this._clusters.forEach(function (cluster) {
+            if (cluster.id === clusterId) {
+                cluster.name = personName;
+            }
+        });
     }
 };
 
 /*
  * View.
  */
-var View = function (persons) {
+var View = function (persons, similar) {
     this._persons = persons;
+    this._similar = similar;
 };
 
 View.prototype = {
@@ -155,6 +159,71 @@ View.prototype = {
                 self.reload();
             }
         });
+    },
+    renamePerson: function (personId, personName, faceUrl) {
+        var self = this;
+        FrDialogs.rename(
+            personName,
+            faceUrl,
+            function(result, name) {
+                if (result === true && name) {
+                    self._persons.updateCluster(personId, name).done(function() {
+                        self._persons.unsetActive();
+                        self.renderContent();
+                        self._similar.findProposal(personId, name).done(function() {
+                            if (self._similar.isEnabled()) {
+                                if (self._similar.hasProposal()) {
+                                    self.suggestPerson(self._similar.getProposal(), name);
+                                } else {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                                }
+                            }
+                        });
+                    }).fail(function () {
+                        OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                    });
+                }
+            }
+        );
+    },
+    suggestPerson: function (proposal, personName) {
+        var self = this;
+        FrDialogs.suggestPersonName(
+            personName,
+            this._persons.getById(proposal.id).faces,
+            function(valid, state) {
+                if (valid === true) {
+                    // It is valid must be update the proposals.
+                    self._similar.updateProposal(proposal, state).done(function() {
+                        if (state === Relation.ACCEPTED) {
+                            // Update view with new name.
+                            self._persons.renameCluster(proposal.id, personName);
+                            self._persons.unsetActive();
+                            self.renderContent();
+                            // Look for new suggestions based on accepted proposal
+                            self._similar.findProposal(proposal.id, personName).done(function() {
+                                if (self._similar.hasProposal()) {
+                                    self.suggestPerson(self._similar.getProposal(), personName);
+                                } else {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                                }
+                            });
+                        } else {
+                            // Suggest cached proposals
+                            if (self._similar.hasProposal()) {
+                                self.suggestPerson(self._similar.getProposal(), personName);
+                            } else {
+                                OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                            }
+                        }
+                    }).fail(function () {
+                        if (state === Relation.ACCEPTED) {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                        }
+                    });
+                }
+            }
+        );
     },
     renderContent: function () {
         this._persons.sortBySize();
@@ -224,20 +293,7 @@ View.prototype = {
         $('#facerecognition .icon-rename').click(function () {
             var id = $(this).parent().data('id');
             var person = self._persons.getById(id);
-            FrDialogs.rename(
-                person.name,
-                person.faces[0]['thumb-url'],
-                function(result, value) {
-                    if (result === true && value) {
-                        self._persons.renameCluster (id, value).done(function () {
-                            self._persons.unsetActive();
-                            self.renderContent();
-                        }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                        });
-                    }
-                }
-            );
+            self.renamePerson(id, person.name, person.faces[0]['thumb-url']);
         });
 
         $('#facerecognition #show-more-clusters').click(function () {
@@ -260,8 +316,9 @@ View.prototype = {
  * Main app.
  */
 var persons = new Persons(OC.generateUrl('/apps/facerecognition'));
+var similar = new Similar(OC.generateUrl('/apps/facerecognition'));
 
-var view = new View(persons);
+var view = new View(persons, similar);
 
 view.renderContent();
 

@@ -1,7 +1,16 @@
+'use strict';
+
+const Relation = {
+	PROPOSED: 0,
+	ACCEPTED: 1,
+	REJECTED: 2
+}
+
 var Similar = function (baseUrl) {
 	this._baseUrl = baseUrl;
+
 	this._enabled = false;
-	this._similarClusters = [];
+	this._similarProposed = [];
 	this._similarRejected = [];
 	this._similarName = undefined;
 };
@@ -10,18 +19,18 @@ Similar.prototype = {
 	isEnabled: function () {
 		return this._enabled;
 	},
-	loadSimilar: function (clusterId, clusterName) {
-		if (this._similarName != clusterName) {
-			this.resetSuggestions();
+	findProposal: function (clusterId, clusterName) {
+		if (this._similarName !== clusterName) {
+			this.resetProposals();
 		}
 		var self = this;
 		var deferred = $.Deferred();
-		$.get(this._baseUrl+'/clusters/similar/'+clusterId).done(function (response) {
+		$.get(this._baseUrl+'/relation/'+clusterId).done(function (response) {
 			self._enabled = response.enabled;
 			if (!self._enabled) {
 				self.resetSuggestions();
 			} else {
-				self.concatNewClusters(response.suggestions);
+				self.concatNewProposals(response.proposed);
 				self._similarName = clusterName;
 			}
 			deferred.resolve();
@@ -30,26 +39,49 @@ Similar.prototype = {
 		});
 		return deferred.promise();
 	},
-	hasSuggestion: function () {
-		return (this._similarClusters.length > 0);
+	acceptProposed: function (proposed) {
+		return this.updateRelation(proposed.origId, proposed.id, Relation.ACCEPTED);
 	},
-	getSuggestion: function () {
-		return this._similarClusters.shift();
+	rejectProposed: function (proposed) {
+		this._similarRejected.push(proposed);
+		return this.updateRelation(proposed.origId, proposed.id, Relation.REJECTED);
 	},
-	rejectSuggestion: function (suggestion) {
-		return this._similarRejected.push(suggestion);
+	hasProposal: function () {
+		return (this._similarProposed.length > 0);
 	},
-	concatNewClusters: function (newClusters) {
+	getProposal: function () {
+		return this._similarProposed.shift();
+	},
+	updateRelation: function (clusterId, toClusterId, newState) {
 		var self = this;
-		newClusters.forEach(function (newCluster) {
-			if ((self._similarClusters.find(function (oldCluster) { return newCluster.id === oldCluster.id;}) === undefined) &&
-			    (self._similarRejected.find(function (rejCluster) { return newCluster.id === rejCluster.id;}) === undefined)) {
-				self._similarClusters.push(newCluster);
+		var deferred = $.Deferred();
+		var data = {
+			toPersonId: toClusterId,
+			state: newState
+		};
+		$.ajax({
+			url: this._baseUrl + '/relation/' + clusterId,
+			method: 'PUT',
+			contentType: 'application/json',
+			data: JSON.stringify(data)
+		}).done(function (data) {
+			deferred.resolve();
+		}).fail(function () {
+			deferred.reject();
+		});
+		return deferred.promise();
+	},
+	concatNewProposals: function (proposals) {
+		var self = this;
+		proposals.forEach(function (proposed) {
+			if ((self._similarProposed.find(function (oldProposed) { return proposed.id === oldProposed.id;}) === undefined) &&
+			    (self._similarRejected.find(function (rejProposed) { return proposed.id === rejProposed.id;}) === undefined)) {
+				self._similarProposed.push(proposed);
 			}
 		});
 	},
-	resetSuggestions: function () {
-		this._similarClusters = [];
+	resetProposals: function () {
+		this._similarProposed = [];
 		this._similarRejected = [];
 		this._similarName = undefined;
 	},

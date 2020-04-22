@@ -99,7 +99,7 @@ Persons.prototype = {
     getAll: function () {
         return this._clusters;
     },
-    renameCluster: function (clusterId, personName) {
+    updateCluster: function (clusterId, personName) {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: personName };
@@ -108,16 +108,19 @@ Persons.prototype = {
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._clusters.forEach(function (cluster) {
-                if (cluster.id === clusterId) {
-                    cluster.name = personName;
-                }
-            });
+            self.renameCluster(clusterId, personName);
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    renameCluster: function (clusterId, personName) {
+        this._clusters.forEach(function (cluster) {
+            if (cluster.id === clusterId) {
+                cluster.name = personName;
+            }
+        });
     }
 };
 
@@ -164,13 +167,13 @@ View.prototype = {
             faceUrl,
             function(result, name) {
                 if (result === true && name) {
-                    self._persons.renameCluster (personId, name).done(function() {
+                    self._persons.updateCluster(personId, name).done(function() {
                         self._persons.unsetActive();
                         self.renderContent();
-                        self._similar.loadSimilar(personId, name).done(function() {
+                        self._similar.findProposal(personId, name).done(function() {
                             if (self._similar.isEnabled()) {
-                                if (self._similar.hasSuggestion()) {
-                                    self.suggestPerson(self._similar.getSuggestion(), name);
+                                if (self._similar.hasProposal()) {
+                                    self.suggestPerson(self._similar.getProposal(), name);
                                 } else {
                                     OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
                                 }
@@ -183,19 +186,20 @@ View.prototype = {
             }
         );
     },
-    suggestPerson: function (suggestion, personName) {
+    suggestPerson: function (proposal, personName) {
         var self = this;
         FrDialogs.suggestPersonName(
             personName,
-            this._persons.getById(suggestion.id).faces,
+            this._persons.getById(proposal.id).faces,
             function(accepted, close) {
                 if (accepted === true) {
-                    self._persons.renameCluster (suggestion.id, personName).done(function() {
+                    self._similar.acceptProposed(proposal).done(function() {
+                        self._persons.renameCluster(proposal.id, personName);
                         self._persons.unsetActive();
                         self.renderContent();
-                        self._similar.loadSimilar(suggestion.id, personName).done(function() {
-                            if (self._similar.hasSuggestion()) {
-                                self.suggestPerson(self._similar.getSuggestion(), personName);
+                        self._similar.findProposal(proposal.id, personName).done(function() {
+                            if (self._similar.hasProposal()) {
+                                self.suggestPerson(self._similar.getProposal(), personName);
                             } else {
                                 OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
                             }
@@ -204,12 +208,13 @@ View.prototype = {
                         OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                     });
                 } else if (close === false) {
-                    self._similar.rejectSuggestion(suggestion);
-                    if (self._similar.hasSuggestion()) {
-                        self.suggestPerson(self._similar.getSuggestion(), personName);
-                    } else {
-                        OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
-                    }
+                    self._similar.rejectProposed(proposal).done(function() {
+                        if (self._similar.hasProposal()) {
+                            self.suggestPerson(self._similar.getProposal(), personName);
+                        } else {
+                            OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                        }
+                    });
                 }
             }
         );

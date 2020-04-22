@@ -44,9 +44,6 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-use OCA\FaceRecognition\Db\Relation;
-use OCA\FaceRecognition\Db\RelationMapper;
-
 use OCA\FaceRecognition\Service\SettingsService;
 
 class PersonController extends Controller {
@@ -69,9 +66,6 @@ class PersonController extends Controller {
 	/** @var PersonMapper */
 	private $personMapper;
 
-	/** @var RelationMapper */
-	private $relationMapper;
-
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -86,7 +80,6 @@ class PersonController extends Controller {
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personmapper,
-	                            RelationMapper  $relationMapper,
 	                            SettingsService $settingsService,
 	                            $UserId)
 	{
@@ -98,7 +91,6 @@ class PersonController extends Controller {
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personmapper;
-		$this->relationMapper  = $relationMapper;
 		$this->settingsService = $settingsService;
 		$this->userId          = $UserId;
 	}
@@ -175,47 +167,6 @@ class PersonController extends Controller {
 		$resp['name'] = $person->getName();
 		$resp['id'] = $person->getId();
 		$resp['faces'] = $faces;
-
-		return new DataResponse($resp);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 */
-	public function findSimilar(int $id) {
-		$deviation = $this->settingsService->getDeviation();
-
-		$enabled = (version_compare(phpversion('pdlib'), '1.0.2', '>=') && ($deviation > 0.0));
-
-		$resp = array();
-		$resp['enabled'] = $enabled;
-		$resp['suggestions'] = array();
-
-		if (!$enabled)
-			return new DataResponse($resp);
-
-		$mainPerson = $this->personMapper->find($this->userId, $id);
-
-		$suggestions = array();
-		$relations = $this->relationMapper->findFromPerson($this->userId, $id, RELATION::PROPOSED);
-		foreach ($relations as $relation) {
-			$person1 = $this->personMapper->findFromFace($this->userId, $relation->getFace1());
-			if (($person1->getId() !== $id) && ($mainPerson->getName() !== $person1->getName())) {
-				$similar = array();
-				$similar['id'] = $person1->getId();
-				$similar['name'] = $person1->getName();
-				$suggestions[] = $similar;
-			}
-			$person2 = $this->personMapper->findFromFace($this->userId, $relation->getFace2());
-			if (($person2->getId() !== $id) && ($mainPerson->getName() !== $person2->getName())) {
-				$similar = array();
-				$similar['id'] = $person2->getId();
-				$similar['name'] = $person2->getName();
-				$suggestions[] = $similar;
-			}
-		}
-
-		$resp['suggestions'] = $suggestions;
 
 		return new DataResponse($resp);
 	}

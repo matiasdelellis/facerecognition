@@ -66,4 +66,26 @@ class RelationMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	public function findFromPersons(int $personId1, int $personId2) {
+		$sub1 = $this->db->getQueryBuilder();
+		$sub1->select('f.id')
+		      ->from('facerecog_faces', 'f')
+		      ->where($sub1->expr()->eq('f.person', $sub1->createParameter('person1')));
+
+		$sub2 = $this->db->getQueryBuilder();
+		$sub2->select('f.id')
+		      ->from('facerecog_faces', 'f')
+		      ->where($sub2->expr()->eq('f.person', $sub2->createParameter('person2')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
+		   ->from($this->getTableName(), 'r')
+		   ->where('r.face1 IN (' . $sub1->getSQL() . ')')
+		   ->orWhere('r.face2 IN (' . $sub2->getSQL() . ')')
+		   ->setParameter('person1', $personId1)
+		   ->setParameter('person2', $personId2);
+
+		return $this->findEntities($qb);
+	}
+
 }

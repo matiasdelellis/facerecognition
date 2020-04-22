@@ -7,12 +7,6 @@ return ['routes' =>
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
-	// Get a similar clusters by Id.
-	[
-		'name' => 'person#findSimilar',
-		'url'  => '/clusters/similar/{id}',
-		'verb' => 'GET'
-	],
 	// Get all clusters filtered by Name.
 	[
 		'name' => 'person#findByName',
@@ -42,6 +36,18 @@ return ['routes' =>
 		'name' => 'file#getPersonsFromPath',
 		'url'  => '/file',
 		'verb' => 'GET'
+	],
+	// Get proposed relations on an person.
+	[
+		'name' => 'relation#findByPerson',
+		'url'  => '/relation/{personId}',
+		'verb' => 'GET'
+	],
+	// Change an relation of an person.
+	[
+		'name' => 'relation#updateByPersons',
+		'url'  => '/relation/{personId}',
+		'verb' => 'PUT'
 	],
 	// Get folder preferences
 	[

@@ -39,32 +39,27 @@ Similar.prototype = {
 		});
 		return deferred.promise();
 	},
-	acceptProposed: function (proposed) {
-		return this.updateRelation(proposed.origId, proposed.id, Relation.ACCEPTED);
-	},
-	rejectProposed: function (proposed) {
-		this._similarRejected.push(proposed);
-		return this.updateRelation(proposed.origId, proposed.id, Relation.REJECTED);
-	},
 	hasProposal: function () {
 		return (this._similarProposed.length > 0);
 	},
 	getProposal: function () {
 		return this._similarProposed.shift();
 	},
-	updateRelation: function (clusterId, toClusterId, newState) {
+	updateProposal: function (proposal, newState) {
 		var self = this;
 		var deferred = $.Deferred();
 		var data = {
-			toPersonId: toClusterId,
+			toPersonId: proposal.id,
 			state: newState
 		};
 		$.ajax({
-			url: this._baseUrl + '/relation/' + clusterId,
+			url: this._baseUrl + '/relation/' + proposal.origId,
 			method: 'PUT',
 			contentType: 'application/json',
 			data: JSON.stringify(data)
 		}).done(function (data) {
+			if (newState !== Relation.ACCEPTED)
+				self._similarRejected.push(proposal);
 			deferred.resolve();
 		}).fail(function () {
 			deferred.reject();

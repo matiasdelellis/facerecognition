@@ -115,21 +115,28 @@ const FrDialogs = {
 			}
 
 			var buttonlist = [{
-				text: t('facerecognition', 'I don\'t know'),
+				text: t('facerecognition', 'No'),
 				click: function () {
 					if (callback !== undefined) {
 						$(dialogId).ocdialog('close');
 					}
-					callback(false, false);
+					callback(true, Relation.REJECTED);
 				},
-				defaultButton: false
-			},{
+			}, {
+				text: t('facerecognition', 'I am not sure'),
+				click: function () {
+					if (callback !== undefined) {
+						$(dialogId).ocdialog('close');
+					}
+					callback(true, Relation.PROPOSED);
+				}
+			}, {
 				text: t('facerecognition', 'Yes'),
 				click: function () {
 					if (callback !== undefined) {
 						$(dialogId).ocdialog('close');
 					}
-					callback(true, false);
+					callback(true, Relation.ACCEPTED);
 				},
 				defaultButton: true
 			}];
@@ -141,7 +148,7 @@ const FrDialogs = {
 				close: function () {
 					// callback is already fired if Yes/No is clicked directly
 					if (callback !== undefined) {
-						callback(false, true);
+						callback(false, Relation.PROPOSED);
 					}
 				}
 			});

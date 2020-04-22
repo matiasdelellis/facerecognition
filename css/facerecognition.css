@@ -52,6 +52,11 @@
     width: 50px;
 }
 
+
+.oc-dialog-buttonrow, .threebuttons {
+    justify-content: space-between;
+}
+
 /*
  * Admin page
  */

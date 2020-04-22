@@ -191,28 +191,34 @@ View.prototype = {
         FrDialogs.suggestPersonName(
             personName,
             this._persons.getById(proposal.id).faces,
-            function(accepted, close) {
-                if (accepted === true) {
-                    self._similar.acceptProposed(proposal).done(function() {
-                        self._persons.renameCluster(proposal.id, personName);
-                        self._persons.unsetActive();
-                        self.renderContent();
-                        self._similar.findProposal(proposal.id, personName).done(function() {
+            function(valid, state) {
+                if (valid === true) {
+                    // It is valid must be update the proposals.
+                    self._similar.updateProposal(proposal, state).done(function() {
+                        if (state === Relation.ACCEPTED) {
+                            // Update view with new name.
+                            self._persons.renameCluster(proposal.id, personName);
+                            self._persons.unsetActive();
+                            self.renderContent();
+                            // Look for new suggestions based on accepted proposal
+                            self._similar.findProposal(proposal.id, personName).done(function() {
+                                if (self._similar.hasProposal()) {
+                                    self.suggestPerson(self._similar.getProposal(), personName);
+                                } else {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                                }
+                            });
+                        } else {
+                            // Suggest cached proposals
                             if (self._similar.hasProposal()) {
                                 self.suggestPerson(self._similar.getProposal(), personName);
                             } else {
                                 OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
                             }
-                        });
+                        }
                     }).fail(function () {
-                        OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                    });
-                } else if (close === false) {
-                    self._similar.rejectProposed(proposal).done(function() {
-                        if (self._similar.hasProposal()) {
-                            self.suggestPerson(self._similar.getProposal(), personName);
-                        } else {
-                            OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                        if (state === Relation.ACCEPTED) {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                         }
                     });
                 }

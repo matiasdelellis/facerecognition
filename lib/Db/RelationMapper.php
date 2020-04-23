@@ -88,4 +88,20 @@ class RelationMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	public function merge(array $relations): int {
+		$addedCount = 0;
+
+		$this->db->beginTransaction();
+		foreach ($relations as $relation) {
+			if ($this->exists($relation))
+				continue;
+
+			$this->insert($relation);
+			$addedCount++;
+		}
+		$this->db->commit();
+
+		return $addedCount;
+	}
+
 }

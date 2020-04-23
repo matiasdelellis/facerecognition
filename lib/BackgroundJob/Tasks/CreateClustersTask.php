@@ -216,7 +216,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Fill relation table with new clusters.
-		$this->fillFaceRelationsFromPersons($userId);
+		$relations = $this->fillFaceRelationsFromPersons($userId, $modelId);
+		$this->logInfo($relations . ' relations added as suggestions');
 
 		// Prevents not create/recreate the clusters unnecessarily.
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
@@ -354,25 +355,26 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return $result;
 	}
 
-	private function fillFaceRelationsFromPersons(string $userId) {
+	private function fillFaceRelationsFromPersons(string $userId, int $modelId): int {
 		$deviation = $this->settingsService->getDeviation();
 		if (!version_compare(phpversion('pdlib'), '1.0.2', '>=') || ($deviation === 0.0))
-			return;
+			return 0;
 
 		$sensitivity = $this->settingsService->getSensitivity();
-		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		// Get the representative faces of each person
 		$mainFaces = array();
 		$persons = $this->personMapper->findAll($userId, $modelId);
 		foreach ($persons as $person) {
-			$mainFaces[] = $this->faceMapper->findRepresentativeFromPerson($userId, $person->getId(), $sensitivity, $modelId);
+			$mainFaces[] = $this->faceMapper->findRepresentativeFromPerson($userId, $modelId, $person->getId(), $sensitivity);
 		}
 
-		// Get similar faces taking into account the deviation and insert new relations
-		for ($i = 0, $face_count1 = count($mainFaces); $i < $face_count1; $i++) {
+		// Get similar faces taking into account the deviation
+		$relations = array();
+		$faces_count = count($mainFaces);
+		for ($i = 0 ; $i < $faces_count; $i++) {
 			$face1 = $mainFaces[$i];
-			for ($j = $i+1, $face_count2 = count($mainFaces); $j < $face_count2; $j++) {
+			for ($j = $i+1; $j < $faces_count; $j++) {
 				$face2 = $mainFaces[$j];
 				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
 				if ($distance < ($sensitivity + $deviation)) {
@@ -380,12 +382,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					$relation->setFace1($face1->getId());
 					$relation->setFace2($face2->getId());
 					$relation->setState(RELATION::PROPOSED);
-					if (!$this->relationMapper->exists($relation)) {
-						$this->relationMapper->insert($relation);
-					}
+					$relations[] = $relation;
 				}
 			}
 		}
+
+		// Merge new suggested relations
+		return $this->relationMapper->merge($relations);
 	}
 
 }

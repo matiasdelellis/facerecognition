@@ -48,14 +48,14 @@ class Relation extends Entity {
 	 *
 	 * @var int
 	 * */
-	protected $face1;
+	public $face1;
 
 	/**
 	 * Face id of a face of a person related with $face1
 	 *
 	 * @var int
 	 * */
-	protected $face2;
+	public $face2;
 
 	/**
 	 * State of two face relation. These are proposed, and can be accepted
@@ -63,6 +63,6 @@ class Relation extends Entity {
 	 *
 	 * @var int
 	 * */
-	protected $state;
+	public $state;
 
 }

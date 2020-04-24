@@ -121,24 +121,33 @@ class RelationMapper extends QBMapper {
 		$matrix = array();
 		$relations = $this->findByUser($userId, $modelId);
 		foreach ($relations as $relation) {
-			$face1 = $relation->getFace1();
-			$face2 = $relation->getFace2();
-			$state = $relation->getState();
-
 			$row = array();
-			if (isset($matrix[$face1])) {
-				$row = $matrix[$face1];
+			if (isset($matrix[$relation->face1])) {
+				$row = $matrix[$relation->face1];
 			}
-			$row[$face2] = $state;
-			$matrix[$face1] = $row;
+			$row[$relation->face2] = $relation->state;
+			$matrix[$relation->face1] = $row;
 		}
 		return $matrix;
 	}
 
-	public function existsOnMatrix(Relation $relation, array $matrix): bool {
-		$face1 = $relation->getFace1();
-		$face2 = $relation->getFace2();
+	public function getStateOnMatrix(int $face1, int $face2, array $matrix): int {
+		if (isset($matrix[$face1])) {
+			$row = $matrix[$face1];
+			if (isset($row[$face2])) {
+				return $matrix[$face1][$face2];
+			}
+		}
+		if (isset($matrix[$face2])) {
+			$row = $matrix[$face2];
+			if (isset($row[$face1])) {
+				return $matrix[$face2][$face1];
+			}
+		}
+		return Relation::PROPOSED;
+	}
 
+	public function existsOnMatrix(int $face1, int $face2, array $matrix): bool {
 		if (isset($matrix[$face1])) {
 			$row = $matrix[$face1];
 			if (isset($row[$face2])) {
@@ -160,7 +169,7 @@ class RelationMapper extends QBMapper {
 		try {
 			$oldMatrix = $this->findByUserAsMatrix($userId, $modelId);
 			foreach ($relations as $relation) {
-				if ($this->existsOnMatrix($relation, $oldMatrix))
+				if ($this->existsOnMatrix($relation->face1, $relation->face2, $oldMatrix))
 					continue;
 				$this->insert($relation);
 				$added++;

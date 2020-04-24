@@ -89,7 +89,7 @@ class RelationController extends Controller {
 		$proposed = array();
 		$relations = $this->relationMapper->findFromPerson($this->userId, $personId, RELATION::PROPOSED);
 		foreach ($relations as $relation) {
-			$person1 = $this->personMapper->findFromFace($this->userId, $relation->getFace1());
+			$person1 = $this->personMapper->findFromFace($this->userId, $relation->face1);
 			if (($person1->getId() !== $personId) && ($mainPerson->getName() !== $person1->getName())) {
 				$proffer = array();
 				$proffer['origId'] = $mainPerson->getId();
@@ -97,7 +97,7 @@ class RelationController extends Controller {
 				$proffer['name'] = $person1->getName();
 				$proposed[] = $proffer;
 			}
-			$person2 = $this->personMapper->findFromFace($this->userId, $relation->getFace2());
+			$person2 = $this->personMapper->findFromFace($this->userId, $relation->face2);
 			if (($person2->getId() !== $personId) && ($mainPerson->getName() !== $person2->getName())) {
 				$proffer = array();
 				$proffer['origId'] = $mainPerson->getId();

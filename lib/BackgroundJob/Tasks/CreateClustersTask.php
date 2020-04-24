@@ -196,12 +196,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$faces = $this->faceMapper->getFaces($userId, $modelId);
 		$this->logInfo(count($faces) . ' faces found for clustering');
 
+		$relations = $this->relationMapper->findByUserAsMatrix($userId, $modelId);
+
 		// Cluster is associative array where key is person ID.
 		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
 		$currentClusters = $this->getCurrentClusters($faces);
-		$newClusters = $this->getNewClusters($faces);
+		$newClusters = $this->getNewClusters($faces, $relations);
 		$this->logInfo(count($newClusters) . ' persons found after clustering');
 
 		// New merge
@@ -237,7 +239,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return $chineseClusters;
 	}
 
-	private function getNewClusters(array $faces): array {
+	private function getNewClusters(array $faces, array $relations): array {
 		// Create edges for chinese whispers
 		$sensitivity = $this->settingsService->getSensitivity();
 		$min_confidence = $this->settingsService->getMinimumConfidence();
@@ -252,6 +254,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				}
 				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
 					$face2 = $faces[$j];
+					if ($this->relationMapper->existsOnMatrix($face1->id, $face2->id, $relations)) {
+						$state = $this->relationMapper->getStateOnMatrix($face1->id, $face2->id, $relations);
+						if ($state === Relation::ACCEPTED) {
+							$edges[] = array($i, $j);
+							continue;
+						} else if ($state === Relation::REJECTED) {
+							continue;
+						}
+					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
 
 					if ($distance < $sensitivity) {

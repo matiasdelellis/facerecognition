@@ -30,6 +30,7 @@ use OCP\IUserManager;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\RelationMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -56,6 +57,9 @@ class FaceManagementService {
 	/** @var PersonMapper */
 	private $personMapper;
 
+	/** @var RelationMapper */
+	private $relationMapper;
+
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -63,12 +67,14 @@ class FaceManagementService {
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personMapper,
+	                            RelationMapper  $relationMapper,
 	                            SettingsService $settingsService)
 	{
 		$this->userManager     = $userManager;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personMapper;
+		$this->relationMapper  = $relationMapper;
 		$this->settingsService = $settingsService;
 	}
 
@@ -134,6 +140,7 @@ class FaceManagementService {
 
 		$this->faceMapper->unsetPersonsRelationForUser($userId, $model);
 		$this->personMapper->deleteUserPersons($userId);
+		$this->relationMapper->deleteUser($userId);
 	}
 
 	/**

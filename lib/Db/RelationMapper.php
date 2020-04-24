@@ -36,21 +36,25 @@ class RelationMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_relations', '\OCA\FaceRecognition\Db\Relation');
 	}
 
-	public function exists(Relation $relation): bool {
+	/**
+	 * Find all relation from that user.
+	 *
+	 * @param string $userId User user to search
+	 * @param int $modelId
+	 * @return array
+	 */
+	public function findByUser(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
-			->select(['id'])
-			->from($this->getTableName())
-			->where($qb->expr()->andX($qb->expr()->eq('face1', $qb->createParameter('face1')), $qb->expr()->eq('face2', $qb->createParameter('face2'))))
-			->orWhere($qb->expr()->andX($qb->expr()->eq('face2', $qb->createParameter('face1')), $qb->expr()->eq('face1', $qb->createParameter('face2'))))
-			->setParameter('face1', $relation->getFace1())
-			->setParameter('face2', $relation->getFace2());
+		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
+		    ->from($this->getTableName(), 'r')
+		    ->innerJoin('r', 'facerecog_faces', 'f', $qb->expr()->eq('r.face1', 'f.id'))
+		    ->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+		    ->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
+		    ->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+		    ->setParameter('user_id', $userId)
+		    ->setParameter('model_id', $modelId);
 
-		$resultStatement = $query->execute();
-		$row = $resultStatement->fetch();
-		$resultStatement->closeCursor();
-
-		return ($row !== false);
+		return $this->findEntities($qb);
 	}
 
 	public function findFromPerson(string $userId, int $personId, int $state): array {
@@ -88,20 +92,85 @@ class RelationMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	public function merge(array $relations): int {
-		$addedCount = 0;
+	/**
+	 * Deletes all relations from that user.
+	 *
+	 * @param string $userId User to drop persons from a table.
+	 */
+	public function deleteUser(string $userId) {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+		     ->from('facerecog_faces', 'f')
+		     ->innerJoin('f', 'facerecog_images', 'i', $sub->expr()->eq('f.image', 'i.id'))
+		     ->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')));
 
-		$this->db->beginTransaction();
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+		    ->where('EXISTS (' . $sub->getSQL() . ')')
+		    ->setParameter('user_id', $userId)
+		    ->execute();
+	}
+
+	/**
+	 * Find all the relations of a user as an matrix array, which is faster to access.
+	 * @param string $userId
+	 * @param int $modelId
+	 * return array
+	 */
+	public function findByUserAsMatrix(string $userId, int $modelId): array {
+		$matrix = array();
+		$relations = $this->findByUser($userId, $modelId);
 		foreach ($relations as $relation) {
-			if ($this->exists($relation))
-				continue;
+			$face1 = $relation->getFace1();
+			$face2 = $relation->getFace2();
+			$state = $relation->getState();
 
-			$this->insert($relation);
-			$addedCount++;
+			$row = array();
+			if (isset($matrix[$face1])) {
+				$row = $matrix[$face1];
+			}
+			$row[$face2] = $state;
+			$matrix[$face1] = $row;
 		}
-		$this->db->commit();
+		return $matrix;
+	}
 
-		return $addedCount;
+	public function existsOnMatrix(Relation $relation, array $matrix): bool {
+		$face1 = $relation->getFace1();
+		$face2 = $relation->getFace2();
+
+		if (isset($matrix[$face1])) {
+			$row = $matrix[$face1];
+			if (isset($row[$face2])) {
+				return true;
+			}
+		}
+		if (isset($matrix[$face2])) {
+			$row = $matrix[$face2];
+			if (isset($row[$face1])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public function merge(string $userId, int $modelId, array $relations): int {
+		$added = 0;
+		$this->db->beginTransaction();
+		try {
+			$oldMatrix = $this->findByUserAsMatrix($userId, $modelId);
+			foreach ($relations as $relation) {
+				if ($this->existsOnMatrix($relation, $oldMatrix))
+					continue;
+				$this->insert($relation);
+				$added++;
+			}
+			$this->db->commit();
+		} catch (\Exception $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+		return $added;
 	}
 
 }

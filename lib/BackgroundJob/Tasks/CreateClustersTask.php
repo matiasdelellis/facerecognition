@@ -388,7 +388,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Merge new suggested relations
-		return $this->relationMapper->merge($relations);
+		return $this->relationMapper->merge($userId, $modelId, $relations);
 	}
 
 }

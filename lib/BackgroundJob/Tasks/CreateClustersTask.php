@@ -263,8 +263,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 							continue;
 						}
 					}
+					if ($face2->confidence < $min_confidence) {
+						continue;
+					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
-
 					if ($distance < $sensitivity) {
 						$edges[] = array($i, $j);
 					}
@@ -280,6 +282,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				}
 				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
 					$face2 = $faces[$j];
+					if ($face2->confidence < $min_confidence) {
+						continue;
+					}
 					// todo: can't this distance be a method in $face1->distance($face2)?
 					$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
 

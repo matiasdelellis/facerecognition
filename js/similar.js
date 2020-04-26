@@ -11,7 +11,10 @@ var Similar = function (baseUrl) {
 
 	this._enabled = false;
 	this._similarProposed = [];
+	this._similarAccepted = [];
 	this._similarRejected = [];
+	this._similarIgnored = [];
+	this._similarApplied = [];
 	this._similarName = undefined;
 };
 
@@ -21,14 +24,14 @@ Similar.prototype = {
 	},
 	findProposal: function (clusterId, clusterName) {
 		if (this._similarName !== clusterName) {
-			this.resetProposals();
+			this.resetProposals(clusterId, clusterName);
 		}
 		var self = this;
 		var deferred = $.Deferred();
 		$.get(this._baseUrl+'/relation/'+clusterId).done(function (response) {
 			self._enabled = response.enabled;
 			if (!self._enabled) {
-				self.resetSuggestions();
+				self.resetSuggestions(clusterId, clusterName);
 			} else {
 				self.concatNewProposals(response.proposed);
 				self._similarName = clusterName;
@@ -45,21 +48,58 @@ Similar.prototype = {
 	getProposal: function () {
 		return this._similarProposed.shift();
 	},
-	updateProposal: function (proposal, newState) {
+	getAcceptedProposal: function () {
+		return this._similarAccepted;
+	},
+	answerProposal: function (proposal, state) {
+		var self = this;
+		// First of all, remove from queue all relations with that ID
+		var newProposed = [];
+		self._similarProposed.forEach(function (oldProposal) {
+			if (proposal.id !== oldProposal.id) {
+				newProposed.push(oldProposal);
+			} else {
+				if (state === Relation.ACCEPTED) {
+					oldProposal.state = Relation.ACCEPTED;
+					self._similarAccepted.push(oldProposal);
+					self._similarApplied.push(oldProposal);
+				} else if (state === Relation.REJECTED) {
+					oldProposal.state = Relation.REJECTED;
+					self._similarRejected.push(oldProposal);
+					self._similarApplied.push(oldProposal);
+				} else {
+					oldProposal.state = Relation.PROPOSED;
+					self._similarIgnored.push(oldProposal);
+				}
+			}
+		});
+		self._similarProposed = newProposed;
+
+		// Add the old proposal to its actual state.
+		proposal.state = state;
+		if (state === Relation.ACCEPTED) {
+			this._similarAccepted.push(proposal);
+			this._similarApplied.push(proposal);
+		} else if (state === Relation.REJECTED) {
+			this._similarRejected.push(proposal);
+			this._similarApplied.push(proposal);
+		} else {
+			this._similarIgnored.push(proposal);
+		}
+	},
+	applyProposals: function () {
 		var self = this;
 		var deferred = $.Deferred();
 		var data = {
-			toPersonId: proposal.id,
-			state: newState
+			personsRelations: self._similarApplied,
+			personName: self._similarName
 		};
 		$.ajax({
-			url: this._baseUrl + '/relation/' + proposal.origId,
+			url: this._baseUrl + '/relations',
 			method: 'PUT',
 			contentType: 'application/json',
 			data: JSON.stringify(data)
 		}).done(function (data) {
-			if (newState !== Relation.ACCEPTED)
-				self._similarRejected.push(proposal);
 			deferred.resolve();
 		}).fail(function () {
 			deferred.reject();
@@ -69,15 +109,39 @@ Similar.prototype = {
 	concatNewProposals: function (proposals) {
 		var self = this;
 		proposals.forEach(function (proposed) {
-			if ((self._similarProposed.find(function (oldProposed) { return proposed.id === oldProposed.id;}) === undefined) &&
-			    (self._similarRejected.find(function (rejProposed) { return proposed.id === rejProposed.id;}) === undefined)) {
+			// An person ca be propoced several times, since they are related to direfents persons.
+			if (self._similarAccepted.find(function (oldProposed) { return proposed.id === oldProposed.id;}) !== undefined) {
+				proposed.state = Relation.ACCEPTED;
+				self._similarAccepted.push(proposed);
+				self._similarApplied.push(proposed);
+			} else if (self._similarRejected.find(function (oldProposed) { return proposed.id === oldProposed.id;}) !== undefined) {
+				proposed.state = Relation.REJECTED;
+				self._similarRejected.push(proposed);
+				self._similarApplied.push(proposed);
+			} else if (self._similarIgnored.find(function (oldProposed) { return proposed.id === oldProposed.id;}) !== undefined) {
+				proposed.state = Relation.REJECTED;
+				self._similarIgnored.push(proposed);
+			} else {
+				proposed.state = Relation.PROPOSED;
 				self._similarProposed.push(proposed);
 			}
 		});
 	},
-	resetProposals: function () {
+	resetProposals: function (clusterId, clusterName) {
+		this._similarAccepted = [];
 		this._similarProposed = [];
 		this._similarRejected = [];
+		this._similarIgnored = [];
+		this._similarApplied = [];
 		this._similarName = undefined;
-	},
+
+		// Add a fake proposal to self-accept when referring to the initial person
+		var fakeProposal = {
+			origId: clusterId,
+			id: clusterId,
+			name: clusterName,
+			state: Relation.ACCEPTED
+		};
+		this._similarAccepted.push(fakeProposal);
+	}
 };

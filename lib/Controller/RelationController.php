@@ -90,7 +90,7 @@ class RelationController extends Controller {
 		$relations = $this->relationMapper->findFromPerson($this->userId, $personId, RELATION::PROPOSED);
 		foreach ($relations as $relation) {
 			$person1 = $this->personMapper->findFromFace($this->userId, $relation->face1);
-			if (($person1->getId() !== $personId) && ($mainPerson->getName() !== $person1->getName())) {
+			if ($person1->getId() !== $personId) {
 				$proffer = array();
 				$proffer['origId'] = $mainPerson->getId();
 				$proffer['id'] = $person1->getId();
@@ -98,7 +98,7 @@ class RelationController extends Controller {
 				$proposed[] = $proffer;
 			}
 			$person2 = $this->personMapper->findFromFace($this->userId, $relation->face2);
-			if (($person2->getId() !== $personId) && ($mainPerson->getName() !== $person2->getName())) {
+			if ($person2->getId() !== $personId) {
 				$proffer = array();
 				$proffer['origId'] = $mainPerson->getId();
 				$proffer['id'] = $person2->getId();
@@ -136,6 +136,36 @@ class RelationController extends Controller {
 
 		$relations = $this->relationMapper->findFromPersons($personId, $toPersonId);
 		return new DataResponse($relations);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @param array $personsRelations
+	 * @param string $personName
+	 */
+	public function updateByPersonsBatch(array $personsRelations, string $personName) {
+		foreach ($personsRelations as $personRelation) {
+			$origId = $personRelation['origId'];
+			$id = $personRelation['id'];
+			$state = $personRelation['state'];
+
+			$faceRelations = $this->relationMapper->findFromPersons($origId, $id);
+			foreach ($faceRelations as $faceRelation) {
+				$faceRelation->setState($state);
+				$this->relationMapper->update($faceRelation);
+			}
+
+			if ($state === RELATION::ACCEPTED) {
+				$toPerson = $this->personMapper->find($this->userId, $id);
+				$toPerson->setName($personName);
+				$this->personMapper->update($toPerson);
+			}
+		}
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
+
+		return new DataResponse($persons);
 	}
 
 }

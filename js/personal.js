@@ -30,6 +30,7 @@ Persons.prototype = {
             self._enabled = response.enabled;
             self._clusters = response.clusters;
             self._loaded = true;
+            console.debug('The user has %i clusters',self._clusters.length);
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -43,6 +44,7 @@ Persons.prototype = {
         var self = this;
         $.get(this._baseUrl+'/cluster/'+id).done(function (cluster) {
             self._cluster = cluster;
+            console.debug('Cluster id %i has %i faces', id, cluster.faces.length);
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -54,6 +56,11 @@ Persons.prototype = {
         var self = this;
         $.get(this._baseUrl+'/person/'+personName).done(function (clusters) {
             self._clustersByName = clusters.clusters;
+            var total = 0;
+            self._clustersByName.forEach(function (cluster) {
+                total += cluster.faces.length;
+            });
+            console.debug('There are %i clusters called %s with a total of %i faces', self._clustersByName.length, personName, total);
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -194,33 +201,40 @@ View.prototype = {
             function(valid, state) {
                 if (valid === true) {
                     // It is valid must be update the proposals.
-                    self._similar.updateProposal(proposal, state).done(function() {
-                        if (state === Relation.ACCEPTED) {
-                            // Update view with new name.
-                            self._persons.renameCluster(proposal.id, personName);
-                            self._persons.unsetActive();
-                            self.renderContent();
-                            // Look for new suggestions based on accepted proposal
-                            self._similar.findProposal(proposal.id, personName).done(function() {
-                                if (self._similar.hasProposal()) {
-                                    self.suggestPerson(self._similar.getProposal(), personName);
-                                } else {
-                                    OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
-                                }
-                            });
-                        } else {
-                            // Suggest cached proposals
+                    self._similar.answerProposal(proposal, state);
+                    if (state === Relation.ACCEPTED) {
+                        // Look for new suggestions based on accepted proposal
+                        self._similar.findProposal(proposal.id, personName).done(function() {
                             if (self._similar.hasProposal()) {
                                 self.suggestPerson(self._similar.getProposal(), personName);
                             } else {
-                                OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions from similar persons'));
+                                OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions. Applying your suggestions.'));
+                                self._similar.applyProposals().done(function() {
+                                    self._similar.getAcceptedProposal().forEach(function (accepted) {
+                                        self._persons.renameCluster(accepted.id, personName);
+                                    });
+                                    self._persons.unsetActive();
+                                    self.renderContent();
+                                });
                             }
+                        });
+                    } else {
+                        // Suggest cached proposals
+                        if (self._similar.hasProposal()) {
+                            self.suggestPerson(self._similar.getProposal(), personName);
+                        } else {
+                            OC.Notification.showTemporary(t('facerecognition', 'There are no more suggestions. Applying your suggestions.'));
+                            self._similar.applyProposals().done(function() {
+                                self._similar.getAcceptedProposal().forEach(function (accepted) {
+                                    self._persons.renameCluster(accepted.id, personName);
+                                });
+                                self._persons.unsetActive();
+                                self.renderContent();
+                            });
                         }
-                    }).fail(function () {
-                        if (state === Relation.ACCEPTED) {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                        }
-                    });
+                    }
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'Canceled'));
                 }
             }
         );

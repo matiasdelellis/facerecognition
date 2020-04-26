@@ -55,6 +55,12 @@ return ['routes' =>
 		'url'  => '/folder',
 		'verb' => 'GET'
 	],
+	// Change relations in batch
+	[
+		'name' => 'relation#updateByPersonsBatch',
+		'url'  => '/relations',
+		'verb' => 'PUT'
+	],
 	// Set folder preferences
 	[
 		'name' => 'file#setFolderOptions',

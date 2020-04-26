@@ -377,6 +377,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			return 0;
 
 		$sensitivity = $this->settingsService->getSensitivity();
+		$sensitivity += $deviation;
 
 		// Get the representative faces of each person
 		$mainFaces = array();
@@ -393,11 +394,11 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			for ($j = $i+1; $j < $faces_count; $j++) {
 				$face2 = $mainFaces[$j];
 				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
-				if ($distance < ($sensitivity + $deviation)) {
+				if ($distance < $sensitivity) {
 					$relation = new Relation();
-					$relation->setFace1($face1->getId());
-					$relation->setFace2($face2->getId());
-					$relation->setState(RELATION::PROPOSED);
+					$relation->setFace1($face1->id);
+					$relation->setFace2($face2->id);
+					$relation->setState(Relation::PROPOSED);
 					$relations[] = $relation;
 				}
 			}

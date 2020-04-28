@@ -17,15 +17,15 @@ $(document).ready(function() {
                 if (progress.processedImages == progress.totalImages) {
                     desc = t('facerecognition', 'The analysis is finished');
                     desc += ' - ';
-                    desc += n('facerecognition', '1 image was analyzed', '{totalImages} images were analyzed', progress.totalImages, {totalImages: progress.totalImages});
+                    desc += n('facerecognition', '%n image was analyzed', '%n images were analyzed', progress.totalImages);
                 } else {
                     var queuedImages = (progress.totalImages - progress.processedImages);
                     var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
                     desc = t('facerecognition', 'Analyzing images');
                     desc += ' - ';
-                    desc += n('facerecognition', '1 image detected', '%n images detected', progress.totalImages, {totalImages: progress.totalImages});
+                    desc += n('facerecognition', '%n image detected', '%n images detected', progress.totalImages);
                     desc += ' - ';
-                    desc += n('facerecognition', '1 image in queue', '%n images in queue', queuedImages, {queuedImages: queuedImages});
+                    desc += n('facerecognition', '%n image in queue', '%n images in queue', queuedImages);
                     desc += ' - ';
                     desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', {estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
                 }
@@ -36,7 +36,7 @@ $(document).ready(function() {
                 $('#progress-bar').attr('value', 0);
                 var desc = t('facerecognition', 'The analysis is not started yet');
                 desc += ' - ';
-                desc += n('facerecognition', '1 image in queue', '{queuedImages} images in queue', progress.totalImages, {queuedImages: progress.totalImages});
+                desc += n('facerecognition', '%n image in queue', '%n images in queue', progress.totalImages);
 
                 $('#progress-text').html(desc);
             }

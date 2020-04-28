@@ -2,10 +2,10 @@ OC.L10N.register(
     "facerecognition",
     {
     "The analysis is finished" : "El análisis ha terminado",
-    "_1 image was analyzed_::_{totalImages} images were analyzed_" : ["1 imagen fue analizada","{totalImages} imágenes fueron analizadas"],
+    "_%n image was analyzed_::_%n images were analyzed_" : ["%n imagen fue analizada","%n imágenes fueron analizadas"],
     "Analyzing images" : "Analizando imágenes",
-    "_1 image detected_::_%n images detected_" : ["1 imagen detectada","%n imágenes detectadas"],
-    "_1 image in queue_::_%n images in queue_" : ["1 imagen en cola","%n imágenes en cola"],
+    "_%n image detected_::_%n images detected_" : ["%n imagen detectada","%n imágenes detectadas"],
+    "_%n image in queue_::_%n images in queue_" : ["%n imagen en cola","%n imágenes en cola"],
     "Ends approximately {estimatedFinalize}" : "Finaliza aproximadamente {estimatedFinalize}",
     "The analysis is not started yet" : "El análisis no se ha iniciado todavía",
     "The changes were saved. It will be taken into account in the next analysis." : "Los cambios fueron guardados. Se tendrá en cuenta en el siguiente análisis.",

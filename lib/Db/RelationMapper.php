@@ -61,14 +61,19 @@ class RelationMapper extends QBMapper {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select('f.id')
 		    ->from('facerecog_faces', 'f')
-		    ->where($sub->expr()->eq('f.person', $sub->createParameter('person_id')));
+		    ->innerJoin('f', 'facerecog_persons' ,'p', $sub->expr()->eq('f.person', 'p.id'))
+		    ->where($sub->expr()->eq('p.user', $sub->createParameter('user_id')))
+		    ->andWhere($sub->expr()->eq('f.person', $sub->createParameter('person_id')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
 		   ->from($this->getTableName(), 'r')
-		   ->where('(r.face1 IN (' . $sub->getSQL() . '))')
+		   ->where($qb->expr()->eq('r.state', $qb->createParameter('state')))
+		   ->andWhere('(r.face1 IN (' . $sub->getSQL() . '))')
 		   ->orWhere('(r.face2 IN (' . $sub->getSQL() . '))')
-		   ->setParameter('person_id', $personId);
+		   ->setParameter('user_id', $userId)
+		   ->setParameter('person_id', $personId)
+		   ->setParameter('state', $state);
 
 		return $this->findEntities($qb);
 	}

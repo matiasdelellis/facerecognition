@@ -379,11 +379,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$sensitivity = $this->settingsService->getSensitivity();
 		$sensitivity += $deviation;
 
+		$min_confidence = $this->settingsService->getMinimumConfidence();
+
 		// Get the representative faces of each person
 		$mainFaces = array();
 		$persons = $this->personMapper->findAll($userId, $modelId);
 		foreach ($persons as $person) {
-			$mainFaces[] = $this->faceMapper->findRepresentativeFromPerson($userId, $modelId, $person->getId(), $sensitivity);
+			$mainFaces[] = $this->faceMapper->findRepresentativeFromPerson($userId, $modelId, $person->id, $sensitivity);
 		}
 
 		// Get similar faces taking into account the deviation
@@ -391,8 +393,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$faces_count = count($mainFaces);
 		for ($i = 0 ; $i < $faces_count; $i++) {
 			$face1 = $mainFaces[$i];
+			if ($face1->confidence < $min_confidence) {
+				continue;
+			}
 			for ($j = $i+1; $j < $faces_count; $j++) {
 				$face2 = $mainFaces[$j];
+				if ($face2->confidence < $min_confidence) {
+					continue;
+				}
 				$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
 				if ($distance < $sensitivity) {
 					$relation = new Relation();

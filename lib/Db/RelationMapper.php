@@ -58,14 +58,17 @@ class RelationMapper extends QBMapper {
 	}
 
 	public function findFromPerson(string $userId, int $personId, int $state): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('f.id')
+		    ->from('facerecog_faces', 'f')
+		    ->where($sub->expr()->eq('f.person', $sub->createParameter('person_id')));
+
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('r.id', 'r.face1', 'r.face2', 'r.state')
 		   ->from($this->getTableName(), 'r')
-		   ->innerJoin('r', 'facerecog_faces' ,'f', $qb->expr()->orX($qb->expr()->eq('r.face1', 'f.id'), $qb->expr()->eq('r.face2', 'f.id')))
-		   ->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
-		   ->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-		   ->andWhere($qb->expr()->eq('p.id', $qb->createNamedParameter($personId)))
-		   ->andWhere($qb->expr()->eq('r.state', $qb->createNamedParameter($state)));
+		   ->where('(r.face1 IN (' . $sub->getSQL() . '))')
+		   ->orWhere('(r.face2 IN (' . $sub->getSQL() . '))')
+		   ->setParameter('person_id', $personId);
 
 		return $this->findEntities($qb);
 	}

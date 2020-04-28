@@ -40,7 +40,7 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
-			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		return $this->findEntity($qb);
 	}
 
@@ -103,7 +103,7 @@ class FaceMapper extends QBMapper {
 		return $face;
 	}
 
-	public function getFaces(string $userId, $model): array {
+	public function getFaces(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.person', 'f.confidence', 'f.descriptor')
 			->from($this->getTableName(), 'f')
@@ -111,7 +111,7 @@ class FaceMapper extends QBMapper {
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
-			->setParameter('model', $model);
+			->setParameter('model', $modelId);
 		return $this->findEntities($qb);
 	}
 
@@ -133,7 +133,7 @@ class FaceMapper extends QBMapper {
 
 	public function findRepresentativeFromPerson(string $userId, int $modelId, int $personId, float $sensitivity) {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.descriptor')
+		$qb->select('f.id', 'f.confidence', 'f.descriptor')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))

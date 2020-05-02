@@ -25,10 +25,18 @@
 			<div class="icon icon-error" />
 			<p>{{ error }}</p>
 		</div>
-		<div v-if="!isEnabledByUser && !loading" class='emptycontent'>
+		<div v-else-if="!isEnabledByUser && !loading" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
 			<h5>{{ t('facerecognition', 'Facial recognition is disabled') }}</h5>
 			<p><span v-html="settingsUrl"></span><p/>
+		</div>
+		<div v-else-if="!isParentEnabled && !loading" class="emptycontent">
+			<div class="icon icon-contacts-dark"/>
+			<p>{{ t('facerecognition', 'Facial recognition is disabled for this folder') }}</p>
+		</div>
+		<div v-else-if="!isAllowedFile && !loading" class="emptycontent">
+			<div class="icon icon-contacts-dark"/>
+			<p>{{ t('facerecognition', 'The type of storage is not supported to analyze your photos') }}</p>
 		</div>
 		<div v-else-if="isProcessed && this.persons.length > 0">
 			<ul class='faces-list'>
@@ -45,6 +53,12 @@
 			<div class='icon icon-contacts-dark'/>
 			<p>{{ t('facerecognition', 'No people found') }}</p>
 		</div>
+		<div v-else-if="!isProcessed && !loading" class='emptycontent'>
+			<div class='icon icon-contacts-dark'/>
+			<h5>{{ t('facerecognition', 'This image is not yet analyzed') }}</h5>
+			<p><span>{{ t('facerecognition', 'Please, be patient') }}</span></p>
+		</div>
+
 	</Tab>
 </template>
 <script>

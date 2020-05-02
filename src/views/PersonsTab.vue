@@ -61,7 +61,7 @@
 		<div v-else-if="isDirectory" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
 			<p>
-				<input class='checkbox' id='searchPersonsToggle' :checked='isChildrensEnabled' type='checkbox'/>
+				<input class='checkbox' id='searchPersonsToggle' :checked='isChildrensEnabled' type='checkbox' @change="enableDirectoryCheck($event)"/>
 				<label for='searchPersonsToggle'>{{ t('facerecognition', 'Search for persons in the photos of this directory') }}</label>
 			</p>
 			<p><span>{{ t('facerecognition', 'Photos that are not in the gallery are also ignored') }}</span></p>
@@ -137,9 +137,9 @@ export default {
 		async getFacesInfo(fileInfo) {
 			const isDirectory = fileInfo.isDirectory()
 			if (isDirectory) {
-				var infoUrl = OC.generateUrl('/apps/facerecognition/folder');
+				var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
 			} else {
-				var infoUrl = OC.generateUrl('/apps/facerecognition/file');
+				var infoUrl = OC.generateUrl('/apps/facerecognition/file')
 			}
 
 			try {
@@ -157,7 +157,22 @@ export default {
 			} catch (error) {
 				this.error = error
 				this.loading = false
-				console.error('Error loading the shares list', error)
+				console.error('Error loading info of image', error)
+			}
+		},
+		async enableDirectoryCheck(event) {
+			const isEnabled = event.target.checked
+			var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
+			try {
+				const response = await Axios.put(infoUrl, {
+					// TODO: replace with proper getFUllpath implementation of our own FileInfo model
+					fullpath: (this.fileInfo.path + '/' + this.fileInfo.name).replace('//', '/'),
+					detection: isEnabled
+				})
+				this.processFacesData(response.data, true)
+			} catch (error) {
+				this.error = error
+				console.error('Error enabling/disabling directory', error)
 			}
 		},
 		processFacesData(data, isDirectory) {
@@ -168,7 +183,7 @@ export default {
 			this.persons = isDirectory ? [] : data.persons
 			this.isProcessed = isDirectory ? false : data.is_processed
 			this.isChildrensEnabled = !isDirectory ? false : data.descendant_detection
-		}
+		},
 	}
 }
 </script>

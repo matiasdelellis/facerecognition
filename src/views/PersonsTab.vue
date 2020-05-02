@@ -25,15 +25,21 @@
 			<div class="icon icon-error" />
 			<h2>{{ error }}</h2>
 		</div>
-		<div v-if="isEnabledByUser" class="emptycontent">
-			<div class="icon icon-contacts-dark"/>
-			<h2>{{ t('facerecognition', 'This image is not yet analyzed') }}</h2>
-			<p><span>{{ t('facerecognition', 'Please, be patient') }}</span></p>
-		</div>
-		<div v-else class='emptycontent'>
+		<div v-if="!isEnabledByUser" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
 			<h2>{{ t('facerecognition', 'Facial recognition is disabled') }}</h2>
 			<p><span v-html="settingsUrl"></span><p/>
+		</div>
+		<div v-else-if="isProcessed">
+			<ul class='faces-list'>
+				<template v-for="person in this.persons">
+					<li class='face-entry' :data-id='person.person_id'>
+						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
+						<h5 class='face-name'>{{ person.name }}</h5>
+						<a rel="noreferrer noopener" class="icon-rename" target="_blank"/>
+					</li>
+				</template>
+			</ul>
 		</div>
 	</Tab>
 </template>
@@ -134,3 +140,26 @@ export default {
 	}
 }
 </script>
+<style scoped>
+.face-entry {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+}
+.face-name {
+	width: 100%;
+	padding: 8px;
+}
+
+.face-preview {
+	background-color: rgba(210, 210, 210, .75);
+	border-radius: 50%;
+	height: 32px;
+	width: 32px;
+}
+
+.icon-rename {
+	padding: 14px;
+	opacity: 0.7;
+}
+</style>

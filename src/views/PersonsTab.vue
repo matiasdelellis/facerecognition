@@ -19,22 +19,29 @@
   - along with this program. If not, see <http://www.gnu.org/licenses/>.
   -
   -->
-
 <template>
-	<Tab
-		:id="id"
-		:icon="icon"
-		:name="name"
-		:class="{ 'icon-loading': loading }">
-		<div id="persons-tab-mount" />
+	<Tab :id="id" :icon="icon" :name="name" :class="{ 'icon-loading': loading }">
+		<div v-if="error" class="emptycontent">
+			<div class="icon icon-error" />
+			<h2>{{ error }}</h2>
+		</div>
+		<div v-if="isEnabledByUser" class="emptycontent">
+			<div class="icon icon-contacts-dark"/>
+			<h2>{{ t('facerecognition', 'This image is not yet analyzed') }}</h2>
+			<p><span>{{ t('facerecognition', 'Please, be patient') }}</span></p>
+		</div>
+		<div v-else class='emptycontent'>
+			<div class='icon icon-contacts-dark'/>
+			<h2>{{ t('facerecognition', 'Facial recognition is disabled') }}</h2>
+			<p><span v-html="settingsUrl"></span><p/>
+		</div>
 	</Tab>
 </template>
-
 <script>
 import Tab from '@nextcloud/vue/dist/Components/AppSidebarTab'
-
+import Axios from '@nextcloud/axios'
 export default {
-	name: 'PersonsTab',
+	name: 'PersonsTabApp',
 	components: {
 		Tab,
 	},
@@ -48,14 +55,17 @@ export default {
 	},
 	data() {
 		return {
-			icon: 'icon-user',
-			loading: false,
+			error: '',
+			icon: 'icon-contacts-dark',
+			loading: true,
 			name: t('facerecognition', 'Persons'),
-			tab: null,
-			token: null,
+			isEnabledByUser: false,
+			isAllowedFile: false,
+			isParentEnabled: false,
+			isProcessed: false,
+			persons: [],
 		}
 	},
-
 	computed: {
 		/**
 		 * Needed to differenciate the tabs
@@ -64,9 +74,8 @@ export default {
 		 * @returns {string}
 		 */
 		id() {
-			return 'persons'
+			return 'facerecognition'
 		},
-
 		/**
 		 * Returns the current active tab
 		 * needed because AppSidebarTab also uses $parent.activeTab
@@ -76,30 +85,51 @@ export default {
 		activeTab() {
 			return this.$parent.activeTab
 		},
+		settingsUrl() {
+			return t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it', {settingsLink: OC.generateUrl('settings/user/facerecognition')})
+		},
 	},
+	watch: {
+		fileInfo: {
+			immediate: true,
+			handler(fileInfo) {
+				 this.getFacesInfo(fileInfo)
+			}
+		},
+	},
+	methods: {
+		async getFacesInfo(fileInfo) {
 
-	beforeMount() {
+			if (fileInfo.isDirectory()) {
+				var infoUrl = OC.generateUrl('/apps/facerecognition/folder');
+			} else {
+				var infoUrl = OC.generateUrl('/apps/facerecognition/file');
+			}
 
-	},
-	mounted() {
-		try {
-			OCA.Facerecognition.fileInfo = this.fileInfo
-			this.tab = OCA.Facerecognition.newTab()
-			this.tab.$mount('#persons-tab-mount')
-		} catch (error) {
-			console.error('Unable to mount Persons tab', error)
+			try {
+				this.loading = true
+
+				const fetchFaces = Axios.get(infoUrl, {
+					params: {
+						// TODO: replace with proper getFUllpath implementation of our own FileInfo model
+						fullpath: (fileInfo.path + '/' + fileInfo.name).replace('//', '/')
+					}
+				})
+				const response = await Promise.all([fetchFaces])
+
+				this.isEnabledByUser = response.enabled
+				this.isAllowedFile = response.is_allowed
+				this.isParentEnabled = response.parent_detection
+				this.isProcessed = response.is_processed
+				this.persons = response.persons
+
+				this.loading = false
+			} catch (error) {
+				this.error = error
+				this.loading = false
+				console.error('Error loading the shares list', error)
+			}
 		}
-	},
-	beforeDestroy() {
-		try {
-			OCA.Facerecognition.fileInfo = null
-			this.tab.$destroy()
-		} catch (error) {
-			console.error('Unable to unmount Persons tab', error)
-		}
-	},
+	}
 }
 </script>
-
-<style scoped>
-</style>

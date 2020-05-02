@@ -23,7 +23,6 @@
 import Vue from 'vue'
 
 import PersonsTab from './views/PersonsTab'
-import PersonsTabApp from './PersonsTabApp'
 
 import { translate, translatePlural } from '@nextcloud/l10n'
 
@@ -32,19 +31,9 @@ Vue.prototype.n = translatePlural
 Vue.prototype.OC = OC
 Vue.prototype.OCA = OCA
 
-const newTab = () => new Vue({
-	id: 'persons-tab',
-	render: h => h(PersonsTabApp)
-})
-
 if (!window.OCA.Facerecognition) {
 	window.OCA.Facerecognition = {}
 }
-
-Object.assign(window.OCA.Facerecognition, {
-	fileInfo: null,
-	newTab
-})
 
 window.addEventListener('DOMContentLoaded', () => {
 	if (OCA.Files && OCA.Files.Sidebar) {

@@ -91,6 +91,9 @@ l10n-deps:
 
 # Build Rules
 
+build-dev:
+	npm run dev
+
 build-vue:
 	npm run build
 

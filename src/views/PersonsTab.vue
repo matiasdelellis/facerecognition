@@ -28,7 +28,7 @@
 		<div v-else-if="!isEnabledByUser && !loading" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
 			<h5>{{ t('facerecognition', 'Facial recognition is disabled') }}</h5>
-			<p><span v-html="settingsUrl"></span><p/>
+			<p><span v-html="settingsUrl"></span></p>
 		</div>
 		<div v-else-if="!isParentEnabled && !loading" class="emptycontent">
 			<div class="icon icon-contacts-dark"/>
@@ -53,12 +53,20 @@
 			<div class='icon icon-contacts-dark'/>
 			<p>{{ t('facerecognition', 'No people found') }}</p>
 		</div>
-		<div v-else-if="!isProcessed && !loading" class='emptycontent'>
+		<div v-else-if="!isProcessed && !isDirectory && !loading" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
 			<h5>{{ t('facerecognition', 'This image is not yet analyzed') }}</h5>
 			<p><span>{{ t('facerecognition', 'Please, be patient') }}</span></p>
 		</div>
-
+		<div v-else-if="isDirectory" class='emptycontent'>
+			<div class='icon icon-contacts-dark'/>
+			<p>
+				<input class='checkbox' id='searchPersonsToggle' :checked='isChildrensEnabled' type='checkbox'/>
+				<label for='searchPersonsToggle'>{{ t('facerecognition', 'Search for persons in the photos of this directory') }}</label>
+			</p>
+			<p><span>{{ t('facerecognition', 'Photos that are not in the gallery are also ignored') }}</span></p>
+			<p><span v-html="faqUrl"></span></p>
+		</div>
 	</Tab>
 </template>
 <script>
@@ -87,6 +95,7 @@ export default {
 			isAllowedFile: false,
 			isParentEnabled: false,
 			isProcessed: false,
+			isDirectory: false,
 			persons: [],
 		}
 	},
@@ -112,6 +121,9 @@ export default {
 		settingsUrl() {
 			return t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it', {settingsLink: OC.generateUrl('settings/user/facerecognition')})
 		},
+		faqUrl() {
+			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
+		},
 	},
 	watch: {
 		fileInfo: {
@@ -123,8 +135,8 @@ export default {
 	},
 	methods: {
 		async getFacesInfo(fileInfo) {
-
-			if (fileInfo.isDirectory()) {
+			const isDirectory = fileInfo.isDirectory()
+			if (isDirectory) {
 				var infoUrl = OC.generateUrl('/apps/facerecognition/folder');
 			} else {
 				var infoUrl = OC.generateUrl('/apps/facerecognition/file');
@@ -139,7 +151,7 @@ export default {
 						fullpath: (fileInfo.path + '/' + fileInfo.name).replace('//', '/')
 					}
 				})
-				this.processFacesData(response.data)
+				this.processFacesData(response.data, isDirectory)
 
 				this.loading = false
 			} catch (error) {
@@ -148,12 +160,14 @@ export default {
 				console.error('Error loading the shares list', error)
 			}
 		},
-		processFacesData(data) {
+		processFacesData(data, isDirectory) {
+			this.isDirectory = isDirectory
 			this.isEnabledByUser = data.enabled
 			this.isAllowedFile = data.is_allowed
 			this.isParentEnabled = data.parent_detection
-			this.isProcessed = data.is_processed
-			this.persons = data.persons
+			this.persons = isDirectory ? [] : data.persons
+			this.isProcessed = isDirectory ? false : data.is_processed
+			this.isChildrensEnabled = !isDirectory ? false : data.descendant_detection
 		}
 	}
 }

@@ -38,11 +38,10 @@ class LoadSidebarListener implements IEventListener {
 			return;
 		}
 
-		\OCP\Util::addScript('facerecognition', 'vendor/lozad');
-		\OCP\Util::addScript('facerecognition', 'fr-dialogs');
-		\OCP\Util::addScript('facerecognition', 'files-tabview');
-		\OCP\Util::addScript('facerecognition', 'files-plugin');
-		\OCP\Util::addStyle('facerecognition', 'files-tabview');
+		Util::addScript('files', 'detailtabview');
+		Util::addScript('facerecognition', 'vendor/lozad');
+		Util::addScript('facerecognition', 'fr-dialogs');
+		Util::addScript('facerecognition', 'personssidebar');
 	}
 
 }

@@ -91,10 +91,13 @@ l10n-deps:
 
 # Build Rules
 
+build-vue:
+	npm run build
+
 js-templates:
 	node_modules/handlebars/bin/handlebars js/templates -f js/templates.js
 
-build: test-bin-deps vendor-deps js-templates
+build: test-bin-deps vendor-deps js-templates build-vue
 	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 

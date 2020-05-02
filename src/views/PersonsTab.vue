@@ -23,14 +23,14 @@
 	<Tab :id="id" :icon="icon" :name="name" :class="{ 'icon-loading': loading }">
 		<div v-if="error" class="emptycontent">
 			<div class="icon icon-error" />
-			<h2>{{ error }}</h2>
+			<p>{{ error }}</p>
 		</div>
-		<div v-if="!isEnabledByUser" class='emptycontent'>
+		<div v-if="!isEnabledByUser && !loading" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
-			<h2>{{ t('facerecognition', 'Facial recognition is disabled') }}</h2>
+			<h5>{{ t('facerecognition', 'Facial recognition is disabled') }}</h5>
 			<p><span v-html="settingsUrl"></span><p/>
 		</div>
-		<div v-else-if="isProcessed">
+		<div v-else-if="isProcessed && this.persons.length > 0">
 			<ul class='faces-list'>
 				<template v-for="person in this.persons">
 					<li class='face-entry' :data-id='person.person_id'>
@@ -40,6 +40,10 @@
 					</li>
 				</template>
 			</ul>
+		</div>
+		<div v-else-if="isProcessed" class='emptycontent'>
+			<div class='icon icon-contacts-dark'/>
+			<p>{{ t('facerecognition', 'No people found') }}</p>
 		</div>
 	</Tab>
 </template>

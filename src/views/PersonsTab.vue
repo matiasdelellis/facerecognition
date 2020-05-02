@@ -109,19 +109,13 @@ export default {
 			try {
 				this.loading = true
 
-				const fetchFaces = Axios.get(infoUrl, {
+				const response = await Axios.get(infoUrl, {
 					params: {
 						// TODO: replace with proper getFUllpath implementation of our own FileInfo model
 						fullpath: (fileInfo.path + '/' + fileInfo.name).replace('//', '/')
 					}
 				})
-				const response = await Promise.all([fetchFaces])
-
-				this.isEnabledByUser = response.enabled
-				this.isAllowedFile = response.is_allowed
-				this.isParentEnabled = response.parent_detection
-				this.isProcessed = response.is_processed
-				this.persons = response.persons
+				this.processFacesData(response.data)
 
 				this.loading = false
 			} catch (error) {
@@ -129,6 +123,13 @@ export default {
 				this.loading = false
 				console.error('Error loading the shares list', error)
 			}
+		},
+		processFacesData(data) {
+			this.isEnabledByUser = data.enabled
+			this.isAllowedFile = data.is_allowed
+			this.isParentEnabled = data.parent_detection
+			this.isProcessed = data.is_processed
+			this.persons = data.persons
 		}
 	}
 }

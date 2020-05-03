@@ -51,7 +51,7 @@ class Application extends App {
 
 		$this->connectWatcher();
 		$this->connectSearch();
-		$this->addServiceListenders();
+		$this->addServiceListeners();
 	}
 
 	private function connectWatcher() {
@@ -88,7 +88,7 @@ class Application extends App {
 		);
 	}
 
-	private function addServiceListenders() {
+	private function addServiceListeners() {
 		/** @var IEventDispatcher $dispatcher */
 		$dispatcher = \OC::$server->query(IEventDispatcher::class);
 		$dispatcher->addServiceListener(LoadSidebar::class, LoadSidebarListener::class);

@@ -91,12 +91,19 @@ class FileController extends Controller {
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($file);
 		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($file);
 		$resp['image_id'] = $image ? $image->getId() : 0;
-		$resp['is_processed'] = $image ? $image->getIsProcessed() : 0;
+		$resp['is_processed'] = $image ? $image->getIsProcessed() : false;
 		$resp['error'] = $image ? $image->getError() : null;
 		$resp['persons'] = array();
 
 		$faces = $this->faceMapper->findFromFile($this->userId, $modelId, $fileId);
 		foreach ($faces as $face) {
+			// When there are faces but still dont have person, the process is not completed yet.
+			// See issue https://github.com/matiasdelellis/facerecognition/issues/255
+			if (!$face->getPerson()) {
+				$resp['is_processed'] = false;
+				break;
+			}
+
 			$person = $this->personMapper->find($this->userId, $face->getPerson());
 
 			$facePerson = array();

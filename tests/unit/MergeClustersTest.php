@@ -25,6 +25,12 @@ namespace OCA\FaceRecognition\Tests\Unit;
 
 use Test\TestCase;
 
+use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Db\FaceMapper;
+
+use OCA\FaceRecognition\Service\SettingsService;
+
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 
 class MergeClustersTest extends TestCase {
@@ -35,16 +41,16 @@ class MergeClustersTest extends TestCase {
 	 * {@inheritDoc}
 	 */
 	public function setUp(): void {
-		$personMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\PersonMapper')
+		$personMapper = $this->getMockBuilder(PersonMapper::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$imageMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\ImageMapper')
+		$imageMapper = $this->getMockBuilder(ImageMapper::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$faceMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\FaceMapper')
+		$faceMapper = $this->getMockBuilder(FaceMapper::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$settingsService = $this->getMockBuilder('OCA\FaceRecognition\Service\SettingsService')
+		$settingsService = $this->getMockBuilder(SettingsService::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$this->createClusterTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);

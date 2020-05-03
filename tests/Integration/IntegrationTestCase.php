@@ -80,7 +80,7 @@ abstract class IntegrationTestCase extends TestCase {
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
 	}
 
-	public function tearDown() {
+	public function tearDown(): void {
 		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 

@@ -57,7 +57,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 
 	}
 
-	public function tearDown() {
+	public function tearDown(): void {
 		$this->config->setAppValue('facerecognition', 'min_image_size', $this->originalMinImageSize);
 		$this->config->setAppValue('facerecognition', 'max_image_area', $this->originalMaxImageArea);
 

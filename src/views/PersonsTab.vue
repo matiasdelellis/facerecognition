@@ -44,7 +44,7 @@
 					<li class='face-entry' :data-id='person.person_id'>
 						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
 						<h5 class='face-name'>{{ person.name }}</h5>
-						<a rel="noreferrer noopener" class="icon-rename" target="_blank"/>
+						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
 					</li>
 				</template>
 			</ul>
@@ -174,6 +174,26 @@ export default {
 				this.error = error
 				console.error('Error enabling/disabling directory', error)
 			}
+		},
+		renamePerson: function(person) {
+			const self = this
+			FrDialogs.rename(
+				person.name,
+				person.thumb_url,
+				function(result, newName) {
+					if (result === true && newName) {
+						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
+						Axios.put(infoUrl, {
+							name: newName
+						}).then(function (response) {
+							self.getFacesInfo(self.fileInfo)
+						}).catch(function (error) {
+							self.error = error
+							console.error('Error renaming person', error)
+						})
+					}
+				}
+			)
 		},
 		processFacesData(data, isDirectory) {
 			this.isDirectory = isDirectory

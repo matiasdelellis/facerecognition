@@ -42,6 +42,7 @@ class LoadSidebarListener implements IEventListener {
 		Util::addScript('facerecognition', 'vendor/lozad');
 		Util::addScript('facerecognition', 'fr-dialogs');
 		Util::addScript('facerecognition', 'personssidebar');
+		Util::addStyle('facerecognition', 'fr-dialogs');
 	}
 
 }

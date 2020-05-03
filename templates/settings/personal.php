@@ -1,7 +1,7 @@
 <?php
-vendor_script('facerecognition', 'js/handlebars');
-vendor_script('facerecognition', 'js/lozad');
-vendor_script('facerecognition', 'js/egg');
+script('facerecognition', 'vendor/handlebars');
+script('facerecognition', 'vendor/lozad');
+script('facerecognition', 'vendor/egg');
 script('facerecognition', 'templates');
 script('facerecognition', 'fr-dialogs');
 script('facerecognition', 'personal');

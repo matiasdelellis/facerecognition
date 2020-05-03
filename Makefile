@@ -48,19 +48,19 @@ endif
 npm-deps:
 	npm i
 
-vendor/js/handlebars.js: npm-deps
-	mkdir -p vendor/js
-	cp node_modules/handlebars/dist/handlebars.js -f vendor/js/handlebars.js
+js/vendor/handlebars.js: npm-deps
+	mkdir -p js/vendor
+	cp node_modules/handlebars/dist/handlebars.js -f js/vendor/handlebars.js
 
-vendor/js/lozad.js: npm-deps
-	mkdir -p vendor/js
-	cp node_modules/lozad/dist/lozad.js -f vendor/js/lozad.js
+js/vendor/lozad.js: npm-deps
+	mkdir -p js/vendor
+	cp node_modules/lozad/dist/lozad.js -f js/vendor/lozad.js
 
-vendor/js/egg.js:
-	mkdir -p vendor/js
-	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O vendor/js/egg.js
+js/vendor/egg.js:
+	mkdir -p js/vendor
+	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O js/vendor/egg.js
 
-javascript-deps: vendor/js/handlebars.js vendor/js/lozad.js vendor/js/egg.js
+javascript-deps: js/vendor/handlebars.js js/vendor/lozad.js js/vendor/egg.js
 
 vendor-deps: composer javascript-deps
 
@@ -91,10 +91,16 @@ l10n-deps:
 
 # Build Rules
 
+build-dev:
+	npm run dev
+
+build-vue:
+	npm run build
+
 js-templates:
 	node_modules/handlebars/bin/handlebars js/templates -f js/templates.js
 
-build: test-bin-deps vendor-deps js-templates
+build: test-bin-deps vendor-deps js-templates build-vue
 	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 
@@ -111,8 +117,7 @@ appstore:
 	--exclude=phpunit*xml \
 	--exclude=screenshots \
 	--exclude=tests \
-	--include=vendor/js \
-	--exclude=vendor/* \
+	--exclude=vendor \
 	$(project_dir) $(sign_dir)
 	@echo "Signing…"
 	tar -czf $(build_dir)/$(app_name).tar.gz \
@@ -123,6 +128,7 @@ test: build
 	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml
 
 clean: l10n-clean
+	rm -rf js/vendor
 	rm -rf build
 	rm -rf vendor
 	rm -rf node_modules

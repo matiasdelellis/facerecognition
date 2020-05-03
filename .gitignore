@@ -1,5 +1,7 @@
 build
 js/templates.js
+js/personssidebar.js*
+js/vendor
 vendor/*
 !vendor/models/README.md
 !vendor/models/LICENCE.md

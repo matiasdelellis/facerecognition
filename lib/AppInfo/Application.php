@@ -1,7 +1,7 @@
 <?php
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2018, 2020 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
@@ -24,13 +24,17 @@
  */
 namespace OCA\FaceRecognition\AppInfo;
 
-use OCA\FaceRecognition\Watcher;
-
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\IUserManager;
+
+use OCA\Files\Event\LoadSidebar;
+
+use OCA\FaceRecognition\Listener\LoadSidebarListener;
+use OCA\FaceRecognition\Watcher;
 
 class Application extends App {
 
@@ -47,6 +51,7 @@ class Application extends App {
 
 		$this->connectWatcher();
 		$this->connectSearch();
+		$this->addServiceListeners();
 	}
 
 	private function connectWatcher() {
@@ -78,7 +83,15 @@ class Application extends App {
 
 	private function connectSearch() {
 		$this->getContainer()->getServer()->getSearch()->registerProvider(
-			'OCA\FaceRecognition\Search\Provider', array('app'=>'facerecognition', 'apps' => array('files')));
+			'OCA\FaceRecognition\Search\Provider',
+			array('app'=>'facerecognition', 'apps' => array('files'))
+		);
+	}
+
+	private function addServiceListeners() {
+		/** @var IEventDispatcher $dispatcher */
+		$dispatcher = \OC::$server->query(IEventDispatcher::class);
+		$dispatcher->addServiceListener(LoadSidebar::class, LoadSidebarListener::class);
 	}
 
 }

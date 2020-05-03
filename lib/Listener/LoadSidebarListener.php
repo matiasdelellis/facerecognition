@@ -1,10 +1,9 @@
 <?php
+declare(strict_types=1);
 /**
- * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@@gmail.com>
  *
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Matias De lellis <mati86dl@gmail.com>
+ * @autor Matias De lellis <mati86dl@@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -23,7 +22,25 @@
  *
  */
 
-use OCA\FaceRecognition\AppInfo\Application;
+namespace OCA\FaceRecognition\Listener;
 
-$app = new Application();
+use OCP\EventDispatcher\Event;
+use OCP\EventDispatcher\IEventDispatcher;
+use OCP\EventDispatcher\IEventListener;
+use OCP\Util;
 
+use OCA\Files\Event\LoadSidebar;
+
+class LoadSidebarListener implements IEventListener {
+
+	public function handle(Event $event): void {
+		if (!($event instanceof LoadSidebar)) {
+			return;
+		}
+
+		Util::addScript('facerecognition', 'fr-dialogs');
+		Util::addScript('facerecognition', 'personssidebar');
+		Util::addStyle('facerecognition', 'fr-dialogs');
+	}
+
+}

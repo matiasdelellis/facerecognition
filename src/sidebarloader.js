@@ -1,9 +1,6 @@
-<?php
 /**
- * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020 Matias De lellis <mati86dl@gmail.com>
  *
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
@@ -19,11 +16,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-use OCA\FaceRecognition\AppInfo\Application;
+import Vue from 'vue'
 
-$app = new Application();
+import PersonsTab from './views/PersonsTab'
 
+import { translate, translatePlural } from '@nextcloud/l10n'
+
+Vue.prototype.t = translate
+Vue.prototype.n = translatePlural
+Vue.prototype.OC = OC
+Vue.prototype.OCA = OCA
+
+if (!window.OCA.Facerecognition) {
+	window.OCA.Facerecognition = {}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+	if (OCA.Files && OCA.Files.Sidebar) {
+		OCA.Files.Sidebar.registerTab(new OCA.Files.Sidebar.Tab('facerecognition', PersonsTab))
+	}
+})

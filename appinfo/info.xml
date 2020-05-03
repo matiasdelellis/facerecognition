@@ -34,9 +34,9 @@
 	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-photos-pane.jpg</screenshot>
 	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-files-search.jpg</screenshot>
 	<dependencies>
-		<php min-version="7.1"/>
+		<php min-version="7.2"/>
 		<lib>pdlib</lib>
-		<nextcloud min-version="16" max-version="18"/>
+		<nextcloud min-version="18" max-version="19"/>
 	</dependencies>
 	<repair-steps>
 		<uninstall>

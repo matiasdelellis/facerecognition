@@ -9,20 +9,20 @@ services:
   - postgresql
 
 php:
-  - 7.1
   - 7.2
+  - 7.3
 
 env:
   global:
-    - CORE_BRANCH=stable16
+    - CORE_BRANCH=stable18
     - APP_NAME=facerecognition
   matrix:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
-    - DB=mysql CORE_BRANCH=stable17
-    - DB=pgsql CORE_BRANCH=stable17
-    - DB=sqlite CORE_BRANCH=stable17
+    - DB=mysql CORE_BRANCH=master
+    - DB=pgsql CORE_BRANCH=master
+    - DB=sqlite CORE_BRANCH=master
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)

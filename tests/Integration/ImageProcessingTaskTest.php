@@ -42,7 +42,7 @@ use Test\TestCase;
 
 class ImageProcessingTaskTest extends IntegrationTestCase {
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 
 		// Since test is changing this values, try to preserve old values (this is best effort)
@@ -57,7 +57,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 
 	}
 
-	public function tearDown() {
+	public function tearDown(): void {
 		$this->config->setAppValue('facerecognition', 'min_image_size', $this->originalMinImageSize);
 		$this->config->setAppValue('facerecognition', 'max_image_area', $this->originalMaxImageArea);
 

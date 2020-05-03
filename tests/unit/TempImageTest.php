@@ -36,7 +36,7 @@ class TempImageTest extends TestCase {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp() {
+	public function setUp(): void {
 		$this->testFile = \OC::$SERVERROOT . '/apps/facerecognition/tests/assets/lenna.jpg';
 	}
 

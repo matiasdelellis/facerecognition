@@ -53,7 +53,7 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var IConfig Config */
 	protected $config;
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
 		if (false === getenv('TRAVIS')) {
@@ -80,7 +80,7 @@ abstract class IntegrationTestCase extends TestCase {
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
 	}
 
-	public function tearDown() {
+	public function tearDown(): void {
 		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 

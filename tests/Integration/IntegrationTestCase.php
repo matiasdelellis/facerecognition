@@ -53,7 +53,7 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var IConfig Config */
 	protected $config;
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
 		if (false === getenv('TRAVIS')) {

@@ -28,7 +28,7 @@ use OCP\AppFramework\IAppContainer;
 
 class AppTest extends IntegrationTestCase {
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 		$app = new App('facerecognition');
 		$this->container = $app->getContainer();

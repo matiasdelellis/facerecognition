@@ -45,7 +45,7 @@ class LockTaskTest extends TestCase {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp() {
+	public function setUp(): void {
 		$userManager = $this->createMock(IUserManager::class);
 		$config = $this->createMock(IConfig::class);
 		$this->context = new FaceRecognitionContext($userManager, $config);

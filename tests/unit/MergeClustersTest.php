@@ -34,7 +34,7 @@ class MergeClustersTest extends TestCase {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp() {
+	public function setUp(): void {
 		$personMapper = $this->getMockBuilder('OCA\FaceRecognition\Db\PersonMapper')
 			->disableOriginalConstructor()
 			->getMock();

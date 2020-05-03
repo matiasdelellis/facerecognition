@@ -42,7 +42,7 @@ use Test\TestCase;
 
 class ImageProcessingTaskTest extends IntegrationTestCase {
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 
 		// Since test is changing this values, try to preserve old values (this is best effort)

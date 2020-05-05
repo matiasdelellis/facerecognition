@@ -1,6 +1,34 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.15] - 2020-05-04
+### Added
+- Experimental support of External Storage. Issue #212
+- Add some documentation about how expect to install, test and use the application
+- Optionally you can install Pdlib 1.0.2 from https://github.com/matiasdelellis/pdlib that increase the speed of clustering drastically.
+- Add php-bzip2 as a necessary dependency to install the models.
+
+### Changed
+- Also adds a minimum php memory requirement for HOG. 128 MB.
+- Indicate which model is enabled in the summary table of the setup --model command.
+
+### Bug fixes
+- Consider the memory configured in php as a dependency on the models.
+- Improves the description of errors and prints the links to documentation whenever it can.
+- Fix plurals in admin panel. Issue #256.
+- Use paginated queries when search persons on file app. Fix part of issue #263.
+- Search mainly faces, rather than persons in file view. Fix issue #264.
+- Don't compare a good face with a bad one. This greatly improves the quality of the faces clusters.
+- Fix that sidebar says no faces were found when just not clustered yet. Issue #255.
+- Fix tests on Nextcloud 18 and 19.
+
+### Translations
+- New French tranlation thanks to Florian Carpentier
+- Update Chinese translation thanks to yui874397188 and Jack Frost
+- Update German translation thanks to Johannes Szeibert
+- Update Polish translation thanks to Piotr Esse
+- Update Spanish translation thanks to Matias De lellis
+
 ## [0.5.14] - 2020-03-30
 ### Bug fixes
 - Fix image will be skipped due 'Unable to open file: /tmp/oc_tmp_###'. Issue #242

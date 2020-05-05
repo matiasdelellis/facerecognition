@@ -1,6 +1,6 @@
 { "translations": {
     "The analysis is finished" : "El análisis ha terminado",
-    "_%n image was analyzed_::_%n images were analyzed_" : ["%n imagen fue analizada","%n imágenes fueron analizadas"],
+    "_%n image was analyzed_::_%n images were analyzed_" : ["%n imagen analizada","%n imágenes fueron analizadas"],
     "Analyzing images" : "Analizando imágenes",
     "_%n image detected_::_%n images detected_" : ["%n imagen detectada","%n imágenes detectadas"],
     "_%n image in queue_::_%n images in queue_" : ["%n imagen en cola","%n imágenes en cola"],
@@ -39,6 +39,7 @@
     "Do you want to deactivate the grouping by faces?" : "¿Quieres desactivar la agrupación por caras?",
     "There was an error when trying to find photos of your friend" : "Hubo un error al intentar encontrar fotos de tu amigo",
     "There was an error renaming this person" : "Se ha producido un error al cambiar el nombre de esta persona",
+    "You must be administrator to configure this feature" : "Debes ser administrador para configurar esta función",
     "The format seems to be incorrect." : "El formato parece ser incorrecto.",
     "Seems you haven't set up any analysis model yet" : "Parece que aún no ha configurado ningún modelo de análisis",
     "The minimum recommended area is %s" : "El área mínima recomendada es %s",

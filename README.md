@@ -42,6 +42,7 @@ Finally the user can use the application in three ways
 
  * Nextcloud 16+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
+ * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
  * 2GB of RAM
 
 #### Installation

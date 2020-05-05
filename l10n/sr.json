@@ -1,6 +1,5 @@
 { "translations": {
     "The analysis is finished" : "Анализа је завршена",
-    "_%n image was analyzed_::_%n images were analyzed_" : ["%n слика је анализирана","%n слике су анализиране","%n слика су анализиране"],
     "Analyzing images" : "Анализирам слике",
     "Ends approximately {estimatedFinalize}" : "Завршиће се одокативно {estimatedFinalize}",
     "The analysis is not started yet" : "Анализа још није започела",

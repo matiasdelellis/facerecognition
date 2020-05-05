@@ -2,7 +2,6 @@ OC.L10N.register(
     "facerecognition",
     {
     "The analysis is finished" : "Analiza zakończona",
-    "_%n image was analyzed_::_%n images were analyzed_" : ["%n obraz został przeanalizowany","obrazy zostały przeanalizowane","obrazów zostało przeanalizowanych","%n obrazów zostało przeanalizowanych"],
     "Analyzing images" : "Analizuje obrazy",
     "Ends approximately {estimatedFinalize}" : "Koniec za około {estimatedFinalize}",
     "The analysis is not started yet" : "Analiza jeszcze się nie rozpoczęła",

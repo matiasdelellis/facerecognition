@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Also adds a minimum php memory requirement for HOG. 128 MB.
-. Indicate which model is enabled in the summary table of the setup --model command.
+- Indicate which model is enabled in the summary table of the setup --model command.
 
 ### Bug fixes
 - Consider the memory configured in php as a dependency on the models.
@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Translations
 - New French tranlation thanks to Florian Carpentier
-- Update Chinese translation thanks to yui874397188
+- Update Chinese translation thanks to yui874397188 and Jack Frost
 - Update German translation thanks to Johannes Szeibert
 - Update Polish translation thanks to Piotr Esse
 - Update Spanish translation thanks to Matias De lellis

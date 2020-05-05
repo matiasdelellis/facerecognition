@@ -116,7 +116,12 @@ appstore:
 	--exclude=package*json \
 	--exclude=phpunit*xml \
 	--exclude=screenshots \
+	--exclude=src \
 	--exclude=tests \
+	--exclude=webpack* \
+	--exclude=js/*map \
+	--exclude=js/templates \
+	--include=js/vendor \
 	--exclude=vendor \
 	$(project_dir) $(sign_dir)
 	@echo "Signing…"

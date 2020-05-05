@@ -1,6 +1,5 @@
 { "translations": {
     "The analysis is finished" : "Die Analyse ist beendet",
-    "_%n image was analyzed_::_%n images were analyzed_" : ["%n Bild wurde analysiert","%n Bilder wurden analysiert"],
     "Analyzing images" : "Bilder werden analysiert",
     "Ends approximately {estimatedFinalize}" : "Endet ungefähr {estimatedFinalize}",
     "The analysis is not started yet" : "Die Analyse wurde noch nicht gestartet",

@@ -1,6 +1,6 @@
 {
 	"name": "facerecognition",
-	"version": "0.5.8",
+	"version": "0.6.0",
 	"author": "Matias De lellis <mati86dl@gmail.com>",
 	"license": "AGPL-3.0-or-later",
 	"description": "FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing and aggregating face data in users images, and providing additional functionalities on top of these information, all with built-in privacy of Nextcloud",

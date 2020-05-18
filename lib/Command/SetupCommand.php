@@ -119,13 +119,14 @@ class SetupCommand extends Command {
 		$table = new Table($this->logger);
 		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
 
-		$currentModel = $this->modelManager->getCurrentModel()->getId();
+		$currentModel = $this->modelManager->getCurrentModel();
+		$modelId = (!is_null($currentModel)) ? $currentModel->getId() : -1;
 
 		$models = $this->modelManager->getAllModels();
 		foreach ($models as $model) {
 			$table->addRow([
 				$model->getId(),
-				($model->getId() === $currentModel) ? '*' : '',
+				($model->getId() === $modelId) ? '*' : '',
 				$model->getName(),
 				$model->getDescription()
 			]);

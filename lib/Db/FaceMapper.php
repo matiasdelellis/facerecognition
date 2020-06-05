@@ -186,6 +186,18 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Remove single face from database
+	 * 
+	 * @param int $faceId Face which should be removed
+	 */
+	public function deleteFace(int $faceId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr->eq('id', $qb->createdNamedParameter($faceId)))
+			->execute();
+	}
+
+	/**
 	 * Deletes all faces from that user.
 	 *
 	 * @param string $userId User to drop faces from table.

@@ -193,7 +193,7 @@ class FaceMapper extends QBMapper {
 	public function deleteFace(int $faceId) {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->where($qb->expr->eq('id', $qb->createdNamedParameter($faceId)))
+			->where($qb->expr->eq('id', $qb->createNamedParameter($faceId)))
 			->execute();
 	}
 

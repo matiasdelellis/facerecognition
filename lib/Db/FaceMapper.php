@@ -195,6 +195,8 @@ class FaceMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where($qb->expr->eq('id', $qb->createNamedParameter($faceId)))
 			->execute();
+
+		//TODO Question is there the need to cleanup cluster? 
 	}
 
 	/**

@@ -109,6 +109,7 @@ class FileController extends Controller {
 			$facePerson = array();
 			$facePerson['name'] = $person->getName();
 			$facePerson['person_id'] = $person->getId();
+			$facePerson['face_id'] = $face->getId();
 			$facePerson['thumb_url'] = $this->getThumbUrl($face->getId());
 			$facePerson['face_left'] = $face->getLeft();
 			$facePerson['face_right'] = $face->getRight();

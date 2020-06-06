@@ -87,6 +87,66 @@ const FrDialogs = {
 			input.select();
 		});
 	},
+
+	deleteFace: function (thumbUrl, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-dialog-content';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Remove tagged face'),
+				message: t('facerecognition', 'Really remove recognized face?'),
+				type: 'notice'
+			});
+			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
+			var thumb = $('<img class="face-preview-dialog" src="' + thumbUrl + '" width="50" height="50"/>');
+
+			div.append(thumb);
+			$dlg.append(div);
+
+			$('body').append($dlg);
+
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'Cancel'),
+				click: function () {
+					if (callback !== undefined) {
+						callback(false);
+					}
+					$(dialogId).ocdialog('close');
+				}
+			}, {
+				text: t('facerecognition', 'Confirm'),
+				click: function () {
+					if (callback !== undefined) {
+						callback(true);
+					}
+					$(dialogId).ocdialog('close');
+				},
+				defaultButton: true
+			}
+			];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false);
+					}
+				}
+			});
+
+		});
+	},
 	_getMessageTemplate: function () {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {
@@ -95,9 +155,9 @@ const FrDialogs = {
 				self.$messageTemplate = $(tmpl);
 				defer.resolve(self.$messageTemplate);
 			})
-			.fail(function (jqXHR, textStatus, errorThrown) {
-				defer.reject(jqXHR.status, errorThrown);
-			});
+				.fail(function (jqXHR, textStatus, errorThrown) {
+					defer.reject(jqXHR.status, errorThrown);
+				});
 		} else {
 			defer.resolve(this.$messageTemplate);
 		}

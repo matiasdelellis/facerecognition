@@ -7,17 +7,20 @@
 	</h2>
 	<div id="persons-navigation">
 		{{#each clustersByName}}
-			<h2 class="person-title icon-user" data-id="{{this.id}}">
-				<span>{{this.name}}</span>
-				<a class="title-icon icon-rename"></a>
-			</h2>
-			<div class="persons-previews">
-				{{#each this.faces}}
-					<a target="_blank" href="{{file-url}}">
-						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
-					</a>
-				{{/each}}
+		<h2 class="person-title icon-user" data-id="{{this.id}}">
+			<span>{{this.name}}</span>
+			<a class="title-icon icon-rename"></a>
+		</h2>
+		<div class="persons-previews">
+			{{#each this.faces}}
+			<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50">
+				<a target="_blank" href="{{file-url}}">
+					<span class="icon icon-picture-white"></span>
+				</a>
+				<span class="icon icon-delete-white" data-face-id="{{face-id}}"></span>
 			</div>
+			{{/each}}
+		</div>
 		{{/each}}
 	</div>
 	{{else if cluster}}
@@ -32,9 +35,12 @@
 		</h2>
 		<div class="persons-previews">
 			{{#each cluster.faces}}
+			<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50">
 				<a target="_blank" href="{{file-url}}">
-					<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+					<span class="icon icon-picture-white"></span>
 				</a>
+				<span class="icon icon-delete-white" data-face-id="{{face-id}}"></span>
+			</div>
 			{{/each}}
 		</div>
 	</div>
@@ -45,28 +51,33 @@
 	<h2>
 		{{appName}}
 	</h2>
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1"
+		{{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div id="persons-navigation">
 		{{#each clusters}}
-			<h2 class="person-title icon-user" data-id="{{this.id}}">
-				<a class="person-name" href="#"><span>{{this.name}}</span></a>
-				<a class="title-icon icon-rename"></a>
-			</h2>
-			<div class="persons-previews">
-				{{#each this.faces}}
-					<a target="_blank" href="{{file-url}}">
-						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
-					</a>
-				{{/each}}
+		<h2 class="person-title icon-user" data-id="{{this.id}}">
+			<a class="person-name" href="#"><span>{{this.name}}</span></a>
+			<a class="title-icon icon-rename"></a>
+		</h2>
+		<div class="persons-previews">
+			{{#each this.faces}}
+			<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50">
+				<a target="_blank" href="{{file-url}}">
+					<span class="icon icon-picture-white"></span>
+				</a>
+				<span class="icon icon-delete-white" data-face-id="{{face-id}}"></span>
 			</div>
+			{{/each}}
+		</div>
 		{{/each}}
 	</div>
 	{{else if loaded}}
 	<h2>
 		{{appName}}
 	</h2>
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1"
+		{{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<div class="emptycontent">
 		<div class="icon-user svg"></div>
@@ -86,7 +97,7 @@
 		<h2>
 			{{loadingMsg}}
 		</h2>
-		<img class="loadingimport" src="{{loadingIcon}}"/>
+		<img class="loadingimport" src="{{loadingIcon}}" />
 	</div>
 	{{/if}}
 

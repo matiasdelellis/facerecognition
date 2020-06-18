@@ -35,10 +35,10 @@ class MemoryLimits {
 	 * negative value. Note that negative here doesn't mean "unlimited"! This
 	 * function doesn't care if PHP is being used in CLI or FPM mode.
 	 *
-	 * @return int Total memory available to PHP, in bytes, or negative if
+	 * @return float Total memory available to PHP, in bytes, or negative if
 	 * we don't know any better
 	 */
-	public static function getAvailableMemory(): int {
+	public static function getAvailableMemory(): float {
 		// Try first to get from php.ini
 		$availableMemory = MemoryLimits::getPhpMemory();
 
@@ -49,7 +49,7 @@ class MemoryLimits {
 			$systemMemory = MemoryLimits::getSystemMemory();
 			if ($systemMemory < 0)
 				return -1;
-			$availableMemory = intval($systemMemory / 2);
+			$availableMemory = ($systemMemory / 2);
 		}
 		return $availableMemory;
 	}
@@ -57,10 +57,10 @@ class MemoryLimits {
 	/**
 	 * Tries to get memory available to PHP reading value of "memory_limit".
 	 *
-	 * @return int Total memory available to PHP, in bytes, or negative if
+	 * @return float Total memory available to PHP, in bytes, or negative if
 	 * we don't know any better or it is unlimited.
 	 */
-	public static function getPhpMemory(): int {
+	public static function getPhpMemory(): float {
 		// Get from php.ini
 		try {
 			$ini_value = ini_get('memory_limit');
@@ -72,11 +72,11 @@ class MemoryLimits {
 	}
 
 	/**
-	 * @return int Total memory available on system, in bytes, or negative if
+	 * @return float Total memory available on system, in bytes, or negative if
 	 * we don't know any better
 	 * Only linux is currently supported.
 	 */
-	public static function getSystemMemory(): int {
+	public static function getSystemMemory(): float {
 		if (php_uname("s") !== "Linux")
 			return -1;
 
@@ -84,19 +84,20 @@ class MemoryLimits {
 		if ($linuxMemory <= 0) {
 			return -2;
 		}
+
+
 		return $linuxMemory;
 	}
 
 	/**
-	 * @return int Total memory available on linux system, in bytes, or
+	 * @return float Total memory available on linux system, in bytes, or
 	 * zero if we don't know any better.
 	 */
-	private static function getTotalMemoryLinux(): int {
+	private static function getTotalMemoryLinux(): float {
 		$fh = fopen('/proc/meminfo','r');
 		if ($fh === false) {
 			return 0;
 		}
-
 		$mem = 0;
 		while ($line = fgets($fh)) {
 			$pieces = array();
@@ -104,10 +105,11 @@ class MemoryLimits {
 				$mem = $pieces[1];
 				break;
 			}
+
 		}
 		fclose($fh);
-		$memKb = intval($mem);
-		return intval($memKb * 1024);
+
+		return $mem * 1024;
 	}
 
 	/**

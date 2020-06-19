@@ -74,7 +74,7 @@ class Admin implements ISettings {
 		}
 
 		$error_message = '';
-		if (!$model->meetDependencies($error_message)) {
+		if (!is_null($model) && !$model->meetDependencies($error_message)) {
 			$resume .= $this->l10n->t("It seems that you do not meet the dependencies to use the current model.");
 			// TODO: Apply message
 			$meetDependencies = false;

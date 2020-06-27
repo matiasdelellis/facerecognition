@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2020-06-27
+### Changed
+- Adjust the appstore makefile rule to ignore vue and teplates files.
+
+### Bug fixes
+- Fix dump models table when none was installed yet. Issue #276.
+- Fix integer overflow on 32 bit systems.. Issue #278.
+- Fix Admin page when not model installed. Issue #284.
+
+### Translations
+- Update German (Germany) translations thanks to ProfDrJones.
+
 ## [0.6.0] - 2020-05-04
 ### Added
 - Experimental support of External Storage. Issue #212

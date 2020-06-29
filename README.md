@@ -45,6 +45,21 @@ Finally the user can use the application in three ways
  * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
  * 2GB of RAM
 
+#### Using with Docker
+You can build Nextcloud image with necessary dependencies via docker.
+
+To test out on a local machine, clone this repo and run
+```
+docker build ./ -t nextcloud:facerecognition
+export nc=$(docker run -d --rm -p 80:80 nextcloud:facerecognition)
+```
+This should spin up a fresh server with all necessary dependencies.
+Install Face Recognition from the store and run this to install a model:
+```
+docker exec $nc ./occ face:setup -m 1
+```
+And after that you are good to go!
+
 #### Installation
 
 Ideally once you meet the requirements, you can install and enable it from the

@@ -56,7 +56,7 @@ export nc=$(docker run -d --rm -p 80:80 nextcloud:facerecognition)
 This should spin up a fresh server with all necessary dependencies.
 Install Face Recognition from the store and run this to install a model:
 ```
-docker exec $nc ./occ face:setup -m 1
+docker exec --user www-data $nc ./occ face:setup -m 1
 ```
 And after that you are good to go!
 

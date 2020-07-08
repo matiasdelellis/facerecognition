@@ -104,87 +104,53 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	}
 
 	private function createClusterIfNeeded(string $userId) {
-		// Check that we processed enough images to start creating clusters
-		//
 		$modelId = $this->settingsService->getCurrentFaceModel();
-
-		$hasPersons = $this->personMapper->countPersons($userId, $modelId) > 0;
 
 		// Depending on whether we already have clusters, decide if we should create/recreate them.
 		//
+		$hasPersons = $this->personMapper->countPersons($userId, $modelId) > 0;
 		if ($hasPersons) {
-			// OK, we already got some persons. We now need to evaluate whether we want to recreate clusters.
-			// We want to recreate clusters/persons if:
-			// * Some cluster/person is invalidated (is_valid is false for someone)
-			//     This means some image that belonged to this user is changed, deleted etc.
-			// * There are some new faces. Now, we don't want to jump the gun here. We want to either have:
-			// ** more than 10 new faces, or
-			// ** less than 10 new faces, but they are older than 2h
-			//  (basically, we want to avoid recreating cluster for each new face being uploaded,
-			//  however, we don't want to wait too much as clusters could be changed a lot)
-			//
-			$haveNewFaces = false;
-			$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
-			$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
-				$facesWithoutPersons, $userId, $modelId));
-			// todo: get rid of magic numbers (move to config)
-			if ($facesWithoutPersons >= 10) {
-				$haveNewFaces = true;
-			} else if ($facesWithoutPersons > 0) {
-				// We have some faces, but not that many, let's see when oldest one is generated.
-				$face = $this->faceMapper->getOldestCreatedFaceWithoutPerson($userId, $modelId);
-				$oldestFaceTimestamp = $face->creationTime->getTimestamp();
-				$currentTimestamp = (new \DateTime())->getTimestamp();
-				$this->logDebug(sprintf('Oldest face without persons for user %s and model %d is from %s',
-					$userId, $modelId, $face->creationTime->format('Y-m-d H:i:s')));
-				// todo: get rid of magic numbers (move to config)
-				if ($currentTimestamp - $oldestFaceTimestamp > 2 * 60 * 60) {
-					$haveNewFaces = true;
-				}
+			$forceRecreate = $this->needRecreateBySettings($userId, $modelId);
+			$haveEnoughFaces = $this->hasNewFacesToRecreate($userId, $modelId);
+			$haveStaled = $this->hasStalePersonsToRecreate($userId, $modelId);
+
+			if ($forceRecreate) {
+				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
-
-			$stalePersonsCount = $this->personMapper->countPersons($userId, $modelId, true);
-			$haveStalePersons = $stalePersonsCount > 0;
-			$staleCluster = $haveStalePersons === false && $haveNewFaces === false;
-
-			$forceRecreation = $this->settingsService->getNeedRecreateClusters($userId);
-
-			$this->logDebug(sprintf('Found %d changed persons for user %s and model %d', $stalePersonsCount, $userId, $modelId));
-
-			if ($staleCluster && !$forceRecreation) {
+			else if (!$haveStaled && !$haveEnoughFaces) {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
 			}
-			else if ($forceRecreation) {
-				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
+			else {
+				$this->logInfo('Face clustering will be recreated.');
 			}
-		} else {
+		}
+		else {
 			// User should not be able to use this directly, used in tests
-			$forceCreation = $this->settingsService->getForceCreateClusters($userId);
+			$forceTestCreation = $this->settingsService->_getForceCreateClusters($userId);
+			$needCreate = $this->needCreateFirstTime($userId, $modelId);
 
-			// These are basic criteria without which we should not even consider creating clusters.
-			// These clusters will be small and not "stable" enough and we should better wait for more images to come.
-			// todo: 2 queries to get these 2 counts, can we do this smarter?
-			$imageCount = $this->imageMapper->countUserImages($userId, $modelId);
-			$imageProcessed = $this->imageMapper->countUserProcessedImages($userId, $modelId);
-			$percentImagesProcessed = 0;
-			if ($imageCount > 0) {
-				$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+			if ($forceTestCreation) {
+				$this->logInfo('Force the creation of clusters for testing');
 			}
-			$facesCount = $this->faceMapper->countFaces($userId, $modelId);
-			// todo: get rid of magic numbers (move to config)
-			if (!$forceCreation && ($facesCount < 1000) && ($imageCount < 100) && ($percentImagesProcessed < 0.95)) {
+			else if (!$needCreate) {
 				$this->logInfo(
 					'Skipping cluster creation, not enough data (yet) collected. ' .
 					'For cluster creation, you need either one of the following:');
-				$this->logInfo(sprintf('* have 1000 faces already processed (you have %d),', $facesCount));
-				$this->logInfo(sprintf('* have 100 images (you have %d),', $imageCount));
-				$this->logInfo(sprintf('* or you need to have 95%% of you images processed (you have %.2f%%)', $percentImagesProcessed));
+				$this->logInfo('* have 1000 faces already processed');
+				$this->logInfo('* have 100 images');
+				$this->logInfo('* or you need to have 95% of you images processed');
+				$this->logInfo('Use stats command to track progress');
 				return;
+			}
+			else {
+				$this->logInfo('Face clustering will be created for the first time.');
 			}
 		}
 
+		// Ok. If we are here, the clusters must be recreated.
+		//
 		$faces = $this->faceMapper->getFaces($userId, $modelId);
 		$this->logInfo(count($faces) . ' faces found for clustering');
 
@@ -210,7 +176,83 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Prevents not create/recreate the clusters unnecessarily.
 
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
-		$this->settingsService->setForceCreateClusters(false, $userId);
+		$this->settingsService->_setForceCreateClusters(false, $userId);
+	}
+
+	/**
+	 * Evaluate whether we want to recreate clusters. We want to recreate clusters/persons if:
+	 * - Some cluster/person is invalidated (is_valid is false for someone)
+	 *   - This means some image that belonged to this user is changed, deleted etc.
+	 * - There are some new faces. Now, we don't want to jump the gun here. We want to either have:
+	 *   - more than 10 new faces, or
+	 *   - less than 10 new faces, but they are older than 2h
+	 *
+	 * (basically, we want to avoid recreating cluster for each new face being uploaded,
+	 *  however, we don't want to wait too much as clusters could be changed a lot)
+	 */
+	private function hasNewFacesToRecreate($userId, $modelId): bool {
+		//
+		$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
+		$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
+		                $facesWithoutPersons, $userId, $modelId));
+
+		// todo: get rid of magic numbers (move to config)
+		if ($facesWithoutPersons === 0)
+			return false;
+
+		if ($facesWithoutPersons >= 10)
+			return true;
+
+		// We have some faces, but not that many, let's see when oldest one is generated.
+		$oldestFace = $this->faceMapper->getOldestCreatedFaceWithoutPerson($userId, $modelId);
+		$oldestFaceTimestamp = $oldestFace->creationTime->getTimestamp();
+		$currentTimestamp = (new \DateTime())->getTimestamp();
+		$this->logDebug(sprintf('Oldest face without persons for user %s and model %d is from %s',
+		                $userId, $modelId, $face->creationTime->format('Y-m-d H:i:s')));
+
+		// todo: get rid of magic numbers (move to config)
+		if ($currentTimestamp - $oldestFaceTimestamp > 2 * 60 * 60)
+			return true;
+
+		return false;
+	}
+
+	private function hasStalePersonsToRecreate($userId, $modelId): bool {
+		return $this->personMapper->countPersons($userId, $modelId, true) > 0;
+	}
+
+	private function needRecreateBySettings($userId, $modelId): bool {
+		return $this->settingsService->getNeedRecreateClusters($userId);
+	}
+
+	private function needCreateFirstTime($userId, $modelId): bool {
+		// User should not be able to use this directly, used in tests
+		if ($this->settingsService->_getForceCreateClusters($userId))
+			return true;
+
+		$imageCount = $this->imageMapper->countUserImages($userId, $modelId);
+		if ($imageCount === 0)
+			return false;
+
+		$imageProcessed = $this->imageMapper->countUserImages($userId, $modelId, true);
+		if ($imageProcessed === 0)
+			return false;
+
+		// These are basic criteria without which we should not even consider creating clusters.
+		// These clusters will be small and not "stable" enough and we should better wait for more images to come.
+		// todo: get rid of magic numbers (move to config)
+		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
+		if ($facesCount > 1000)
+			return true;
+
+		if ($imageCount > 100)
+			return true;
+
+		$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+		if ($percentImagesProcessed < 0.95)
+			return true;
+
+		return false;
 	}
 
 	private function getCurrentClusters(array $faces): array {

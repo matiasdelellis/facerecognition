@@ -135,7 +135,7 @@ class ImageMapper extends QBMapper {
 		return (int)$data[0];
 	}
 
-	public function countUserImages(string $userId, $model): int {
+	public function countUserImages(string $userId, int $model, $processed = false): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
@@ -144,24 +144,12 @@ class ImageMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$resultStatement = $query->execute();
-		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
-		$resultStatement->closeCursor();
 
-		return (int)$data[0];
-	}
+		if ($processed) {
+			$query->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
+			      ->setParameter('is_processed', true);
+		}
 
-	public function countUserProcessedImages(string $userId, $model): int {
-		$qb = $this->db->getQueryBuilder();
-		$query = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
-			->setParameter('user', $userId)
-			->setParameter('model', $model)
-			->setParameter('is_processed', True);
 		$resultStatement = $query->execute();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();

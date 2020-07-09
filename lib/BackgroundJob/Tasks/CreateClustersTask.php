@@ -117,7 +117,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			if ($forceRecreate) {
 				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
-			else if ($haveEnoughFaces || $haveStales) {
+			else if ($haveEnoughFaces || $haveStaled) {
 				$this->logInfo('Face clustering will be recreated with new information or changes');
 			}
 			else {

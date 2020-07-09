@@ -110,7 +110,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		//
 		$hasPersons = $this->personMapper->countPersons($userId, $modelId) > 0;
 		if ($hasPersons) {
-			$forceRecreate = $this->needRecreateBySettings($userId, $modelId);
+			$forceRecreate = $this->needRecreateBySettings($userId);
 			$haveEnoughFaces = $this->hasNewFacesToRecreate($userId, $modelId);
 			$haveStaled = $this->hasStalePersonsToRecreate($userId, $modelId);
 

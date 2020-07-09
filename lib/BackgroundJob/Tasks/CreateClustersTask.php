@@ -117,13 +117,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			if ($forceRecreate) {
 				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
 			}
-			else if (!$haveStaled && !$haveEnoughFaces) {
+			else if ($haveEnoughFaces || $haveStales) {
+				$this->logInfo('Face clustering will be recreated with new information or changes');
+			}
+			else {
 				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
 				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
 				return;
-			}
-			else {
-				$this->logInfo('Face clustering will be recreated.');
 			}
 		}
 		else {
@@ -134,18 +134,17 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			if ($forceTestCreation) {
 				$this->logInfo('Force the creation of clusters for testing');
 			}
-			else if (!$needCreate) {
+			else if ($needCreate) {
+				$this->logInfo('Face clustering will be created for the first time.');
+			}
+			else {
 				$this->logInfo(
 					'Skipping cluster creation, not enough data (yet) collected. ' .
 					'For cluster creation, you need either one of the following:');
 				$this->logInfo('* have 1000 faces already processed');
-				$this->logInfo('* have 100 images');
 				$this->logInfo('* or you need to have 95% of you images processed');
 				$this->logInfo('Use stats command to track progress');
 				return;
-			}
-			else {
-				$this->logInfo('Face clustering will be created for the first time.');
 			}
 		}
 
@@ -184,8 +183,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * - Some cluster/person is invalidated (is_valid is false for someone)
 	 *   - This means some image that belonged to this user is changed, deleted etc.
 	 * - There are some new faces. Now, we don't want to jump the gun here. We want to either have:
-	 *   - more than 10 new faces, or
-	 *   - less than 10 new faces, but they are older than 2h
+	 *   - more than 25 new faces, or
+	 *   - less than 25 new faces, but they are older than 2h
 	 *
 	 * (basically, we want to avoid recreating cluster for each new face being uploaded,
 	 *  however, we don't want to wait too much as clusters could be changed a lot)
@@ -200,7 +199,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		if ($facesWithoutPersons === 0)
 			return false;
 
-		if ($facesWithoutPersons >= 10)
+		if ($facesWithoutPersons >= 25)
 			return true;
 
 		// We have some faces, but not that many, let's see when oldest one is generated.
@@ -245,11 +244,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		if ($facesCount > 1000)
 			return true;
 
-		if ($imageCount > 100)
-			return true;
-
 		$percentImagesProcessed = $imageProcessed / floatval($imageCount);
-		if ($percentImagesProcessed < 0.95)
+		if ($percentImagesProcessed > 0.95)
 			return true;
 
 		return false;

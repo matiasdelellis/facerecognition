@@ -208,7 +208,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$oldestFaceTimestamp = $oldestFace->creationTime->getTimestamp();
 		$currentTimestamp = (new \DateTime())->getTimestamp();
 		$this->logDebug(sprintf('Oldest face without persons for user %s and model %d is from %s',
-		                $userId, $modelId, $face->creationTime->format('Y-m-d H:i:s')));
+		                $userId, $modelId, $oldestFace->creationTime->format('Y-m-d H:i:s')));
 
 		// todo: get rid of magic numbers (move to config)
 		if ($currentTimestamp - $oldestFaceTimestamp > 2 * 60 * 60)
@@ -221,7 +221,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return $this->personMapper->countPersons($userId, $modelId, true) > 0;
 	}
 
-	private function needRecreateBySettings($userId, $modelId): bool {
+	private function needRecreateBySettings($userId): bool {
 		return $this->settingsService->getNeedRecreateClusters($userId);
 	}
 

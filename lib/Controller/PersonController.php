@@ -122,9 +122,11 @@ class PersonController extends Controller {
 			$faces = [];
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-				$fileUrl = $this->getRedirectToFileUrl($image->getFile());
-				if (NULL === $fileUrl)
-					continue;
+				$fileId = $image->getFile();
+				if ($fileId === null) continue;
+
+				$fileUrl = $this->getRedirectToFileUrl($fileId);
+				if ($fileUrl === null) continue;
 
 				$face = [];
 				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
@@ -157,9 +159,12 @@ class PersonController extends Controller {
 		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-			$fileUrl = $this->getRedirectToFileUrl($image->getFile());
-			if (NULL === $fileUrl)
-				continue;
+			$fileId = $image->getFile();
+			if ($fileId === null) continue;
+
+			$fileUrl = $this->getRedirectToFileUrl($fileId);
+			if ($fileUrl === null) continue;
+
 			$face = [];
 			$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 			$face['file-url'] = $fileUrl;
@@ -194,9 +199,11 @@ class PersonController extends Controller {
 			$faces = [];
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-				$fileUrl = $this->getRedirectToFileUrl($image->getFile());
-				if (NULL === $fileUrl)
-					continue;
+				$fileId = $image->getFile();
+				if ($fileId === null) continue;
+
+				$fileUrl = $this->getRedirectToFileUrl($fileId);
+				if ($fileUrl === null) continue;
 
 				$face = [];
 				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());

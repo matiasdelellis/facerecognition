@@ -201,6 +201,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		}
 
 		$imagePath = $this->fileService->getLocalFile($file);
+		if ($imagePath === null)
+			return null;
 
 		$this->logInfo('Processing image ' . $imagePath);
 

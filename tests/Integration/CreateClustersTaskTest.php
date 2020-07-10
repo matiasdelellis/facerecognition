@@ -43,7 +43,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	/**
 	 * Test that one face that was not in any cluster will be assigned new person
 	 */
-	public function testCreateClustersSimple() {
+	public function testCreateSingleFaceCluster() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
@@ -57,6 +57,23 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$faceMapper->insertFace($face);
+
+		// With a single face should never create clusters.
+		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $this->user);
+
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(0, $personCount);
+		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(0, count($persons));
+
+		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(1, $faceCount);
+		$faces = $faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(1, count($faces));
+		$this->assertNull($faces[0]->getPerson());
+
+		// Force clustering the sigle face.
+		$settingsService->_setForceCreateClusters(true, $this->user->getUID());
 
 		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $this->user);
 
@@ -82,10 +99,6 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 * If not given, clusters for all users will be processed.
 	 */
 	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $contextUser = null) {
-		if ($contextUser) {
-			$this->config->setUserValue($contextUser->getUID(), 'facerecognition', 'force_create_clusters', 'true');
-		}
-
 		$createClustersTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);
 		$this->assertNotEquals("", $createClustersTask->description());
 

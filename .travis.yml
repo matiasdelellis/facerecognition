@@ -20,9 +20,9 @@ env:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
-    - DB=mysql CORE_BRANCH=master
-    - DB=pgsql CORE_BRANCH=master
-    - DB=sqlite CORE_BRANCH=master
+    - DB=mysql CORE_BRANCH=stable19
+    - DB=pgsql CORE_BRANCH=stable19
+    - DB=sqlite CORE_BRANCH=stable19
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)
@@ -38,7 +38,7 @@ before_install:
   - ./configure --enable-debug && make && sudo make install
   - echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - popd
-
+  - sudo apt-get install nodejs-dev node-gyp libssl1.0-dev
   - sudo apt-get install npm
   - sudo npm config set strict-ssl false
   - make

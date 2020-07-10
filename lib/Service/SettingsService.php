@@ -184,12 +184,14 @@ class SettingsService {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? "true" : "false");
 	}
 
-	public function getForceCreateClusters ($userId = null): bool {
+	// Private function used only on tests
+	public function _getForceCreateClusters ($userId = null): bool {
 		$forceCreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, self::DEFAULT_FORCE_CREATE_CLUSTERS);
 		return ($forceCreate === 'true');
 	}
 
-	public function setForceCreateClusters (bool $forceCreate, $userId = null) {
+	// Private function used only on tests
+	public function _setForceCreateClusters (bool $forceCreate, $userId = null) {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? "true" : "false");
 	}
 

@@ -148,7 +148,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					$landmarks = $this->model->detectLandmarks($tempImage->getImagePath(), $normFace);
 
 					// Get descriptor of face from model
-					$descriptor = $this->model->computeDescriptor($tempImage->getImagePath(), $landmarks, 100);
+					$descriptor = $this->model->computeDescriptor($tempImage->getImagePath(), $landmarks);
 
 					// Convert from dictionary of faces to our Face Db Entity and put Landmarks and descriptor
 					$face = Face::fromModel($image->getId(), $normFace);

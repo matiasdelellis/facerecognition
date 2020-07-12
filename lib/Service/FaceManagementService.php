@@ -73,6 +73,37 @@ class FaceManagementService {
 	}
 
 	/**
+	 * Check if the current model has data on db
+	 *
+	 * @param IUser|null $user Optional user to check
+	 * @param Int $modelId Optional model to check
+	 */
+	public function hasData(IUser $user = null, int $modelId = -1) {
+		if ($modelId === -1) {
+			$modelId = $this->settingsService->getCurrentFaceModel();
+		}
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach ($eligible_users as $userId) {
+			if ($this->hasDataForUser($userId, $modelId)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the current model has data on db for user
+	 *
+	 * @param string $user ID of user to check
+	 * @param Int $modelId model to check
+	 */
+	public function hasDataForUser(string $userId, int $modelId) {
+		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
+		return ($facesCount > 0);
+	}
+
+
+	/**
 	 * Deletes all faces, images and persons found. IF no user is given, resetting is executed for all users.
 	 *
 	 * @param IUser|null $user Optional user to execute resetting for

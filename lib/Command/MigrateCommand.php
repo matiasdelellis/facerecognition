@@ -32,7 +32,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Db\FaceMapper;
 
-use OCA\FaceRecognition\Model\SettingsManager;
+use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 
@@ -73,18 +73,18 @@ class MigrateCommand extends Command {
 			->setDescription(
 				'Migrate the faces found in a model and analyze with the current model.')
 			->addOption(
+				'model',
+				'm',
+				InputOption::VALUE_REQUIRED,
+				'The identifier number of the model to migrate',
+				null,
+			)
+			->addOption(
 				'user_id',
 				'u',
 				InputOption::VALUE_REQUIRED,
 				'Migrate data for a given user only. If not given, migrate everything for all users.',
-				null
-			)
-			->addOption(
-				'model',
-				'm',
-				InputOption::VALUE_OPTIONAL,
-				'The identifier number of the model to migrate',
-				null
+				null,
 			);
 	}
 
@@ -97,28 +97,31 @@ class MigrateCommand extends Command {
 		// Extract user, if any
 		//
 		$userId = $input->getOption('user_id');
-		if (!is_null($userId)) {
-			$user = $this->userManager->get($userId);
-			if ($user === null) {
-				$output->writeln("User with id <$userId> is unknown.");
-				return 1;
-			}
+		if ($userId === null) {
+			$output->writeln("You must specify the user to migrate");
+			return 1;
+		}
+
+		$user = $this->userManager->get($userId);
+		if ($user === null) {
+			$output->writeln("User with id <$userId> is unknown.");
+			return 1;
 		}
 
 		$modelId = $input->getOption('model');
 		if (is_null($modelId)) {
-			$this->logger->writeln("You must indicate the ID of the model to migrate");
+			$output->writeln("You must indicate the ID of the model to migrate");
 			return 1;
 		}
 
 		$model = $this->modelManager->getModel($modelId);
 		if (is_null($model)) {
-			$this->logger->writeln("Invalid model Id");
+			$output->writeln("Invalid model Id");
 			return 1;
 		}
 
-		if (!$model->isIstalled()) {
-			$this->logger->writeln("The model <$modelId> is not installed");
+		if (!$model->isInstalled()) {
+			$output->writeln("The model <$modelId> is not installed");
 			return 1;
 		}
 
@@ -126,17 +129,17 @@ class MigrateCommand extends Command {
 		$currentModelId = (!is_null($currentModel)) ? $currentModel->getId() : -1;
 
 		if ($currentModelId === $modelId) {
-			$this->logger->writeln("The proposed model <$modelId> to migrate must be other than the current one <$currentModelId>");
+			$output->writeln("The proposed model <$modelId> to migrate must be other than the current one <$currentModelId>");
 			return 1;
 		}
 
-		if (!$this->$faceManagementService->hasDataForUser($userId, $modelId)) {
-			$this->logger->writeln("The proposed model <$modelId> to migrate is empty");
+		if (!$this->faceManagementService->hasDataForUser($userId, $modelId)) {
+			$output->writeln("The proposed model <$modelId> to migrate is empty");
 			return 1;
 		}
 
-		if ($this->$faceManagementService->hasDataForUser($userId, $modelId)) {
-			$this->logger->writeln("The current model <$currentModelId> already has data. You cannot migrate to a used model.");
+		if ($this->faceManagementService->hasDataForUser($userId, $modelId)) {
+			$output->writeln("The current model <$currentModelId> already has data. You cannot migrate to a used model.");
 			return 1;
 		}
 

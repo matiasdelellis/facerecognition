@@ -30,16 +30,24 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
+
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
+use OCA\FaceRecognition\Service\FileService;
 
 class MigrateCommand extends Command {
 
 	/** @var FaceManagementService */
 	protected $faceManagementService;
+
+	/** @var FileService */
+	protected $fileService;
 
 	/** @var IUserManager */
 	protected $userManager;
@@ -50,21 +58,28 @@ class MigrateCommand extends Command {
 	/** @var FaceMapper */
 	protected $faceMapper;
 
+	/** @var ImageMapper Image mapper*/
+	protected $imageMapper;
+
 	/**
 	 * @param FaceManagementService $faceManagementService
 	 * @param IUserManager $userManager
 	 */
 	public function __construct(FaceManagementService $faceManagementService,
+	                            FileService           $fileService,
 	                            IUserManager          $userManager,
 	                            ModelManager          $modelManager,
-	                            FaceMapper            $faceMapper)
+	                            FaceMapper            $faceMapper,
+	                            ImageMapper           $imageMapper)
 	{
 		parent::__construct();
 
 		$this->faceManagementService = $faceManagementService;
+		$this->fileService           = $fileService;
 		$this->userManager           = $userManager;
 		$this->modelManager          = $modelManager;
 		$this->faceMapper            = $faceMapper;
+		$this->imageMapper           = $imageMapper;
 	}
 
 	protected function configure() {
@@ -138,11 +153,21 @@ class MigrateCommand extends Command {
 			return 1;
 		}
 
-		if ($this->faceManagementService->hasDataForUser($userId, $modelId)) {
+		if ($this->faceManagementService->hasDataForUser($userId, $currentModelId)) {
 			$output->writeln("The current model <$currentModelId> already has data. You cannot migrate to a used model.");
 			return 1;
 		}
 
+		$totalFaces = 0;
+		$oldImages = $this->imageMapper->findAll($userId, $modelId);
+		$totalImages = count($oldImages);
+		foreach ($oldImages as $oldImage) {
+			$facesImage = $this->faceMapper->findFromFile($userId, $modelId, $oldImage->getFile());
+			$totalFaces += count($facesImage);
+		}
+
+		$output->writeln("Images: $totalImages");
+		$output->writeln("Faces: $totalFaces");
 
 	}
 

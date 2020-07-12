@@ -148,6 +148,9 @@ class FileService {
 			}
 			if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
 				$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
+				if (!($file instanceof File)) // Maybe the node exists but it can be a folder.
+					return true;
+
 				$settings = json_decode($file->getContent(), true);
 				if ($settings === null || !array_key_exists('detection', $settings))
 					return true;
@@ -171,11 +174,12 @@ class FileService {
 	public function setDescendantDetection(Folder $folder, bool $detection): bool {
 		if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
 			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
-			$settings = json_decode($file->getContent(), true);
-			if ($settings === null) {
-				// Invalid json.
+			if (!($file instanceof File)) // Maybe the node exists but it can be a folder.
 				return false;
-			}
+
+			$settings = json_decode($file->getContent(), true);
+			if ($settings === null) // Invalid json
+				return false;
 		}
 		else {
 			$file = $folder->newFile(FileService::FACERECOGNITION_SETTINGS_FILE);
@@ -229,9 +233,9 @@ class FileService {
 	 *
 	 * @param File $file
 	 * @param int $maxSize maximum size for temporary files
-	 * @return string
+	 * @return string|null
 	 */
-	public function getLocalFile(File $file, int $maxSize = null): string {
+	public function getLocalFile(File $file, int $maxSize = null): ?string {
 		$useTempFile = $file->isEncrypted() || !$file->getStorage()->isLocal();
 		if ($useTempFile) {
 			$absPath = $this->tempManager->getTemporaryFile();
@@ -244,7 +248,8 @@ class FileService {
 
 			return $absPath;
 		} else {
-			return $file->getStorage()->getLocalFile($file->getInternalPath());
+			$localPath = $file->getStorage()->getLocalFile($file->getInternalPath());
+			return ($localPath !== false) ? $localPath : null;
 		}
 	}
 
@@ -294,7 +299,7 @@ class FileService {
 
 		$ch = curl_init($fileUrl);
 		if ($ch === false) {
-			throw new \Exception('Curl error: ' . curl_error($ch));
+			throw new \Exception('Curl error: unable to initialize curl');
 		}
 
 		curl_setopt_array($ch, [

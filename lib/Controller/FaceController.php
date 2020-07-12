@@ -81,6 +81,10 @@ class FaceController extends Controller {
 	 */
 	public function getThumb ($id, $size) {
 		$face = $this->faceMapper->find($id);
+		if ($face === null) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
 		$fileId = $image->getFile();
 
@@ -162,10 +166,11 @@ class FaceController extends Controller {
 		$angle = rad2deg(atan(-$eyesH/$eyesW));
 
 		$glassesGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/glasses.png');
-		if ($glassesGd === false)
-			return;
+		if ($glassesGd === false) return;
+
 		$fillColor = imagecolorallocatealpha($glassesGd, 0, 0, 0, 127);
 		$glassesGd = imagerotate($glassesGd, $angle, $fillColor);
+		if ($glassesGd === false) return;
 
 		$glassesW = imagesx($glassesGd);
 		$glassesH = imagesy($glassesGd);
@@ -180,10 +185,12 @@ class FaceController extends Controller {
 		imagecopyresized($imgResource, $glassesGd, $glassesDestX, $glassesDestY, 0, 0, $glassesDestW, $glassesDestH, $glassesW, $glassesH);
 
 		$mustacheGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/mustache.png');
-		if ($mustacheGd === false)
-			return;
+		if ($mustacheGd === false) return;
+
 		$fillColor = imagecolorallocatealpha($mustacheGd, 0, 0, 0, 127);
 		$mustacheGd = imagerotate($mustacheGd, $angle, $fillColor);
+		if ($mustacheGd === false) return;
+
 		$mustacheW = imagesx($mustacheGd);
 		$mustacheH = imagesy($mustacheGd);
 

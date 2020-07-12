@@ -82,8 +82,8 @@ class Image extends Entity implements JsonSerializable {
 	/**
 	 * Timestamp when this image was last processed.
 	 *
-	 * @var timestamp|null
-	*/
+	 * @var \DateTime|null
+	 */
 	protected $lastProcessedTime;
 
 	/**

@@ -58,7 +58,7 @@ class Person extends Entity implements JsonSerializable {
 	/**
 	 * Last timestamp when this person/cluster was created, or when it was refreshed
 	 *
-	 * @var timestamp|null
+	 * @var \DateTime|null
 	 */
 	protected $lastGenerationTime;
 

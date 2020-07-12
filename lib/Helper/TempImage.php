@@ -81,6 +81,15 @@ class TempImage extends Image {
 	}
 
 	/**
+	 * Get the path of orig image
+	 *
+	 * @return string
+	 */
+	public function getImagePath(): string {
+		return $this->imagePath;
+	}
+
+	/**
 	 * Obtain the ratio of the temporary image against the original
 	 *
 	 * @return float

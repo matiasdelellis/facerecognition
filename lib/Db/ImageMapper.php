@@ -54,6 +54,19 @@ class ImageMapper extends QBMapper {
 
 	/**
 	 * @param string $userId Id of user
+	 * @param int $modelId Id of model to get
+	 */
+	public function findAll(string $userId, int $modelId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)));
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId Id of user
 	 * @param int $modelId Id of model
 	 * @param int $fileId Id of file to get Image
 	 */

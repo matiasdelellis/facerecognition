@@ -30,6 +30,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use Symfony\Component\Console\Helper\ProgressBar;
+
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -158,17 +160,72 @@ class MigrateCommand extends Command {
 			return 1;
 		}
 
-		$totalFaces = 0;
+		/**
+		 * MIgrate
+		 */
+		$currentModel->open();
+
 		$oldImages = $this->imageMapper->findAll($userId, $modelId);
-		$totalImages = count($oldImages);
+
+		$progressBar = new ProgressBar($output, count($oldImages));
+		$progressBar->start();
+
 		foreach ($oldImages as $oldImage) {
-			$facesImage = $this->faceMapper->findFromFile($userId, $modelId, $oldImage->getFile());
-			$totalFaces += count($facesImage);
+			$newImage = $this->migrateImage($oldImage, $userId, $currentModelId);
+			$oldFaces = $this->faceMapper->findFromFile($userId, $modelId, $newImage->getFile());
+			foreach ($oldFaces as $oldFace) {
+				$this->migrateFace($currentModel, $oldFace, $newImage);
+			}
+			$progressBar->advance(1);
 		}
 
-		$output->writeln("Images: $totalImages");
-		$output->writeln("Faces: $totalFaces");
+		$progressBar->finish();
+	}
 
+	private function migrateImage($oldImage, $userId, $modelId): Image {
+		$image = new Image();
+		$image->setUser($userId);
+		$image->setFile($oldImage->getFile());
+		$image->setModel($modelId);
+		$image->setIsProcessed($oldImage->getIsProcessed());
+		$image->setError($oldImage->getError());
+		$image->setLastProcessedTime($oldImage->getLastProcessedTime());
+		$image->setProcessingDuration($oldImage->getProcessingDuration());
+
+		return $this->imageMapper->insert($image);
+	}
+
+	private function migrateFace($model, $oldFace, $image) {
+		$filePath = $this->getImageFilePath($image);
+		$faceRect = $this->getFaceRect($oldFace);
+
+		$face = Face::fromModel($image->getId(), $faceRect);
+
+		$landmarks = $model->detectLandmarks($filePath, $faceRect);
+		$descriptor = $model->computeDescriptor($filePath, $landmarks);
+
+		$face->landmarks = $landmarks['parts'];
+		$face->descriptor = $descriptor;
+
+		$this->faceMapper->insertFace($face);
+	}
+
+	private function getImageFilePath(Image $image): ?string {
+		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
+		if (empty($file)) {
+			return null;
+		}
+		return $this->fileService->getLocalFile($file);
+	}
+
+	private function getFaceRect(Face $face): array {
+		$rect = [];
+		$rect['left'] = (int)$face->getLeft();
+		$rect['right'] = (int)$face->getRight();
+		$rect['top'] =  (int)$face->getTop();
+		$rect['bottom'] = (int)$face->getBottom();
+		$rect['detection_confidence'] = $face->getConfidence();
+		return $rect;
 	}
 
 }

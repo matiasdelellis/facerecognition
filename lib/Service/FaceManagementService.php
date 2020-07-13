@@ -102,7 +102,6 @@ class FaceManagementService {
 		return ($facesCount > 0);
 	}
 
-
 	/**
 	 * Deletes all faces, images and persons found. IF no user is given, resetting is executed for all users.
 	 *
@@ -124,6 +123,36 @@ class FaceManagementService {
 		$this->faceMapper->deleteUserFaces($userId);
 		$this->personMapper->deleteUserPersons($userId);
 		$this->imageMapper->deleteUserImages($userId);
+
+		$this->settingsService->setUserFullScanDone(false, $userId);
+	}
+
+	/**
+	 * Deletes all faces, images and persons found. If no user is given, resetting is executed for all users.
+	 *
+	 * @param IUser|null $user Optional user to execute resetting for
+	 * @param Int $modelId Optional model to clean
+	 */
+	public function resetModel(IUser $user = null, int $modelId = -1) {
+		if ($modelId === -1) {
+			$modelId = $this->settingsService->getCurrentFaceModel();
+		}
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach($eligible_users as $userId) {
+			$this->resetModelForUser($userId, $modelId);
+		}
+	}
+
+	/**
+	 * Deletes all faces, images and persons found for a given user.
+	 *
+	 * @param string $user ID of user to execute resetting for
+	 * @param Int $modelId model to clean
+	 */
+	public function resetModelForUser(string $userId, $modelId) {
+		$this->personMapper->deleteUserModel($userId, $modelId);
+		$this->faceMapper->deleteUserModel($userId, $modelId);
+		$this->imageMapper->deleteUserModel($userId, $modelId);
 
 		$this->settingsService->setUserFullScanDone(false, $userId);
 	}

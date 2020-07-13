@@ -311,4 +311,19 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->execute();
 	}
+
+	/**
+	 * Deletes all images from that user and Model
+	 *
+	 * @param string $userId User to drop images from table.
+	 * @param int $modelId model to drop images from table.
+	 */
+	public function deleteUserModel(string $userId, $modelId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->execute();
+	}
+
 }

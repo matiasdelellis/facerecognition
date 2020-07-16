@@ -20,14 +20,14 @@ $(document).ready(function() {
                     desc += n('facerecognition', '%n image was analyzed', '%n images were analyzed', progress.totalImages);
                 } else {
                     var queuedImages = (progress.totalImages - progress.processedImages);
-                    var estimatedFinalizeDate = Date.now()/1000 + progress.estimatedFinalize;
+                    var estimatedFinalizeDate = Date.now() + progress.estimatedFinalize*1000;
                     desc = t('facerecognition', 'Analyzing images');
                     desc += ' - ';
                     desc += n('facerecognition', '%n image detected', '%n images detected', progress.totalImages);
                     desc += ' - ';
                     desc += n('facerecognition', '%n image in queue', '%n images in queue', queuedImages);
                     desc += ' - ';
-                    desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', {estimatedFinalize: relative_modified_date(estimatedFinalizeDate)});
+                    desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', {estimatedFinalize: OC.Util.relativeModifiedDate(estimatedFinalizeDate)});
                 }
                 $('#progress-text').html(desc);
                 $('#progress-bar').attr('value', progress.processedImages);

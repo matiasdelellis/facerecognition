@@ -56,6 +56,21 @@
 		</p>
 		<br>
 		<h3>
+			<?php p($l->t('Minimum face size'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('Very small faces may be discovered during analysis, however they can be very diffuse to compare reliably. The smaller faces will not be clustered, but you will still be able to identify them.'));?>
+			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Mininimum-face-size"></a>
+		</p>
+		<p class="settings-ranged">
+			<label for="min-face-range"><?php p($l->t('Small faces'));?></label>
+			<span><input type="range" id="min-face-range" min="0" max="250" value="125" step="1" class="ui-slider"></span>
+			<label for="min-face-range"><?php p($l->t('Big faces'));?></label>
+			<span id="min-face-value"class="span-highlighted">...</span>
+			<a id="restore-min-face" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-min-face" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
 			<?php p($l->t('Additional settings'));?>
 		</h3>
 		<p>

@@ -109,9 +109,13 @@ class TempImage extends Image {
 	 *
 	 */
 	private function prepareImage() {
-		$this->loadFromFile($this->imagePath);
-		$this->fixOrientation();
+		try {
+			$this->loadFromFile($this->imagePath);
+		} catch (Exception $e) {
+			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+		}
 
+		$this->fixOrientation();
 		if (!$this->valid()) {
 			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
 		}

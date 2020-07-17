@@ -63,6 +63,12 @@ class SettingsService {
 	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
 	const MAXIMUM_MINIMUM_CONFIDENCE = '1.1';
 
+	/** Minimum face size used to try to clustring faces */
+	const MINIMUM_FACE_SIZE_KEY = 'min_face_size';
+	const MINIMUM_MINIMUM_FACE_SIZE = '0';
+	const DEFAULT_MINIMUM_FACE_SIZE = '125';
+	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
+
 	/** Show single persons on clustes view */
 	const SHOW_NOT_GROUPED_KEY = 'show_not_grouped';
 	const DEFAULT_SHOW_NOT_GROUPED = 'false';
@@ -228,6 +234,14 @@ class SettingsService {
 
 	public function setMinimumConfidence($confidence) {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
+	}
+
+	public function getMinimumFaceSize(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
+	}
+
+	public function setMinimumFaceSize($face_size) {
+		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, $face_size);
 	}
 
 	public function getShowNotGrouped(): bool {

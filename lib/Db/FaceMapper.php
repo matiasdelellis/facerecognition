@@ -131,7 +131,7 @@ class FaceMapper extends QBMapper {
 
 	public function getFaces(string $userId, $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.person', 'f.bottom', 'f.top', 'f.confidence', 'f.descriptor')
+		$qb->select('f.id', 'f.person', 'f.left', 'f.right', 'f.top', 'f.bottom', 'f.confidence', 'f.descriptor')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))

@@ -278,14 +278,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
 				if (($face1->confidence < $min_confidence) ||
-				    ($face1->height() < $min_face_size)) {
+				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
 					if (($face2->confidence < $min_confidence) ||
-					    ($face2->height() < $min_face_size)) {
+					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
@@ -300,14 +300,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
 				if (($face1->confidence < $min_confidence) ||
-				    ($face1->height() < $min_face_size)) {
+				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
 					if (($face2->confidence < $min_confidence) ||
-					    ($face2->height() < $min_face_size)) {
+					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
 					// todo: can't this distance be a method in $face1->distance($face2)?

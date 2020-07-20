@@ -37,7 +37,6 @@ $(document).ready(function() {
                 var desc = t('facerecognition', 'The analysis is not started yet');
                 desc += ' - ';
                 desc += n('facerecognition', '%n image in queue', '%n images in queue', progress.totalImages);
-
                 $('#progress-text').html(desc);
             }
         });
@@ -215,6 +214,59 @@ $(document).ready(function() {
         });
     });
 
+    /*
+     * Face Size
+     */
+    function getMinFaceSize() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'min_face_size',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    var minFace = parseInt(data.value);
+                    $('#min-face-range').val(minFace);
+                    $('#min-face-value').html(minFace);
+                }
+            }
+        });
+    }
+
+    $('#min-face-range').on('input', function() {
+        $('#min-face-value').html(this.value);
+        $('#restore-min-face').show();
+        $('#save-min-face').show();
+    });
+
+    $('#restore-min-face').on('click', function(event) {
+        event.preventDefault();
+        getMinFaceSize();
+
+        $('#restore-min-face').hide();
+        $('#save-min-face').hide();
+    });
+
+    $('#save-min-face').on('click', function(event) {
+        event.preventDefault();
+        var minFace = $('#min-face-range').val().toString();
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'min_face_size',
+                'value': minFace
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                    $('#restore-min-face').hide();
+                    $('#save-min-face').hide();
+                }
+            }
+        });
+    });
 
     /*
      * Show not clustered people
@@ -264,6 +316,7 @@ $(document).ready(function() {
     getImageArea();
     getSensitivity();
     getMinConfidence();
+    getMinFaceSize();
     getNotGrouped();
 
     checkProgress();

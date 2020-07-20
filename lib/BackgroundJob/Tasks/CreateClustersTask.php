@@ -265,22 +265,27 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	}
 
 	private function getNewClusters(array $faces): array {
-		// Create edges for chinese whispers
-		$euclidean = new Euclidean();
+		// Clustering parameters
 		$sensitivity = $this->settingsService->getSensitivity();
 		$min_confidence = $this->settingsService->getMinimumConfidence();
+		$min_face_size = $this->settingsService->getMinimumFaceSize();
+
+		// Create edges for chinese whispers
 		$edges = array();
 
 		if (version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
-			for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+			$faces_count = count($faces);
+			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if ($face1->confidence < $min_confidence) {
+				if (($face1->confidence < $min_confidence) ||
+				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
-				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if ($face2->confidence < $min_confidence) {
+					if (($face2->confidence < $min_confidence) ||
+					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
@@ -290,20 +295,23 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				}
 			}
 		} else {
-			for ($i = 0, $face_count1 = count($faces); $i < $face_count1; $i++) {
+			$euclidean = new Euclidean();
+			$faces_count = count($faces);
+			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if ($face1->confidence < $min_confidence) {
+				if (($face1->confidence < $min_confidence) ||
+				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
-				for ($j = $i, $face_count2 = count($faces); $j < $face_count2; $j++) {
+				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if ($face2->confidence < $min_confidence) {
+					if (($face2->confidence < $min_confidence) ||
+					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
 					// todo: can't this distance be a method in $face1->distance($face2)?
 					$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
-
 					if ($distance < $sensitivity) {
 						$edges[] = array($i, $j);
 					}

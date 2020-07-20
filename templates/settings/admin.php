@@ -58,7 +58,7 @@
 		<h3>
 			<?php p($l->t('Minimum face size'));?>
 		</h3>
-		<p class="settings-hint"><?php p($l->t('Very small faces may be discovered during analysis, however they can be very diffuse to compare reliably. The smaller faces will not be clustered, but you will still be able to identify them.'));?>
+		<p class="settings-hint"><?php p($l->t('Very small faces may be discovered during analysis, however they can be very diffuse to compare reliably. The smaller faces will not be clustered, but you can still see and name them individually.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Mininimum-face-size"></a>
 		</p>
 		<p class="settings-ranged">

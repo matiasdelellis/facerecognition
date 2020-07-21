@@ -136,7 +136,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				}
 
 				// Get faces in the temporary image
-				$tempImagePath = $tempImage->getTempPath();
+				$tempImagePath = $tempImage->getResizedImagePath();
 				$rawFaces = $this->model->detectFaces($tempImagePath);
 
 				$this->logInfo('Faces found: ' . count($rawFaces));
@@ -145,10 +145,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				foreach ($rawFaces as $rawFace) {
 					// Normalize face and get landmarks of face from model to original size
 					$normFace = $this->getNormalizedFace($rawFace, $tempImage->getRatio());
-					$landmarks = $this->model->detectLandmarks($tempImage->getImagePath(), $normFace);
+					$landmarks = $this->model->detectLandmarks($tempImage->getOrientedImagePath(), $normFace);
 
 					// Get descriptor of face from model
-					$descriptor = $this->model->computeDescriptor($tempImage->getImagePath(), $landmarks);
+					$descriptor = $this->model->computeDescriptor($tempImage->getOrientedImagePath(), $landmarks);
 
 					// Convert from dictionary of faces to our Face Db Entity and put Landmarks and descriptor
 					$face = Face::fromModel($image->getId(), $normFace);

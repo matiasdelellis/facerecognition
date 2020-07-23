@@ -33,10 +33,10 @@ class TempImage extends Image {
 	/** @var string */
 	private $imagePath;
 
-	/** @var string */
+	/** @var string|null */
 	private $orientedImagePath;
 
-	/** @var string */
+	/** @var string|null */
 	private $resizedImagePath;
 
 	/** @var string */
@@ -84,11 +84,13 @@ class TempImage extends Image {
 	}
 
 	/**
-	 * Get the path of orig image
+	 * Get the path of oriented or original  image
 	 *
 	 * @return string
 	 */
 	public function getOrientedImagePath(): string {
+		$this->prepareOrientedImage();
+
 		return $this->orientedImagePath;
 	}
 
@@ -142,17 +144,10 @@ class TempImage extends Image {
 			return;
 		}
 
-		if ($this->getOrientation() > 1) {
-			$this->fixOrientation();
-			$this->orientedImagePath = $this->tempManager->getTemporaryFile();
-			$this->save($this->orientedImagePath, $this->preferredMimeType);
-		} else {
-			$this->orientedImagePath = $this->imagePath;
-		}
-
+		$this->fixOrientation();
 		$this->ratio = $this->resizeImage();
-		$this->resizedImagePath = $this->tempManager->getTemporaryFile();
 
+		$this->resizedImagePath = $this->tempManager->getTemporaryFile();
 		$this->save($this->resizedImagePath, $this->preferredMimeType);
 	}
 
@@ -182,6 +177,31 @@ class TempImage extends Image {
 		}
 
 		return 1 / $scaleFactor;
+	}
+
+	/**
+	 * Obtain a temporary image according to the imposed restrictions.
+	 *
+	 */
+	private function prepareOrientedImage() {
+		if (!is_null($this->orientedImagePath)) {
+			return;
+		}
+
+		$this->loadFromFile($this->imagePath);
+
+		if (!$this->valid()) {
+			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+		}
+
+		if ($this->getOrientation() > 1) {
+			$this->fixOrientation();
+
+			$this->orientedImagePath = $this->tempManager->getTemporaryFile();
+			$this->save($this->orientedImagePath, $this->preferredMimeType);
+		} else {
+			$this->orientedImagePath = $this->imagePath;
+		}
 	}
 
 }

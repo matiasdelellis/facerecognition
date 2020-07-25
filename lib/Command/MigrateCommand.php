@@ -43,6 +43,8 @@ use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 
+use OCP\Image as OCP_Image;
+
 class MigrateCommand extends Command {
 
 	/** @var FaceManagementService */
@@ -173,8 +175,12 @@ class MigrateCommand extends Command {
 		foreach ($oldImages as $oldImage) {
 			$newImage = $this->migrateImage($oldImage, $userId, $currentModelId);
 			$oldFaces = $this->faceMapper->findFromFile($userId, $modelId, $newImage->getFile());
-			foreach ($oldFaces as $oldFace) {
-				$this->migrateFace($currentModel, $oldFace, $newImage);
+			if (count($oldFaces) > 0) {
+				$filePath = $this->getImageFilePath($newImage);
+				foreach ($oldFaces as $oldFace) {
+					$this->migrateFace($currentModel, $oldFace, $newImage, $filePath);
+				}
+				$this->fileService->clean();
 			}
 			$progressBar->advance(1);
 		}
@@ -184,6 +190,7 @@ class MigrateCommand extends Command {
 
 	private function migrateImage($oldImage, $userId, $modelId): Image {
 		$image = new Image();
+
 		$image->setUser($userId);
 		$image->setFile($oldImage->getFile());
 		$image->setModel($modelId);
@@ -195,8 +202,7 @@ class MigrateCommand extends Command {
 		return $this->imageMapper->insert($image);
 	}
 
-	private function migrateFace($model, $oldFace, $image) {
-		$filePath = $this->getImageFilePath($image);
+	private function migrateFace($model, $oldFace, $image, $filePath) {
 		$faceRect = $this->getFaceRect($oldFace);
 
 		$face = Face::fromModel($image->getId(), $faceRect);
@@ -215,7 +221,19 @@ class MigrateCommand extends Command {
 		if (empty($file)) {
 			return null;
 		}
-		return $this->fileService->getLocalFile($file);
+
+		$localPath = $this->fileService->getLocalFile($file);
+
+		$image = new OCP_Image();
+		$image->loadFromFile($localPath);
+		if ($image->getOrientation() > 1) {
+			$tempPath = $this->fileService->getTemporaryFile();
+			$image->fixOrientation();
+			$image->save($tempPath, 'image/png');
+			return $tempPath;
+		}
+
+		return $localPath;
 	}
 
 	private function getFaceRect(Face $face): array {

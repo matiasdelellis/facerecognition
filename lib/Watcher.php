@@ -220,7 +220,7 @@ class Watcher {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.
-			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
+			$this->settingsService->setUserFullScanDone(false, $owner);
 			return;
 		}
 

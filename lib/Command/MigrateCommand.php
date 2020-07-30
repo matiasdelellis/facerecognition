@@ -96,14 +96,14 @@ class MigrateCommand extends Command {
 				'm',
 				InputOption::VALUE_REQUIRED,
 				'The identifier number of the model to migrate',
-				null,
+				null
 			)
 			->addOption(
 				'user_id',
 				'u',
 				InputOption::VALUE_REQUIRED,
 				'Migrate data for a given user only. If not given, migrate everything for all users.',
-				null,
+				null
 			);
 	}
 

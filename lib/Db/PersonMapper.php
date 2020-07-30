@@ -300,6 +300,24 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * Deletes all persons from that user and model
+	 *
+	 * @param string $userId ID of user for drop from table
+	 * @param string $modelId model for drop from table
+	 */
+	public function deleteUserModel(string $userId, int $modelId) {
+		//TODO: Make it atomic
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createParameter('person')));
+
+		$persons = $this->findAll($userId, $modelId);
+		foreach ($persons as $person) {
+			$qb->setParameter('person', $person->getId())->execute();
+		}
+	}
+
+	/**
 	 * Deletes person if it is empty (have no faces associated to it)
 	 *
 	 * @param int $personId Person to check if it should be deleted

@@ -57,7 +57,7 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'left', 'right', 'top', 'bottom', 'person')
+		$qb->select('f.id', 'left', 'right', 'top', 'bottom', 'person', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
@@ -201,6 +201,28 @@ class FaceMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)
+			->execute();
+	}
+
+	/**
+	 * Deletes all faces from that user and model
+	 *
+	 * @param string $userId User to drop faces from table.
+	 * @param int $modelId model to drop faces from table.
+	 */
+	public function deleteUserModel(string $userId, $modelId) {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'));
+		$sub->from('facerecog_images', 'i')
+			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->setParameter('user', $userId)
+			->setParameter('model', $modelId)
 			->execute();
 	}
 

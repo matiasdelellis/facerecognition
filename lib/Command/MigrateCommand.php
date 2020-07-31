@@ -24,6 +24,7 @@
 namespace OCA\FaceRecognition\Command;
 
 use OCP\IUserManager;
+use OCP\IUser;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -64,6 +65,9 @@ class MigrateCommand extends Command {
 
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
+
+	/** @var OutputInterface $output */
+	protected $output;
 
 	/**
 	 * @param FaceManagementService $faceManagementService
@@ -113,20 +117,11 @@ class MigrateCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		// Extract user, if any
-		//
-		$userId = $input->getOption('user_id');
-		if ($userId === null) {
-			$output->writeln("You must specify the user to migrate");
-			return 1;
-		}
+		$this->output = $output;
 
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
-			$output->writeln("User with id <$userId> is unknown.");
-			return 1;
-		}
-
+		/**
+		 * Check the considerations of the models to migrate.
+		 */
 		$modelId = $input->getOption('model_id');
 		if (is_null($modelId)) {
 			$output->writeln("You must indicate the ID of the model to migrate");
@@ -152,29 +147,62 @@ class MigrateCommand extends Command {
 			return 1;
 		}
 
-		if (!$this->faceManagementService->hasDataForUser($userId, $modelId)) {
-			$output->writeln("The proposed model <$modelId> to migrate is empty");
-			return 1;
-		}
-
-		if ($this->faceManagementService->hasDataForUser($userId, $currentModelId)) {
-			$output->writeln("The current model <$currentModelId> already has data. You cannot migrate to a used model.");
-			return 1;
+		/**
+		 * Check the user if it is provided.
+		 */
+		$userId = $input->getOption('user_id');
+		if ($userId !== null) {
+			$user = $this->userManager->get($userId);
+			if ($user === null) {
+				$output->writeln("User with id <$userId> is unknown.");
+				return 1;
+			}
 		}
 
 		/**
-		 * MIgrate
+		 * Get user to migrate
+		 */
+		$userIds = $this->getEligiblesUserId($userId);
+
+		/**
+		 * Check that any user have data in the current model
+		 */
+		foreach ($userIds as $mUserId) {
+			if ($this->faceManagementService->hasDataForUser($mUserId, $currentModelId)) {
+				$output->writeln("The user <$mUserId> in current model <$currentModelId> already has data. You cannot migrate to a used model.");
+				return 1;
+			}
+		}
+
+		/**
+		 * Open the model and migrate to users.
 		 */
 		$currentModel->open();
 
-		$oldImages = $this->imageMapper->findAll($userId, $modelId);
+		foreach ($userIds as $mUserId) {
+			$this->migrateUser($currentModel, $modelId, $mUserId);
+		}
 
-		$progressBar = new ProgressBar($output, count($oldImages));
+		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+	}
+
+	private function migrateUser($currentModel, $oldModelId, $userId) {
+		if (!$this->faceManagementService->hasDataForUser($userId, $oldModelId)) {
+			$this->output->writeln("User <$userId> has no data in model <$oldModelId> to migrate.");
+			return;
+		}
+
+		$this->output->writeln("Will be migrated <$userId> from model <$oldModelId>");
+
+		$currentModelId = $currentModel->getId();
+		$oldImages = $this->imageMapper->findAll($userId, $oldModelId);
+
+		$progressBar = new ProgressBar($this->output, count($oldImages));
 		$progressBar->start();
 
 		foreach ($oldImages as $oldImage) {
 			$newImage = $this->migrateImage($oldImage, $userId, $currentModelId);
-			$oldFaces = $this->faceMapper->findFromFile($userId, $modelId, $newImage->getFile());
+			$oldFaces = $this->faceMapper->findFromFile($userId, $oldModelId, $newImage->getFile());
 			if (count($oldFaces) > 0) {
 				$filePath = $this->getImageFilePath($newImage);
 				foreach ($oldFaces as $oldFace) {
@@ -186,6 +214,8 @@ class MigrateCommand extends Command {
 		}
 
 		$progressBar->finish();
+
+		$this->output->writeln("Done");
 	}
 
 	private function migrateImage($oldImage, $userId, $modelId): Image {
@@ -244,6 +274,22 @@ class MigrateCommand extends Command {
 		$rect['bottom'] = (int)$face->getBottom();
 		$rect['detection_confidence'] = $face->getConfidence();
 		return $rect;
+	}
+
+	/**
+	 * Get an array with the eligibles users taking into account the user argument,
+	 * or all users.
+	 */
+	private function getEligiblesUserId(string $userId = null): array {
+		$eligible_users = array();
+		if (is_null($userId)) {
+			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligible_users) {
+				$eligible_users[] = $user->getUID();
+			});
+		} else {
+			$eligible_users[] = $userId;
+		}
+		return $eligible_users;
 	}
 
 }

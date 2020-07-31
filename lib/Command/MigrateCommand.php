@@ -92,7 +92,7 @@ class MigrateCommand extends Command {
 			->setDescription(
 				'Migrate the faces found in a model and analyze with the current model.')
 			->addOption(
-				'model',
+				'model_id',
 				'm',
 				InputOption::VALUE_REQUIRED,
 				'The identifier number of the model to migrate',
@@ -127,7 +127,7 @@ class MigrateCommand extends Command {
 			return 1;
 		}
 
-		$modelId = $input->getOption('model');
+		$modelId = $input->getOption('model_id');
 		if (is_null($modelId)) {
 			$output->writeln("You must indicate the ID of the model to migrate");
 			return 1;

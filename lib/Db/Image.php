@@ -39,7 +39,7 @@ use OCP\AppFramework\Db\Entity;
  * @method integer getModel()
  * @method void setModel(integer $model)
  *
- * @method void setErrror(string $error)
+ * @method void setError(string $error)
  *
  * @method void setLastProcessedTime($lastProcessedTime)
  *

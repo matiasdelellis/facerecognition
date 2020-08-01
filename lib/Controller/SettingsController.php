@@ -194,12 +194,6 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
-			case SettingsService::MINIMUM_FACE_SIZE_KEY:
-				$this->settingsService->setMinimumFaceSize($value);
-				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
-				});
-				break;
 			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
 				break;
@@ -235,9 +229,6 @@ class SettingsController extends Controller {
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
-				break;
-			case SettingsService::MINIMUM_FACE_SIZE_KEY:
-				$value = $this->settingsService->getMinimumFaceSize();
 				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();

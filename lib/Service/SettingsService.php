@@ -265,7 +265,7 @@ class SettingsService {
 
 	public function getMinimumFaceSize(): int {
 		$minFaceSize = intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
-		$minFaceSize = max(self::MINIMIM_MINIMUM_FACE_SIZE, $minFaceSize);
+		$minFaceSize = max(self::MINIMUM_MINIMUM_FACE_SIZE, $minFaceSize);
 		$minFaceSize = min($minFaceSize, self::MAXIMUM_MINIMUM_FACE_SIZE);
 		return $minFaceSize;
 	}

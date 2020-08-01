@@ -38,6 +38,13 @@ use OCP\AppFramework\Db\Entity;
  *
  * @method integer getModel()
  * @method void setModel(integer $model)
+ *
+ * @method void setError(string $error)
+ *
+ * @method void setLastProcessedTime($lastProcessedTime)
+ *
+ * @method void setProcessingDuration(int $processingDuration)
+ *
  */
 class Image extends Entity implements JsonSerializable {
 

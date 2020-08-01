@@ -73,6 +73,13 @@ class ResetCommand extends Command {
 				null
 			)
 			->addOption(
+				'model',
+				null,
+				InputOption::VALUE_NONE,
+				'Reset current model.',
+				null
+			)
+			->addOption(
 				'image-errors',
 				null,
 				InputOption::VALUE_NONE,
@@ -114,6 +121,11 @@ class ResetCommand extends Command {
 			$output->writeln('Reset successfully done');
 			return 0;
 		}
+		else if ($input->getOption('model')) {
+			$this->resetModel($user);
+			$output->writeln('Reset model successfully done');
+			return 0;
+		}
 		else if ($input->getOption('image-errors')) {
 			$this->resetImageErrors($user);
 			$output->writeln('Reset image errors done');
@@ -140,6 +152,10 @@ class ResetCommand extends Command {
 
 	private function resetAll($user) {
 		$this->faceManagementService->resetAll($user);
+	}
+
+	private function resetModel($user) {
+		$this->faceManagementService->resetModel($user);
 	}
 
 }

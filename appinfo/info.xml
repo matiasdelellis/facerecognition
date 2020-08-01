@@ -46,6 +46,7 @@
 	</repair-steps>
 	<commands>
 		<command>OCA\FaceRecognition\Command\BackgroundCommand</command>
+		<command>OCA\FaceRecognition\Command\MigrateCommand</command>
 		<command>OCA\FaceRecognition\Command\ProgressCommand</command>
 		<command>OCA\FaceRecognition\Command\ResetCommand</command>
 		<command>OCA\FaceRecognition\Command\SetupCommand</command>

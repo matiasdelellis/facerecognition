@@ -120,18 +120,32 @@ if face detection crashes randomly.
 
 #### Resetting information
 
-`occ face:reset --all|--clustering|--image-errors [-u|--user_id USER_ID]`
+`occ face:reset [--all] [--model] [--image-errors] [--clustering] [-u|--user_id USER_ID]`
 
 This command can completely wipe out all images, faces and cluster of persons.
 It is ideal if you want to start from scratch for any reason.
 
-You must specify if you wish to completely reset the database `[--all]` and all
-images must be analyzed again, or you can reset only the clustering of persons
-`[--clustering]` and only clustering needs to be done again, or reset only the
-images that had errors `[--image-errors]` to try to analyze them again.
+You must specify if you wish to completely reset the database `[--all]` or just
+the current model `[--model]` and all images must be analyzed again, or or you
+can reset only the clustering of persons `[--clustering]` and only clustering
+needs to be done again, or reset only the images that had errors
+`[--image-errors]` to try to analyze them again.
 
 If `USER_ID` is provided, it will just reset the information of a particular
 user.
+
+#### Migrate models
+
+`occ face:migrate [-m|--model_id MODEL_ID] [-u|--user_id USER_ID]`
+
+This command allows to migrate the faces obtained in a model to a new one. Note
+that the persons name  are not migrated, and the user must rename them again.
+Always is recommended to analyze from scratch any configured model, but you can
+save a lot of time migrating it.
+
+You must specify which model you want to migrate using the `MODEL_ID` option.
+
+If `USER_ID` is provided, just migrate the faces for the given user.
 
 #### Statistics
 

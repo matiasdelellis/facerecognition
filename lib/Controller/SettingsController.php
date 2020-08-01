@@ -257,7 +257,7 @@ class SettingsController extends Controller {
 	private function getFourByThreeRelation(int $area): string {
 		$width = intval(sqrt($area * 4 / 3));
 		$height = intval($width * 3  / 4);
-		return $width . 'x' . $height;
+		return $width . 'x' . $height . ' (4x3)';
 	}
 
 }

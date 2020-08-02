@@ -197,7 +197,7 @@ class DlibHogModel implements IModel {
 	public function detectFaces(string $imagePath): array {
 		$faces_detected = dlib_face_detection($imagePath);
 		// To improve clustering a confidence value is needed, which this model does not provide
-		return array_map (function (array $face) { $face['detection_confidence'] = 1.0; return $face; }, $faces_detected);
+		return array_map (function (array $face) { $face['detection_confidence'] = 1.1; return $face; }, $faces_detected);
 	}
 
 	public function detectLandmarks(string $imagePath, array $rect): array {

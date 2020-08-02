@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -127,9 +127,9 @@ class Face extends Entity implements JsonSerializable {
 		$face = new Face();
 		$face->setImage($image);
 		$face->setPerson(null);
-		$face->setLeft(max($faceFromModel["left"], 0));
+		$face->setLeft($faceFromModel["left"]);
 		$face->setRight($faceFromModel["right"]);
-		$face->setTop(max($faceFromModel["top"], 0));
+		$face->setTop($faceFromModel["top"]);
 		$face->setBottom($faceFromModel["bottom"]);
 		$face->setConfidence($faceFromModel["detection_confidence"]);
 		$face->setLandmarks("[]");

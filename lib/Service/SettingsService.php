@@ -66,7 +66,7 @@ class SettingsService {
 	/** Minimum face size used to try to clustring faces */
 	const MINIMUM_FACE_SIZE_KEY = 'min_face_size';
 	const MINIMUM_MINIMUM_FACE_SIZE = '0';
-	const DEFAULT_MINIMUM_FACE_SIZE = '125';
+	const DEFAULT_MINIMUM_FACE_SIZE = '60';
 	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
 
 	/** Show single persons on clustes view */
@@ -236,14 +236,6 @@ class SettingsService {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
 	}
 
-	public function getMinimumFaceSize(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
-	}
-
-	public function setMinimumFaceSize($face_size) {
-		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, $face_size);
-	}
-
 	public function getShowNotGrouped(): bool {
 		$show = $this->config->getAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, self::DEFAULT_SHOW_NOT_GROUPED);
 		return ($show === 'true');
@@ -269,6 +261,13 @@ class SettingsService {
 
 	public function getMinimumImageSize(): int {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_IMAGE_SIZE_KEY, self::DEFAULT_MINIMUM_IMAGE_SIZE));
+	}
+
+	public function getMinimumFaceSize(): int {
+		$minFaceSize = intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
+		$minFaceSize = max(self::MINIMUM_MINIMUM_FACE_SIZE, $minFaceSize);
+		$minFaceSize = min($minFaceSize, self::MAXIMUM_MINIMUM_FACE_SIZE);
+		return $minFaceSize;
 	}
 
 	public function getMaximumImageArea(): int {

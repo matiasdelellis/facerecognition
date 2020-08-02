@@ -194,12 +194,6 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
-			case SettingsService::MINIMUM_FACE_SIZE_KEY:
-				$this->settingsService->setMinimumFaceSize($value);
-				$this->userManager->callForSeenUsers(function(IUser $user) {
-					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
-				});
-				break;
 			case SettingsService::SHOW_NOT_GROUPED_KEY:
 				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
 				break;
@@ -236,9 +230,6 @@ class SettingsController extends Controller {
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
 				break;
-			case SettingsService::MINIMUM_FACE_SIZE_KEY:
-				$value = $this->settingsService->getMinimumFaceSize();
-				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();
 				break;
@@ -266,7 +257,7 @@ class SettingsController extends Controller {
 	private function getFourByThreeRelation(int $area): string {
 		$width = intval(sqrt($area * 4 / 3));
 		$height = intval($width * 3  / 4);
-		return $width . 'x' . $height;
+		return $width . 'x' . $height . ' (4x3)';
 	}
 
 }

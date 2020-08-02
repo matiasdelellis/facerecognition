@@ -252,9 +252,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 */
 	private function getNormalizedFace(array $rawFace, float $ratio): array {
 		$face = [];
-		$face['left'] = intval(round(max($rawFace['left'], 0)*$ratio));
+		$face['left'] = intval(round($rawFace['left']*$ratio));
 		$face['right'] = intval(round($rawFace['right']*$ratio));
-		$face['top'] = intval(round(max($rawFace['top'], 0)*$ratio));
+		$face['top'] = intval(round($rawFace['top']*$ratio));
 		$face['bottom'] = intval(round($rawFace['bottom']*$ratio));
 		$face['detection_confidence'] = $rawFace['detection_confidence'];
 		return $face;

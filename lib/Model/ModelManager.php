@@ -35,7 +35,7 @@ use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
 
 use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
-use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnHogModel;
+use OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel;
 
 class ModelManager {
 

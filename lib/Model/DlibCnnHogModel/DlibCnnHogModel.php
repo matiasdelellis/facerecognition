@@ -255,16 +255,16 @@ class DlibCnnHogModel implements IModel {
 
 	private function getOverlayPercent($rectP, $rectV): float {
 		// Proposed face rect
-		$leftP = $rectP->getLeft();
-		$rightP = $rectP->getRight();
-		$topP = $rectP->getTop();
-		$bottomP = $rectP->getBottom();
+		$leftP = $rectP['left'];
+		$rightP = $rectP['right'];
+		$topP = $rectP['top'];
+		$bottomP = $rectP['bottom'];
 
 		// Validate face rect
-		$leftV = $rectV->getLeft();
-		$rightV = $rectV->getRight();
-		$topV = $rectV->getTop();
-		$bottomV = $rectV->getBottom();
+		$leftV = $rectV['left'];
+		$rightV = $rectV['right'];
+		$topV = $rectV['top'];
+		$bottomV = $rectV['bottom'];
 
 		// If one rectangle is on left side of other
 		if ($leftP > $rightV || $leftV > $rightP)

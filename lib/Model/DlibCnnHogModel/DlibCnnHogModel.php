@@ -226,7 +226,7 @@ class DlibCnnHogModel implements IModel {
 		return $this->fr->computeDescriptor($imagePath, $landmarks);
 	}
 
-	private function validateFace($proposedFace, $validataFaces) {
+	private function validateFace($proposedFace, $validateFaces) {
 		foreach ($validateFaces as $validateFace) {
 			$overlayPercent = $this->getOverlayPercent($proposedFace, $validateFace);
 			/**
@@ -278,7 +278,7 @@ class DlibCnnHogModel implements IModel {
 		$leftO = max($leftP, $leftV);
 		$rightO = min($rightP, $rightV);
 		$topO = max($topP, $topV);
-		$bottomO = min($bottomP, $botomV);
+		$bottomO = min($bottomP, $bottomV);
 
 		// Get area of both rect areas
 		$areaP = ($rightP - $leftP) * ($bottomP - $topP);

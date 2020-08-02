@@ -72,7 +72,7 @@ class ModelManager {
 	                            SettingsService $settingsService,
 	                            DlibCnn5Model   $dlibCnn5Model,
 	                            DlibCnn68Model  $dlibCnn68Model,
-	                            DlibHogModel    $dlibHogModel)
+	                            DlibHogModel    $dlibHogModel,
 	                            DlibCnnHogModel $dlibCnnHogModel)
 	{
 		$this->userManager     = $userManager;

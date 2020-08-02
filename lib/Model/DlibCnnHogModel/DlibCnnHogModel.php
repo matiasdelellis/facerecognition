@@ -25,6 +25,8 @@ namespace OCA\FaceRecognition\Model\DlibCnnHogModel;
 
 use OCP\IDBConnection;
 
+use OCA\FaceRecognition\Helper\FaceRect;
+
 use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
@@ -163,7 +165,7 @@ class DlibCnnHogModel implements IModel {
 
 	private function validateFace($proposedFace, $validateFaces) {
 		foreach ($validateFaces as $validateFace) {
-			$overlayPercent = $this->getOverlayPercent($proposedFace, $validateFace);
+			$overlayPercent = FaceRect::getOverlayPercent($proposedFace, $validateFace);
 			/**
 			 * The weak link in our default model is the landmark detector that
 			 * can't align profile faces correctly.
@@ -186,42 +188,6 @@ class DlibCnnHogModel implements IModel {
 		$proposedFace['detection_confidence'] = $confidence * 0.9;
 
 		return $proposedFace;
-	}
-
-	private function getOverlayPercent($rectP, $rectV): float {
-		// Proposed face rect
-		$leftP = $rectP['left'];
-		$rightP = $rectP['right'];
-		$topP = $rectP['top'];
-		$bottomP = $rectP['bottom'];
-
-		// Validate face rect
-		$leftV = $rectV['left'];
-		$rightV = $rectV['right'];
-		$topV = $rectV['top'];
-		$bottomV = $rectV['bottom'];
-
-		// If one rectangle is on left side of other
-		if ($leftP > $rightV || $leftV > $rightP)
-			return 0.0;
-
-		// If one rectangle is above other
-		if ($topP > $bottomV || $topV > $bottomP)
-			return 0.0;
-
-		// Overlap area.
-		$leftO = max($leftP, $leftV);
-		$rightO = min($rightP, $rightV);
-		$topO = max($topP, $topV);
-		$bottomO = min($bottomP, $bottomV);
-
-		// Get area of both rect areas
-		$areaP = ($rightP - $leftP) * ($bottomP - $topP);
-		$areaV = ($rightV - $leftV) * ($bottomV - $topV);
-		$overlapArea = ($rightO - $leftO) * ($bottomO - $topO);
-
-		// Calculate and return the overlay percent.
-		return floatval($overlapArea / ($areaP + $areaV - $overlapArea));
 	}
 
 }

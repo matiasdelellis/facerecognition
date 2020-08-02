@@ -39,11 +39,11 @@ class FaceRect {
 		$bottomB = $rectB['bottom'];
 
 		// If one rectangle is on left side of other
-		if ($leftA >= $rightB || $leftB > $rightA)
+		if ($leftA >= $rightB || $leftB >= $rightA)
 			return 0.0;
 
 		// If one rectangle is above other
-		if ($topA > $bottomB || $topB > $bottomA)
+		if ($topA >= $bottomB || $topB >= $bottomA)
 			return 0.0;
 
 		// Overlap area.

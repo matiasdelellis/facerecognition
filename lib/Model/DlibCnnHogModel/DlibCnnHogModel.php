@@ -146,6 +146,10 @@ class DlibCnnHogModel implements IModel {
 		$detectedFaces = [];
 
 		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath);
+		if (count($cnnFaces) === 0) {
+			return $detectedFaces;
+		}
+
 		$hogFaces = $this->dlibHogModel->detectFaces($imagePath);
 
 		foreach ($cnnFaces as $proposedFace) {
@@ -171,11 +175,12 @@ class DlibCnnHogModel implements IModel {
 			 * can't align profile faces correctly.
 			 * The Hog detector also fails and cannot detect these faces.
 			 *
-			 * So, if Hog detects it (Overlay > 80%), we know that the landmark
+			 * So, if Hog detects it (Overlay > 35%), we can assume that landmark
 			 * detector will do it too.
-			 * Just return it.
+			 *
+			 * In this case, we consider the face valid, and just return it.
 			 */
-			if ($overlayPercent > 0.8) {
+			if ($overlayPercent >= 0.35) {
 				return $proposedFace;
 			}
 		}

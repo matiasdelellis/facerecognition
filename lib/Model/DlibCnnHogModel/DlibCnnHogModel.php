@@ -38,8 +38,8 @@ class DlibCnnHogModel implements IModel {
 	 * Model files.
 	 */
 	const FACE_MODEL_ID = 4;
-	const FACE_MODEL_NAME = "CnnHog5";
-	const FACE_MODEL_DESC = "Default Cnn model with Hog validation, and 5 point landmarks preprictor";
+	const FACE_MODEL_NAME = "DlibCnnHog5";
+	const FACE_MODEL_DESC = "Extends the main model, doing a face validation with the Hog detector";
 	const FACE_MODEL_DOC = "";
 
 	/** @var IDBConnection */
@@ -139,7 +139,7 @@ class DlibCnnHogModel implements IModel {
 	}
 
 	public function open() {
-		return $this->dlibCnn5Model->open();
+		$this->dlibCnn5Model->open();
 	}
 
 	public function detectFaces(string $imagePath): array {
@@ -172,13 +172,15 @@ class DlibCnnHogModel implements IModel {
 			$overlayPercent = FaceRect::getOverlayPercent($proposedFace, $validateFace);
 			/**
 			 * The weak link in our default model is the landmark detector that
-			 * can't align profile faces correctly.
-			 * The Hog detector also fails and cannot detect these faces.
+			 * can't align profile or rotate faces correctly.
 			 *
-			 * So, if Hog detects it (Overlay > 35%), we can assume that landmark
-			 * detector will do it too.
+			 * The Hog detector also fails and cannot detect these faces. So, we
+			 * consider if Hog detector can detect it, to infer when the predictor
+			 * will give good results.
 			 *
-			 * In this case, we consider the face valid, and just return it.
+			 * If Hog detects it (Overlay > 35%), we can assume that landmark
+			 * detector will do it too. In this case, we consider the face valid,
+			 * and just return it.
 			 */
 			if ($overlayPercent >= 0.35) {
 				return $proposedFace;
@@ -190,7 +192,7 @@ class DlibCnnHogModel implements IModel {
 		 * These are bad to compare, so we lower the confidence, to avoid clustering.
 		 */
 		$confidence = $proposedFace['detection_confidence'];
-		$proposedFace['detection_confidence'] = $confidence * 0.9;
+		$proposedFace['detection_confidence'] = $confidence * 0.8;
 
 		return $proposedFace;
 	}

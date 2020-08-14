@@ -18,7 +18,7 @@
 		"css-loader": "^3.5.3",
 		"eslint": "^6.8.0",
 		"eslint-loader": "^4.0.2",
-		"handlebars": "^4.7.3",
+		"handlebars": "^4.7.6",
 		"lozad": "^1.14.0",
 		"nextcloud-l10n": "^0.1.1",
 		"stylelint": "^13.3.3",

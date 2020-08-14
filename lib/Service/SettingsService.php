@@ -66,7 +66,7 @@ class SettingsService {
 	/** Minimum face size used to try to clustring faces */
 	const MINIMUM_FACE_SIZE_KEY = 'min_face_size';
 	const MINIMUM_MINIMUM_FACE_SIZE = '0';
-	const DEFAULT_MINIMUM_FACE_SIZE = '60';
+	const DEFAULT_MINIMUM_FACE_SIZE = '40';
 	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
 
 	/** Show single persons on clustes view */

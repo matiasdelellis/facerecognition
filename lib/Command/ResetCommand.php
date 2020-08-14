@@ -26,9 +26,11 @@ namespace OCA\FaceRecognition\Command;
 use OCP\IUserManager;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 
@@ -40,16 +42,28 @@ class ResetCommand extends Command {
 	/** @var IUserManager */
 	protected $userManager;
 
+	/** @var InputInterface */
+	protected $input;
+
+	/** @var OutputInterface */
+	protected $output;
+
+	/** @var  QuestionHelper */
+	protected $questionHelper;
+
 	/**
 	 * @param FaceManagementService $faceManagementService
 	 * @param IUserManager $userManager
+	 * @param QuestionHelper $questionHelper
 	 */
 	public function __construct(FaceManagementService $faceManagementService,
-	                            IUserManager          $userManager) {
+	                            IUserManager          $userManager,
+	                            QuestionHelper        $questionHelper) {
 		parent::__construct();
 
 		$this->faceManagementService = $faceManagementService;
-		$this->userManager = $userManager;
+		$this->userManager           = $userManager;
+		$this->questionHelper        = $questionHelper;
 	}
 
 	protected function configure() {
@@ -101,6 +115,11 @@ class ResetCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		// Used to questions.
+		//
+		$this->input = $input;
+		$this->output = $output;
+
 		// Extract user, if any
 		//
 		$userId = $input->getOption('user_id');
@@ -117,29 +136,52 @@ class ResetCommand extends Command {
 		// Main thing
 		//
 		if ($input->getOption('all')) {
-			$this->resetAll($user);
-			$output->writeln('Reset successfully done');
-			return 0;
+			if ($this->confirmate()) {
+				$this->resetAll($user);
+				$output->writeln('Reset successfully done');
+			} else {
+				$output->writeln('Aborted');
+				return 1;
+			}
 		}
 		else if ($input->getOption('model')) {
-			$this->resetModel($user);
-			$output->writeln('Reset model successfully done');
-			return 0;
+			if ($this->confirmate()) {
+				$this->resetModel($user);
+				$output->writeln('Reset model successfully done');
+			} else {
+				$output->writeln('Aborted');
+				return 1;
+			}
 		}
 		else if ($input->getOption('image-errors')) {
-			$this->resetImageErrors($user);
-			$output->writeln('Reset image errors done');
-			return 0;
+			if ($this->confirmate()) {
+				$this->resetImageErrors($user);
+				$output->writeln('Reset image errors done');
+			} else {
+				$output->writeln('Aborted');
+				return 1;
+			}
 		}
 		else if ($input->getOption('clustering')) {
-			$this->resetClusters($user);
-			$output->writeln('Reset clustering done');
-			return 0;
+			if ($this->confirmate()) {
+				$this->resetClusters($user);
+				$output->writeln('Reset clustering done');
+			} else {
+				$output->writeln('Aborted');
+				return 1;
+			}
 		}
 		else {
 			$output->writeln('You must specify what you want to reset');
 			return 1;
 		}
+
+		return 0;
+	}
+
+	private function confirmate() {
+		$question = new ConfirmationQuestion('Warning: This command is not reversible. Do you want to continue? [y/N]', false);
+		return $this->questionHelper->ask($this->input, $this->output, $question);
 	}
 
 	private function resetClusters($user) {

@@ -74,6 +74,15 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
+		$system = php_uname("s");
+		$this->logDebug("System: " . $system);
+
+		$systemMemory = MemoryLimits::getSystemMemory();
+		$this->logDebug("System memory: " . ($systemMemory > 0 ? $systemMemory : "Unknown"));
+
+		$phpMemory = MemoryLimits::getPhpMemory();
+		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
+
 		if (!Requirements::pdlibLoaded()) {
 			$error_message =
 				"The PDlib PHP extension is not loaded. Cannot continue without it." .
@@ -135,12 +144,6 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			$this->logInfo($error_message);
 			return false;
 		}
-
-		$systemMemory = MemoryLimits::getSystemMemory();
-		$this->logDebug("System memory: " . ($systemMemory > 0 ? $systemMemory : "Unknown"));
-
-		$phpMemory = MemoryLimits::getPhpMemory();
-		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
 
 		return true;
 	}

@@ -35,6 +35,8 @@ use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
 
 use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
+use OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel;
+
 class ModelManager {
 
 	/** There is no default model. This is used by tests */
@@ -55,18 +57,23 @@ class ModelManager {
 	/** @var DlibHogModel */
 	private $dlibHogModel;
 
+	/** @var DlibCnnHogModel */
+	private $dlibCnnHogModel;
+
 	/**
 	 * @patam IUserManager $userManager
 	 * @param SettingsService $settingsService
 	 * @param DlibCnn5Model $dlibCnn5Model
 	 * @param DlibCnn68Model $dlibCnn68Model
 	 * @param DlibHogModel $dlibHogModel
+	 * @param DlibCnnHogModel $dlibCnnHogModel
 	 */
 	public function __construct(IUserManager    $userManager,
 	                            SettingsService $settingsService,
 	                            DlibCnn5Model   $dlibCnn5Model,
 	                            DlibCnn68Model  $dlibCnn68Model,
-	                            DlibHogModel    $dlibHogModel)
+	                            DlibHogModel    $dlibHogModel,
+	                            DlibCnnHogModel $dlibCnnHogModel)
 	{
 		$this->userManager     = $userManager;
 		$this->settingsService = $settingsService;
@@ -74,6 +81,7 @@ class ModelManager {
 		$this->dlibCnn5Model   = $dlibCnn5Model;
 		$this->dlibCnn68Model  = $dlibCnn68Model;
 		$this->dlibHogModel    = $dlibHogModel;
+		$this->dlibCnnHogModel = $dlibCnnHogModel;
 	}
 
 	/**
@@ -90,6 +98,9 @@ class ModelManager {
 				break;
 			case 3:
 				$model = $this->dlibHogModel;
+				break;
+			case 4:
+				$model = $this->dlibCnnHogModel;
 				break;
 			default:
 				$model = null;
@@ -113,7 +124,8 @@ class ModelManager {
 		return [
 			$this->dlibCnn5Model,
 			$this->dlibCnn68Model,
-			$this->dlibHogModel
+			$this->dlibHogModel,
+			$this->dlibCnnHogModel
 		];
 	}
 

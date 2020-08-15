@@ -1,6 +1,39 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2020-08-14
+### Added
+- Introduduce a new model (Model 4, aka DlibCnnHog5) that is 2 times slower, but
+  much more accurate, which now is in testing stages, and we invite you to test
+  since probably will be the next recommended model. See PR #313 for details.
+- Add face:migrate command that allows to migrate the faces obtained in a model
+  to a new one. Still recommended to fully analyze the images when changing
+  models, but can save a lot of time migrating them. See PR #309
+- Add face:reset --model command to just reset current model.
+
+### Changed
+- At least 1000 faces are needed for to make an initial clustering.
+- Don't group faces smaller than 40 pixels, which are supposed to be of poor
+  quality. This is configurable within an advanced hidden setting. PR #299
+- All reset commands require a confirmation to work.
+- Hint the 4x3 relation when model recommending memory values.
+
+## Deprecated
+- After many analysis, we discourage the use of model 2 (Aka DlibCnn68). We
+  still recommend model 1, and model 3 for low-resource devices. You can migrate
+  the faces using the new command, but we recommend analyzing them again.
+
+### Fixed
+- Fix estimated time in the administration panel. See RP #297
+- Fix that removing .nomedia file does not trigger facerecognition when next
+  analysis starts. Issue #304
+- Fix travis tests and lot of scrutinizer reports.
+- Fix that if increase the minimum confidence dont cluster any face in model 3
+- Log the system info before return any error. Part of issue #278
+
+### Translations
+- Add Macedonian translation thanks to Сашко Тодоров
+
 ## [0.6.1] - 2020-06-27
 ### Changed
 - Adjust the appstore makefile rule to ignore vue and teplates files.

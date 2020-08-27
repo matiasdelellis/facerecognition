@@ -35,7 +35,7 @@ class SettingsService {
 	/*
 	 * System
 	 */
-	const MINIMUM_SYSTEM_MEMORY_REQUIREMENTS = 2 * 1024 * 1024 * 1024;
+	const MINIMUM_SYSTEM_MEMORY_REQUIREMENTS = 1 * 1024 * 1024 * 1024;
 
 	/*
 	 * Settings keys and default values.

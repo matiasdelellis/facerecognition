@@ -40,7 +40,7 @@ class DlibCnnHogModel implements IModel {
 	const FACE_MODEL_ID = 4;
 	const FACE_MODEL_NAME = "DlibCnnHog5";
 	const FACE_MODEL_DESC = "Extends the main model, doing a face validation with the Hog detector";
-	const FACE_MODEL_DOC = "";
+	const FACE_MODEL_DOC = "https://github.com/matiasdelellis/facerecognition/wiki/Models#model-4";
 
 	/** @var IDBConnection */
 	private $connection;
@@ -92,12 +92,12 @@ class DlibCnnHogModel implements IModel {
 	}
 
 	public function meetDependencies(string &$error_message): bool {
-		if (!$this->dlibCnn5Model->meetDependencies($error_message)) {
-			$error_message .= " This Model depend on Model 1 and must install it.";
+		if (!$this->dlibCnn5Model->isInstalled()) {
+			$error_message = "This Model depend on Model 1 and must install it.";
 			return false;
 		}
-		if (!$this->dlibHogModel->meetDependencies($error_message)) {
-			$error_message .= " This Model depend on Model 3 and must install it.";
+		if (!$this->dlibHogModel->isInstalled()) {
+			$error_message = "This Model depend on Model 3 and must install it.";
 			return false;
 		}
 		return true;

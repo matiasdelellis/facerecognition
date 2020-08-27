@@ -100,6 +100,10 @@ class Image extends Entity implements JsonSerializable {
 	*/
 	protected $processingDuration;
 
+	public function __construct() {
+		$this->addType('isProcessed', 'bool');
+	}
+
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,

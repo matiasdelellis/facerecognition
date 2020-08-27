@@ -92,12 +92,12 @@ class DlibCnnHogModel implements IModel {
 	}
 
 	public function meetDependencies(string &$error_message): bool {
-		if (!$this->dlibCnn5Model->meetDependencies($error_message)) {
-			$error_message .= " This Model depend on Model 1 and must install it.";
+		if (!$this->dlibCnn5Model->isInstalled()) {
+			$error_message = "This Model depend on Model 1 and must install it.";
 			return false;
 		}
-		if (!$this->dlibHogModel->meetDependencies($error_message)) {
-			$error_message .= " This Model depend on Model 3 and must install it.";
+		if (!$this->dlibHogModel->isInstalled()) {
+			$error_message = "This Model depend on Model 3 and must install it.";
 			return false;
 		}
 		return true;

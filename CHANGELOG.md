@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2020-08-28
+### Changed
+- Reduce the minimum system memory to 1GB. Issue #319 and others.
+
+### Fixed
+- Fix migration command due 'Invalid datetime format'. Issue #320
+- Fix can't change model to 4, migration says model <4> not installed. Issue #318
+
+### Translations
+- Update French tranlation thanks to Tho Vi
+
 ## [0.6.2] - 2020-08-14
 ### Added
 - Introduduce a new model (Model 4, aka DlibCnnHog5) that is 2 times slower, but

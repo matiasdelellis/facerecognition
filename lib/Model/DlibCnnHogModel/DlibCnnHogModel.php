@@ -40,7 +40,7 @@ class DlibCnnHogModel implements IModel {
 	const FACE_MODEL_ID = 4;
 	const FACE_MODEL_NAME = "DlibCnnHog5";
 	const FACE_MODEL_DESC = "Extends the main model, doing a face validation with the Hog detector";
-	const FACE_MODEL_DOC = "";
+	const FACE_MODEL_DOC = "https://github.com/matiasdelellis/facerecognition/wiki/Models#model-4";
 
 	/** @var IDBConnection */
 	private $connection;

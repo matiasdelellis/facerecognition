@@ -126,6 +126,15 @@ class FaceController extends Controller {
 		return $resp;
 	}
 
+	/**
+	 * @NoAdminRequired
+	 */
+	public function deleteFace($id) {
+		$this->faceMapper->deleteFace($id);
+
+		return new JSONResponse(['result'=>true]);
+	}
+
 	private function hipsterize(&$image, &$face) {
 		$imgResource = $image->resource();
 

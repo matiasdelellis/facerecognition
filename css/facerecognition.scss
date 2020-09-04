@@ -23,15 +23,26 @@
 }
 
 .face-preview {
-	background-color: rgba(210, 210, 210, .75);
+	background-color: rgba(210, 210, 210, 0.75);
 	border-radius: 3px;
 	margin: 2px;
 	height: 50px;
 	width: 50px;
+
+	.icon {
+		display: none;
+		height: 17px;
+		width: 17px;
+		cursor: pointer;
+	}
 }
 
 .face-preview:hover {
-	opacity: .5;
+	opacity: 0.5;
+
+	.icon {
+		display: inline-block;
+	}
 }
 
 /*
@@ -44,7 +55,7 @@
 }
 
 .face-preview-dialog {
-	background-color: rgba(210, 210, 210, .75);
+	background-color: rgba(210, 210, 210, 0.75);
 	border-radius: 25px;
 	height: 50px;
 	width: 50px;

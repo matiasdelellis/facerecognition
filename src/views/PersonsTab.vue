@@ -45,6 +45,7 @@
 						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
 						<h5 class='face-name'>{{ person.name }}</h5>
 						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
+						<a rel="noreferrer noopener" class="icon-delete" target="_blank" v-on:click="deleteFace(person)"/>
 					</li>
 				</template>
 			</ul>
@@ -194,6 +195,24 @@ export default {
 					}
 				}
 			)
+		},
+		deleteFace: function(person) {
+			const self = this
+			FrDialogs.deleteFace(
+				person.thumb_url,
+				function(result) {
+					if (result === true) {
+						var deleteUrl = OC.generateUrl('/apps/facerecognition/face/' + person.face_id);
+						Axios.delete(deleteUrl).then(function(response) {
+								self.getFacesInfo(self.fileInfo);
+							}).catch(function(error) {
+								self.error = error;
+								console.error('Error removing face', error);
+							})
+
+					}
+				}
+			);
 		},
 		processFacesData(data, isDirectory) {
 			this.isDirectory = isDirectory

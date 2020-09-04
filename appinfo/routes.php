@@ -31,6 +31,12 @@ return ['routes' =>
 		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],
+	// Delete a single face
+	[
+		'name' => 'face#deleteFace',
+		'url'  => '/face/{id}',
+		'verb' => 'DELETE'
+	],
 	// Get persons from path
 	[
 		'name' => 'file#getPersonsFromPath',

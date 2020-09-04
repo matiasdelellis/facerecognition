@@ -129,6 +129,7 @@ class PersonController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$face = [];
+				$face['face-id'] = $personFace->getId();
 				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 				$face['file-url'] = $fileUrl;
 				$faces[] = $face;
@@ -166,6 +167,7 @@ class PersonController extends Controller {
 			if ($fileUrl === null) continue;
 
 			$face = [];
+			$face['face-id'] = $personFace->getId();
 			$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 			$face['file-url'] = $fileUrl;
 			$faces[] = $face;
@@ -206,6 +208,7 @@ class PersonController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$face = [];
+				$face['face-id'] = $personFace->getId();
 				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
 				$face['file-url'] = $fileUrl;
 				$faces[] = $face;

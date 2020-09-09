@@ -269,7 +269,6 @@ class PersonMapper extends QBMapper {
 					->insert($this->getTableName())
 					->values([
 						'user' => $qb->createNamedParameter($userId),
-						'name' => $qb->createNamedParameter(sprintf("New person %d", $newPerson)),
 						'is_valid' => $qb->createNamedParameter(true),
 						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
 						'linked_user' => $qb->createNamedParameter(null)])

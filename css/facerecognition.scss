@@ -2,6 +2,16 @@
 	width: 100%;
 }
 
+.person-box {
+	display: inline-block;
+	margin: 3px;
+}
+
+.person-desc {
+	text-align: center;
+	color: var(--color-text-lighter);
+}
+
 .person-title {
 	display: inline-flex;
 	padding: 10px;
@@ -16,10 +26,24 @@
 	padding-left: 34px;
 }
 
+.person-name {
+	text-align: center;
+	margin-top: 5px;
+	margin-bottom: 0px;
+}
+
 .persons-previews {
 	margin-left: 24px;
 	display: flex;
 	flex-wrap: wrap;
+}
+
+.face-preview-big {
+	background-color: rgba(210, 210, 210, .75);
+	border-radius: 12px;
+	height: 128px;
+	width: 128px;
+	margin: 0 auto;
 }
 
 .face-preview {

@@ -100,50 +100,37 @@ class PersonController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function index() {
-		$notGrouped = $this->settingsService->getShowNotGrouped();
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
-		$resp['clusters'] = array();
+		$resp['persons'] = array();
 
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findAll($this->userId, $modelId);
-		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-			if ($notGrouped === false && count($personFaces) <= 1)
-				continue;
-
-			$limit = 14;
-			$faces = [];
-			foreach ($personFaces as $personFace) {
-				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-				$fileId = $image->getFile();
-				if ($fileId === null) continue;
-
-				$fileUrl = $this->getRedirectToFileUrl($fileId);
-				if ($fileUrl === null) continue;
-
-				$face = [];
-				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
-				$face['file-url'] = $fileUrl;
-				$faces[] = $face;
-
-				if (--$limit === 0)
-					break;
+		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
+		foreach ($personsNames as $personNamed) {
+			$facesCount = 0;
+			$faceUrl = null;
+			$faces = null;
+			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
+			foreach ($persons as $person) {
+				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
+				if (is_null($faceUrl)) {
+					$faceUrl = $this->getThumbUrl($personFaces[0]->getId(), 128);
+				}
+				$facesCount += count($personFaces);
 			}
 
-			$cluster = [];
-			$cluster['name'] = $person->getName();
-			$cluster['count'] = count($personFaces);
-			$cluster['id'] = $person->getId();
-			$cluster['faces'] = $faces;
+			$person = [];
+			$person['name'] = $personNamed->getName();
+			$person['thumb-url'] = $faceUrl;
+			$person['count'] = $facesCount;
 
-			$resp['clusters'][] = $cluster;
+			$resp['persons'][] = $person;
 		}
 		return new DataResponse($resp);
 	}
@@ -206,7 +193,7 @@ class PersonController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$face = [];
-				$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
+				$face['thumb-url'] = $this->getThumbUrl($personFace->getId(), 50);
 				$face['file-url'] = $fileUrl;
 				$faces[] = $face;
 			}
@@ -240,12 +227,13 @@ class PersonController extends Controller {
 	/**
 	 * Url to thumb face
 	 *
-	 * @param string $faceId face id to show
+	 * @param int $faceId face id to show
+	 * @param int $size Size of face thumbnails
 	 */
-	private function getThumbUrl($faceId) {
+	private function getThumbUrl(int $faceId, int $size) {
 		$params = [];
 		$params['id'] = $faceId;
-		$params['size'] = 50;
+		$params['size'] = $size;
 		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 

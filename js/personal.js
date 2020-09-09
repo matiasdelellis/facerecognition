@@ -16,7 +16,7 @@ const state = {
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
     this._enabled = false;
-    this._clusters = [];
+    this._persons = [];
     this._cluster = undefined;
     this._clustersByName = undefined;
     this._loaded = false;
@@ -26,9 +26,9 @@ Persons.prototype = {
     load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/clusters').done(function (response) {
+        $.get(this._baseUrl+'/persons').done(function (response) {
             self._enabled = response.enabled;
-            self._clusters = response.clusters;
+            self._persons = response.persons;
             self._loaded = true;
             deferred.resolve();
         }).fail(function () {
@@ -72,7 +72,7 @@ Persons.prototype = {
     },
     getById: function (clusterId) {
         var ret = undefined;
-        for (var cluster of this._clusters) {
+        for (var cluster of this._persons) {
             if (cluster.id === clusterId) {
                 ret = cluster;
                 break;
@@ -87,8 +87,8 @@ Persons.prototype = {
         return this._enabled;
     },
     sortBySize: function () {
-        if (this._clusters !== undefined)
-            this._clusters.sort(function(a, b) {
+        if (this._persons !== undefined)
+            this._persons.sort(function(a, b) {
                 return b.count - a.count;
             });
         if (this._clustersByName !== undefined)
@@ -97,7 +97,7 @@ Persons.prototype = {
             });
     },
     getAll: function () {
-        return this._clusters;
+        return this._persons;
     },
     renameCluster: function (clusterId, personName) {
         var self = this;
@@ -108,7 +108,7 @@ Persons.prototype = {
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._clusters.forEach(function (cluster) {
+            self._persons.forEach(function (cluster) {
                 if (cluster.id === clusterId) {
                     cluster.name = personName;
                 }
@@ -172,7 +172,7 @@ View.prototype = {
 
         if (this._persons.isEnabled() === true) {
             context.enabled = true;
-            context.clusters = this._persons.getAll();
+            context.persons = this._persons.getAll();
 
             context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
             context.emptyHint = t('facerecognition', 'Please, be patient');
@@ -187,7 +187,7 @@ View.prototype = {
         var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
 
-        const observer = lozad('.face-preview');
+        const observer = lozad('.face-preview-big');
         observer.observe();
 
         var self = this;
@@ -255,6 +255,14 @@ View.prototype = {
         });
     }
 };
+
+/**
+ * Add Helpers to handlebars
+ */
+
+Handlebars.registerHelper('noPhotos', function(count) {
+    return n('facerecognition', '%n image', '%n images', count);
+});
 
 /*
  * Main app.

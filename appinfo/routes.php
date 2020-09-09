@@ -4,7 +4,7 @@ return ['routes' =>
 	// Get all face clusters with faces and file asociated.
 	[
 		'name' => 'person#index',
-		'url'  => '/clusters',
+		'url'  => '/persons',
 		'verb' => 'GET'
 	],
 	// Get all clusters filtered by Name.

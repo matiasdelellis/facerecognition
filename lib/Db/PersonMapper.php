@@ -103,6 +103,23 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * @param string $userId ID of the user
+	 */
+	public function findDistinctNames(string $userId, int $modelId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('name')
+			->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces' , 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->andwhere($qb->expr()->isNotNull('p.name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
+		return $this->findEntities($qb);
+	}
+
+	/**
 	 * Returns count of persons (clusters) found for a given user.
 	 *
 	 * @param string $userId ID of the user

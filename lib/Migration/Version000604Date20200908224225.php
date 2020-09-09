@@ -50,7 +50,7 @@ class Version000604Date20200908224225 extends SimpleMigrationStep {
 		$query = $this->connection->getQueryBuilder();
 		$query->update('facerecog_persons')
 			->set('name', $query->createNamedParameter(null))
-			->where($query->expr()->iLike('name', 'New person %'));
+			->where($query->expr()->iLike('name', $query->createNamedParameter('New person %')));
 		$query->execute();
 	}
 

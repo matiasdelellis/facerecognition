@@ -119,6 +119,11 @@ class Watcher {
 			return;
 		}
 
+		if (\OC::$server->getUserSession()->isLoggedIn()) {
+			$this->logger->debug('Skipping since the file was not changed by a logged in user.');
+			return;
+		}
+
 		$owner = \OC::$server->getUserSession()->getUser()->getUID();
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(
@@ -206,6 +211,11 @@ class Watcher {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		if ($modelId === SettingsService::FALLBACK_CURRENT_MODEL) {
 			$this->logger->debug("Skipping deleting file since there are no configured model");
+			return;
+		}
+
+		if (\OC::$server->getUserSession()->isLoggedIn()) {
+			$this->logger->debug('Skipping since the file was not deleted by a logged in user.');
 			return;
 		}
 

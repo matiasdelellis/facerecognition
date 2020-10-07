@@ -24,7 +24,7 @@
  */
 const FrDialogs = {
 
-	rename: function (name, thumbUrl, callback) {
+	rename: function (name, faces, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-dialog-content';
 			var dialogId = '#' + dialogName;
@@ -34,13 +34,21 @@ const FrDialogs = {
 				message: t('facerecognition', 'Please enter a name to rename the person'),
 				type: 'none'
 			});
-			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
-			var thumb = $('<img class="face-preview-dialog" src="' + thumbUrl + '" width="50" height="50"/>');
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
 
-			div.append(thumb);
-			div.append(input);
+			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
 			$dlg.append(div);
+
+			for (var face of faces) {
+				var thumb = $('<img class="face-preview-dialog" src="' + face['thumb-url'] + '" width="50" height="50"/>');
+				div.append(thumb);
+			}
+
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
+			if (faces.length > 1) {
+				$dlg.append(input);
+			} else {
+				div.append(input);
+			}
 
 			$('body').append($dlg);
 

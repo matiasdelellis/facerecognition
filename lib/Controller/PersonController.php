@@ -209,8 +209,6 @@ class PersonController extends Controller {
 		return new DataResponse($resp);
 	}
 
-
-
 	/**
 	 * @NoAdminRequired
 	 */

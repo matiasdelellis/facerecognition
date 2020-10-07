@@ -88,7 +88,7 @@ Persons.prototype = {
     },
     getById: function (clusterId) {
         var ret = undefined;
-        for (var cluster of this._persons) {
+        for (var cluster of this._clustersByName) {
             if (cluster.id === clusterId) {
                 ret = cluster;
                 break;
@@ -248,7 +248,7 @@ View.prototype = {
             var person = self._persons.getById(id);
             FrDialogs.rename(
                 person.name,
-                person.faces[0]['thumb-url'],
+                [person.faces[0]],
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.renameCluster (id, value).done(function () {

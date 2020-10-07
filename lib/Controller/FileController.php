@@ -171,7 +171,7 @@ class FileController extends Controller {
 	private function getThumbUrl($faceId) {
 		$params = [];
 		$params['id'] = $faceId;
-		$params['size'] = 32;
+		$params['size'] = 50;
 		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 

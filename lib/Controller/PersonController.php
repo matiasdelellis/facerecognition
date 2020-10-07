@@ -172,6 +172,53 @@ class PersonController extends Controller {
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
+		$resp['name'] = $personName;
+		$resp['clusters'] = 0;
+		$resp['images'] = array();
+
+		if (!$userEnabled)
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		foreach ($clusters as $cluster) {
+			$resp['clusters']++;
+
+			$faces = $this->faceMapper->findFacesFromPerson($this->userId, $cluster->getId(), $modelId);
+			foreach ($faces as $face) {
+				$image = $this->imageMapper->find($this->userId, $face->getImage());
+
+				$fileId = $image->getFile();
+				if ($fileId === null) continue;
+
+				$fileUrl = $this->getRedirectToFileUrl($fileId);
+				if ($fileUrl === null) continue;
+
+				$thumbUrl = $this->getPreviewUrl($fileId, 128);
+				if ($thumbUrl === null) continue;
+
+				$image = [];
+				$image['thumb-url'] = $thumbUrl;
+				$image['file-url'] = $fileUrl;
+
+				$resp['images'][] = $image;
+			}
+		}
+
+		return new DataResponse($resp);
+	}
+
+
+
+	/**
+	 * @NoAdminRequired
+	 */
+	public function findClustersByName(string $personName) {
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+
+		$resp = array();
+		$resp['enabled'] = $userEnabled;
 		$resp['clusters'] = array();
 
 		if (!$userEnabled)
@@ -238,6 +285,29 @@ class PersonController extends Controller {
 	}
 
 	/**
+	 * Get thumbnail of the give file id
+	 *
+	 * @param int $fileId file id to show
+	 * @param int $sideSize side lenght to show
+	 */
+	public function getPreviewUrl(int $fileId, int $sideSize): ?string {
+		$userFolder = $this->rootFolder->getUserFolder($this->userId);
+		$file = current($userFolder->getById($fileId));
+
+		if (!($file instanceof File)) {
+			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
+			$this->settingsService->setNeedRemoveStaleImages(true, $this->userId);
+			return null;
+		}
+
+		return $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreview', [
+			'file' => $userFolder->getRelativePath($file->getPath()),
+			'x' => $sideSize,
+			'y' => $sideSize
+		]);
+	}
+
+	/**
 	 * Redirects to the file list and highlight the given file id
 	 *
 	 * @param int $fileId file id to show
@@ -251,7 +321,7 @@ class PersonController extends Controller {
 		if(!($file instanceof File)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
 			$this->settingsService->setNeedRemoveStaleImages(true, $this->userId);
-			return NULL;
+			return null;
 		}
 
 		$params = [];

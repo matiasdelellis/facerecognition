@@ -7,10 +7,16 @@ return ['routes' =>
 		'url'  => '/persons',
 		'verb' => 'GET'
 	],
-	// Get all clusters filtered by Name.
+	// Get all images filtered by Name.
 	[
 		'name' => 'person#findByName',
 		'url'  => '/person/{personName}',
+		'verb' => 'GET'
+	],
+	// Get all clusters filtered by Name.
+	[
+		'name' => 'person#findClustersByName',
+		'url'  => '/clusters/{personName}',
 		'verb' => 'GET'
 	],
 	// Get a cluster by Id.

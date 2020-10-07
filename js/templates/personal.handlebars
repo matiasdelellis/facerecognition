@@ -1,10 +1,11 @@
 <div class="section" id="facerecognition">
 
-	{{#if clustersByName}}
+{{#if clustersByName}}
 	<h2>
-		<a class="title-icon icon-view-previous"></a>
 		{{appName}}
 	</h2>
+	<br>
+	<h3><a class="title-icon icon-view-previous"></a>{{personName}}</h3>
 	<div id="persons-navigation">
 		{{#each clustersByName}}
 			<h2 class="person-title icon-user" data-id="{{this.id}}">
@@ -14,13 +15,33 @@
 			<div class="persons-previews">
 				{{#each this.faces}}
 					<a target="_blank" href="{{file-url}}">
-						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+						<div class="face-preview lozad" data-background-image="{{thumb-url}}" width="50" height="50"></div>
 					</a>
 				{{/each}}
 			</div>
 		{{/each}}
 	</div>
-	{{else if cluster}}
+{{else if personName}}
+	<h2>
+		{{appName}}
+	</h2>
+	<br>
+	<h3><a class="title-icon icon-view-previous"></a>{{personName}}</h3>
+	<div id="persons-previews">
+		{{#each personImages}}
+			<div class="image-box">
+				<a target="_blank" href="{{file-url}}">
+					<div class="face-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumb-url}}}" width="128" height="128"></div>
+				</a>
+			</div>
+		{{/each}}
+	</div>
+	{{#if multipleClusters}}
+		<button id="show-more-clusters" type="button" class="primary">
+			{{showMoreButton}}
+		</button>
+	{{/if}}
+{{else if cluster}}
 	<h2>
 		<a class="title-icon icon-view-previous"></a>
 		{{appName}}
@@ -33,7 +54,7 @@
 		<div class="persons-previews">
 			{{#each cluster.faces}}
 				<a target="_blank" href="{{file-url}}">
-					<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+					<div class="face-preview lozad" data-background-image="{{thumb-url}}" width="50" height="50"></div>
 				</a>
 			{{/each}}
 		</div>
@@ -41,11 +62,10 @@
 	<button id="show-more-clusters" type="button" class="primary">
 		{{showMoreButton}}
 	</button>
-	{{else if persons}}
+{{else if persons}}
 	<h2>
 		{{appName}}
 	</h2>
-
 	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
 	<br>
@@ -53,17 +73,15 @@
 	<div id="persons-previews">
 		{{#each persons}}
 			<div class="person-box" data-id="{{name}}">
-				<a target="_blank" href="{{file-url}}">
-					<div class="face-preview-big" data-background-image="{{thumb-url}}" width="128" height="128"></div>
-				</a>
+				<div class="face-preview-big lozad" data-background-image="{{thumb-url}}" width="128" height="128"></div>
 				<p class="person-name">
-					<a class="person-name" href="#"><span>{{name}}</span></a>
+					<span>{{name}}</span>
 				</p>
 				<p class="person-desc">{{noPhotos count}}</p>
 			</div>
 		{{/each}}
 	</div>
-	{{else if loaded}}
+{{else if loaded}}
 	<h2>
 		{{appName}}
 	</h2>
@@ -75,10 +93,10 @@
 			{{emptyMsg}}
 		</h2>
 		<p>
-			{{emptyHint}}
+		{{emptyHint}}
 		</p>
 	</div>
-	{{else}}
+{{else}}
 	<h2>
 		{{appName}}
 	</h2>
@@ -89,6 +107,6 @@
 		</h2>
 		<img class="loadingimport" src="{{loadingIcon}}"/>
 	</div>
-	{{/if}}
+{{/if}}
 
 </div>

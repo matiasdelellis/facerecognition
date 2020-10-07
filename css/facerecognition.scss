@@ -2,13 +2,16 @@
 	width: 100%;
 }
 
+.image-box,
 .person-box {
 	display: inline-block;
+	cursor: pointer;
 	margin: 3px;
 }
 
 .person-desc {
 	text-align: center;
+	margin-top: -5px;
 	color: var(--color-text-lighter);
 }
 
@@ -40,6 +43,7 @@
 
 .face-preview-big {
 	background-color: rgba(210, 210, 210, .75);
+	background-size: cover;
 	border-radius: 12px;
 	height: 128px;
 	width: 128px;
@@ -48,6 +52,7 @@
 
 .face-preview {
 	background-color: rgba(210, 210, 210, .75);
+	background-size: cover;
 	border-radius: 3px;
 	margin: 2px;
 	height: 50px;

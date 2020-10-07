@@ -19,6 +19,9 @@ var Persons = function (baseUrl) {
     this._persons = [];
     this._cluster = undefined;
     this._clustersByName = undefined;
+    this._personName = undefined;
+    this._clustersCount = 0;
+    this._imagesPersons = [];
     this._loaded = false;
 };
 
@@ -36,13 +39,14 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    loadCluster: function (id) {
+    loadPerson: function (name) {
         this.unsetActive();
-
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/cluster/'+id).done(function (cluster) {
-            self._cluster = cluster;
+        $.get(this._baseUrl+'/person/'+name).done(function (person) {
+            self._personName = person.name;
+            self._imagesPerson = person.images;
+            self._clustersCount = person.clusters;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -52,7 +56,7 @@ Persons.prototype = {
     loadClustersByName: function (personName) {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+personName).done(function (clusters) {
+        $.get(this._baseUrl+'/clusters/'+personName).done(function (clusters) {
             self._clustersByName = clusters.clusters;
             deferred.resolve();
         }).fail(function () {
@@ -60,9 +64,21 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
+    getPersonName: function() {
+        return this._personName;
+    },
+    getPersonClustersCount: function() {
+        return this._clustersCount;
+    },
+    getPersonImages: function() {
+        return this._imagesPerson;
+    },
     unsetActive: function () {
         this._cluster = undefined;
         this._clustersByName = undefined;
+        this._personName = undefined;
+        this._clustersCount = 0;
+        this._imagesPerson = [];
     },
     getActive: function () {
         return this._cluster;
@@ -126,6 +142,7 @@ Persons.prototype = {
  */
 var View = function (persons) {
     this._persons = persons;
+    this._observer = lozad('.lozad');
 };
 
 View.prototype = {
@@ -178,6 +195,12 @@ View.prototype = {
             context.emptyHint = t('facerecognition', 'Please, be patient');
         }
 
+        if (this._persons.getPersonName() !== undefined) {
+            context.personName = this._persons.getPersonName();
+            context.personImages = this._persons.getPersonImages();
+            context.multipleClusters = (this._persons.getPersonClustersCount() > 1);
+        }
+
         if (this._persons.getActive() !== undefined)
             context.cluster = this._persons.getActive();
 
@@ -187,8 +210,7 @@ View.prototype = {
         var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
 
-        const observer = lozad('.face-preview-big');
-        observer.observe();
+        this._observer.observe();
 
         var self = this;
 
@@ -212,9 +234,9 @@ View.prototype = {
             }
         });
 
-        $('#facerecognition .person-name').click(function () {
-            var id = $(this).parent().data('id');
-            self._persons.loadCluster(id).done(function () {
+        $('#facerecognition .person-box').click(function () {
+            var name = $(this).data('id');
+            self._persons.loadPerson(name).done(function () {
                 self.renderContent();
             }).fail(function () {
                 OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
@@ -241,7 +263,7 @@ View.prototype = {
         });
 
         $('#facerecognition #show-more-clusters').click(function () {
-            var personName = self._persons.getActive().name;
+            var personName = self._persons.getPersonName();
             self._persons.loadClustersByName(personName).done(function () {
                 self.renderContent();
             }).fail(function () {

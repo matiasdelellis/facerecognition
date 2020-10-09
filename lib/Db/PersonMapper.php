@@ -438,4 +438,39 @@ class PersonMapper extends QBMapper {
 		}
 		return false;
 	}
+
+	/**
+	 * Search Person by name
+	 *
+	 */
+	public function findPersonsLike(string $userId, int $model, string $name, $offset = null, $limit = null): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('p.name','p.id')
+			->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces', 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('p', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
+
+		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
+		$qb->setParameter('query', $query);
+
+		$qb->setFirstResult($offset);
+		$qb->setMaxResults($limit);
+
+		//different clusters could have the same name
+		$personNames = [];
+		$uniquePeople = [];
+		$people = $this->findEntities($qb);
+		foreach ($people as $person) {
+			if (!in_array($person->getName(), $personNames)) {
+				$personNames[] = $person->getName();
+				$uniquePeople[]= $person;
+			}
+		}
+		return $uniquePeople;
+	}
+
 }

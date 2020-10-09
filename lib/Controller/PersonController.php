@@ -195,7 +195,7 @@ class PersonController extends Controller {
 				$fileUrl = $this->getRedirectToFileUrl($fileId);
 				if ($fileUrl === null) continue;
 
-				$thumbUrl = $this->getPreviewUrl($fileId, 128);
+				$thumbUrl = $this->getPreviewUrl($fileId, 256);
 				if ($thumbUrl === null) continue;
 
 				$image = [];
@@ -298,11 +298,7 @@ class PersonController extends Controller {
 			return null;
 		}
 
-		return $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreview', [
-			'file' => $userFolder->getRelativePath($file->getPath()),
-			'x' => $sideSize,
-			'y' => $sideSize
-		]);
+		return '/core/preview?fileId=' . $fileId .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag();
 	}
 
 	/**

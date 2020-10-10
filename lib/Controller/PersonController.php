@@ -127,7 +127,7 @@ class PersonController extends Controller {
 
 			$person = [];
 			$person['name'] = $personNamed->getName();
-			$person['thumb-url'] = $faceUrl;
+			$person['thumbUrl'] = $faceUrl;
 			$person['count'] = $facesCount;
 
 			$resp['persons'][] = $person;
@@ -153,8 +153,8 @@ class PersonController extends Controller {
 			if ($fileUrl === null) continue;
 
 			$face = [];
-			$face['thumb-url'] = $this->getThumbUrl($personFace->getId());
-			$face['file-url'] = $fileUrl;
+			$face['thumbUrl'] = $this->getThumbUrl($personFace->getId());
+			$face['fileUrl'] = $fileUrl;
 			$faces[] = $face;
 		}
 		$resp['name'] = $person->getName();
@@ -199,8 +199,8 @@ class PersonController extends Controller {
 				if ($thumbUrl === null) continue;
 
 				$image = [];
-				$image['thumb-url'] = $thumbUrl;
-				$image['file-url'] = $fileUrl;
+				$image['thumbUrl'] = $thumbUrl;
+				$image['fileUrl'] = $fileUrl;
 
 				$resp['images'][] = $image;
 			}
@@ -238,8 +238,8 @@ class PersonController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$face = [];
-				$face['thumb-url'] = $this->getThumbUrl($personFace->getId(), 50);
-				$face['file-url'] = $fileUrl;
+				$face['thumbUrl'] = $this->getThumbUrl($personFace->getId(), 50);
+				$face['fileUrl'] = $fileUrl;
 				$faces[] = $face;
 			}
 
@@ -252,6 +252,22 @@ class PersonController extends Controller {
 		}
 
 		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @param string $personName
+	 * @param string $name
+	 */
+	public function updatePerson($personName, $name) {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		foreach ($clusters as $person) {
+			$person->setName($name);
+			$this->personMapper->update($person);
+		}
+		return $this->findByName($name);
 	}
 
 	/**

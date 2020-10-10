@@ -2,10 +2,13 @@
 	width: 100%;
 }
 
+.icon-back {
+	@include icon-color('back', 'facerecognition', $color-black);
+}
+
 .image-box,
 .person-box {
 	display: inline-block;
-	cursor: pointer;
 	margin: 3px;
 }
 
@@ -15,11 +18,8 @@
 	color: var(--color-text-lighter);
 }
 
-.person-title {
-	display: inline-flex;
+.cluster-title {
 	padding: 10px;
-	padding-left: 34px;
-	background-position: 10px center;
 	text-align: left;
 	margin-top: 22px;
 	margin-bottom: 0px !important;
@@ -36,6 +36,10 @@
 }
 
 .persons-previews {
+	margin-top: 22px;
+}
+
+.faces-previews {
 	margin-left: 24px;
 	display: flex;
 	flex-wrap: wrap;
@@ -48,6 +52,7 @@
 	height: 128px;
 	width: 128px;
 	margin: 0 auto;
+	cursor: pointer;
 }
 
 .face-preview {
@@ -59,6 +64,7 @@
 	width: 50px;
 }
 
+.face-preview-big:hover,
 .face-preview:hover {
 	opacity: .5;
 }

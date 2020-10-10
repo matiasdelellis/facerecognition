@@ -27,6 +27,12 @@ return ['routes' =>
 	],
 	// Change name to a person.
 	[
+		'name' => 'person#updatePerson',
+		'url'  => '/person/{personName}',
+		'verb' => 'PUT'
+	],
+	// Change name to a cluster.
+	[
 		'name' => 'person#updateName',
 		'url'  => '/cluster/{id}',
 		'verb' => 'PUT'

@@ -20,6 +20,7 @@ var Persons = function (baseUrl) {
     this._cluster = undefined;
     this._clustersByName = undefined;
     this._personName = undefined;
+    this._person = undefined;
     this._clustersCount = 0;
     this._imagesPersons = [];
     this._loaded = false;
@@ -39,14 +40,20 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
-    loadPerson: function (name) {
+    loadPerson: function (personName) {
         this.unsetActive();
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+name).done(function (person) {
+        $.get(this._baseUrl+'/person/' + personName).done(function (person) {
             self._personName = person.name;
             self._imagesPerson = person.images;
             self._clustersCount = person.clusters;
+            for (var _person of self._persons) {
+                if (_person.name === personName) {
+                    self._person = _person;
+                    break;
+                }
+            }
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -77,6 +84,7 @@ Persons.prototype = {
         this._cluster = undefined;
         this._clustersByName = undefined;
         this._personName = undefined;
+        this._person = undefined;
         this._clustersCount = 0;
         this._imagesPerson = [];
     },
@@ -114,6 +122,24 @@ Persons.prototype = {
     },
     getAll: function () {
         return this._persons;
+    },
+    renamePerson: function (personName, name) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { name: name };
+        $.ajax({url: this._baseUrl + '/person/' + personName,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(opt)
+        }).done(function (person) {
+            self._personName = person.name;
+            self._imagesPerson = person.images;
+            self._clustersCount = person.clusters;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
     },
     renameCluster: function (clusterId, personName) {
         var self = this;
@@ -243,8 +269,26 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition .icon-rename').click(function () {
-            var id = $(this).parent().data('id');
+        $('#facerecognition #rename-person').click(function () {
+            var person = self._persons._person;
+            FrDialogs.rename(
+                person.name,
+                [person],
+                function(result, value) {
+                    if (result === true && value) {
+                        self._persons.renamePerson (person.name, value).done(function () {
+                            self._persons.unsetActive();
+                            self.renderContent();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                        });
+                    }
+                }
+            );
+        });
+
+        $('#facerecognition #rename-cluster').click(function () {
+            var id = $(this).data('id');
             var person = self._persons.getById(id);
             FrDialogs.rename(
                 person.name,
@@ -255,7 +299,7 @@ View.prototype = {
                             self._persons.unsetActive();
                             self.renderContent();
                         }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this cluster of faces'));
                         });
                     }
                 }
@@ -271,7 +315,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition .icon-view-previous').click(function () {
+        $('#facerecognition .icon-back').click(function () {
             self._persons.unsetActive();
             self.renderContent();
         });

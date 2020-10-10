@@ -39,7 +39,7 @@ const FrDialogs = {
 			$dlg.append(div);
 
 			for (var face of faces) {
-				var thumb = $('<img class="face-preview-dialog" src="' + face['thumb-url'] + '" width="50" height="50"/>');
+				var thumb = $('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>');
 				div.append(thumb);
 			}
 

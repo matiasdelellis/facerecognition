@@ -37,7 +37,7 @@ const FrDialogs = {
 
 			$dlg.append($('<br/>'));
 
-			var div = $('<div/>').attr('style', 'align-items: center');
+			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
 
 			for (var face of faces) {
@@ -46,11 +46,7 @@ const FrDialogs = {
 			}
 
 			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
-			if (faces.length > 1) {
-				$dlg.append(input);
-			} else {
-				div.append(input);
-			}
+			$dlg.append(input);
 
 			$('body').append($dlg);
 

@@ -177,9 +177,10 @@ export default {
 		},
 		renamePerson: function(person) {
 			const self = this
+			console.log(person);
 			FrDialogs.rename(
 				person.name,
-				[person],
+				[{thumbUrl: person.thumb_url}],
 				function(result, newName) {
 					if (result === true && newName) {
 						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)

@@ -257,6 +257,45 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
+	 */
+	public function findUnassignedClusters() {
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+
+		$resp = array();
+		$resp['enabled'] = $userEnabled;
+		$resp['clusters'] = array();
+
+		if (!$userEnabled)
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$persons = $this->personMapper->findUnassigned($this->userId, $modelId);
+		foreach ($persons as $person) {
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
+			if (count($personFaces) === 1)
+				continue;
+
+			$faces = [];
+			foreach ($personFaces as $personFace) {
+				$face = [];
+				$face['thumbUrl'] = $this->getThumbUrl($personFace->getId(), 50);
+				$faces[] = $face;
+			}
+
+			$cluster = [];
+			$cluster['count'] = count($personFaces);
+			$cluster['id'] = $person->getId();
+			$cluster['faces'] = $faces;
+			$resp['clusters'][] = $cluster;
+		}
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
 	 * @param string $personName
 	 * @param string $name
 	 */

@@ -35,7 +35,9 @@ const FrDialogs = {
 				type: 'none'
 			});
 
-			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
+			$dlg.append($('<br/>'));
+
+			var div = $('<div/>').attr('style', 'align-items: center');
 			$dlg.append(div);
 
 			for (var face of faces) {
@@ -62,18 +64,18 @@ const FrDialogs = {
 			var buttonlist = [{
 				text: t('facerecognition', 'Cancel'),
 				click: function () {
+					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {
 						callback(false, input.val().trim());
 					}
-					$(dialogId).ocdialog('close');
 				}
 			}, {
 				text: t('facerecognition', 'Rename'),
 				click: function () {
+					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {
 						callback(true, input.val().trim());
 					}
-					$(dialogId).ocdialog('close');
 				},
 				defaultButton: true
 			}

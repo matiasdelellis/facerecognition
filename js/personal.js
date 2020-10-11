@@ -18,11 +18,13 @@ var Persons = function (baseUrl) {
     this._enabled = false;
     this._persons = [];
     this._cluster = undefined;
-    this._clustersByName = undefined;
+    this._clustersByName = [];
     this._personName = undefined;
     this._person = undefined;
     this._clustersCount = 0;
     this._imagesPersons = [];
+    this._unassignedClusters = [];
+    this._unassignedCount = 0;
     this._loaded = false;
 };
 
@@ -60,6 +62,22 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
+    loadUnassignedClusters: function () {
+        this.unsetActive();
+        var deferred = $.Deferred();
+        var self = this;
+        $.get(this._baseUrl+'/clusters').done(function (clusters) {
+            self._unassignedClusters = clusters.clusters;
+            self._unassignedClustersCount = clusters.clusters.length;
+            self._unassignedClusters.sort(function(a, b) {
+                return b.count - a.count;
+            });
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
     loadClustersByName: function (personName) {
         var deferred = $.Deferred();
         var self = this;
@@ -80,9 +98,12 @@ Persons.prototype = {
     getPersonImages: function() {
         return this._imagesPerson;
     },
+    getUnassignedClustersCount: function () {
+        return this._unassignedClustersCount;
+    },
     unsetActive: function () {
         this._cluster = undefined;
-        this._clustersByName = undefined;
+        this._clustersByName = [];
         this._personName = undefined;
         this._person = undefined;
         this._clustersCount = 0;
@@ -93,6 +114,9 @@ Persons.prototype = {
     },
     getActiveByName: function () {
         return this._clustersByName;
+    },
+    getUnassignedClusters: function () {
+        return this._unassignedClusters;
     },
     getById: function (clusterId) {
         var ret = undefined;
@@ -150,7 +174,7 @@ Persons.prototype = {
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._persons.forEach(function (cluster) {
+            self._clustersByName.forEach(function (cluster) {
                 if (cluster.id === clusterId) {
                     cluster.name = personName;
                 }
@@ -198,6 +222,35 @@ View.prototype = {
                 self.reload();
             }
         });
+    },
+    renameUnassignedClusterDialog: function () {
+        var self = this;
+        var unassignedClusters = this._persons.getUnassignedClusters();
+        var cluster = unassignedClusters.shift();
+        if (cluster === undefined) {
+            if (self._persons.getUnassignedClustersCount() > 0)
+                self.reload();
+            return;
+        }
+        FrDialogs.rename("", cluster.faces,
+            function(result, name) {
+                if (result === true) {
+                    if (name.length > 0) {
+                        self._persons.renameCluster(cluster.id, name).done(function () {
+                            self.renameUnassignedClusterDialog();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                        });
+                    } else {
+                        // Fake ignore.
+                        self.renameUnassignedClusterDialog();
+                    }
+                } else {
+                    if (self._persons.getUnassignedClustersCount() > 0)
+                        self.reload();
+                }
+            }
+        );
     },
     renderContent: function () {
         this._persons.sortBySize();
@@ -341,6 +394,11 @@ view.renderContent();
 
 persons.load().done(function () {
     view.renderContent();
+
+    persons.loadUnassignedClusters().done(function () {
+        if (persons.getUnassignedClustersCount() > 0)
+            view.renameUnassignedClusterDialog();
+    });
 }).fail(function () {
     OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
 });

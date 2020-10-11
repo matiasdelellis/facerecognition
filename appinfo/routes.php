@@ -19,6 +19,12 @@ return ['routes' =>
 		'url'  => '/clusters/{personName}',
 		'verb' => 'GET'
 	],
+	// Get all clusters unassigned clusters.
+	[
+		'name' => 'person#findUnassignedClusters',
+		'url'  => '/clusters',
+		'verb' => 'GET'
+	],
 	// Get a cluster by Id.
 	[
 		'name' => 'person#find',

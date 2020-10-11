@@ -132,6 +132,7 @@ class PersonController extends Controller {
 
 			$resp['persons'][] = $person;
 		}
+
 		return new DataResponse($resp);
 	}
 

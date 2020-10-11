@@ -396,8 +396,14 @@ persons.load().done(function () {
     view.renderContent();
 
     persons.loadUnassignedClusters().done(function () {
-        if (persons.getUnassignedClustersCount() > 0)
-            view.renameUnassignedClusterDialog();
+        if (persons.getUnassignedClustersCount() > 0) {
+            var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
+            $('#optional-buttons-div').append(button);
+            button.click(function () {
+                view.renameUnassignedClusterDialog();
+            });
+            OC.Notification.showTemporary(t('facerecognition', 'More people were found to recognize.'));
+        }
     });
 }).fail(function () {
     OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));

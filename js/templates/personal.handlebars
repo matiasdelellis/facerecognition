@@ -35,11 +35,13 @@
 			</div>
 		{{/each}}
 	</div>
+	<div id="optional-buttons-div">
 	{{#if multipleClusters}}
 		<button id="show-more-clusters" type="button" class="primary">
 			{{showMoreButton}}
 		</button>
 	{{/if}}
+	</div>
 {{else if persons}}
 	<h2>
 		{{appName}}
@@ -57,6 +59,7 @@
 			</div>
 		{{/each}}
 	</div>
+	<div id="optional-buttons-div"></div>
 {{else if loaded}}
 	<h2>
 		{{appName}}
@@ -72,6 +75,7 @@
 		{{emptyHint}}
 		</p>
 	</div>
+	<div id="optional-buttons-div"></div>
 {{else}}
 	<h2>
 		{{appName}}

@@ -100,7 +100,7 @@ class PersonMapper extends QBMapper {
 			->andWhere($qb->expr()->isNull('name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
-			->setParameter('is_valid', true);
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
 
 		return $this->findEntities($qb);
 	}

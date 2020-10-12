@@ -132,12 +132,14 @@ class PersonController extends Controller {
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
 		$resp['name'] = $personName;
+		$resp['thumbUrl'] = null;
 		$resp['clusters'] = 0;
 		$resp['images'] = array();
 
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
+		$faceUrl = null;
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
@@ -145,8 +147,13 @@ class PersonController extends Controller {
 			$resp['clusters']++;
 
 			$faces = $this->faceMapper->findFacesFromPerson($this->userId, $cluster->getId(), $modelId);
+			if (is_null($faceUrl)) {
+				$faceUrl = $this->urlService->getThumbUrl($faces[0]->getId(), 128);
+				$resp['thumbUrl'] = $faceUrl;
+			}
 			foreach ($faces as $face) {
 				$image = $this->imageMapper->find($this->userId, $face->getImage());
+
 
 				$fileId = $image->getFile();
 				if ($fileId === null) continue;

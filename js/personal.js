@@ -275,6 +275,7 @@ View.prototype = {
         }
 
         if (this._persons.getPersonName() !== undefined) {
+            setPersonUrl(this._persons.getPersonName());
             context.personName = this._persons.getPersonName();
             context.personImages = this._persons.getPersonImages();
             context.multipleClusters = (this._persons.getPersonClustersCount() > 1);
@@ -371,8 +372,45 @@ View.prototype = {
         $('#facerecognition .icon-back').click(function () {
             self._persons.unsetActive();
             self.renderContent();
+            if (!self._persons.isLoaded()) {
+                self.reload();
+            }
+            setPersonUrl();
         });
     }
+};
+
+/**
+ * Get the personName as URL parameter
+ */
+var getPersonNameUrl = function () {
+    var personName = undefined;
+    var parser = document.createElement('a');
+    parser.href = window.location.href;
+    var query = parser.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (pair[0] === 'name') {
+            personName = decodeURIComponent(pair[1]);
+            break;
+        }
+    }
+    return personName;
+};
+
+/**
+ *  Change the URL location with personName as parameter
+ */
+var setPersonNameUrl = function (personName) {
+    var cleanUrl = window.location.href.split("?")[0];
+    var title = t('facerecognition', 'Face Recogntion');
+    if (personName) {
+        cleanUrl += '?name=' + personName;
+        title += ' - ' + personName;
+    }
+    window.history.replaceState({}, title, cleanUrl);
+    document.title = title;
 };
 
 /**
@@ -392,22 +430,31 @@ var view = new View(persons);
 
 view.renderContent();
 
-persons.load().done(function () {
-    view.renderContent();
-
-    persons.loadUnassignedClusters().done(function () {
-        if (persons.getUnassignedClustersCount() > 0) {
-            var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
-            $('#optional-buttons-div').append(button);
-            button.click(function () {
-                view.renameUnassignedClusterDialog();
-            });
-            OC.Notification.showTemporary(t('facerecognition', 'More people were found to recognize.'));
-        }
+var personName = getPersonNameUrl();
+if (personName !== undefined) {
+    persons.loadPerson(personName).done(function () {
+        view.renderContent();
+    }).fail(function () {
+        OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
     });
-}).fail(function () {
-    OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
-});
+} else {
+    persons.load().done(function () {
+        view.renderContent();
+
+        persons.loadUnassignedClusters().done(function () {
+            if (persons.getUnassignedClustersCount() > 0) {
+                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
+                $('#optional-buttons-div').append(button);
+                button.click(function () {
+                    view.renameUnassignedClusterDialog();
+                });
+                OC.Notification.showTemporary(t('facerecognition', 'More people were found to recognize.'));
+           }
+        });
+    }).fail(function () {
+        OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
+    });
+}
 
 var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
     if (!OC.isUserAdmin()) {

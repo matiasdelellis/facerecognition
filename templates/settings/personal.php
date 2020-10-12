@@ -6,5 +6,6 @@ script('facerecognition', 'templates');
 script('facerecognition', 'fr-dialogs');
 script('facerecognition', 'personal');
 style('facerecognition', 'facerecognition');
+style('facerecognition', 'fr-dialogs');
 ?>
 <div id="div-content"></div>

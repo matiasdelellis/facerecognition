@@ -177,24 +177,41 @@ export default {
 		},
 		renamePerson: function(person) {
 			const self = this
-			console.log(person);
-			FrDialogs.rename(
-				person.name,
-				[{thumbUrl: person.thumb_url}],
-				function(result, newName) {
-					if (result === true && newName) {
-						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
-						Axios.put(infoUrl, {
-							name: newName
-						}).then(function (response) {
-							self.getFacesInfo(self.fileInfo)
-						}).catch(function (error) {
-							self.error = error
-							console.error('Error renaming person', error)
-						})
+			if (person.name) {
+				FrDialogs.rename(
+					person.name,
+					[{thumbUrl: person.thumb_url}],
+					function(result, newName) {
+						if (result === true && newName) {
+							var infoUrl = OC.generateUrl('/apps/facerecognition/person/' + person.name)
+							Axios.put(infoUrl, {
+								name: newName
+							}).then(function (response) {
+								self.getFacesInfo(self.fileInfo)
+							}).catch(function (error) {
+								self.error = error
+								console.error('Error renaming person', error)
+							})
+						}
 					}
-				}
-			)
+				)
+			} else {
+				FrDialogs.assignName([{thumbUrl: person.thumb_url}],
+					function(result, newName) {
+						if (result === true && newName) {
+							var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
+							Axios.put(infoUrl, {
+								name: newName
+							}).then(function (response) {
+								self.getFacesInfo(self.fileInfo)
+							}).catch(function (error) {
+								self.error = error
+								console.error('Error renaming person', error)
+							})
+						}
+					}
+				)
+			}
 		},
 		processFacesData(data, isDirectory) {
 			this.isDirectory = isDirectory

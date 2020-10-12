@@ -238,7 +238,7 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.rename("", cluster.faces,
+        FrDialogs.assignName(cluster.faces,
             function(result, name) {
                 if (result === true) {
                     if (name.length > 0) {
@@ -432,7 +432,6 @@ var setPersonNameUrl = function (personName) {
 /**
  * Add Helpers to handlebars
  */
-
 Handlebars.registerHelper('noPhotos', function(count) {
     return n('facerecognition', '%n image', '%n images', count);
 });

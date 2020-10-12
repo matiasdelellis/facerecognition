@@ -275,7 +275,7 @@ View.prototype = {
         }
 
         if (this._persons.getPersonName() !== undefined) {
-            setPersonUrl(this._persons.getPersonName());
+            setPersonNameUrl(this._persons.getPersonName());
             context.personName = this._persons.getPersonName();
             context.personImages = this._persons.getPersonImages();
             context.multipleClusters = (this._persons.getPersonClustersCount() > 1);
@@ -375,7 +375,7 @@ View.prototype = {
             if (!self._persons.isLoaded()) {
                 self.reload();
             }
-            setPersonUrl();
+            setPersonNameUrl();
         });
     }
 };

@@ -45,7 +45,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 
 
-class PersonController extends Controller {
+class ClusterController extends Controller {
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -87,38 +87,28 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 */
-	public function index() {
-		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+	public function find(int $id) {
+		$person = $this->personMapper->find($this->userId, $id);
 
-		$resp = array();
-		$resp['enabled'] = $userEnabled;
-		$resp['persons'] = array();
+		$resp = [];
+		$faces = [];
+		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
+		foreach ($personFaces as $personFace) {
+			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			$fileId = $image->getFile();
+			if ($fileId === null) continue;
 
-		if (!$userEnabled)
-			return new DataResponse($resp);
+			$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
+			if ($fileUrl === null) continue;
 
-		$modelId = $this->settingsService->getCurrentFaceModel();
-
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
-		foreach ($personsNames as $personNamed) {
-			$facesCount = 0;
-			$faceUrl = null;
-			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
-			foreach ($persons as $person) {
-				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-				if (is_null($faceUrl)) {
-					$faceUrl = $this->urlService->getThumbUrl($personFaces[0]->getId(), 128);
-				}
-				$facesCount += count($personFaces);
-			}
-
-			$person = [];
-			$person['name'] = $personNamed->getName();
-			$person['thumbUrl'] = $faceUrl;
-			$person['count'] = $facesCount;
-
-			$resp['persons'][] = $person;
+			$face = [];
+			$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+			$face['fileUrl'] = $fileUrl;
+			$faces[] = $face;
 		}
+		$resp['name'] = $person->getName();
+		$resp['id'] = $person->getId();
+		$resp['faces'] = $faces;
 
 		return new DataResponse($resp);
 	}
@@ -126,43 +116,43 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 */
-	public function find(string $personName) {
+	public function findByName(string $personName) {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
-		$resp['name'] = $personName;
-		$resp['clusters'] = 0;
-		$resp['images'] = array();
+		$resp['clusters'] = array();
 
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($clusters as $cluster) {
-			$resp['clusters']++;
+		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		foreach ($persons as $person) {
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
 
-			$faces = $this->faceMapper->findFacesFromPerson($this->userId, $cluster->getId(), $modelId);
-			foreach ($faces as $face) {
-				$image = $this->imageMapper->find($this->userId, $face->getImage());
-
+			$faces = [];
+			foreach ($personFaces as $personFace) {
+				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 				$fileId = $image->getFile();
 				if ($fileId === null) continue;
 
 				$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
 				if ($fileUrl === null) continue;
 
-				$thumbUrl = $this->urlService->getPreviewUrl($fileId, 256);
-				if ($thumbUrl === null) continue;
-
-				$image = [];
-				$image['thumbUrl'] = $thumbUrl;
-				$image['fileUrl'] = $fileUrl;
-
-				$resp['images'][] = $image;
+				$face = [];
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['fileUrl'] = $fileUrl;
+				$faces[] = $face;
 			}
+
+			$cluster = [];
+			$cluster['name'] = $person->getName();
+			$cluster['count'] = count($personFaces);
+			$cluster['id'] = $person->getId();
+			$cluster['faces'] = $faces;
+			$resp['clusters'][] = $cluster;
 		}
 
 		return new DataResponse($resp);
@@ -171,17 +161,55 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param string $personName
+	 */
+	public function findUnassigned() {
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+
+		$resp = array();
+		$resp['enabled'] = $userEnabled;
+		$resp['clusters'] = array();
+
+		if (!$userEnabled)
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$persons = $this->personMapper->findUnassigned($this->userId, $modelId);
+		foreach ($persons as $person) {
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
+			if (count($personFaces) === 1)
+				continue;
+
+			$faces = [];
+			foreach ($personFaces as $personFace) {
+				$face = [];
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$faces[] = $face;
+			}
+
+			$cluster = [];
+			$cluster['count'] = count($personFaces);
+			$cluster['id'] = $person->getId();
+			$cluster['faces'] = $faces;
+			$resp['clusters'][] = $cluster;
+		}
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @param int $id
 	 * @param string $name
 	 */
-	public function updateName($personName, $name) {
-		$modelId = $this->settingsService->getCurrentFaceModel();
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($clusters as $person) {
-			$person->setName($name);
-			$this->personMapper->update($person);
-		}
-		return $this->find($name);
+	public function updateName($id, $name) {
+		$person = $this->personMapper->find ($this->userId, $id);
+		$person->setName($name);
+		$this->personMapper->update($person);
+
+		$newPerson = $this->personMapper->find($this->userId, $id);
+		return new DataResponse($newPerson);
 	}
 
 }

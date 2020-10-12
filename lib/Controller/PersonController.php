@@ -115,7 +115,6 @@ class PersonController extends Controller {
 		foreach ($personsNames as $personNamed) {
 			$facesCount = 0;
 			$faceUrl = null;
-			$faces = null;
 			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
 			foreach ($persons as $person) {
 				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
@@ -154,7 +153,7 @@ class PersonController extends Controller {
 			if ($fileUrl === null) continue;
 
 			$face = [];
-			$face['thumbUrl'] = $this->getThumbUrl($personFace->getId());
+			$face['thumbUrl'] = $this->getThumbUrl($personFace->getId(), 50);
 			$face['fileUrl'] = $fileUrl;
 			$faces[] = $face;
 		}

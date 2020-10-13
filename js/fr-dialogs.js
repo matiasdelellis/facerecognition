@@ -113,7 +113,7 @@ const FrDialogs = {
 				div.append(thumb);
 			}
 
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
 			$dlg.append(input);
 
 			$('body').append($dlg);
@@ -157,7 +157,6 @@ const FrDialogs = {
 			});
 
 			input.focus();
-			input.select();
 		});
 	},
 	_getMessageTemplate: function () {

@@ -23,17 +23,10 @@
 
 namespace OCA\FaceRecognition\Service;
 
-use OCP\IRequest;
 use OCP\Files\IRootFolder;
 use OCP\Files\File;
 use OCP\IUserSession;
 use OCP\IURLGenerator;
-
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\DataResponse;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\DataDisplayResponse;
-use OCP\AppFramework\Controller;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -55,9 +48,7 @@ class UrlService {
 	/** @var string */
 	private $userId;
 
-	public function __construct($AppName,
-	                            IRequest        $request,
-	                            IRootFolder     $rootFolder,
+	public function __construct(IRootFolder     $rootFolder,
 	                            IUserSession    $userSession,
 	                            IURLGenerator   $urlGenerator,
 	                            SettingsService $settingsService,

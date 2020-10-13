@@ -117,4 +117,17 @@ class UrlService {
 		return $this->urlGenerator->linkToRoute('files.view.index', $params);
 	}
 
+	/**
+	 * Redirects to the facerecognition page to show photos of an person.
+	 *
+	 * @param int $personId person id to show
+	 */
+	public function getRedirectToPersonUrl(string $personId) {
+		$params = [
+			'section' => 'facerecognition',
+			'name' => $personId
+		];
+		return $this->urlGenerator->linkToRoute('settings.PersonalSettings.index', $params);
+	}
+
 }

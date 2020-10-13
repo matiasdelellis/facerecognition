@@ -62,7 +62,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(), array(), array(100=>[$face->getId()]));
 
-		$personId = $this->assertOnePerson("100");
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
 	}
 
@@ -104,7 +104,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		);
 
 		$this->assertPersonDoNotExist($person->getId());
-		$personId = $this->assertOnePerson(strval($person->getId()+1));
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
 	}
 
@@ -281,7 +281,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		$this->assertPersonDoNotExist($person1->getId());
 		$this->assertPersonDoNotExist($person2->getId());
-		$personId = $this->assertOnePerson(strval($person1->getId()+5));
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face1->getId(), $face2->getId()]]);
 	}
 
@@ -600,18 +600,25 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		return $face;
 	}
 
-	private function assertOnePerson(string $nameSubstring): int {
+	private function assertOnePerson($name = null): int {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
-		if ($nameSubstring !== null) {
-			$this->assertTrue(strpos($persons[0]->getName(), $nameSubstring) !== false);
+
+		if ($name !== null) {
+			// check that retains the name
+			$this->assertTrue($persons[0]->getName() === $name);
+
+			// Check that it can be found using this method too
+			$persons = $personMapper->find($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
+			$this->assertEquals(1, count($persons));
 		}
 
 		// Check that it can be found using this method too
-		$personMapper->find($this->user->getUID(), $persons[0]->getId());
+		$persons = $personMapper->find($this->user->getUID(), $persons[0]->getId());
+		$this->assertEquals(1, count($persons));
 
 		// After clustering, person must be valid
 		$this->assertTrue($persons[0]->getIsValid());

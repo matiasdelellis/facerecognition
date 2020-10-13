@@ -361,8 +361,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person2->getId()+5)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo');
+		$this->assertTrue($persons[1]->getName() === null);
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertEquals($person1->getId(), $persons[0]->getId());
@@ -442,12 +442,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo-p1') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), 'foo-p2') !== false);
-		$this->assertTrue(strpos($persons[2]->getName(), 'foo-p3') !== false);
-		$this->assertTrue(strpos($persons[3]->getName(), 'foo-p4') !== false);
-		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+100)) !== false);
-		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+101)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo-p1');
+		$this->assertTrue($persons[1]->getName() === 'foo-p2');
+		$this->assertTrue($persons[2]->getName() === 'foo-p3');
+		$this->assertTrue($persons[3]->getName() === 'foo-p4');
+		$this->assertTrue($persons[4]->getName() === null);
+		$this->assertTrue($persons[5]->getName() === null);
 		foreach ($persons as $person) {
 			$this->assertTrue($person->getIsValid());
 		}

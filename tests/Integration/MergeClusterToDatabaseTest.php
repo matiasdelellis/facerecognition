@@ -541,12 +541,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$this->assertPersonDoNotExist($person2->getId());
 		$this->assertPersonDoNotExist($person3->getId());
 		$this->assertPersonDoNotExist($person4->getId());
-		$this->assertTrue(strpos($persons[0]->getName(), strval($person1->getId()+100)) !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person1->getId()+101)) !== false);
-		$this->assertTrue(strpos($persons[2]->getName(), strval($person1->getId()+102)) !== false);
-		$this->assertTrue(strpos($persons[3]->getName(), strval($person1->getId()+103)) !== false);
-		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+104)) !== false);
-		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+105)) !== false);
+		$this->assertTrue($persons[0]->getName() === null);
+		$this->assertTrue($persons[1]->getName() === null);
+		$this->assertTrue($persons[2]->getName() === null);
+		$this->assertTrue($persons[3]->getName() === null);
+		$this->assertTrue($persons[4]->getName() === null);
+		$this->assertTrue($persons[5]->getName() === null);
 		foreach ($persons as $person) {
 			$this->assertTrue($person->getIsValid());
 		}

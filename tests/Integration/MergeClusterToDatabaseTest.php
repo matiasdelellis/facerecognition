@@ -171,14 +171,14 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), strval($person->getId()+1)) !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+2)) !== false);
+		$this->assertTrue(is_null($persons[0]->getName()));
+		$this->assertTrue(is_null($persons[1]->getName()));
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertPersonDoNotExist($person->getId());
+
 		$person1Id = $persons[0]->getId();
 		$person2Id = $persons[1]->getId();
-
 		$this->assertFaces([$person1Id => [$face1->getId()], $person2Id => [$face2->getId()]]);
 	}
 
@@ -212,8 +212,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+1)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo');
+		$this->assertTrue($persons[1]->getName() === null);
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$person1Id = $persons[0]->getId();
@@ -612,13 +612,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			$this->assertTrue($persons[0]->getName() === $name);
 
 			// Check that it can be found using this method too
-			$persons = $personMapper->find($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
+			$persons = $personMapper->findByName($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
 			$this->assertEquals(1, count($persons));
 		}
 
 		// Check that it can be found using this method too
-		$persons = $personMapper->find($this->user->getUID(), $persons[0]->getId());
-		$this->assertEquals(1, count($persons));
+		$personMapper->find($this->user->getUID(), $persons[0]->getId());
 
 		// After clustering, person must be valid
 		$this->assertTrue($persons[0]->getIsValid());

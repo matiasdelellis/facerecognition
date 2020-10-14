@@ -119,7 +119,17 @@ class Watcher {
 			return;
 		}
 
-		$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		$owner = null;
+		if ($this->fileService->isUserFile($node)) {
+			$owner = $node->getOwner()->getUid();
+		} else {
+			if (!\OC::$server->getUserSession()->isLoggedIn()) {
+				$this->logger->debug('Skipping interting file ' . $node->getName() . ' since we cannot determine the owner.');
+				return;
+			}
+			$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		}
+
 		if (!$this->userManager->userExists($owner)) {
 			$this->logger->debug(
 				"Skipping inserting file " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
@@ -209,7 +219,17 @@ class Watcher {
 			return;
 		}
 
-		$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		$owner = null;
+		if ($this->fileService->isUserFile($node)) {
+			$owner = $node->getOwner()->getUid();
+		} else {
+			if (!\OC::$server->getUserSession()->isLoggedIn()) {
+				$this->logger->debug('Skipping deleting the file ' . $node->getName() .  ' since we cannot determine the owner');
+				return;
+			}
+			$owner = \OC::$server->getUserSession()->getUser()->getUID();
+		}
+
 		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');

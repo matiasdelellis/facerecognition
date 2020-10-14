@@ -43,7 +43,7 @@
 				<template v-for="person in this.persons">
 					<li class='face-entry' :data-id='person.person_id'>
 						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
-						<h5 class='face-name'>{{ person.name }}</h5>
+						<h5 v-bind:class="['face-name', person.name ? '' : 'unknown-name']">{{ person.name ? person.name : t('facerecognition', 'Unknown') }}</h5>
 						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
 					</li>
 				</template>
@@ -177,32 +177,65 @@ export default {
 		},
 		renamePerson: function(person) {
 			const self = this
-			FrDialogs.rename(
-				person.name,
-				person.thumb_url,
-				function(result, newName) {
-					if (result === true && newName) {
-						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
-						Axios.put(infoUrl, {
-							name: newName
-						}).then(function (response) {
-							self.getFacesInfo(self.fileInfo)
-						}).catch(function (error) {
-							self.error = error
-							console.error('Error renaming person', error)
-						})
+			if (person.name) {
+				FrDialogs.rename(
+					person.name,
+					[{thumbUrl: person.thumb_url}],
+					function(result, newName) {
+						if (result === true && newName) {
+							var infoUrl = OC.generateUrl('/apps/facerecognition/person/' + person.name)
+							Axios.put(infoUrl, {
+								name: newName
+							}).then(function (response) {
+								self.getFacesInfo(self.fileInfo)
+							}).catch(function (error) {
+								self.error = error
+								console.error('Error renaming person', error)
+							})
+						}
 					}
-				}
-			)
+				)
+			} else {
+				FrDialogs.assignName([{thumbUrl: person.thumb_url}],
+					function(result, newName) {
+						if (result === true && newName) {
+							var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
+							Axios.put(infoUrl, {
+								name: newName
+							}).then(function (response) {
+								self.getFacesInfo(self.fileInfo)
+							}).catch(function (error) {
+								self.error = error
+								console.error('Error renaming person', error)
+							})
+						}
+					}
+				)
+			}
 		},
 		processFacesData(data, isDirectory) {
 			this.isDirectory = isDirectory
 			this.isEnabledByUser = data.enabled
 			this.isAllowedFile = data.is_allowed
 			this.isParentEnabled = data.parent_detection
-			this.persons = isDirectory ? [] : data.persons
 			this.isProcessed = isDirectory ? false : data.is_processed
 			this.isChildrensEnabled = !isDirectory ? false : data.descendant_detection
+			this.persons = []
+			if (!isDirectory) {
+				this.persons = data.persons.sort(function(a, b) {
+					if (a.name == b.name)
+						return 0;
+					if (a.name == null)
+						return 1;
+					if (b.name == null)
+						return -1;
+					if (a.name > b.name)
+						return 1;
+					if (a.name < b.name)
+						return -1;
+					return 0;
+				});
+			}
 		},
 	}
 }
@@ -213,9 +246,14 @@ export default {
 	align-items: center;
 	min-height: 44px;
 }
+
 .face-name {
 	width: 100%;
 	padding: 8px;
+}
+
+.unknown-name {
+	opacity: .7;
 }
 
 .face-preview {

@@ -1,36 +1,66 @@
 <?php
-return ['routes' => 
+return ['routes' =>
 [
+	/*
+	 * Persons
+	 */
 	// Get all face clusters with faces and file asociated.
 	[
 		'name' => 'person#index',
-		'url'  => '/clusters',
+		'url'  => '/persons',
 		'verb' => 'GET'
 	],
-	// Get all clusters filtered by Name.
-	[
-		'name' => 'person#findByName',
-		'url'  => '/person/{personName}',
-		'verb' => 'GET'
-	],
-	// Get a cluster by Id.
+	// Get all images filtered by Name.
 	[
 		'name' => 'person#find',
-		'url'  => '/cluster/{id}',
+		'url'  => '/person/{personName}',
 		'verb' => 'GET'
 	],
 	// Change name to a person.
 	[
 		'name' => 'person#updateName',
+		'url'  => '/person/{personName}',
+		'verb' => 'PUT'
+	],
+	/*
+	 * Clusters
+	 */
+	// Get a cluster by Id.
+	[
+		'name' => 'cluster#find',
+		'url'  => '/cluster/{id}',
+		'verb' => 'GET'
+	],
+	// Get all clusters filtered by Name.
+	[
+		'name' => 'cluster#findByName',
+		'url'  => '/clusters/{personName}',
+		'verb' => 'GET'
+	],
+	// Get all clusters unassigned clusters.
+	[
+		'name' => 'cluster#findUnassigned',
+		'url'  => '/clusters',
+		'verb' => 'GET'
+	],
+	// Change name to a cluster.
+	[
+		'name' => 'cluster#updateName',
 		'url'  => '/cluster/{id}',
 		'verb' => 'PUT'
 	],
+	/*
+	 * Face thumbails
+	 */
 	// Get a face Thumb
 	[
 		'name' => 'face#getThumb',
 		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],
+	/*
+	 * File and Folders
+	 */
 	// Get persons from path
 	[
 		'name' => 'file#getPersonsFromPath',
@@ -49,6 +79,9 @@ return ['routes' =>
 		'url'  => '/folder',
 		'verb' => 'PUT'
 	],
+	/*
+	 * Settings
+	 */
 	// User settings
 	[
 		'name' => 'settings#setUserValue',
@@ -71,6 +104,9 @@ return ['routes' =>
 		'url' => '/getappvalue',
 		'verb' => 'GET'
 	],
+	/*
+	 * Status of process.
+	 */
 	// Get process status.
 	[
 		'name' => 'process#index',

@@ -69,10 +69,6 @@ class SettingsService {
 	const DEFAULT_MINIMUM_FACE_SIZE = '40';
 	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
 
-	/** Show single persons on clustes view */
-	const SHOW_NOT_GROUPED_KEY = 'show_not_grouped';
-	const DEFAULT_SHOW_NOT_GROUPED = 'false';
-
 	/** User setting what indicates if has the analysis enabled */
 	const USER_ENABLED_KEY = 'enabled';
 	const DEFAULT_USER_ENABLED = 'false';
@@ -234,15 +230,6 @@ class SettingsService {
 
 	public function setMinimumConfidence($confidence) {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
-	}
-
-	public function getShowNotGrouped(): bool {
-		$show = $this->config->getAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, self::DEFAULT_SHOW_NOT_GROUPED);
-		return ($show === 'true');
-	}
-
-	public function setShowNotGrouped(bool $show) {
-		$this->config->setAppValue(Application::APP_NAME, self::SHOW_NOT_GROUPED_KEY, $show ? "true" : "false");
 	}
 
 	/**

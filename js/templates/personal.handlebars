@@ -1,68 +1,66 @@
 <div class="section" id="facerecognition">
 
-	{{#if clustersByName}}
+{{#if clustersByName}}
 	<h2>
-		<a class="title-icon icon-view-previous"></a>
-		{{appName}}
+		<a class="title-icon icon-back"></a>
+		{{personName}}
 	</h2>
 	<div id="persons-navigation">
 		{{#each clustersByName}}
-			<h2 class="person-title icon-user" data-id="{{this.id}}">
+			<h2 class="cluster-title">
 				<span>{{this.name}}</span>
-				<a class="title-icon icon-rename"></a>
+				<a id="rename-cluster" class="title-icon icon-rename" data-id="{{this.id}}"></a>
 			</h2>
-			<div class="persons-previews">
+			<div class="faces-previews">
 				{{#each this.faces}}
-					<a target="_blank" href="{{file-url}}">
-						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+					<a target="_blank" href="{{fileUrl}}">
+						<div class="face-preview lozad" data-background-image="{{thumbUrl}}" width="50" height="50"></div>
 					</a>
 				{{/each}}
 			</div>
 		{{/each}}
 	</div>
-	{{else if cluster}}
+{{else if personName}}
 	<h2>
-		<a class="title-icon icon-view-previous"></a>
-		{{appName}}
+		<a class="title-icon icon-back"></a>
+		{{personName}}
+		<a id="rename-person" class="title-icon icon-rename" data-id="{{personName}}"></a>
 	</h2>
-	<div id="persons-navigation">
-		<h2 class="person-title icon-user" data-id="{{cluster.id}}">
-			<span>{{cluster.name}}</span>
-			<a class="title-icon icon-rename"></a>
-		</h2>
-		<div class="persons-previews">
-			{{#each cluster.faces}}
-				<a target="_blank" href="{{file-url}}">
-					<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
+	<div class="persons-previews">
+		{{#each personImages}}
+			<div class="image-box">
+				<a target="_blank" href="{{fileUrl}}">
+					<div class="file-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumbUrl}}}" width="128" height="128"></div>
 				</a>
-			{{/each}}
-		</div>
+			</div>
+		{{/each}}
 	</div>
-	<button id="show-more-clusters" type="button" class="primary">
-		{{showMoreButton}}
-	</button>
-	{{else if clusters}}
+	<div id="optional-buttons-div">
+	{{#if multipleClusters}}
+		<button id="show-more-clusters" type="button" class="primary">
+			{{showMoreButton}}
+		</button>
+	{{/if}}
+	</div>
+{{else if persons}}
 	<h2>
 		{{appName}}
 	</h2>
 	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
 	<label for="enableFacerecognition">{{enableDescription}}</label><br>
-	<div id="persons-navigation">
-		{{#each clusters}}
-			<h2 class="person-title icon-user" data-id="{{this.id}}">
-				<a class="person-name" href="#"><span>{{this.name}}</span></a>
-				<a class="title-icon icon-rename"></a>
-			</h2>
-			<div class="persons-previews">
-				{{#each this.faces}}
-					<a target="_blank" href="{{file-url}}">
-						<div class="face-preview" data-background-image="{{thumb-url}}" width="50" height="50"></div>
-					</a>
-				{{/each}}
+	<div class="persons-previews">
+		{{#each persons}}
+			<div class="person-box" data-id="{{name}}">
+				<div class="face-preview-big lozad" data-background-image="{{thumbUrl}}" width="128" height="128"></div>
+				<p class="person-name">
+					<span>{{name}}</span>
+				</p>
+				<p class="person-desc">{{noPhotos count}}</p>
 			</div>
 		{{/each}}
 	</div>
-	{{else if loaded}}
+	<div id="optional-buttons-div"></div>
+{{else if loaded}}
 	<h2>
 		{{appName}}
 	</h2>
@@ -74,10 +72,11 @@
 			{{emptyMsg}}
 		</h2>
 		<p>
-			{{emptyHint}}
+		{{emptyHint}}
 		</p>
 	</div>
-	{{else}}
+	<div id="optional-buttons-div"></div>
+{{else}}
 	<h2>
 		{{appName}}
 	</h2>
@@ -88,6 +87,6 @@
 		</h2>
 		<img class="loadingimport" src="{{loadingIcon}}"/>
 	</div>
-	{{/if}}
+{{/if}}
 
 </div>

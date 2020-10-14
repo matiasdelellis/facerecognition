@@ -24,9 +24,9 @@
  */
 const FrDialogs = {
 
-	rename: function (name, thumbUrl, callback) {
+	rename: function (name, faces, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-dialog-content';
+			var dialogName = 'fr-rename-dialog';
 			var dialogId = '#' + dialogName;
 			var $dlg = $tmpl.octemplate({
 				dialog_name: dialogName,
@@ -34,13 +34,19 @@ const FrDialogs = {
 				message: t('facerecognition', 'Please enter a name to rename the person'),
 				type: 'none'
 			});
-			var div = $('<div/>').attr('style', 'display:flex; align-items: center');
-			var thumb = $('<img class="face-preview-dialog" src="' + thumbUrl + '" width="50" height="50"/>');
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
 
-			div.append(thumb);
-			div.append(input);
+			$dlg.append($('<br/>'));
+
+			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
+
+			for (var face of faces) {
+				var thumb = $('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>');
+				div.append(thumb);
+			}
+
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
+			$dlg.append(input);
 
 			$('body').append($dlg);
 
@@ -54,22 +60,21 @@ const FrDialogs = {
 			var buttonlist = [{
 				text: t('facerecognition', 'Cancel'),
 				click: function () {
+					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {
 						callback(false, input.val().trim());
 					}
-					$(dialogId).ocdialog('close');
 				}
 			}, {
 				text: t('facerecognition', 'Rename'),
 				click: function () {
+					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {
 						callback(true, input.val().trim());
 					}
-					$(dialogId).ocdialog('close');
 				},
 				defaultButton: true
-			}
-			];
+			}];
 
 			$(dialogId).ocdialog({
 				closeOnEscape: true,
@@ -85,6 +90,73 @@ const FrDialogs = {
 
 			input.focus();
 			input.select();
+		});
+	},
+	assignName: function (faces, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-assign-dialog';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Rename Person'),
+				message: t('facerecognition', 'Please assign a name to this person.'),
+				type: 'none'
+			});
+
+			$dlg.append($('<br/>'));
+
+			var div = $('<div/>').attr('style', 'text-align: center');
+			$dlg.append(div);
+
+			for (var face of faces) {
+				var thumb = $('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>');
+				div.append(thumb);
+			}
+
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
+			$dlg.append(input);
+
+			$('body').append($dlg);
+
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'I am not sure'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, '');
+					}
+				},
+			}, {
+				text: t('facerecognition', 'Rename'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, input.val().trim());
+					}
+				},
+				defaultButton: true
+			}];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false, '');
+					}
+				}
+			});
+
+			input.focus();
 		});
 	},
 	_getMessageTemplate: function () {

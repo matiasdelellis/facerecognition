@@ -83,6 +83,33 @@ class PersonMapper extends QBMapper {
 	 * @param int $modelId ID of the model
 	 * @return Person[]
 	 */
+	public function findUnassigned(string $userId, int $modelId): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'is_valid')
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->isNull('name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @return Person[]
+	 */
 	public function findAll(string $userId, int $modelId): array {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))
@@ -99,6 +126,23 @@ class PersonMapper extends QBMapper {
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
 
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId ID of the user
+	 */
+	public function findDistinctNames(string $userId, int $modelId) {
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('name')
+			->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces' , 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->andwhere($qb->expr()->isNotNull('p.name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
 		return $this->findEntities($qb);
 	}
 
@@ -269,7 +313,6 @@ class PersonMapper extends QBMapper {
 					->insert($this->getTableName())
 					->values([
 						'user' => $qb->createNamedParameter($userId),
-						'name' => $qb->createNamedParameter(sprintf("New person %d", $newPerson)),
 						'is_valid' => $qb->createNamedParameter(true),
 						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
 						'linked_user' => $qb->createNamedParameter(null)])

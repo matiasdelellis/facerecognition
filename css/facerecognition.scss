@@ -2,11 +2,24 @@
 	width: 100%;
 }
 
-.person-title {
-	display: inline-flex;
+.icon-back {
+	@include icon-color('back', 'facerecognition', $color-black);
+}
+
+.image-box,
+.person-box {
+	display: inline-block;
+	margin: 3px;
+}
+
+.person-desc {
+	text-align: center;
+	margin-top: -5px;
+	color: var(--color-text-lighter);
+}
+
+.cluster-title {
 	padding: 10px;
-	padding-left: 34px;
-	background-position: 10px center;
 	text-align: left;
 	margin-top: 22px;
 	margin-bottom: 0px !important;
@@ -16,38 +29,45 @@
 	padding-left: 34px;
 }
 
+.person-name {
+	text-align: center;
+	margin-top: 5px;
+	margin-bottom: 0px;
+}
+
 .persons-previews {
+	margin-top: 22px;
+}
+
+.faces-previews {
 	margin-left: 24px;
 	display: flex;
 	flex-wrap: wrap;
 }
 
+.face-preview-big,
+.file-preview-big {
+	background-color: rgba(210, 210, 210, .75);
+	background-size: cover;
+	border-radius: 12px;
+	height: 128px;
+	width: 128px;
+	margin: 0 auto;
+	cursor: pointer;
+}
+
 .face-preview {
 	background-color: rgba(210, 210, 210, .75);
+	background-size: cover;
 	border-radius: 3px;
 	margin: 2px;
 	height: 50px;
 	width: 50px;
 }
 
+.face-preview-big:hover,
 .face-preview:hover {
 	opacity: .5;
-}
-
-/*
- * Rename dialog
- */
-
-#fr-dialog-content-input {
-	width: 80%;
-	margin: 6px;
-}
-
-.face-preview-dialog {
-	background-color: rgba(210, 210, 210, .75);
-	border-radius: 25px;
-	height: 50px;
-	width: 50px;
 }
 
 /*

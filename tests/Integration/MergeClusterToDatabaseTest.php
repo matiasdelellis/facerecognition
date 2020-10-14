@@ -62,7 +62,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		$personMapper->mergeClusterToDatabase($this->user->getUid(), array(), array(100=>[$face->getId()]));
 
-		$personId = $this->assertOnePerson("100");
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
 	}
 
@@ -104,7 +104,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		);
 
 		$this->assertPersonDoNotExist($person->getId());
-		$personId = $this->assertOnePerson(strval($person->getId()+1));
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
 	}
 
@@ -171,14 +171,14 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), strval($person->getId()+1)) !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+2)) !== false);
+		$this->assertTrue(is_null($persons[0]->getName()));
+		$this->assertTrue(is_null($persons[1]->getName()));
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertPersonDoNotExist($person->getId());
+
 		$person1Id = $persons[0]->getId();
 		$person2Id = $persons[1]->getId();
-
 		$this->assertFaces([$person1Id => [$face1->getId()], $person2Id => [$face2->getId()]]);
 	}
 
@@ -212,8 +212,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person->getId()+1)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo');
+		$this->assertTrue($persons[1]->getName() === null);
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$person1Id = $persons[0]->getId();
@@ -281,7 +281,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 		$this->assertPersonDoNotExist($person1->getId());
 		$this->assertPersonDoNotExist($person2->getId());
-		$personId = $this->assertOnePerson(strval($person1->getId()+5));
+		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face1->getId(), $face2->getId()]]);
 	}
 
@@ -361,8 +361,8 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person2->getId()+5)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo');
+		$this->assertTrue($persons[1]->getName() === null);
 		$this->assertTrue($persons[0]->getIsValid());
 		$this->assertTrue($persons[1]->getIsValid());
 		$this->assertEquals($person1->getId(), $persons[0]->getId());
@@ -442,12 +442,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
-		$this->assertTrue(strpos($persons[0]->getName(), 'foo-p1') !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), 'foo-p2') !== false);
-		$this->assertTrue(strpos($persons[2]->getName(), 'foo-p3') !== false);
-		$this->assertTrue(strpos($persons[3]->getName(), 'foo-p4') !== false);
-		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+100)) !== false);
-		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+101)) !== false);
+		$this->assertTrue($persons[0]->getName() === 'foo-p1');
+		$this->assertTrue($persons[1]->getName() === 'foo-p2');
+		$this->assertTrue($persons[2]->getName() === 'foo-p3');
+		$this->assertTrue($persons[3]->getName() === 'foo-p4');
+		$this->assertTrue($persons[4]->getName() === null);
+		$this->assertTrue($persons[5]->getName() === null);
 		foreach ($persons as $person) {
 			$this->assertTrue($person->getIsValid());
 		}
@@ -541,12 +541,12 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$this->assertPersonDoNotExist($person2->getId());
 		$this->assertPersonDoNotExist($person3->getId());
 		$this->assertPersonDoNotExist($person4->getId());
-		$this->assertTrue(strpos($persons[0]->getName(), strval($person1->getId()+100)) !== false);
-		$this->assertTrue(strpos($persons[1]->getName(), strval($person1->getId()+101)) !== false);
-		$this->assertTrue(strpos($persons[2]->getName(), strval($person1->getId()+102)) !== false);
-		$this->assertTrue(strpos($persons[3]->getName(), strval($person1->getId()+103)) !== false);
-		$this->assertTrue(strpos($persons[4]->getName(), strval($person1->getId()+104)) !== false);
-		$this->assertTrue(strpos($persons[5]->getName(), strval($person1->getId()+105)) !== false);
+		$this->assertTrue($persons[0]->getName() === null);
+		$this->assertTrue($persons[1]->getName() === null);
+		$this->assertTrue($persons[2]->getName() === null);
+		$this->assertTrue($persons[3]->getName() === null);
+		$this->assertTrue($persons[4]->getName() === null);
+		$this->assertTrue($persons[5]->getName() === null);
 		foreach ($persons as $person) {
 			$this->assertTrue($person->getIsValid());
 		}
@@ -600,14 +600,20 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		return $face;
 	}
 
-	private function assertOnePerson(string $nameSubstring): int {
+	private function assertOnePerson($name = null): int {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
-		if ($nameSubstring !== null) {
-			$this->assertTrue(strpos($persons[0]->getName(), $nameSubstring) !== false);
+
+		if ($name !== null) {
+			// check that retains the name
+			$this->assertTrue($persons[0]->getName() === $name);
+
+			// Check that it can be found using this method too
+			$persons = $personMapper->findByName($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
+			$this->assertEquals(1, count($persons));
 		}
 
 		// Check that it can be found using this method too

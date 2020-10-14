@@ -214,42 +214,9 @@ $(document).ready(function() {
         });
     });
 
-
     /*
-     * Show not clustered people
+     * Utils
      */
-    function getNotGrouped() {
-        $.ajax({
-            type: 'GET',
-            url: OC.generateUrl('apps/facerecognition/getappvalue'),
-            data: {
-                'type': 'show_not_grouped',
-            },
-            success: function (data) {
-                if (data.status === state.OK) {
-                    $('#showNotGrouped').prop('checked', data.value);
-                }
-            }
-        });
-    }
-
-    $('#showNotGrouped').click(function() {
-        var checked = $(this).is(':checked');
-        var self = this;
-        $.ajax({
-            type: 'POST',
-            url: OC.generateUrl('apps/facerecognition/setappvalue'),
-            data: {
-                'type': 'show_not_grouped',
-                'value': checked
-            },
-            error: function () {
-                $('#showNotGrouped').prop('checked', !checked);
-                OC.Notification.showTemporary(t('facerecognition', 'The change could not be applied.'));
-            }
-        });
-    })
-
     function getFourByThreeRelation(area) {
         var width = Math.sqrt(area * 4 / 3);
         var height = (width * 3  / 4);
@@ -263,7 +230,6 @@ $(document).ready(function() {
     getImageArea();
     getSensitivity();
     getMinConfidence();
-    getNotGrouped();
 
     checkProgress();
 

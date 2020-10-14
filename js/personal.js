@@ -15,89 +15,132 @@ const state = {
  */
 var Persons = function (baseUrl) {
     this._baseUrl = baseUrl;
+
+    this._persons = [];
+
+    this._activePerson = undefined;
+
+    this._clustersByName = [];
+
+    this._unassignedClusters = [];
+
     this._enabled = false;
-    this._clusters = [];
-    this._cluster = undefined;
-    this._clustersByName = undefined;
     this._loaded = false;
+    this._mustReload = false;
 };
 
 Persons.prototype = {
+    /*
+     * View State
+     */
+    isEnabled: function () {
+        return this._enabled;
+    },
+    isLoaded: function () {
+        return this._loaded;
+    },
+    mustReload: function() {
+        return this._mustReload;
+    },
+    /*
+     * Persons
+     */
     load: function () {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/clusters').done(function (response) {
+        $.get(this._baseUrl+'/persons').done(function (response) {
             self._enabled = response.enabled;
-            self._clusters = response.clusters;
+            self._persons = response.persons.sort(function(a, b) {
+                return b.count - a.count;
+            });
             self._loaded = true;
+            self._mustReload = false;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
     },
-    loadCluster: function (id) {
+    loadPerson: function (personName) {
         this.unsetActive();
-
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/cluster/'+id).done(function (cluster) {
-            self._cluster = cluster;
+        $.get(this._baseUrl+'/person/' + personName).done(function (person) {
+            self._activePerson = person;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
     },
+    getPersons: function () {
+        return this._persons;
+    },
+    getActivePerson: function () {
+        return this._activePerson;
+    },
+    renamePerson: function (personName, name) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { name: name };
+        $.ajax({url: this._baseUrl + '/person/' + personName,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(opt)
+        }).done(function (person) {
+            self._activePerson = person;
+            self._mustReload = true;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
+    /*
+     * Clusters
+     */
     loadClustersByName: function (personName) {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/'+personName).done(function (clusters) {
-            self._clustersByName = clusters.clusters;
+        $.get(this._baseUrl+'/clusters/'+personName).done(function (clusters) {
+            self._clustersByName = clusters.clusters.sort(function(a, b) {
+                return b.count - a.count;
+            });
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
     },
-    unsetActive: function () {
-        this._cluster = undefined;
-        this._clustersByName = undefined;
+    loadUnassignedClusters: function () {
+        this._unassignedClusters = [];
+        var deferred = $.Deferred();
+        var self = this;
+        $.get(this._baseUrl+'/clusters').done(function (clusters) {
+            self._unassignedClusters = clusters.clusters.sort(function(a, b) {
+                return b.count - a.count;
+            });
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
     },
-    getActive: function () {
-        return this._cluster;
-    },
-    getActiveByName: function () {
+    getClustersByName: function () {
         return this._clustersByName;
     },
-    getById: function (clusterId) {
+    getUnassignedClusters: function () {
+        return this._unassignedClusters;
+    },
+    getNamedClusterById: function (clusterId) {
         var ret = undefined;
-        for (var cluster of this._clusters) {
+        for (var cluster of this._clustersByName) {
             if (cluster.id === clusterId) {
                 ret = cluster;
                 break;
             }
         };
         return ret;
-    },
-    isLoaded: function () {
-        return this._loaded;
-    },
-    isEnabled: function () {
-        return this._enabled;
-    },
-    sortBySize: function () {
-        if (this._clusters !== undefined)
-            this._clusters.sort(function(a, b) {
-                return b.count - a.count;
-            });
-        if (this._clustersByName !== undefined)
-            this._clustersByName.sort(function(a, b) {
-                return b.count - a.count;
-            });
-    },
-    getAll: function () {
-        return this._clusters;
     },
     renameCluster: function (clusterId, personName) {
         var self = this;
@@ -108,16 +151,26 @@ Persons.prototype = {
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
         }).done(function (data) {
-            self._clusters.forEach(function (cluster) {
+            self._clustersByName.forEach(function (cluster) {
                 if (cluster.id === clusterId) {
                     cluster.name = personName;
                 }
             });
+            self._mustReload = true;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
         });
         return deferred.promise();
+    },
+    unsetActive: function () {
+//        this._persons = [];
+
+        this._activePerson = undefined;
+
+//        this._unassignedClusters = [];
+
+        this._clustersByName = [];
     }
 };
 
@@ -126,6 +179,7 @@ Persons.prototype = {
  */
 var View = function (persons) {
     this._persons = persons;
+    this._observer = lozad('.lozad');
 };
 
 View.prototype = {
@@ -156,8 +210,51 @@ View.prototype = {
             }
         });
     },
+    searchUnassignedClusters: function () {
+        var self = this;
+        self._persons.loadUnassignedClusters().done(function () {
+            if (self._persons.getUnassignedClusters().length > 0) {
+                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
+                $('#optional-buttons-div').append(button);
+                button.click(function () {
+                    self.renameUnassignedClusterDialog();
+                });
+                OC.Notification.showTemporary(t('facerecognition', 'More people were found to recognize.'));
+            }
+        });
+    },
+    renameUnassignedClusterDialog: function () {
+        var self = this;
+        var unassignedClusters = this._persons.getUnassignedClusters();
+        var cluster = unassignedClusters.shift();
+        if (cluster === undefined) {
+            self.renderContent();
+            if (self._persons.mustReload())
+                self.reload();
+            return;
+        }
+        FrDialogs.assignName(cluster.faces,
+            function(result, name) {
+                if (result === true) {
+                    if (name.length > 0) {
+                        self._persons.renameCluster(cluster.id, name).done(function () {
+                            self.renameUnassignedClusterDialog();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                        });
+                    } else {
+                        // Fake ignore.
+                        self.renameUnassignedClusterDialog();
+                    }
+                } else {
+                    // Cancelled
+                    if (self._persons.mustReload())
+                        self.reload();
+                }
+            }
+        );
+    },
     renderContent: function () {
-        this._persons.sortBySize();
         var context = {
             loaded: this._persons.isLoaded(),
             appName: t('facerecognition', 'Face Recognition'),
@@ -172,26 +269,44 @@ View.prototype = {
 
         if (this._persons.isEnabled() === true) {
             context.enabled = true;
-            context.clusters = this._persons.getAll();
+            context.persons = this._persons.getPersons();
 
             context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
             context.emptyHint = t('facerecognition', 'Please, be patient');
         }
 
-        if (this._persons.getActive() !== undefined)
-            context.cluster = this._persons.getActive();
+        var person = this._persons.getActivePerson()
+        if (person != undefined) {
+            context.personName = person.name;
+            context.personImages = person.images;
+            context.multipleClusters = (person.clusters > 1);
+        }
 
-        if (this._persons.getActiveByName() !== undefined)
-            context.clustersByName = this._persons.getActiveByName();
+        var clustersByName = this._persons.getClustersByName();
+        if (clustersByName.length > 0) {
+            context.clustersByName = clustersByName;
+        }
 
+        // Render Page.
         var html = Handlebars.templates['personal'](context);
         $('#div-content').html(html);
 
-        const observer = lozad('.face-preview');
-        observer.observe();
+        // Handle new images
+        this._observer.observe();
 
+        // Update title.
+        if (person !== undefined) {
+            setPersonNameUrl(person.name);
+        } else {
+            setPersonNameUrl();
+        }
+
+        // Share View context
         var self = this;
 
+        /*
+         * Actions
+         */
         $('#enableFacerecognition').click(function() {
             var enabled = $(this).is(':checked');
             if (enabled === false) {
@@ -212,25 +327,24 @@ View.prototype = {
             }
         });
 
-        $('#facerecognition .person-name').click(function () {
-            var id = $(this).parent().data('id');
-            self._persons.loadCluster(id).done(function () {
+        $('#facerecognition .face-preview-big').click(function () {
+            $(this).css("cursor", "wait");
+            var name = $(this).parent().data('id');
+            self._persons.loadPerson(name).done(function () {
                 self.renderContent();
             }).fail(function () {
                 OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
             });
         });
 
-        $('#facerecognition .icon-rename').click(function () {
-            var id = $(this).parent().data('id');
-            var person = self._persons.getById(id);
+        $('#facerecognition #rename-person').click(function () {
+            var person = self._persons.getActivePerson();
             FrDialogs.rename(
                 person.name,
-                person.faces[0]['thumb-url'],
+                [person],
                 function(result, value) {
                     if (result === true && value) {
-                        self._persons.renameCluster (id, value).done(function () {
-                            self._persons.unsetActive();
+                        self._persons.renamePerson (person.name, value).done(function () {
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
@@ -240,21 +354,83 @@ View.prototype = {
             );
         });
 
+        $('#facerecognition #rename-cluster').click(function () {
+            var id = $(this).data('id');
+            var person = self._persons.getNamedClusterById(id);
+            FrDialogs.rename(
+                person.name,
+                [person.faces[0]],
+                function(result, value) {
+                    if (result === true && value) {
+                        self._persons.renameCluster (id, value).done(function () {
+                            self.renderContent();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this cluster of faces'));
+                        });
+                    }
+                }
+            );
+        });
+
         $('#facerecognition #show-more-clusters').click(function () {
-            var personName = self._persons.getActive().name;
-            self._persons.loadClustersByName(personName).done(function () {
+            $(this).css("cursor", "wait");
+            var person = self._persons.getActivePerson();
+            self._persons.loadClustersByName(person.name).done(function () {
                 self.renderContent();
             }).fail(function () {
                 OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
             });
         });
 
-        $('#facerecognition .icon-view-previous').click(function () {
+        $('#facerecognition .icon-back').click(function () {
             self._persons.unsetActive();
             self.renderContent();
+            if (self._persons.mustReload() || !self._persons.isLoaded()) {
+                self.reload();
+            }
         });
     }
 };
+
+/**
+ * Get the personName as URL parameter
+ */
+var getPersonNameUrl = function () {
+    var personName = undefined;
+    var parser = document.createElement('a');
+    parser.href = window.location.href;
+    var query = parser.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (pair[0] === 'name') {
+            personName = decodeURIComponent(pair[1]);
+            break;
+        }
+    }
+    return personName;
+};
+
+/**
+ *  Change the URL location with personName as parameter
+ */
+var setPersonNameUrl = function (personName) {
+    var cleanUrl = window.location.href.split("?")[0];
+    var title = t('facerecognition', 'Face Recogntion');
+    if (personName) {
+        cleanUrl += '?name=' + personName;
+        title += ' - ' + personName;
+    }
+    window.history.replaceState({}, title, cleanUrl);
+    document.title = title;
+};
+
+/**
+ * Add Helpers to handlebars
+ */
+Handlebars.registerHelper('noPhotos', function(count) {
+    return n('facerecognition', '%n image', '%n images', count);
+});
 
 /*
  * Main app.
@@ -263,13 +439,23 @@ var persons = new Persons(OC.generateUrl('/apps/facerecognition'));
 
 var view = new View(persons);
 
-view.renderContent();
-
-persons.load().done(function () {
+var personName = getPersonNameUrl();
+if (personName !== undefined) {
     view.renderContent();
-}).fail(function () {
-    OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
-});
+    persons.loadPerson(personName).done(function () {
+        view.renderContent();
+    }).fail(function () {
+        OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+    });
+} else {
+    view.renderContent();
+    persons.load().done(function () {
+        view.renderContent();
+        view.searchUnassignedClusters();
+    }).fail(function () {
+        OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
+    });
+}
 
 var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
     if (!OC.isUserAdmin()) {

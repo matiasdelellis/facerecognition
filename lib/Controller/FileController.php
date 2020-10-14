@@ -5,8 +5,6 @@ use OCP\IRequest;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
 
-use OCP\IURLGenerator;
-
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
@@ -20,10 +18,9 @@ use OCA\FaceRecognition\Service\FileService;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
-class FileController extends Controller {
+use OCA\FaceRecognition\Service\UrlService;
 
-	/** @var IURLGenerator */
-	private $urlGenerator;
+class FileController extends Controller {
 
 	/** @var ImageMapper */
 	private $imageMapper;
@@ -40,27 +37,30 @@ class FileController extends Controller {
 	/** @var SettingsService */
 	private $settingsService;
 
+	/** @var UrlService */
+	private $urlService;
+
 	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
-	                            IURLGenerator   $urlGenerator,
 	                            IRequest        $request,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personMapper,
 	                            FaceMapper      $faceMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
+	                            UrlService      $urlService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 
-		$this->urlGenerator    = $urlGenerator;
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personMapper;
 		$this->faceMapper      = $faceMapper;
 		$this->fileService     = $fileService;
 		$this->settingsService = $settingsService;
+		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
 	}
 
@@ -109,7 +109,7 @@ class FileController extends Controller {
 			$facePerson = array();
 			$facePerson['name'] = $person->getName();
 			$facePerson['person_id'] = $person->getId();
-			$facePerson['thumb_url'] = $this->getThumbUrl($face->getId());
+			$facePerson['thumb_url'] = $this->urlService->getThumbUrl($face->getId(), 50);
 			$facePerson['face_left'] = $face->getLeft();
 			$facePerson['face_right'] = $face->getRight();
 			$facePerson['face_top'] = $face->getTop();
@@ -161,18 +161,6 @@ class FileController extends Controller {
 		$this->fileService->setDescendantDetection($folder, $detection);
 
 		return $this->getFolderOptions($fullpath);
-	}
-
-	/**
-	 * Url to thumb face
-	 *
-	 * @param string $faceId face id to show
-	 */
-	private function getThumbUrl($faceId) {
-		$params = [];
-		$params['id'] = $faceId;
-		$params['size'] = 32;
-		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 
 }

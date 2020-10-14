@@ -1,6 +1,6 @@
-#fr-dialog-content-input {
-	width: 80%;
-	margin: 6px;
+#fr-assign-dialog-input,
+#fr-rename-dialog-input {
+	width: 100%;
 }
 
 .face-preview-dialog {
@@ -8,4 +8,5 @@
 	border-radius: 50%;
 	height: 50px;
 	width: 50px;
+	margin: 1px;
 }

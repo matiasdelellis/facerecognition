@@ -194,9 +194,6 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
-			case SettingsService::SHOW_NOT_GROUPED_KEY:
-				$this->settingsService->setShowNotGrouped($value === 'true' ? true : false);
-				break;
 			case SettingsService::OBFUSCATE_FACE_THUMBS_KEY:
 				$this->settingsService->setObfuscateFaces(!$this->settingsService->getObfuscateFaces());
 				break;
@@ -232,9 +229,6 @@ class SettingsController extends Controller {
 				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();
-				break;
-			case SettingsService::SHOW_NOT_GROUPED_KEY:
-				$value = $this->settingsService->getShowNotGrouped();
 				break;
 			default:
 				break;

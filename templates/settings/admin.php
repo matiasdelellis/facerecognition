@@ -56,14 +56,6 @@
 		</p>
 		<br>
 		<h3>
-			<?php p($l->t('Additional settings'));?>
-		</h3>
-		<p>
-			<input id="showNotGrouped" name="showNotGrouped" type="checkbox" class="checkbox">
-			<label for="showNotGrouped"><?php p($l->t('Show persons with only one face found'));?></label><br>
-		</p>
-		<br>
-		<h3>
 			<?php p($l->t('Configuration information'));?>
 			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
 		</h3>

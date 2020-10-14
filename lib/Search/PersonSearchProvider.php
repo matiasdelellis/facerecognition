@@ -26,19 +26,19 @@ namespace OCA\FaceRecognition\Search;
 
 use OCP\Search\IProvider;
 use OCP\IL10N;
+use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\Search\ISearchQuery;
 use OCP\Search\SearchResult;
 use OCP\Search\SearchResultEntry;
 use OCP\Files\IRootFolder;
-use OCP\IURLGenerator;
-use OCP\Files\IMimeTypeDetector;
 
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Model\IModel;
+use OCA\FaceRecognition\Service\UrlService;
 
 /**
  * Provide search results from the 'facerecognition' app
@@ -57,33 +57,33 @@ class PersonSearchProvider implements IProvider {
 	/** @var IL10N */
 	private $l10n;
 
-	/** @var IMimeTypeDetector */
-	private $mimeTypeDetector;
-
 	/** @var IURLGenerator */
 	private $urlGenerator;
+
+	/** @var UrlService */
+	private $urlService;
 
 	/** @var IRootFolder */
 	private $rootFolder;
 
-	/** @var IModel*/
+	/** @var int*/
 	private $modelId;
 
 	public function __construct(PersonMapper      $personMapper,
 	                            ImageMapper       $imageMapper,
 	                            SettingsService   $settingsService,
 	                            IL10N             $l10n,
-	                            ImimeTypeDetector $mimeTypeDetector,
+	                            UrlService        $urlService,
 	                            IURLGenerator     $urlGenerator,
 	                            IRootFolder       $rootFolder) {
 		$this->personMapper     = $personMapper;
-		$this->imageMapper = $imageMapper;
-		$this->settingsService = $settingsService;
-		$this->l10n = $l10n;
-		$this->urlGenerator = $urlGenerator;
-		$this->rootFolder = $rootFolder;
-		$this->mimeTypeDetector = $mimeTypeDetector;
-		$this->modelId =$this->settingsService->getCurrentFaceModel();
+		$this->imageMapper      = $imageMapper;
+		$this->settingsService  = $settingsService;
+		$this->l10n             = $l10n;
+		$this->urlService       = $urlService;
+		$this->urlGenerator     = $urlGenerator;
+		$this->rootFolder       = $rootFolder;
+		$this->modelId          = $this->settingsService->getCurrentFaceModel();
 	}
 
 	/**
@@ -104,6 +104,9 @@ class PersonSearchProvider implements IProvider {
 	 * @inheritDoc
 	 */
 	public function getOrder(string $route, array $routeParameters): int {
+		if ($route === 'settings.PersonalSettings.index' && $routeParameters["section"] === 'facerecognition') {
+			return 0;
+		}
 		return 10;
 	}
 
@@ -117,22 +120,13 @@ class PersonSearchProvider implements IProvider {
 			$this->l10n->t('Face Recognition'),
 			array_map(function (Person $result) {
 				$personName = $result->getName();
-				$link = '/index/settings/user/facerecognition?name=' . \OCP\Util::encodePath($personName);
-
-				$image = $this->imageMapper->getPersonAvatar($result);
-				$file = $this->rootFolder->getById($image->getFile())[0];
-				$file = new \OC\Search\Result\File($file->getFileInfo());
-				// Generate thumbnail url
-				$thumbnailUrl = $file->has_preview
-					? $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreviewByFileId', ['x' => 32, 'y' => 32, 'fileId' => $file->id])
-					: '';
-
 				return new SearchResultEntry(
-				    $thumbnailUrl,
+				    $this->urlGenerator->imagePath('facerecognition','avatar.webp'),
 				    $personName,
 				    '',
-				    $this->urlGenerator->getAbsoluteURL($link),
-				    $result->type === 'folder' ? 'icon-folder' : $this->mimeTypeDetector->mimeTypeIcon($file->mime_type)
+				    $this->urlService->getRedirectToPersonUrl($personName),
+				    '',
+				    true,
 				);
 			},
 			$this->personMapper->findPersonsLike($user->getUID(), 

@@ -51,7 +51,6 @@ class Application20 extends App implements IBootstrap {
 		parent::__construct(self::APP_NAME, $urlParams);
 
 		$this->connectWatcher();
-		$this->connectSearch();
 		$this->addServiceListeners();
 	}
 
@@ -88,13 +87,6 @@ class Application20 extends App implements IBootstrap {
 			$watcher = \OC::$server->query(Watcher::class);
 			$watcher->postUserDelete($user);
 		});
-	}
-
-	private function connectSearch() {
-		$this->getContainer()->getServer()->getSearch()->registerProvider(
-			'OCA\FaceRecognition\Search\Provider',
-			array('app'=>'facerecognition', 'apps' => array('files'))
-		);
 	}
 
 	private function addServiceListeners() {

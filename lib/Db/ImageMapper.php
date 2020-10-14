@@ -199,25 +199,6 @@ class ImageMapper extends QBMapper {
 		return $images;
 	}
 
-	/**
-	 * return the first find image as prson's avatar 
-	 */
-	public function getPersonAvatar(Person $person) {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.file')
-			->from($this->getTableName(), 'i')
-			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
-			->where($qb->expr()->eq('p.id', $qb->createNamedParameter($person->getId())));
-
-		$qb->setParameter('query', $query);
-
-		$qb->setMaxResults(1);
-
-		$images = $this->findEntities($qb);
-		return $images[0];
-	}
-	
 	public function findFromPersonLike(string $userId, int $model, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'i.file')

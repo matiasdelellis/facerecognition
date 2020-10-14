@@ -19,26 +19,28 @@ var Persons = function (baseUrl) {
     this._persons = [];
 
     this._activePerson = undefined;
-    this._activePersonClustersCount = 0;
-
-    this._unassignedClusters = [];
-    this._unassignedClustersCount = 0;
 
     this._clustersByName = [];
 
+    this._unassignedClusters = [];
+
     this._enabled = false;
     this._loaded = false;
+    this._mustReload = false;
 };
 
 Persons.prototype = {
     /*
      * View State
      */
+    isEnabled: function () {
+        return this._enabled;
+    },
     isLoaded: function () {
         return this._loaded;
     },
-    isEnabled: function () {
-        return this._enabled;
+    mustReload: function() {
+        return this._mustReload;
     },
     /*
      * Persons
@@ -52,6 +54,7 @@ Persons.prototype = {
                 return b.count - a.count;
             });
             self._loaded = true;
+            self._mustReload = false;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -64,7 +67,6 @@ Persons.prototype = {
         var self = this;
         $.get(this._baseUrl+'/person/' + personName).done(function (person) {
             self._activePerson = person;
-            self._activePersonClustersCount = person.clusters;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -77,9 +79,6 @@ Persons.prototype = {
     getActivePerson: function () {
         return this._activePerson;
     },
-    getActivePersonClustersCount: function() {
-        return this._activePersonClustersCount;
-    },
     renamePerson: function (personName, name) {
         var self = this;
         var deferred = $.Deferred();
@@ -90,7 +89,7 @@ Persons.prototype = {
                 data: JSON.stringify(opt)
         }).done(function (person) {
             self._activePerson = person;
-            self._activePersonClustersCount = person.clusters;
+            self._mustReload = true;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -114,14 +113,13 @@ Persons.prototype = {
         return deferred.promise();
     },
     loadUnassignedClusters: function () {
-        this.unsetActive();
+        this._unassignedClusters = [];
         var deferred = $.Deferred();
         var self = this;
         $.get(this._baseUrl+'/clusters').done(function (clusters) {
             self._unassignedClusters = clusters.clusters.sort(function(a, b) {
                 return b.count - a.count;
             });
-            self._unassignedClustersCount = self._unassignedClusters.length;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -133,9 +131,6 @@ Persons.prototype = {
     },
     getUnassignedClusters: function () {
         return this._unassignedClusters;
-    },
-    getUnassignedClustersCount: function () {
-        return this._unassignedClustersCount;
     },
     getNamedClusterById: function (clusterId) {
         var ret = undefined;
@@ -161,6 +156,7 @@ Persons.prototype = {
                     cluster.name = personName;
                 }
             });
+            self._mustReload = true;
             deferred.resolve();
         }).fail(function () {
             deferred.reject();
@@ -171,10 +167,8 @@ Persons.prototype = {
 //        this._persons = [];
 
         this._activePerson = undefined;
-        this._activePersonClustersCount = 0;
 
 //        this._unassignedClusters = [];
-//        this._unassignedClustersCount = 0;
 
         this._clustersByName = [];
     }
@@ -219,7 +213,7 @@ View.prototype = {
     searchUnassignedClusters: function () {
         var self = this;
         self._persons.loadUnassignedClusters().done(function () {
-            if (self._persons.getUnassignedClustersCount() > 0) {
+            if (self._persons.getUnassignedClusters().length > 0) {
                 var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
                 $('#optional-buttons-div').append(button);
                 button.click(function () {
@@ -234,7 +228,8 @@ View.prototype = {
         var unassignedClusters = this._persons.getUnassignedClusters();
         var cluster = unassignedClusters.shift();
         if (cluster === undefined) {
-            if (self._persons.getUnassignedClustersCount() > 0)
+            self.renderContent();
+            if (self._persons.mustReload())
                 self.reload();
             return;
         }
@@ -252,7 +247,8 @@ View.prototype = {
                         self.renameUnassignedClusterDialog();
                     }
                 } else {
-                    if (self._persons.getUnassignedClustersCount() > 0)
+                    // Cancelled
+                    if (self._persons.mustReload())
                         self.reload();
                 }
             }
@@ -331,8 +327,9 @@ View.prototype = {
             }
         });
 
-        $('#facerecognition .person-box').click(function () {
-            var name = $(this).data('id');
+        $('#facerecognition .face-preview-big').click(function () {
+            $(this).css("cursor", "wait");
+            var name = $(this).parent().data('id');
             self._persons.loadPerson(name).done(function () {
                 self.renderContent();
             }).fail(function () {
@@ -348,7 +345,6 @@ View.prototype = {
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.renamePerson (person.name, value).done(function () {
-                            self._persons.unsetActive();
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
@@ -367,7 +363,6 @@ View.prototype = {
                 function(result, value) {
                     if (result === true && value) {
                         self._persons.renameCluster (id, value).done(function () {
-                            self._persons.unsetActive();
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this cluster of faces'));
@@ -378,6 +373,7 @@ View.prototype = {
         });
 
         $('#facerecognition #show-more-clusters').click(function () {
+            $(this).css("cursor", "wait");
             var person = self._persons.getActivePerson();
             self._persons.loadClustersByName(person.name).done(function () {
                 self.renderContent();
@@ -389,7 +385,7 @@ View.prototype = {
         $('#facerecognition .icon-back').click(function () {
             self._persons.unsetActive();
             self.renderContent();
-            if (!self._persons.isLoaded()) {
+            if (self._persons.mustReload() || !self._persons.isLoaded()) {
                 self.reload();
             }
         });

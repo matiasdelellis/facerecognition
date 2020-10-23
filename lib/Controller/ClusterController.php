@@ -176,7 +176,7 @@ class ClusterController extends Controller {
 
 		$persons = $this->personMapper->findUnassigned($this->userId, $modelId);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
+			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId, 40);
 			if (count($personFaces) === 1)
 				continue;
 

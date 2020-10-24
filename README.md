@@ -19,7 +19,7 @@ later analysis. A scheduled task (Or admin on demand) take this queue, and
 analyze the images for looking faces and if possible identify them grouping by
 similarity.
 
-![App screenshots](/screenshots/facerecognition-clusters-view-small.jpg "App screenshots")
+![App screenshots](https://matiasdelellis.github.io/img/facerecognition/facerecognition-persons-view-small.jpeg "App screenshots")
 
 ## How to use it?
 
@@ -43,7 +43,7 @@ Finally the user can use the application in three ways
  * Nextcloud 16+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
  * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
- * 2GB of RAM
+ * 1GB of RAM
 
 #### Installation
 

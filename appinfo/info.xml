@@ -16,7 +16,7 @@
 - **🚀 Build your own thing:** FaceRecognition app is just a basic building block. Through FaceRecognition API, you can build your advanced scenarios - automatically add tags to images, connect contacts and persons, share images from specific person… We want to hear your ideas!
 ]]>
 	</description>
-	<version>0.6.4</version>
+	<version>0.7.0</version>
 	<licence>agpl</licence>
 	<author>Matias De lellis</author>
 	<author>Branko Kokanovic</author>
@@ -28,11 +28,10 @@
 	<website>https://github.com/matiasdelellis/facerecognition</website>
 	<bugs>https://github.com/matiasdelellis/facerecognition/issues</bugs>
 	<repository type="git">https://github.com/matiasdelellis/facerecognition.git</repository>
-	<screenshot small-thumbnail="https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-clusters-view-small.jpg">https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-clusters-view.jpg</screenshot>
-	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-cluster-detail.jpg</screenshot>
-	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-file-pane.jpg</screenshot>
-	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-photos-pane.jpg</screenshot>
-	<screenshot>https://raw.githubusercontent.com/matiasdelellis/facerecognition/master/screenshots/facerecognition-files-search.jpg</screenshot>
+	<screenshot small-thumbnail="https://matiasdelellis.github.io/img/facerecognition/facerecognition-persons-view-small.jpeg">https://matiasdelellis.github.io/img/facerecognition/facerecognition-persons-view.jpeg</screenshot>
+	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-person-photos.jpeg</screenshot>
+	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-photos-integration.jpeg</screenshot>
+	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-assign-initial-name.jpeg</screenshot>
 	<dependencies>
 		<php min-version="7.2"/>
 		<lib>pdlib</lib>

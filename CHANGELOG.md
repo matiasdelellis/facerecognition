@@ -1,6 +1,27 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2020-10-24
+### Added
+- Support to Nextcloud 20. Issue #343 and #347. Thanks to xiangbin li.
+- Add a dialog to assign names to the new persons found.
+
+### Changed
+- The main view of face clusters change switches to a view of persons. We
+  consider person to the set of all faces with the same name, regardless of the
+  clusters. Fix issue #334 and parts of #134.
+- The second viev show all photos of a person. The server thumbnails are reused,
+  and therefore the performance is drastically improved. In general fix issue
+  #193 and parts of #134.
+- Finally, the third view, allows you to see all the clusters as before, only to
+  fix name errors if necessary.
+
+### Fixed
+- Fix crashed on postWrite and prevent other apps to work. Issue  #341
+
+### Translations
+- Update French tranlation thanks to Tho Vi
+
 ## [0.6.3] - 2020-08-28
 ### Changed
 - Reduce the minimum system memory to 1GB. Issue #319 and others.

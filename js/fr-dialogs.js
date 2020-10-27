@@ -30,7 +30,7 @@ const FrDialogs = {
 			var dialogId = '#' + dialogName;
 			var $dlg = $tmpl.octemplate({
 				dialog_name: dialogName,
-				title: t('facerecognition', 'Rename Person'),
+				title: t('facerecognition', 'Rename person'),
 				message: t('facerecognition', 'Please enter a name to rename the person'),
 				type: 'none'
 			});
@@ -98,7 +98,7 @@ const FrDialogs = {
 			var dialogId = '#' + dialogName;
 			var $dlg = $tmpl.octemplate({
 				dialog_name: dialogName,
-				title: t('facerecognition', 'Rename Person'),
+				title: t('facerecognition', 'Rename person'),
 				message: t('facerecognition', 'Please assign a name to this person.'),
 				type: 'none'
 			});

@@ -214,12 +214,12 @@ View.prototype = {
         var self = this;
         self._persons.loadUnassignedClusters().done(function () {
             if (self._persons.getUnassignedClusters().length > 0) {
-                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'There are more persons to recognize') + "</button>");
+                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'Recognize persons found') + "</button>");
                 $('#optional-buttons-div').append(button);
                 button.click(function () {
                     self.renameUnassignedClusterDialog();
                 });
-                OC.Notification.showTemporary(t('facerecognition', 'More people were found to recognize.'));
+                OC.Notification.showTemporary(t('facerecognition', 'There are some persons to recognize'));
             }
         });
     },

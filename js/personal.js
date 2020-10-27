@@ -416,7 +416,7 @@ var getPersonNameUrl = function () {
  */
 var setPersonNameUrl = function (personName) {
     var cleanUrl = window.location.href.split("?")[0];
-    var title = t('facerecognition', 'Face Recogntion');
+    var title = t('facerecognition', 'Face Recognition');
     if (personName) {
         cleanUrl += '?name=' + personName;
         title += ' - ' + personName;

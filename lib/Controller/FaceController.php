@@ -86,6 +86,10 @@ class FaceController extends Controller {
 		}
 
 		$image = $this->imageMapper->find($this->userId, $face->getImage());
+		if ($image === null) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+
 		$fileId = $image->getFile();
 
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);

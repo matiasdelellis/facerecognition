@@ -42,7 +42,11 @@ class FaceMapper extends QBMapper {
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
-		return $this->findEntity($qb);
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
 	}
 
 	/**

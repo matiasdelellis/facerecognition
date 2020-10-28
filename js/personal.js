@@ -65,7 +65,7 @@ Persons.prototype = {
         this.unsetActive();
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/person/' + personName).done(function (person) {
+        $.get(this._baseUrl+'/person/' + encodeURIComponent(personName)).done(function (person) {
             self._activePerson = person;
             deferred.resolve();
         }).fail(function () {
@@ -83,7 +83,7 @@ Persons.prototype = {
         var self = this;
         var deferred = $.Deferred();
         var opt = { name: name };
-        $.ajax({url: this._baseUrl + '/person/' + personName,
+        $.ajax({url: this._baseUrl + '/person/' + encodeURIComponent(personName),
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(opt)
@@ -102,7 +102,7 @@ Persons.prototype = {
     loadClustersByName: function (personName) {
         var deferred = $.Deferred();
         var self = this;
-        $.get(this._baseUrl+'/clusters/'+personName).done(function (clusters) {
+        $.get(this._baseUrl+'/clusters/' + encodeURIComponent(personName)).done(function (clusters) {
             self._clustersByName = clusters.clusters.sort(function(a, b) {
                 return b.count - a.count;
             });
@@ -418,7 +418,7 @@ var setPersonNameUrl = function (personName) {
     var cleanUrl = window.location.href.split("?")[0];
     var title = t('facerecognition', 'Face Recognition');
     if (personName) {
-        cleanUrl += '?name=' + personName;
+        cleanUrl += '?name=' + encodeURIComponent(personName);
         title += ' - ' + personName;
     }
     window.history.replaceState({}, title, cleanUrl);

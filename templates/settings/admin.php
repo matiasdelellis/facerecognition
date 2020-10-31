@@ -49,7 +49,7 @@
 		<p class="settings-ranged">
 			<label for="min-confidence-range"><?php p($l->t('Lower minimum confidence'));?></label>
 			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider"></span>
-			<label for="min-confidence-range"><?php p($l->t('Highest minimum confidence'));?></label>
+			<label for="min-confidence-range"><?php p($l->t('Higher minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-min-confidence" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>

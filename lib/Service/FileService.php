@@ -215,6 +215,13 @@ class FileService {
 	}
 
 	/**
+	 * Returns if the file is inside a group folder storage.
+	 */
+	public function isGroupFile(Node $node): bool {
+		return ($node->getMountPoint()->getMountType() === 'group');
+	}
+
+	/**
 	 * Returns if the Node is allowed based on preferences.
 	 */
 	public function isAllowedNode(Node $node): bool {
@@ -224,6 +231,8 @@ class FileService {
 			return $this->settingsService->getHandleSharedFiles();
 		} else if ($this->isExternalFile($node)) {
 			return $this->settingsService->getHandleExternalFiles();
+		} else if ($this->isGroupFile($node)) {
+			return $this->settingsService->getHandleGroupFiles();
 		}
 		return false;
 	}

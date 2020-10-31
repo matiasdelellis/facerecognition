@@ -101,6 +101,10 @@ class SettingsService {
 	const HANDLE_EXTERNAL_FILES_KEY = 'handle_external_files';
 	const DEFAULT_HANDLE_EXTERNAL_FILES = 'false';
 
+	/** Hidden setting that allows to analyze group files */
+	const HANDLE_GROUP_FILES_KEY = 'handle_group_files';
+	const DEFAULT_HANDLE_GROUP_FILES = 'false';
+
 	/** Hidden setting that indicate minimum large of image to analyze */
 	const MINIMUM_IMAGE_SIZE_KEY = 'min_image_size';
 	const DEFAULT_MINIMUM_IMAGE_SIZE = '512';
@@ -243,6 +247,11 @@ class SettingsService {
 
 	public function getHandleExternalFiles(): bool {
 		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_EXTERNAL_FILES_KEY, self::DEFAULT_HANDLE_EXTERNAL_FILES);
+		return ($handle === 'true');
+	}
+
+	public function getHandleGroupFiles(): bool {
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_GROUP_FILES_KEY, self::DEFAULT_HANDLE_GROUP_FILES);
 		return ($handle === 'true');
 	}
 

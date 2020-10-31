@@ -56,7 +56,7 @@
 		</p>
 		<br>
 		<h3>
-			<?php p($l->t('Model'));?>
+			<?php p($l->t('Configuration information'));?>
 			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
 		</h3>
 		<p><?php p($l->t('Current model:'));?> <em><?php p($_['model-version']);?></em></p>

@@ -90,7 +90,7 @@ class UrlService {
 			return null;
 		}
 
-		return '/core/preview?fileId=' . $fileId .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag();
+		return $this->urlGenerator->getAbsoluteURL('index.php/core/preview?fileId=' . $fileId .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag());
 	}
 
 	/**

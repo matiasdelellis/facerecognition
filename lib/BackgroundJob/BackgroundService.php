@@ -89,18 +89,33 @@ class BackgroundService {
 
 		// Here we are defining all the tasks that will get executed.
 		//
-		$task_classes = [
-			CheckRequirementsTask::class,
-			CheckCronTask::class,
-			LockTask::class,
-			DisabledUserRemovalTask::class,
-			StaleImagesRemovalTask::class,
-			CreateClustersTask::class,
-			AddMissingImagesTask::class,
-			EnumerateImagesMissingFacesTask::class,
-			ImageProcessingTask::class,
-			UnlockTask::class
-		];
+		if ($timeout > 0) {
+			$task_classes = [
+				CheckRequirementsTask::class,
+				CheckCronTask::class,
+				LockTask::class,
+				DisabledUserRemovalTask::class,
+				StaleImagesRemovalTask::class,
+				CreateClustersTask::class,
+				AddMissingImagesTask::class,
+				EnumerateImagesMissingFacesTask::class,
+				ImageProcessingTask::class,
+				UnlockTask::class
+			];
+		} else {
+                       $task_classes = [
+				CheckRequirementsTask::class,
+				CheckCronTask::class,
+				LockTask::class,
+				DisabledUserRemovalTask::class,
+				StaleImagesRemovalTask::class,
+				AddMissingImagesTask::class,
+				EnumerateImagesMissingFacesTask::class,
+				ImageProcessingTask::class,
+				CreateClustersTask::class,
+				UnlockTask::class
+                        ];
+		};
 
 		// Main logic to iterate over all tasks and executes them.
 		//

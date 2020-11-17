@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2020-11-17
+### Added
+- Add support for analyzing photos from group folders. Issue #364
+
+### Fixed
+- Fixed Prevent error when pretty url is disabled on subfolder #379
+- Fix responses when you want to see another user's faces. Issue #352
+- Fix enconde name to URL params queries. Issue #359
+- Typo in title. Issue #357 and #380. Thanks to @strugee
+- Try to improve some messages.
+
 ## [0.7.0] - 2020-10-24
 ### Added
 - Support to Nextcloud 20. Issue #343 and #347. Thanks to xiangbin li.

@@ -16,7 +16,7 @@
 - **🚀 Build your own thing:** FaceRecognition app is just a basic building block. Through FaceRecognition API, you can build your advanced scenarios - automatically add tags to images, connect contacts and persons, share images from specific person… We want to hear your ideas!
 ]]>
 	</description>
-	<version>0.7.0</version>
+	<version>0.7.1</version>
 	<licence>agpl</licence>
 	<author>Matias De lellis</author>
 	<author>Branko Kokanovic</author>

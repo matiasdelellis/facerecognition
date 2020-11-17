@@ -12,6 +12,13 @@ All notable changes to this project will be documented in this file.
 - Typo in title. Issue #357 and #380. Thanks to @strugee
 - Try to improve some messages.
 
+### Translations
+- Add Dutch translation thanks to Robin Slot.
+- Update Macedonian language thanks to Сашко Тодоров
+- Update French language thanks to Tho Vi
+- Update Serbian language thanks to Branko Kokanovic.
+- Update Spanish language thanks to Matias De lellis.
+
 ## [0.7.0] - 2020-10-24
 ### Added
 - Support to Nextcloud 20. Issue #343 and #347. Thanks to xiangbin li.

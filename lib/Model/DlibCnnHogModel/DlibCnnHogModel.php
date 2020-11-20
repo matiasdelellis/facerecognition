@@ -159,6 +159,10 @@ class DlibCnnHogModel implements IModel {
 		return $detectedFaces;
 	}
 
+	public function compute(string $imagePath, $face): array {
+		return $this->dlibCnn5Model->compute($imagePath, $face);
+	}
+
 	private function validateFace($proposedFace, $validateFaces) {
 		foreach ($validateFaces as $validateFace) {
 			$overlayPercent = FaceRect::getOverlayPercent($proposedFace, $validateFace);

@@ -123,17 +123,17 @@ class Face extends Entity implements JsonSerializable {
 	 * @param array $faceFromModel Face obtained from DNN model
 	 * @return Face Created face
 	 */
-	public static function fromModel(int $image, array $faceFromModel): Face {
+	public static function fromModel(int $imageId, array $faceFromModel): Face {
 		$face = new Face();
-		$face->setImage($image);
-		$face->setPerson(null);
-		$face->setLeft($faceFromModel["left"]);
-		$face->setRight($faceFromModel["right"]);
-		$face->setTop($faceFromModel["top"]);
-		$face->setBottom($faceFromModel["bottom"]);
-		$face->setConfidence($faceFromModel["detection_confidence"]);
-		$face->setLandmarks("[]");
-		$face->setDescriptor("[]");
+		$face->image      = $imageId;
+		$face->person     = null;
+		$face->left       = $faceFromModel['left'];
+		$face->right      = $faceFromModel['right'];
+		$face->top        = $faceFromModel['top'];
+		$face->bottom     = $faceFromModel['bottom'];
+		$face->confidence = $faceFromModel['detection_confidence'];
+		$face->landmarks  = isset($faceFromModel['landmarks']) ? $faceFromModel['landmarks'] : [];
+		$face->descriptor = isset($faceFromModel['descriptor']) ? $faceFromModel['descriptor'] : [];
 		$face->setCreationTime(new \DateTime());
 		return $face;
 	}

@@ -194,16 +194,20 @@ class DlibHogModel implements IModel {
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
-	public function detectFaces(string $imagePath): array {
+	public function detectFaces(string $imagePath, bool $compute = true): array {
 		$faces_detected = dlib_face_detection($imagePath);
 		foreach ($faces_detected as &$face) {
+			// Add and fake higher confidense value sinse this model does not provide it.
+			$face['detection_confidence'] = 1.1;
+
+			if (!$compute)
+				continue;
+
 			$landmarks = $this->fld->detect($imagePath, $face);
 			$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 
 			$face['landmarks'] = $landmarks['parts'];
 			$face['descriptor'] = $descriptor;
-			// Add and fake higher confidense value sinse this model does not provide it.
-			$face['detection_confidence'] = 1.1;
 		}
 		return $faces_detected;
 	}

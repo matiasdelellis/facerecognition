@@ -84,9 +84,10 @@ interface IModel {
 	 * Detect faces on image.
 	 *
 	 * @param string $imagePath Image path to analyze
+	 * @param bool $compute (optional) variable that indicates if it must obtain the landmarks and the descriptor
 	 * @return array where values are assoc arrays with "top", "bottom", "left", "right"
 	 * "detection_confidence", "landmaks", and "descriptor"
 	 */
-	public function detectFaces(string $imagePath): array;
+	public function detectFaces(string $imagePath, bool $compute = true): array;
 
 }

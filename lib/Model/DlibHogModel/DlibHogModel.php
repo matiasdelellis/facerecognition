@@ -196,16 +196,16 @@ class DlibHogModel implements IModel {
 
 	public function detectFaces(string $imagePath): array {
 		$faces_detected = dlib_face_detection($imagePath);
-		// To improve clustering a confidence value is needed, which this model does not provide
-		return array_map (function (array $face) { $face['detection_confidence'] = 1.1; return $face; }, $faces_detected);
-	}
+		foreach ($faces_detected as &$face) {
+			$landmarks = $this->fld->detect($imagePath, $face);
+			$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->fld->detect($imagePath, $rect);
-	}
-
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->fr->computeDescriptor($imagePath, $landmarks);
+			$face['landmarks'] = $landmarks['parts'];
+			$face['descriptor'] = $descriptor;
+			// Add and fake higher confidense value sinse this model does not provide it.
+			$face['detection_confidence'] = 1.1;
+		}
+		return $faces_detected;
 	}
 
 }

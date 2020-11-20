@@ -140,6 +140,7 @@ class DlibCnnHogModel implements IModel {
 
 	public function open() {
 		$this->dlibCnn5Model->open();
+		$this->dlibHogModel->open();
 	}
 
 	public function detectFaces(string $imagePath): array {
@@ -157,14 +158,6 @@ class DlibCnnHogModel implements IModel {
 		}
 
 		return $detectedFaces;
-	}
-
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->dlibCnn5Model->detectLandmarks($imagePath, $rect);
-	}
-
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->dlibCnn5Model->computeDescriptor($imagePath, $landmarks);
 	}
 
 	private function validateFace($proposedFace, $validateFaces) {

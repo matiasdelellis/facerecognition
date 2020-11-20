@@ -194,15 +194,15 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function detectFaces(string $imagePath): array {
-		return $this->cfd->detect($imagePath, 0);
-	}
+		$faces_detected = $this->cfd->detect($imagePath, 0);
+		foreach ($faces_detected as &$face) {
+			$landmarks = $this->fld->detect($imagePath, $face);
+			$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->fld->detect($imagePath, $rect);
-	}
-
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->fr->computeDescriptor($imagePath, $landmarks);
+			$face['landmarks'] = $landmarks['parts'];
+			$face['descriptor'] = $descriptor;
+		}
+		return $faces_detected;
 	}
 
 }

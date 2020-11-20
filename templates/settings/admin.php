@@ -17,9 +17,9 @@
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Settings#temporary-files"></a>
 		</p>
 		<p class="settings-ranged">
-			<label for="image-area-range"><?php p($l->t('Small images'));?></label>
+			<label for="image-area-range"><?php p($l->t('Smaller images'));?></label>
 			<span><input type="range" id="image-area-range" min="307200" max="8294400" value="-1" step="1200" class="ui-slider"></span>
-			<label for="image-area-range"><?php p($l->t('Large images'));?></label>
+			<label for="image-area-range"><?php p($l->t('Larger images'));?></label>
 			<span id="image-area-value"class="span-highlighted">...</span>
 			<a id="restore-image-area" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-image-area" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
@@ -32,9 +32,9 @@
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
 		</p>
 		<p class="settings-ranged">
-			<label for="sensitivity-range"><?php p($l->t('More sensitivity, more groups'));?></label>
+			<label for="sensitivity-range"><?php p($l->t('Higher sensitivity, more groups'));?></label>
 			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider"></span>
-			<label for="sensitivity-range"><?php p($l->t('Less sensitivity, less groups'));?></label>
+			<label for="sensitivity-range"><?php p($l->t('Lower sensitivity, less groups'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-sensitivity" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
@@ -47,9 +47,9 @@
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Confidence"></a>
 		</p>
 		<p class="settings-ranged">
-			<label for="min-confidence-range"><?php p($l->t('Less minimum confidence'));?></label>
+			<label for="min-confidence-range"><?php p($l->t('Lower minimum confidence'));?></label>
 			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider"></span>
-			<label for="min-confidence-range"><?php p($l->t('Highest minimum confidence'));?></label>
+			<label for="min-confidence-range"><?php p($l->t('Higher minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-min-confidence" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
@@ -59,7 +59,7 @@
 			<?php p($l->t('Configuration information'));?>
 			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
 		</h3>
-		<p><?php p($l->t('Current Model:'));?> <em><?php p($_['model-version']);?></em></p>
+		<p><?php p($l->t('Current model:'));?> <em><?php p($_['model-version']);?></em></p>
 		<p><span><?php p($_['resume']); ?></span></p>
 		<br>
 		<h3>

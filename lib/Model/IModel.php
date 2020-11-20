@@ -97,6 +97,6 @@ interface IModel {
 	 * @param assoc array with "top", "bottom", "left", "right" of an face in that imagePath
 	 * @return an copy of that face with the values of the landmarks and the descriptor.
 	 */
-	public function compute(string $imagePath, $face): array;
+	public function compute(string $imagePath, array $face): array;
 
 }

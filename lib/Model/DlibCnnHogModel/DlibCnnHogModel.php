@@ -159,7 +159,7 @@ class DlibCnnHogModel implements IModel {
 		return $detectedFaces;
 	}
 
-	public function compute(string $imagePath, $face): array {
+	public function compute(string $imagePath, array $face): array {
 		return $this->dlibCnn5Model->compute($imagePath, $face);
 	}
 

@@ -209,7 +209,7 @@ class DlibCnnModel implements IModel {
 		return $faces_detected;
 	}
 
-	public function compute(string $imagePath, $face): array {
+	public function compute(string $imagePath, array $face): array {
 		$landmarks = $this->fld->detect($imagePath, $face);
 		$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 

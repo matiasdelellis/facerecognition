@@ -27,6 +27,9 @@ namespace OCA\FaceRecognition\Settings;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IL10N;
 use OCP\Settings\ISettings;
+use OCP\Util as OCP_Util;
+
+use OCA\FaceRecognition\Helper\MemoryLimits;
 
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
@@ -41,15 +44,20 @@ class Admin implements ISettings {
 	/** @var SettingsService */
 	public $settingsService;
 
+	/** @var MemoryLimits */
+	public $memoryLimits;
+
 	/** @var IL10N */
 	protected $l10n;
 
 	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
+	                            MemoryLimits    $memoryLimits,
 	                            IL10N           $l10n)
 	{
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
+		$this->memoryLimits    = $memoryLimits;
 		$this->l10n            = $l10n;
 	}
 
@@ -80,9 +88,19 @@ class Admin implements ISettings {
 			$meetDependencies = false;
 		}
 
+		$pdlibVersion = phpversion('pdlib');
+
+		$systemMemory = $this->memoryLimits->getSystemMemory();
+		$phpMemory = $this->memoryLimits->getPhpMemory();
+		$availableMemory = $this->memoryLimits->getAvailableMemory();
+
 		$params = [
 			'meet-dependencies' => $meetDependencies,
-			'model-version' => is_null($model) ? "-1" : $model->getId(),
+			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
+			'pdlib-version' => $pdlibVersion ? $pdlibVersion : $this->l10n->t("Not installed"),
+			'system-memory' => $systemMemory > 0 ? OCP_Util::humanFileSize($systemMemory) : $this->l10n->t("Unknown"),
+			'php-memory' => $phpMemory > 0 ? OCP_Util::humanFileSize($phpMemory) : $this->l10n->t("Unknown"),
+			'available-memory' => $availableMemory > 0 ? OCP_Util::humanFileSize($availableMemory) : $this->l10n->t("Unknown"),
 			'resume' => $resume,
 		];
 

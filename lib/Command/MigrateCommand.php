@@ -233,16 +233,14 @@ class MigrateCommand extends Command {
 	}
 
 	private function migrateFace($model, $oldFace, $image, $filePath) {
+		// Get the rectangle and the confidence of the original face.
 		$faceRect = $this->getFaceRect($oldFace);
 
-		$face = Face::fromModel($image->getId(), $faceRect);
+		// Get the landmarks and descriptor with the new model.
+		$faceAssoc = $model->compute($filePath, $faceRect);
 
-		$landmarks = $model->detectLandmarks($filePath, $faceRect);
-		$descriptor = $model->computeDescriptor($filePath, $landmarks);
-
-		$face->landmarks = $landmarks['parts'];
-		$face->descriptor = $descriptor;
-
+		// Convert the assoc array into an Face object and insert on database.
+		$face = Face::fromModel($image->getId(), $faceAssoc);
 		$this->faceMapper->insertFace($face);
 	}
 

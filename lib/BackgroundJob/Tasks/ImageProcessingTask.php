@@ -143,20 +143,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				$faces = array();
 				foreach ($rawFaces as $rawFace) {
-					// Get landmarks of face from model
-					$rawLandmarks = $this->model->detectLandmarks($tempImage->getTempPath(), $rawFace);
-					// Get descriptor of face from model
-					$descriptor = $this->model->computeDescriptor($tempImage->getTempPath(), $rawLandmarks);
-
 					// Normalize face and landmarks from model to original size
 					$normFace = $this->getNormalizedFace($rawFace, $tempImage->getRatio());
-					$normLandmarks = $this->getNormalizedLandmarks($rawLandmarks['parts'], $tempImage->getRatio());
-
-					// Convert from dictionary of faces to our Face Db Entity and put Landmarks and descriptor
+					// Convert from dictionary of face to our Face Db Entity.
 					$face = Face::fromModel($image->getId(), $normFace);
-					$face->landmarks = $normLandmarks;
-					$face->descriptor = $descriptor;
-
+					// Save the normalized Face to insert on database later.
 					$faces[] = $face;
 				}
 
@@ -257,6 +248,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$face['top'] = intval(round($rawFace['top']*$ratio));
 		$face['bottom'] = intval(round($rawFace['bottom']*$ratio));
 		$face['detection_confidence'] = $rawFace['detection_confidence'];
+		$face['landmarks'] = $this->getNormalizedLandmarks($rawFace['landmarks'], $ratio);
+		$face['descriptor'] = $rawFace['descriptor'];
 		return $face;
 	}
 

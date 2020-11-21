@@ -193,16 +193,30 @@ class DlibCnnModel implements IModel {
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
-	public function detectFaces(string $imagePath): array {
-		return $this->cfd->detect($imagePath, 0);
+	public function detectFaces(string $imagePath, bool $compute = true): array {
+		$faces_detected = $this->cfd->detect($imagePath, 0);
+
+		if (!$compute)
+			return $faces_detected;
+
+		foreach ($faces_detected as &$face) {
+			$landmarks = $this->fld->detect($imagePath, $face);
+			$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
+
+			$face['landmarks'] = $landmarks['parts'];
+			$face['descriptor'] = $descriptor;
+		}
+		return $faces_detected;
 	}
 
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->fld->detect($imagePath, $rect);
-	}
+	public function compute(string $imagePath, array $face): array {
+		$landmarks = $this->fld->detect($imagePath, $face);
+		$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->fr->computeDescriptor($imagePath, $landmarks);
+		$face['landmarks'] = $landmarks['parts'];
+		$face['descriptor'] = $descriptor;
+
+		return $face;
 	}
 
 }

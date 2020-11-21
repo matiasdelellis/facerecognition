@@ -142,7 +142,7 @@ class DlibCnnHogModel implements IModel {
 		$this->dlibCnn5Model->open();
 	}
 
-	public function detectFaces(string $imagePath): array {
+	public function detectFaces(string $imagePath, bool $compute = true): array {
 		$detectedFaces = [];
 
 		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath);
@@ -150,7 +150,7 @@ class DlibCnnHogModel implements IModel {
 			return $detectedFaces;
 		}
 
-		$hogFaces = $this->dlibHogModel->detectFaces($imagePath);
+		$hogFaces = $this->dlibHogModel->detectFaces($imagePath, false);
 
 		foreach ($cnnFaces as $proposedFace) {
 			$detectedFaces[] = $this->validateFace($proposedFace, $hogFaces);
@@ -159,12 +159,8 @@ class DlibCnnHogModel implements IModel {
 		return $detectedFaces;
 	}
 
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->dlibCnn5Model->detectLandmarks($imagePath, $rect);
-	}
-
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->dlibCnn5Model->computeDescriptor($imagePath, $landmarks);
+	public function compute(string $imagePath, array $face): array {
+		return $this->dlibCnn5Model->compute($imagePath, $face);
 	}
 
 	private function validateFace($proposedFace, $validateFaces) {

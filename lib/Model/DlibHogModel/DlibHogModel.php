@@ -194,18 +194,32 @@ class DlibHogModel implements IModel {
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
-	public function detectFaces(string $imagePath): array {
+	public function detectFaces(string $imagePath, bool $compute = true): array {
 		$faces_detected = dlib_face_detection($imagePath);
-		// To improve clustering a confidence value is needed, which this model does not provide
-		return array_map (function (array $face) { $face['detection_confidence'] = 1.1; return $face; }, $faces_detected);
+		foreach ($faces_detected as &$face) {
+			// Add and fake higher confidense value sinse this model does not provide it.
+			$face['detection_confidence'] = 1.1;
+
+			if (!$compute)
+				continue;
+
+			$landmarks = $this->fld->detect($imagePath, $face);
+			$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
+
+			$face['landmarks'] = $landmarks['parts'];
+			$face['descriptor'] = $descriptor;
+		}
+		return $faces_detected;
 	}
 
-	public function detectLandmarks(string $imagePath, array $rect): array {
-		return $this->fld->detect($imagePath, $rect);
-	}
+	public function compute(string $imagePath, array $face): array {
+		$landmarks = $this->fld->detect($imagePath, $face);
+		$descriptor = $this->fr->computeDescriptor($imagePath, $landmarks);
 
-	public function computeDescriptor(string $imagePath, array $landmarks): array {
-		return $this->fr->computeDescriptor($imagePath, $landmarks);
+		$face['landmarks'] = $landmarks['parts'];
+		$face['descriptor'] = $descriptor;
+
+		return $face;
 	}
 
 }

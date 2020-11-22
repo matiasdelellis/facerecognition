@@ -40,7 +40,7 @@ class ExternalModel implements IModel {
 	const MINIMUM_MEMORY_REQUIREMENTS = 128 * 1024 * 1024;
 
 	/** @var String model api endpoint */
-	private $modelEndpoint = "http://127.0.0.1:5000";
+	private $modelUrl = null;
 
 	/** @var String preferred mimetype */
 	private $preferredMimetype = null;
@@ -78,10 +78,8 @@ class ExternalModel implements IModel {
 	}
 
 	public function isInstalled(): bool {
-		if (!is_null($this->modelEndpoint))
-			return true;
-
-		return false;
+		$this->modelUrl = $this->settingsService->getExternalModelUrl();
+		return !is_null($this->modelUrl);
 	}
 
 	public function meetDependencies(string &$error_message): bool {
@@ -107,16 +105,19 @@ class ExternalModel implements IModel {
 	}
 
 	public function open() {
+		$this->modelUrl = $this->settingsService->getExternalModelUrl();
+
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $this->modelEndpoint . '/open');
+		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/open');
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
-		$response = curl_exec($ch);
-		curl_close($ch);
 
+		$response = curl_exec($ch);
 		if (curl_errno($ch)) {
 			throw new RuntimeException("Cannot connect to external model:" . curl_error($ch));
 		}
+		curl_close($ch);
+
 		$jsonResponse = json_decode($response, true);
 
 		$this->maximumImageArea = intval($jsonResponse['maximum_area']);
@@ -127,16 +128,17 @@ class ExternalModel implements IModel {
 		$cFile = curl_file_create($imagePath);
 		$post = array('file'=> $cFile);
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $this->modelEndpoint . '/detect');
+		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/detect');
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$response = curl_exec($ch);
-		curl_close($ch);
 
+		$response = curl_exec($ch);
 		if (curl_errno($ch)) {
 			throw new RuntimeException("External model dont response: " . curl_error($ch));
 		}
+		curl_close($ch);
+
 		$jsonResponse = json_decode($response, true);
 
 		if ($jsonResponse['faces-count'] == 0)

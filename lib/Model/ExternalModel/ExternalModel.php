@@ -165,7 +165,33 @@ class ExternalModel implements IModel {
 	}
 
 	public function compute(string $imagePath, array $face): array {
-		return $face;
+		$ch = curl_init();
+		if ($ch === false) {
+			throw new \Exception('Curl error: unable to initialize curl');
+		}
+
+		$cFile = curl_file_create($imagePath, $this->preferredMimetype, basename($imagePath));
+		$post = [
+			'file' => $cFile,
+			'face' => json_encode($face),
+		];
+
+		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/compute');
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key:' . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		$response = curl_exec($ch);
+		if ($response === false) {
+			throw new \Exception('External model dont response: ' . curl_error($ch));
+		}
+
+		curl_close($ch);
+
+		$jsonResponse = json_decode($response, true);
+
+		return $jsonResponse['face'];
 	}
 
 }

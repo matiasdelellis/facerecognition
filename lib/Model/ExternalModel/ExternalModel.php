@@ -113,14 +113,19 @@ class ExternalModel implements IModel {
 		$this->modelApiKey = $this->settingsService->getExternalModelApiKey();
 
 		$ch = curl_init();
+		if ($ch === false) {
+			throw new \Exception('Curl error: unable to initialize curl');
+		}
+
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/open');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: '  . $this->modelApiKey));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
-		if (curl_errno($ch)) {
-			throw new RuntimeException("Cannot connect to external model:" . curl_error($ch));
+		if ($response === false) {
+			throw new \Exception('Cannot connect to external model: ' . curl_error($ch));
 		}
+
 		curl_close($ch);
 
 		$jsonResponse = json_decode($response, true);
@@ -130,9 +135,14 @@ class ExternalModel implements IModel {
 	}
 
 	public function detectFaces(string $imagePath, bool $compute = true): array {
+		$ch = curl_init();
+		if ($ch === false) {
+			throw new \Exception('Curl error: unable to initialize curl');
+		}
+
 		$cFile = curl_file_create($imagePath);
 		$post = array('file'=> $cFile);
-		$ch = curl_init();
+
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/detect');
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
@@ -140,9 +150,10 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
-		if (curl_errno($ch)) {
-			throw new RuntimeException("External model dont response: " . curl_error($ch));
+		if ($response === false) {
+			throw new \Exception('External model dont response: ' . curl_error($ch));
 		}
+
 		curl_close($ch);
 
 		$jsonResponse = json_decode($response, true);

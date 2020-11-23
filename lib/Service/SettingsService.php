@@ -128,6 +128,7 @@ class SettingsService {
 
 	/** System setting to configure external model */
 	const SYSTEM_EXTERNAL_MODEL_URL = 'facerecognition.external_model_url';
+	const SYSTEM_EXTERNAL_MODEL_API_KEY = 'facerecognition.external_model_api_key';
 
 	/**
 	 * SettingsService
@@ -313,6 +314,13 @@ class SettingsService {
 	 */
 	public function getExternalModelUrl(): ?string {
 		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_URL, null);
+	}
+
+	/**
+	 * External model Api Key
+	 */
+	public function getExternalModelApiKey(): ?string {
+		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_API_KEY, null);
 	}
 
 }

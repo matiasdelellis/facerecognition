@@ -126,12 +126,17 @@ class ExternalModel implements IModel {
 			throw new \Exception('Cannot connect to external model: ' . curl_error($ch));
 		}
 
-		curl_close($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($httpCode !== 200) {
+			throw new \Exception('Can\'t connect with external model. HTTP status code: ' . $httpCode);
+		}
 
 		$jsonResponse = json_decode($response, true);
 
 		$this->maximumImageArea = intval($jsonResponse['maximum_area']);
 		$this->preferredMimetype = $jsonResponse['preferred_mimetype'];
+
+		curl_close($ch);
 	}
 
 	public function detectFaces(string $imagePath, bool $compute = true): array {

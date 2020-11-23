@@ -82,8 +82,8 @@ class ExternalModel implements IModel {
 
 	public function isInstalled(): bool {
 		$this->modelUrl = $this->settingsService->getExternalModelUrl();
-		$this->modelApiKey = $this->settingsService->getExternalModelUrl();
-		return !is_null($this->modelUrl) && !is_null($this->modelApikey);
+		$this->modelApiKey = $this->settingsService->getExternalModelApiKey();
+		return !is_null($this->modelUrl) && !is_null($this->modelApiKey);
 	}
 
 	public function meetDependencies(string &$error_message): bool {
@@ -118,7 +118,7 @@ class ExternalModel implements IModel {
 		}
 
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/open');
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: '  . $this->modelApiKey));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: '  . $this->modelApiKey]);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
@@ -146,7 +146,7 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/detect');
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, ["x-api-key: " . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ' . $this->modelApiKey]);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);

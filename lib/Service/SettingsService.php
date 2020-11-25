@@ -245,7 +245,7 @@ class SettingsService {
 	 */
 	private function getModelPath(): string {
 		// Get model path setting
-		$modelPath = $this->config->getSystemValue(self::SYSTEM_MODE_PATH, null);
+		$modelPath = $this->config->getSystemValue(self::SYSTEM_FACE_RECOGNITION_MODEL_PATH, null);
 		
 		// Check if model path is null
 		if (!is_null($modelPath)) {

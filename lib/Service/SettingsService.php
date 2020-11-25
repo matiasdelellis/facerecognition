@@ -58,7 +58,7 @@ class SettingsService {
 	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Model Path used for read and writing models  **/
-	const SYSTEM_MODEL_PATH = 'modelPath';
+	const SYSTEM_FACE_RECOGNITION_MODEL_PATH = 'FaceRecognitionModelPath';
 
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';

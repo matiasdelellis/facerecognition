@@ -49,10 +49,30 @@ class ModelService {
 		$this->config     = $config;
 		$this->appData    = $appData;
 		$this->rootFolder = $rootFolder;
-		$this->modelsFolder = $this->settingsService->getModelPath();
+		$this->modelsFolder = getModelPath();
 
 		// Prepare Model Folder
 		prepareModelFolder();
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getModelPath(): string {
+		// Get model path setting
+		$modelPath = $this->settingsService->getModelPath();
+		
+		// Check if model path is null
+		if (!is_null($modelPath)) {
+		   return $modelPath;
+		}
+		
+		// Get this folder
+		$instanceId = $this->config->getSystemValue('instanceid', null);
+		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
+		$dataDir = $this->config->getSystemValue('datadirectory', null);
+	
+		return $dataDir . $appData . '/facerecognition/models/';
 	}
 
 	/**
@@ -74,7 +94,7 @@ class ModelService {
 	 */
 	public function prepareModelFolder(int $modelId) {
 		if (!is_dir($this->modelsFolder)) {
-			mkdir($this->modelsFolder, 0770, true);
+			mkdir($this->modelsFolder . '/' . $modelID, 0770, true);
 		}
 	}
 }

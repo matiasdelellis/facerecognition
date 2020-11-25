@@ -58,7 +58,7 @@ class SettingsService {
 	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Model Path used for read and writing models  **/
-	const SYSTEM_FACE_RECOGNITION_MODEL_PATH = 'FaceRecognitionModelPath';
+	const SYSTEM_MODEL_PATH = 'modelPath';
 
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
@@ -243,21 +243,8 @@ class SettingsService {
 	 * The next settings are advanced preferences that are not available in gui.
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
-	private function getModelPath(): string {
-		// Get model path setting
-		$modelPath = $this->config->getSystemValue(self::SYSTEM_FACE_RECOGNITION_MODEL_PATH, null);
-		
-		// Check if model path is null
-		if (!is_null($modelPath)) {
-		   return $modelPath;
-		}
-		
-		// Get this folder
-		$instanceId = $this->config->getSystemValue('instanceid', null);
-		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
-		$dataDir = $this->config->getSystemValue('datadirectory', null);
-	
-		return $dataDir . $appData . '/facerecognition/models/';
+	public function getModelPath(): string {
+		return $this->config->getSystemValue(self::SYSTEM_FACE_RECOGNITION_MODEL_PATH, null);
 	}
 	
 	public function getHandleSharedFiles(): bool {

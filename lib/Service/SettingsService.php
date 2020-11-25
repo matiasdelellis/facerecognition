@@ -57,6 +57,9 @@ class SettingsService {
 	const DEFAULT_SENSITIVITY = '0.4';
 	const MAXIMUM_SENSITIVITY = '0.6';
 
+	/** Model Path used for read and writing models  **/
+	const SYSTEM_MODEL_PATH = 'modelPath';
+
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
 	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
@@ -240,6 +243,10 @@ class SettingsService {
 	 * The next settings are advanced preferences that are not available in gui.
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
+	public function getModelPath(): string {
+		return $this->config->getSystemValue(self::SYSTEM_MODE_PATH, null);
+	}
+	
 	public function getHandleSharedFiles(): bool {
 		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
 		return ($handle === 'true');

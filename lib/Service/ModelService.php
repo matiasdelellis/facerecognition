@@ -27,6 +27,7 @@ use OCP\IConfig;
 use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCA\FaceRecognition\Service\SettingsService;
 
 class ModelService {
 
@@ -48,16 +49,33 @@ class ModelService {
 		$this->config     = $config;
 		$this->appData    = $appData;
 		$this->rootFolder = $rootFolder;
-
-		// Construct root folder for models
-		$this->prepareAppDataFolders();
+		
+		// Set model path.
+		setModelPath();
 
 		/// Get this folder.
 		$instanceId = $this->config->getSystemValue('instanceid', null);
 		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
 		$dataDir = $this->config->getSystemValue('datadirectory', null);
+	}
 
-		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/';
+	/**
+	 * @return void
+	 */
+	private function setModelPath() {
+		$modelPath = $this->settingsService->getModelPath();
+
+		// Check if the modelPath value is set
+		if (is_null($modelPath)) {
+			// Set model folder to set path
+			$this->modelsFolder = $modelPath;
+		} else {
+			// Construct root folder for models
+			$this->prepareAppDataFolders();
+
+			// Set default model folder
+			$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/';
+		}
 	}
 
 	/**
@@ -79,9 +97,9 @@ class ModelService {
 	 */
 	public function prepareModelFolder(int $modelId) {
 		try {
-			$this->appData->getFolder('/models/' . $modelId);
+			$this->rootFolder->getFolder($this->modelsFolder . $modelId);
 		} catch (NotFoundException $e) {
-			$this->appData->newFolder('/models/' . $modelId);
+			$this->rootFolder->newFolder($this->modelsFolder . $modelId);
 		}
 	}
 

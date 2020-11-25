@@ -43,6 +43,9 @@ class ModelService {
 	/** @var string */
 	private $modelsFolder;
 
+	/** @var bool */
+	private $customModelPathSet = false;
+
 	public function __construct(IConfig     $config,
 	                            IAppData    $appData,
 	                            IRootFolder $rootFolder) {
@@ -64,14 +67,16 @@ class ModelService {
 		
 		// Check if model path is null
 		if (!is_null($modelPath)) {
-		   return $modelPath;
+			$this->customModelPathSet = true;
+			return $modelPath;
 		}
 		
 		// Get this folder
 		$instanceId = $this->config->getSystemValue('instanceid', null);
 		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
 		$dataDir = $this->config->getSystemValue('datadirectory', null);
-	
+		
+		$this->customModelPathSet = false;
 		return $dataDir . $appData . '/facerecognition/models/';
 	}
 
@@ -93,8 +98,16 @@ class ModelService {
 	 * @return void
 	 */
 	public function prepareModelFolder(int $modelId) {
-		if (!is_dir($this->modelsFolder)) {
-			mkdir($this->modelsFolder . '/' . $modelID, 0770, true);
+		if ($this->customModelPathSet) {
+			if (!is_dir($this->modelsFolder)) {
+				mkdir($this->modelsFolder . '/' . $modelID, 0770, true);
+			}
+		} else {
+			try {
+				$this->appData->getFolder('/facerecognition/models/' . $modelId);
+			} catch (NotFoundException $e) {
+				$this->appData->newFolder('/facerecognition/models/' . $modelId);
+			}
 		}
 	}
 }

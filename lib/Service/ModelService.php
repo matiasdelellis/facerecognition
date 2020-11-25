@@ -49,33 +49,7 @@ class ModelService {
 		$this->config     = $config;
 		$this->appData    = $appData;
 		$this->rootFolder = $rootFolder;
-		
-		// Set model path.
-		setModelPath();
-
-		/// Get this folder.
-		$instanceId = $this->config->getSystemValue('instanceid', null);
-		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
-		$dataDir = $this->config->getSystemValue('datadirectory', null);
-	}
-
-	/**
-	 * @return void
-	 */
-	private function setModelPath() {
-		$modelPath = $this->settingsService->getModelPath();
-
-		// Check if the modelPath value is set
-		if (is_null($modelPath)) {
-			// Set model folder to set path
-			$this->modelsFolder = $modelPath;
-		} else {
-			// Construct root folder for models
-			$this->prepareAppDataFolders();
-
-			// Set default model folder
-			$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/';
-		}
+		$this->modelsFolder = $this->settingsService->getModelPath();
 	}
 
 	/**
@@ -96,10 +70,8 @@ class ModelService {
 	 * @return void
 	 */
 	public function prepareModelFolder(int $modelId) {
-		try {
-			$this->rootFolder->getFolder($this->modelsFolder . $modelId);
-		} catch (NotFoundException $e) {
-			$this->rootFolder->newFolder($this->modelsFolder . $modelId);
+		if (!is_dir($this->modelsFolder)) {
+			mkdir($this->modelsFolder);
 		}
 	}
 

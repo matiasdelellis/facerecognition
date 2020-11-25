@@ -243,8 +243,21 @@ class SettingsService {
 	 * The next settings are advanced preferences that are not available in gui.
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
-	public function getModelPath(): string {
-		return $this->config->getSystemValue(self::SYSTEM_MODE_PATH, null);
+	private function getModelPath(): string {
+		// Get model path setting
+		$modelPath = $this->config->getSystemValue(self::SYSTEM_MODE_PATH, null);
+		
+		// Check if model path is null
+		if (!is_null($modelPath)) {
+		   return $modelPath;
+		}
+		
+		// Get this folder
+		$instanceId = $this->config->getSystemValue('instanceid', null);
+		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
+		$dataDir = $this->config->getSystemValue('datadirectory', null);
+	
+		return $dataDir . $appData . '/facerecognition/models/';
 	}
 	
 	public function getHandleSharedFiles(): bool {

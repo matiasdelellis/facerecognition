@@ -50,6 +50,9 @@ class ModelService {
 		$this->appData    = $appData;
 		$this->rootFolder = $rootFolder;
 		$this->modelsFolder = $this->settingsService->getModelPath();
+
+		// Prepare Model Folder
+		prepareModelFolder();
 	}
 
 	/**
@@ -71,19 +74,7 @@ class ModelService {
 	 */
 	public function prepareModelFolder(int $modelId) {
 		if (!is_dir($this->modelsFolder)) {
-			mkdir($this->modelsFolder);
+			mkdir($this->modelsFolder, 0770, true);
 		}
 	}
-
-	/**
-	 * @return void
-	 */
-	private function prepareAppDataFolders() {
-		try {
-			$this->appData->getFolder('/models');
-		} catch (NotFoundException $e) {
-			$this->appData->newFolder('/models');
-		}
-	}
-
 }

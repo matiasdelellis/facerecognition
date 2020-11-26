@@ -118,12 +118,17 @@ class SettingsService {
 	const DEFAULT_OBFUSCATE_FACE_THUMBS = 'false';
 
 	/** System setting to enable mimetypes */
+
 	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
 	private $allowedMimetypes = ['image/jpeg', 'image/png'];
 	private $cachedAllowedMimetypes = false;
 
 	/** System setting to use custom folder for models */
 	const SYSTEM_MODEL_PATH = 'facerecognition.model_path';
+
+	/** System setting to configure external model */
+	const SYSTEM_EXTERNAL_MODEL_URL = 'facerecognition.external_model_url';
+	const SYSTEM_EXTERNAL_MODEL_API_KEY = 'facerecognition.external_model_api_key';
 
 	/**
 	 * SettingsService
@@ -302,6 +307,20 @@ class SettingsService {
 	 */
 	public function getSystemModelPath(): ?string {
 		return $this->config->getSystemValue(self::SYSTEM_MODEL_PATH, null);
+	}
+
+	/**
+	 * External model url
+	 */
+	public function getExternalModelUrl(): ?string {
+		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_URL, null);
+	}
+
+	/**
+	 * External model Api Key
+	 */
+	public function getExternalModelApiKey(): ?string {
+		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_API_KEY, null);
 	}
 
 }

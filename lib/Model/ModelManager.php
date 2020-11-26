@@ -37,6 +37,8 @@ use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
 use OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel;
 
+use OCA\FaceRecognition\Model\ExternalModel\ExternalModel;
+
 class ModelManager {
 
 	/** There is no default model. This is used by tests */
@@ -60,6 +62,9 @@ class ModelManager {
 	/** @var DlibCnnHogModel */
 	private $dlibCnnHogModel;
 
+	/** @var ExternalModel */
+	private $externalModel;
+
 	/**
 	 * @patam IUserManager $userManager
 	 * @param SettingsService $settingsService
@@ -67,13 +72,15 @@ class ModelManager {
 	 * @param DlibCnn68Model $dlibCnn68Model
 	 * @param DlibHogModel $dlibHogModel
 	 * @param DlibCnnHogModel $dlibCnnHogModel
+	 * @param ExternalModel $externalModel
 	 */
 	public function __construct(IUserManager    $userManager,
 	                            SettingsService $settingsService,
 	                            DlibCnn5Model   $dlibCnn5Model,
 	                            DlibCnn68Model  $dlibCnn68Model,
 	                            DlibHogModel    $dlibHogModel,
-	                            DlibCnnHogModel $dlibCnnHogModel)
+	                            DlibCnnHogModel $dlibCnnHogModel,
+	                            ExternalModel   $externalModel)
 	{
 		$this->userManager     = $userManager;
 		$this->settingsService = $settingsService;
@@ -82,6 +89,7 @@ class ModelManager {
 		$this->dlibCnn68Model  = $dlibCnn68Model;
 		$this->dlibHogModel    = $dlibHogModel;
 		$this->dlibCnnHogModel = $dlibCnnHogModel;
+		$this->externalModel   = $externalModel;
 	}
 
 	/**
@@ -90,17 +98,20 @@ class ModelManager {
 	 */
 	public function getModel(int $version): ?IModel {
 		switch ($version) {
-			case 1:
+			case DlibCnn5Model::FACE_MODEL_ID:
 				$model = $this->dlibCnn5Model;
 				break;
-			case 2:
+			case DlibCnn68Model::FACE_MODEL_ID:
 				$model = $this->dlibCnn68Model;
 				break;
-			case 3:
+			case DlibHogModel::FACE_MODEL_ID:
 				$model = $this->dlibHogModel;
 				break;
-			case 4:
+			case DlibCnnHogModel::FACE_MODEL_ID:
 				$model = $this->dlibCnnHogModel;
+				break;
+			case ExternalModel::FACE_MODEL_ID:
+				$model = $this->externalModel;
 				break;
 			default:
 				$model = null;
@@ -125,7 +136,8 @@ class ModelManager {
 			$this->dlibCnn5Model,
 			$this->dlibCnn68Model,
 			$this->dlibHogModel,
-			$this->dlibCnnHogModel
+			$this->dlibCnnHogModel,
+			$this->externalModel
 		];
 	}
 

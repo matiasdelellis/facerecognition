@@ -122,6 +122,9 @@ class SettingsService {
 	private $allowedMimetypes = ['image/jpeg', 'image/png'];
 	private $cachedAllowedMimetypes = false;
 
+	/** System setting to use custom folder for models */
+	const SYSTEM_MODEL_PATH = 'facerecognition.model_path';
+
 	/**
 	 * SettingsService
 	 */
@@ -292,6 +295,13 @@ class SettingsService {
 		}
 
 		return in_array($mimetype, $this->allowedMimetypes);
+	}
+
+	/**
+	 * System settings that allow use an custom folder to install the models.
+	 */
+	public function getSystemModelPath(): ?string {
+		return $this->config->getSystemValue(self::SYSTEM_MODEL_PATH, null);
 	}
 
 }

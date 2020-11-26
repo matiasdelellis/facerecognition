@@ -28,6 +28,8 @@ use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 
+use OCA\FaceRecognition\Service\SettingsService;
+
 class ModelService {
 
 	/** @var IConfig */
@@ -42,29 +44,27 @@ class ModelService {
 	/** @var string */
 	private $modelsFolder;
 
-	public function __construct(IConfig     $config,
-	                            IAppData    $appData,
-	                            IRootFolder $rootFolder) {
-		$this->config     = $config;
-		$this->appData    = $appData;
-		$this->rootFolder = $rootFolder;
+	/** @var SettingsService */
+	private $settingsService;
 
-		// Construct root folder for models
-		$this->prepareAppDataFolders();
+	public function __construct(IConfig         $config,
+	                            IAppData        $appData,
+	                            IRootFolder     $rootFolder,
+	                            SettingsService $settingsService)
+	{
+		$this->config         = $config;
+		$this->appData         = $appData;
+		$this->rootFolder      = $rootFolder;
+		$this->settingsService = $settingsService;
 
-		/// Get this folder.
-		$instanceId = $this->config->getSystemValue('instanceid', null);
-		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
-		$dataDir = $this->config->getSystemValue('datadirectory', null);
-
-		$this->modelsFolder = $dataDir . $appData . '/facerecognition/models/';
+		$this->modelsFolder = $this->getModelsFolder();
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getFileModelPath(int $modelId, string $file): string {
-		return $this->modelsFolder . $modelId . '/' . $file;
+		return $this->modelsFolder . '/' . $modelId . '/' . $file;
 	}
 
 	/**
@@ -78,6 +78,16 @@ class ModelService {
 	 * @return void
 	 */
 	public function prepareModelFolder(int $modelId) {
+		// Custum folder
+		if (!is_null($this->settingsService->getSystemModelPath())) {
+			$modelFolder = $this->modelsFolder . '/' . $modelId;
+			if (!is_dir($modelFolder)) {
+				mkdir($modelFolder, 0770, true);
+			}
+			return;
+		}
+
+		// Default folder
 		try {
 			$this->appData->getFolder('/models/' . $modelId);
 		} catch (NotFoundException $e) {
@@ -86,14 +96,30 @@ class ModelService {
 	}
 
 	/**
-	 * @return void
+	 * @return string
 	 */
-	private function prepareAppDataFolders() {
+	private function getModelsFolder(): string {
+		// Custum folder
+		$customFolder = $this->settingsService->getSystemModelPath();
+		if (!is_null($customFolder)) {
+			if (!is_dir($customFolder)) {
+				mkdir($customFolder, 0770, true);
+			}
+			return $customFolder;
+		}
+
+		// Default folder
 		try {
 			$this->appData->getFolder('/models');
 		} catch (NotFoundException $e) {
 			$this->appData->newFolder('/models');
 		}
+
+		$instanceId = $this->config->getSystemValue('instanceid', null);
+		$appData = $this->rootFolder->get('appdata_'.$instanceId)->getPath();
+		$dataDir = $this->config->getSystemValue('datadirectory', null);
+
+		return $dataDir . '/' . $appData . '/facerecognition/models/';
 	}
 
 }

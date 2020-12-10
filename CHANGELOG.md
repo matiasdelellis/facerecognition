@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2020-12-10
+### Added
+- Add an external model that allows run the photos analysis outside of your
+  Nextcoud instance freeing server resources. This is generic and just define a
+  reference api, and we share a reference example equivalent to model 1. See
+  issue #210, #238, and PR #389.
+  See: https://github.com/matiasdelellis/facerecognition-external-model
+- Allow setting a custom model path, useful for configurations like Object
+  Storage as Primary Storage. This thanks to David Kang. See #381 and #390.
+- Add memory info and pdlib version to admin page. PR #385
+
+### Translations
+- Some messages improved thanks to Robin @Derkades. They were not translated yet
+  and will probably change again. Please be patient.
+
 ## [0.7.1] - 2020-11-17
 ### Added
 - Add support for analyzing photos from group folders. Issue #364

@@ -91,7 +91,7 @@ available models.
 
 #### Face analysis
 
-`occ face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]`
+`occ face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT] [--defer-clustering] [-M|--max_image_area MAX_IMAGE_AREA]`
 
 This command will do all the work. It is responsible for searching the images,
 analyzing them and clustering faces found in them in groups of similar people.
@@ -117,6 +117,10 @@ scheduled task to distribute the system load during the day.
 If `MAX_IMAGE_AREA` is supplied caps the maximum area (in pixels^2) of the image
 to be fed to neural network, effectively lowering needed memory. Use this
 if face detection crashes randomly.
+
+If use the `--defer-clustering` option, it changes the order of execution of the
+process deferring the face clustering at the end of the analysis to get persons
+in a simple execution of the command.
 
 #### Resetting information
 

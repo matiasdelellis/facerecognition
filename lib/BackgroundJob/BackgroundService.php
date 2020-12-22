@@ -78,8 +78,9 @@ class BackgroundService {
 	 * @param bool $verbose Whether to be more verbose
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
+	 * @param bool $deferClustering defer the grouping at the end of the analysis.
 	 */
-	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null) {
+	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, bool $deferClustering) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
@@ -89,7 +90,20 @@ class BackgroundService {
 
 		// Here we are defining all the tasks that will get executed.
 		//
-		if ($timeout > 0) {
+		if ($deferClustering === true) {
+			$task_classes = [
+				CheckRequirementsTask::class,
+				CheckCronTask::class,
+				LockTask::class,
+				DisabledUserRemovalTask::class,
+				StaleImagesRemovalTask::class,
+				AddMissingImagesTask::class,
+				EnumerateImagesMissingFacesTask::class,
+				ImageProcessingTask::class,
+				CreateClustersTask::class,
+				UnlockTask::class
+			];
+		} else {
 			$task_classes = [
 				CheckRequirementsTask::class,
 				CheckCronTask::class,
@@ -102,19 +116,6 @@ class BackgroundService {
 				ImageProcessingTask::class,
 				UnlockTask::class
 			];
-		} else {
-                       $task_classes = [
-				CheckRequirementsTask::class,
-				CheckCronTask::class,
-				LockTask::class,
-				DisabledUserRemovalTask::class,
-				StaleImagesRemovalTask::class,
-				AddMissingImagesTask::class,
-				EnumerateImagesMissingFacesTask::class,
-				ImageProcessingTask::class,
-				CreateClustersTask::class,
-				UnlockTask::class
-                        ];
 		};
 
 		// Main logic to iterate over all tasks and executes them.

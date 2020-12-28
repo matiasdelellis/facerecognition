@@ -75,6 +75,12 @@ class BackgroundCommand extends Command {
 				'Use this if face detection crashes randomly.'
 			)
 			->addOption(
+				'defer-clustering',
+				null,
+				InputOption::VALUE_NONE,
+				'Defer the face clustering at the end of the analysis to get persons in a simple execution of the command.'
+			)
+			->addOption(
 				'timeout',
 				't',
 				InputOption::VALUE_REQUIRED,
@@ -129,13 +135,17 @@ class BackgroundCommand extends Command {
 			}
 		}
 
+		// Extract defer clustering option
+		//
+		$deferClustering = $input->getOption('defer-clustering');
+
 		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
 		//
 		$verbose = $input->getOption('verbose');
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea);
+		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $deferClustering);
 
 		return 0;
 	}

@@ -15,21 +15,19 @@ php:
   
 env:
   global:
-    - CORE_BRANCH=stable18
+    - CORE_BRANCH=stable20
     - APP_NAME=facerecognition
   matrix:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
-    - DB=mysql CORE_BRANCH=stable19
-    - DB=pgsql CORE_BRANCH=stable19
-    - DB=sqlite CORE_BRANCH=stable19
-    - DB=mysql CORE_BRANCH=stable20
-    - DB=pgsql CORE_BRANCH=stable20
-    - DB=sqlite CORE_BRANCH=stable20
     - DB=mysql CORE_BRANCH=stable21
     - DB=pgsql CORE_BRANCH=stable21
     - DB=sqlite CORE_BRANCH=stable21
+jobs:
+  exclude:
+    - php: 7.2
+      env: CORE_BRANCH=stable21
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)

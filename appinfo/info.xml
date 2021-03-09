@@ -36,7 +36,7 @@
 		<php min-version="7.2" max-version="7.4" />
 		<lib>pdlib</lib>
 		<lib>bz2</lib>
-		<nextcloud min-version="18" max-version="21"/>
+		<nextcloud min-version="20" max-version="21"/>
 	</dependencies>
 	<repair-steps>
 		<uninstall>

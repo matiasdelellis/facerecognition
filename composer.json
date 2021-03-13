@@ -19,7 +19,7 @@
         "php": ">=7.2"
     },
     "require-dev": {
-        "christophwurst/nextcloud": "^18.0",
-        "phpunit/phpunit": "8.0"
+        "christophwurst/nextcloud": "^20",
+        "phpunit/phpunit": "^8"
     }
 }

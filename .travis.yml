@@ -11,22 +11,27 @@ services:
 php:
   - 7.2
   - 7.3
-
+  - 7.4
+  
 env:
   global:
-    - CORE_BRANCH=stable18
+    - CORE_BRANCH=stable20
     - APP_NAME=facerecognition
   matrix:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
-    - DB=mysql CORE_BRANCH=stable19
-    - DB=pgsql CORE_BRANCH=stable19
-    - DB=sqlite CORE_BRANCH=stable19
-    - DB=mysql CORE_BRANCH=stable20
-    - DB=pgsql CORE_BRANCH=stable20
-    - DB=sqlite CORE_BRANCH=stable20
-
+    - DB=mysql CORE_BRANCH=stable21
+    - DB=pgsql CORE_BRANCH=stable21
+    - DB=sqlite CORE_BRANCH=stable21
+jobs:
+  exclude:
+    - php: 7.2
+      env: DB=mysql CORE_BRANCH=stable21
+    - php: 7.2
+      env: DB=pgsql CORE_BRANCH=stable21
+    - php: 7.2
+      env: DB=sqlite CORE_BRANCH=stable21
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)
@@ -67,4 +72,3 @@ script:
 
 after_failure:
   - cat ../../data/nextcloud.log
-

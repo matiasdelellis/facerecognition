@@ -27,7 +27,11 @@ env:
 jobs:
   exclude:
     - php: 7.2
-      env: CORE_BRANCH=stable21
+      env: DB=mysql CORE_BRANCH=stable21
+    - php: 7.2
+      env: DB=pgsql CORE_BRANCH=stable21
+    - php: 7.2
+      env: DB=sqlite CORE_BRANCH=stable21
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)

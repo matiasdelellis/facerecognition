@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2021 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -120,12 +120,12 @@ class UrlService {
 	/**
 	 * Redirects to the facerecognition page to show photos of an person.
 	 *
-	 * @param int $personId person id to show
+	 * @param int $personName person name used as Id to show
 	 */
-	public function getRedirectToPersonUrl(string $personId) {
+	public function getRedirectToPersonUrl(string $personName) {
 		$params = [
 			'section' => 'facerecognition',
-			'name' => $personId
+			'name' => $personName
 		];
 		return $this->urlGenerator->linkToRoute('settings.PersonalSettings.index', $params);
 	}

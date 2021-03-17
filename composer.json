@@ -12,14 +12,14 @@
     ],
     "config": {
         "platform": {
-            "php": "7.2"
+            "php": "7.3"
         }
     },
     "require": {
-        "php": ">=7.2"
+        "php": ">=7.3"
     },
     "require-dev": {
-        "christophwurst/nextcloud": "^20",
+        "christophwurst/nextcloud": "^21",
         "phpunit/phpunit": "^8"
     }
 }

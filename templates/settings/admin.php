@@ -26,15 +26,16 @@
 		</p>
 		<br>
 		<h3>
-			<?php p($l->t('Sensitivity'));?>
+			<?php p($l->t('Clustering threshold'));?>
 		</h3>
-		<p class="settings-hint"><?php p($l->t('The sensitivity determines how different the faces can be to continue to be considered as the same person.'));?>
+		<p class="settings-hint"><?php p($l->t('Persons are determined as groups of similar faces and to obtain them, all the faces found must be compared. When they are compared, a threshold is used to determine if they should be grouped.'));?></p>
+		<p class="settings-hint"><?php p($l->t('A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces, obtaining fewer groups, but being able to confuse similar persons.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
 		</p>
 		<p class="settings-ranged">
-			<label for="sensitivity-range"><?php p($l->t('Higher sensitivity, more groups'));?></label>
+			<label for="sensitivity-range"><?php p($l->t('Small threshold'));?></label>
 			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider"></span>
-			<label for="sensitivity-range"><?php p($l->t('Lower sensitivity, less groups'));?></label>
+			<label for="sensitivity-range"><?php p($l->t('Higher threshold'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-sensitivity" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>

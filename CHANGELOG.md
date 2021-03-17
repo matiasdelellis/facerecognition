@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2021-03-17
+### Added
+- Increase requirements to NC21. See issue #429
+- Add defer-clustering option. It changes the order of execution of the process
+  deferring the face clustering at the end of the analysis to get persons in a
+  simple execution of the command. Thanks to @cliffalbert. See issue #371
+
 ## [0.7.2] - 2020-12-10
 ### Added
 - Add an external model that allows run the photos analysis outside of your

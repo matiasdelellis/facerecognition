@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -143,6 +143,30 @@ class PersonMapper extends QBMapper {
 			->andwhere($qb->expr()->isNotNull('p.name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * Search Person by name
+	 *
+	 */
+	public function findPersonsLike(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('p.name')
+			->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces', 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('p', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
+
+		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
+		$qb->setParameter('query', $query);
+
+		$qb->setFirstResult($offset);
+		$qb->setMaxResults($limit);
+
 		return $this->findEntities($qb);
 	}
 

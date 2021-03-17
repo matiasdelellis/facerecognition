@@ -35,8 +35,36 @@ if (!window.OCA.Facerecognition) {
 	window.OCA.Facerecognition = {}
 }
 
+const View = Vue.extend(PersonsTab)
+
+let TabInstance = null
+const personTab = new OCA.Files.Sidebar.Tab({
+	id: 'facerecognition',
+	name: t('facerecognition', 'Persons'),
+	icon: 'icon-contacts-dark',
+	async mount(el, fileInfo, context) {
+		if (TabInstance) {
+			TabInstance.$destroy()
+		}
+		TabInstance = new View({
+			// Better integration with vue parent component
+			parent: context,
+		})
+		// Only mount after we have all the info we need
+		await TabInstance.update(fileInfo)
+		TabInstance.$mount(el)
+	},
+	update(fileInfo) {
+		TabInstance.update(fileInfo)
+	},
+	destroy() {
+		TabInstance.$destroy()
+		TabInstance = null
+	}
+})
+
 window.addEventListener('DOMContentLoaded', () => {
 	if (OCA.Files && OCA.Files.Sidebar) {
-		OCA.Files.Sidebar.registerTab(new OCA.Files.Sidebar.Tab('facerecognition', PersonsTab))
+		OCA.Files.Sidebar.registerTab(personTab)
 	}
 })

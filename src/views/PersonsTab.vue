@@ -20,7 +20,7 @@
   -
   -->
 <template>
-	<Tab :id="id" :icon="icon" :name="name" :class="{ 'icon-loading': loading }">
+	<div :class="{ 'icon-loading': loading }">
 		<div v-if="error" class="emptycontent">
 			<div class="icon icon-error" />
 			<p>{{ error }}</p>
@@ -67,29 +67,26 @@
 			<p><span>{{ t('facerecognition', 'Photos that are not in the gallery are also ignored') }}</span></p>
 			<p><span v-html="faqUrl"></span></p>
 		</div>
-	</Tab>
+	</div>
 </template>
 <script>
 import Tab from '@nextcloud/vue/dist/Components/AppSidebarTab'
 import Axios from '@nextcloud/axios'
+
 export default {
+
 	name: 'PersonsTabApp',
+
 	components: {
 		Tab,
 	},
-	props: {
-		// fileInfo will be given by the Sidebar
-		fileInfo: {
-			type: Object,
-			default: () => {},
-			required: true,
-		},
-	},
+
 	data() {
 		return {
 			error: '',
 			icon: 'icon-contacts-dark',
 			loading: true,
+			fileInfo: null,
 			name: t('facerecognition', 'Persons'),
 			isEnabledByUser: false,
 			isAllowedFile: false,
@@ -99,6 +96,7 @@ export default {
 			persons: [],
 		}
 	},
+
 	computed: {
 		/**
 		 * Needed to differenciate the tabs
@@ -125,17 +123,23 @@ export default {
 			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
 		},
 	},
-	watch: {
-		fileInfo: {
-			immediate: true,
-			handler(fileInfo) {
-				 this.getFacesInfo(fileInfo)
-			}
-		},
-	},
+
 	methods: {
-		async getFacesInfo(fileInfo) {
-			const isDirectory = fileInfo.isDirectory()
+		async update(fileInfo) {
+			this.resetState()
+			this.fileInfo = fileInfo
+			this.getFacesInfo()
+		},
+
+		resetState() {
+			this.loading = true
+			this.error = ''
+			this.isProcessed = false
+			this.persons = []
+		},
+
+		async getFacesInfo() {
+			const isDirectory = this.fileInfo.isDirectory()
 			if (isDirectory) {
 				var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
 			} else {
@@ -148,7 +152,7 @@ export default {
 				const response = await Axios.get(infoUrl, {
 					params: {
 						// TODO: replace with proper getFUllpath implementation of our own FileInfo model
-						fullpath: (fileInfo.path + '/' + fileInfo.name).replace('//', '/')
+						fullpath: (this.fileInfo.path + '/' + this.fileInfo.name).replace('//', '/')
 					}
 				})
 				this.processFacesData(response.data, isDirectory)
@@ -160,6 +164,7 @@ export default {
 				console.error('Error loading info of image', error)
 			}
 		},
+
 		async enableDirectoryCheck(event) {
 			const isEnabled = event.target.checked
 			var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
@@ -175,6 +180,7 @@ export default {
 				console.error('Error enabling/disabling directory', error)
 			}
 		},
+
 		renamePerson: function(person) {
 			const self = this
 			if (person.name) {
@@ -213,6 +219,7 @@ export default {
 				)
 			}
 		},
+
 		processFacesData(data, isDirectory) {
 			this.isDirectory = isDirectory
 			this.isEnabledByUser = data.enabled
@@ -237,9 +244,10 @@ export default {
 				});
 			}
 		},
-	}
+	},
 }
 </script>
+
 <style scoped>
 .face-entry {
 	display: flex;

@@ -1,9 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.7.3] - 2021-03-17
+## [0.8.0] - 2021-03-17
 ### Added
 - Increase requirements to NC21. See issue #429
+- Add support for unified search, being able to search the photos of your loved
+  ones from anywhere in nextcloud. Thanks to @dassio. See PR #344
 - Add defer-clustering option. It changes the order of execution of the process
   deferring the face clustering at the end of the analysis to get persons in a
   simple execution of the command. Thanks to @cliffalbert. See issue #371

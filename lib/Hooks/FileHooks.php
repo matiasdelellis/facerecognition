@@ -1,7 +1,8 @@
 <?php
+declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
@@ -22,14 +23,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition;
 
+namespace OCA\FaceRecognition\Hooks;
+
+use OCP\Files\IRootFolder;
 use OCP\Files\Folder;
 use OCP\Files\Node;
 use OCP\ILogger;
 use OCP\IUserManager;
 
-use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -40,7 +42,10 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-class Watcher {
+class FileHooks {
+
+	/** @var IRootFolder */
+	private $root;
 
 	/** @var ILogger Logger */
 	private $logger;
@@ -63,12 +68,10 @@ class Watcher {
 	/** @var FileService */
 	private $fileService;
 
-	/** @var FaceManagementService */
-	private $faceManagementService;
-
 	/**
 	 * Watcher constructor.
 	 *
+	 * @param IRootFolder $root
 	 * @param ILogger $logger
 	 * @param IUserManager $userManager
 	 * @param FaceMapper $faceMapper
@@ -76,17 +79,17 @@ class Watcher {
 	 * @param PersonMapper $personMapper
 	 * @param SettingsService $settingsService
 	 * @param FileService $fileService
-	 * @param FaceManagementService $faceManagementService
 	 */
-	public function __construct(ILogger               $logger,
+	public function __construct(IRootFolder           $root,
+	                            ILogger               $logger,
 	                            IUserManager          $userManager,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
 	                            SettingsService       $settingsService,
-	                            FileService           $fileService,
-	                            FaceManagementService $faceManagementService)
+	                            FileService           $fileService)
 	{
+		$this->root                  = $root;
 		$this->logger                = $logger;
 		$this->userManager           = $userManager;
 		$this->faceMapper            = $faceMapper;
@@ -94,7 +97,19 @@ class Watcher {
 		$this->personMapper          = $personMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
-		$this->faceManagementService = $faceManagementService;
+	}
+
+	public function register() {
+		// Watch on postWrite to handle new and changes files
+		$this->root->listen('\OC\Files', 'postWrite', function (Node $node) {
+			$this->postWrite($node);
+		});
+
+		// We want to react on postDelete and not preDelete as in preDelete we don't know if
+		// file actually got deleted (locked, other errors...)
+		$this->root->listen('\OC\Files', 'postDelete', function (Node $node) {
+			$this->postDelete($node);
+		});
 	}
 
 	/**
@@ -283,16 +298,5 @@ class Watcher {
 				}
 			}
 		}
-	}
-
-	/**
-	 * A user has been deleted. Cleanup everything from this user.
-	 *
-	 * @param \OC\User\User $user Deleted user
-	 */
-	public function postUserDelete(\OC\User\User $user) {
-		$userId = $user->getUid();
-		$this->faceManagementService->resetAllForUser($userId);
-		$this->logger->info("Removed all face recognition data for deleted user " . $userId);
 	}
 }

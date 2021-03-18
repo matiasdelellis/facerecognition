@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
  * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
@@ -23,6 +24,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\AppInfo;
 
 use OCP\AppFramework\App;
@@ -39,9 +41,10 @@ use OCP\Files\Node;
 
 use OCP\IUserManager;
 
+use OCA\FaceRecognition\Hooks\FileHooks;
+use OCA\FaceRecognition\Hooks\UserHooks;
 use OCA\FaceRecognition\Listener\LoadSidebarListener;
 use OCA\FaceRecognition\Search\PersonSearchProvider;
-use OCA\FaceRecognition\Watcher;
 
 class Application extends App implements IBootstrap {
 
@@ -55,8 +58,6 @@ class Application extends App implements IBootstrap {
 	 */
 	public function __construct(array $urlParams = []) {
 		parent::__construct(self::APP_NAME, $urlParams);
-
-		$this->connectWatcher();
 	}
 
 	public function register(IRegistrationContext $context): void {
@@ -65,33 +66,8 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function boot(IBootContext $context): void {
-	}
-
-	private function connectWatcher() {
-		/** @var IRootFolder $root */
-		$root = $this->getContainer()->query(IRootFolder::class);
-
-		$root->listen('\OC\Files', 'postWrite', function (Node $node) {
-			/** @var Watcher $watcher */
-			$watcher = \OC::$server->query(Watcher::class);
-			$watcher->postWrite($node);
-		});
-
-		// We want to react on postDelete and not preDelete as in preDelete we don't know if
-		// file actually got deleted (locked, other errors...)
-		$root->listen('\OC\Files', 'postDelete', function (Node $node) {
-			/** @var Watcher $watcher */
-			$watcher = \OC::$server->query(Watcher::class);
-			$watcher->postDelete($node);
-		});
-
-		// Watch for user deletion, so we clean up user data, after user gets deleted
-		$userManager = $this->getContainer()->query(IUserManager::class);
-		$userManager->listen('\OC\User', 'postDelete', function (\OC\User\User $user) {
-			/** @var Watcher $watcher */
-			$watcher = \OC::$server->query(Watcher::class);
-			$watcher->postUserDelete($user);
-		});
+		$context->getAppContainer()->get(FileHooks::class)->register();
+		$context->getAppContainer()->get(UserHooks::class)->register();
 	}
 
 }

@@ -36,14 +36,13 @@ use OCP\AppFramework\IAppContainer;
 use OCP\EventDispatcher\IEventDispatcher;
 
 use OCA\Files\Event\LoadSidebar;
-use OCP\Files\IRootFolder;
-use OCP\Files\Node;
-
-use OCP\IUserManager;
+use OCP\User\Events\UserDeletedEvent;
 
 use OCA\FaceRecognition\Hooks\FileHooks;
-use OCA\FaceRecognition\Hooks\UserHooks;
+
 use OCA\FaceRecognition\Listener\LoadSidebarListener;
+use OCA\FaceRecognition\Listener\UserDeletedListener;
+
 use OCA\FaceRecognition\Search\PersonSearchProvider;
 
 class Application extends App implements IBootstrap {
@@ -62,12 +61,13 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		$context->registerSearchProvider(PersonSearchProvider::class);
+
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
+		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);
 	}
 
 	public function boot(IBootContext $context): void {
 		$context->getAppContainer()->get(FileHooks::class)->register();
-		$context->getAppContainer()->get(UserHooks::class)->register();
 	}
 
 }

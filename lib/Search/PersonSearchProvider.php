@@ -127,7 +127,7 @@ class PersonSearchProvider implements IProvider {
 					'',
 					$this->urlService->getRedirectToPersonUrl($personName),
 					'icon-contacts-dark',
-					true,
+					true
 				);
 			},
 			$this->personMapper->findPersonsLike($user->getUID(),

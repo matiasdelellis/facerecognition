@@ -52,7 +52,7 @@ class UserDeletedListener implements IEventListener {
 			return;
 		}
 
-		$userId = $event->getUser()->getUID()
+		$userId = $event->getUser()->getUID();
 
 		$this->service->resetAllForUser($userId);
 

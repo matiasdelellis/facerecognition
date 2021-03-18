@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2021-03-18
+### Fixed
+- Register the Hooks within the Bootstrap mechanism, removing many undesirable
+  logs. Similar to https://github.com/nextcloud/server/issues/22590
+
+### Translations
+- New Korean (Korea) translation thanks to HyeongJong Choi
+- Updating many others translations from Transifex. This time I cannot
+  individualize your changes to thank you properly, but thank you very much to
+  all the translators.
+
 ## [0.8.0] - 2021-03-17
 ### Added
 - Increase the supported version only to NC21. Thanks to @szaimen. See issue #429

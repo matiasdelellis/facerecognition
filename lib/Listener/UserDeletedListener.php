@@ -29,6 +29,8 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\ILogger;
 use OCP\User\Events\UserDeletedEvent;
 
+use OCA\FaceRecognition\Service\FaceManagementService;
+
 
 class UserDeletedListener implements IEventListener {
 
@@ -50,9 +52,9 @@ class UserDeletedListener implements IEventListener {
 			return;
 		}
 
-		$user = $event->getUser();
+		$userId = $event->getUser()->getUID()
 
-		$this->faceManagementService->resetAllForUser($user->getUID());
+		$this->service->resetAllForUser($userId);
 
 		$this->logger->info("Removed all face recognition data for deleted user " . $userId);
 	}

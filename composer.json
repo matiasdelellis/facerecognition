@@ -23,6 +23,6 @@
         "phpunit/phpunit": "^8"
     },
     "scripts": {
-        "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
+        "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l"
     }
 }

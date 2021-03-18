@@ -17,7 +17,6 @@ OC.L10N.register(
     "The format seems to be incorrect." : "O formato parece estar incorreto",
     "Restore" : "Restaurar",
     "Save" : "Salvar",
-    "Sensitivity" : "Sensibilidade",
     "Current status" : "Status atual",
     "Stopped" : "Parado"
 },

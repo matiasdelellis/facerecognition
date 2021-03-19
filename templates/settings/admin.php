@@ -29,7 +29,7 @@
 			<?php p($l->t('Clustering threshold'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('Persons are determined as groups of similar faces and to obtain them, all the faces found must be compared. When they are compared, a threshold is used to determine if they should be grouped.'));?></p>
-		<p class="settings-hint"><?php p($l->t('A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces, obtaining fewer groups, but being able to confuse similar persons.'));?>
+		<p class="settings-hint"><?php p($l->t('A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces and obtaining fewer groups, but being able to confuse similar persons.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
 		</p>
 		<p class="settings-ranged">

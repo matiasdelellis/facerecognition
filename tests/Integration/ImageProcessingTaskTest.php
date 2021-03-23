@@ -23,25 +23,16 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Model\ModelManager;
 
-use Test\TestCase;
-
 class ImageProcessingTaskTest extends IntegrationTestCase {
-
 	public function setUp(): void {
 		parent::setUp();
 
@@ -54,7 +45,6 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		// Install models needed to test
 		$model = $this->container->query('OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model');
 		$model->install();
-
 	}
 
 	public function tearDown(): void {
@@ -80,7 +70,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	public function testImageTooSmallToProcess() {
 		$this->config->setAppValue('facerecognition', 'min_image_size', 10000);
 		$imgData = file_get_contents(\OC::$SERVERROOT . '/apps/facerecognition/tests/assets/lenna.jpg');
-		$image = $this->genericTestImageProcessing($imgData, false, 0);
+		$image   = $this->genericTestImageProcessing($imgData, false, 0);
 	}
 
 	/**
@@ -89,7 +79,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	public function testNoFacesFound() {
 		$imgData = file_get_contents(\OC::$SERVERROOT . '/apps/facerecognition/tests/assets/black.jpg');
-		$image = $this->genericTestImageProcessing($imgData, false, 0);
+		$image   = $this->genericTestImageProcessing($imgData, false, 0);
 	}
 
 	/**
@@ -97,12 +87,12 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	public function testFindFace() {
 		$imgData = file_get_contents(\OC::$SERVERROOT . '/apps/facerecognition/tests/assets/lenna.jpg');
-		$image = $this->genericTestImageProcessing($imgData, false, 1);
+		$image   = $this->genericTestImageProcessing($imgData, false, 1);
 
 		// Check exact values for face boundaries (might need to update when we bump dlib/pdlib versions)
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$face = $faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)[0];
-		$face = $faceMapper->find($face->getId());
+		$face       = $faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)[0];
+		$face       = $faceMapper->find($face->getId());
 		$this->assertEquals(62, $face->getTop());
 		$this->assertEquals(137, $face->getBottom());
 		$this->assertEquals(49, $face->getLeft());
@@ -120,7 +110,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	private function genericTestImageProcessing($imgData, $expectingError, $expectedFacesCount) {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper  = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$this->doImageProcessing($imgData);
 
@@ -151,10 +141,10 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 */
 	private function doImageProcessing($imgData, $contextUser = null) {
 		// Create ImageProcessingTask
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		$modelManager =  $this->container->query('OCA\FaceRecognition\Model\ModelManager');
+		$imageMapper         = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService         = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$settingsService     = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$modelManager        = $this->container->query('OCA\FaceRecognition\Model\ModelManager');
 		$imageProcessingTask = new ImageProcessingTask($imageMapper, $fileService, $settingsService, $modelManager);
 		$this->assertNotEquals("", $imageProcessingTask->description());
 
@@ -186,9 +176,9 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$imageMapper          = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService          = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$settingsService      = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
 
 		// Set user for which to do scanning, if any
@@ -201,5 +191,4 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 
 		$this->assertEquals(true, $generator->getReturn());
 	}
-
 }

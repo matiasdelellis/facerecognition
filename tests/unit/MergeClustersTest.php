@@ -64,37 +64,37 @@ class MergeClustersTest extends TestCase {
 	public function testMergeClustersSimple() {
 		// Case when old cluster is empty and we get some new clusters
 		//
-		$result = $this->createClusterTask->mergeClusters(array(), array(1=>[101,102], 2=>[103,104]));
+		$result = $this->createClusterTask->mergeClusters([], [1 => [101,102], 2 => [103,104]]);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[1], [101, 102]);
 		$this->assertEquals($result[2], [103, 104]);
 		// Case when old and new cluster are completely same
 		//
-		$c = array(3=>[101,103], 4=>[105,107]);
+		$c      = [3 => [101,103], 4 => [105,107]];
 		$result = $this->createClusterTask->mergeClusters($c, $c);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[3], [101, 103]);
 		$this->assertEquals($result[4], [105, 107]);
 		// Case when cluster are the same, but person ID differ
 		//
-		$old = array(5=>[102,103], 6=>[105,106]);
-		$new = array(1=>[102,103], 2=>[105,106]);
+		$old    = [5 => [102,103], 6 => [105,106]];
+		$new    = [1 => [102,103], 2 => [105,106]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[5], [102, 103]);
 		$this->assertEquals($result[6], [105, 106]);
 		// Case when new faces are added to existing cluster
 		//
-		$old = array(7=>[102,103], 8=>[105,106]);
-		$new = array(1=>[102,103], 2=>[105,106, 107]);
+		$old    = [7 => [102,103], 8 => [105,106]];
+		$new    = [1 => [102,103], 2 => [105,106, 107]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[7], [102, 103]);
 		$this->assertEquals($result[8], [105, 106, 107]);
 		// Case when new faces are added to new cluster
 		//
-		$old = array(3=>[110,111], 4=>[112,113]);
-		$new = array(1=>[110,111], 2=>[112,113], 3=>[114, 115, 116]);
+		$old    = [3 => [110,111], 4 => [112,113]];
+		$new    = [1 => [110,111], 2 => [112,113], 3 => [114, 115, 116]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 3);
 		$this->assertEquals($result[3], [110, 111]);
@@ -102,8 +102,8 @@ class MergeClustersTest extends TestCase {
 		$this->assertEquals($result[5], [114, 115, 116]);
 		// Case when existing face "pops" to new cluster (cluster split)
 		//
-		$old = array(5=>[110,111,112], 6=>[113,114]);
-		$new = array(1=>[110,111], 2=>[113,114], 3=>[112]);
+		$old    = [5 => [110,111,112], 6 => [113,114]];
+		$new    = [1 => [110,111], 2 => [113,114], 3 => [112]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 3);
 		$this->assertEquals($result[5], [110,111]);
@@ -111,23 +111,23 @@ class MergeClustersTest extends TestCase {
 		$this->assertEquals($result[7], [112]);
 		// Case when existing face is removed
 		//
-		$old = array(7=>[110,111], 8=>[113,114]);
-		$new = array(1=>[110], 2=>[113,114]);
+		$old    = [7 => [110,111], 8 => [113,114]];
+		$new    = [1 => [110], 2 => [113,114]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[7], [110]);
 		$this->assertEquals($result[8], [113, 114]);
 		// Case when all faces in cluster are removed (cluster dissapear)
 		//
-		$old = array(3=>[110,111], 4=>[113,114]);
-		$new = array(1=>[110,111]);
+		$old    = [3 => [110,111], 4 => [113,114]];
+		$new    = [1 => [110,111]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 1);
 		$this->assertEquals($result[3], [110, 111]);
 		// Case when existing faces move to other cluster (cluster spil)
 		//
-		$old = array(5=>[110,111], 6=>[112,113,114]);
-		$new = array(1=>[110,111,112,113], 2=>[114]);
+		$old    = [5 => [110,111], 6 => [112,113,114]];
+		$new    = [1 => [110,111,112,113], 2 => [114]];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 2);
 		$this->assertEquals($result[5], [110, 111,112,113]);
@@ -140,20 +140,20 @@ class MergeClustersTest extends TestCase {
 	public function testMergeClustersComplex() {
 		// Case when old cluster is empty and we get some new clusters
 		//
-		$old = array(
-			10=>[100,101,102,103],
-			11=>[104,105,106,107],
-			12=>[108,109,110,111],
-			13=>[112,113,114,115]
-		);
-		$new = array(
-			1=>[100,101,102,103], // not touched
-			2=>[104,105,106,107,130], // new face added to this one
-			3=>[108,109,110], // one face removed
-			4=>[112,113,114], // one face moved to separate cluster
-			5=>[115,116], // face from cluster 4 (12) plus new face in this
-			6=>[117,118,119] // completely new cluster with new faces
-		);
+		$old = [
+			10 => [100,101,102,103],
+			11 => [104,105,106,107],
+			12 => [108,109,110,111],
+			13 => [112,113,114,115]
+		];
+		$new = [
+			1 => [100,101,102,103], // not touched
+			2 => [104,105,106,107,130], // new face added to this one
+			3 => [108,109,110], // one face removed
+			4 => [112,113,114], // one face moved to separate cluster
+			5 => [115,116], // face from cluster 4 (12) plus new face in this
+			6 => [117,118,119] // completely new cluster with new faces
+		];
 		$result = $this->createClusterTask->mergeClusters($old, $new);
 		$this->assertEquals(count($result), 6);
 		$this->assertEquals($result[10], [100, 101, 102, 103]);

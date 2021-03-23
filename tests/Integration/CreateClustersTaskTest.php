@@ -23,20 +23,12 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
-
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Model\ModelManager;
-
-use Test\TestCase;
 
 class CreateClustersTaskTest extends IntegrationTestCase {
 
@@ -44,9 +36,9 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 * Test that one face that was not in any cluster will be assigned new person
 	 */
 	public function testCreateSingleFaceCluster() {
-		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$personMapper    = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
+		$imageMapper     = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$faceMapper      = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 
 		$image = new Image();
@@ -55,7 +47,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
-		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
+		$face = Face::fromModel($image->getId(), ["left" => 0, "right" => 100, "top" => 0, "bottom" => 100, "detection_confidence" => 1.0]);
 		$faceMapper->insertFace($face);
 
 		// With a single face should never create clusters.

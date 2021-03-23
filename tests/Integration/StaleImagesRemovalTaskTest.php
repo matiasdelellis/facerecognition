@@ -23,23 +23,15 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 
 use OCA\FaceRecognition\Db\Image;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\SettingsService;
-
-use Test\TestCase;
 
 class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 
@@ -48,14 +40,14 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	 */
 	public function testNotNeededScan() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$image = new Image();
+		$image       = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 		$imageMapper->insert($image);
 
 		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
-		$generator = $staleImagesRemovalTask->execute($this->context);
+		$generator              = $staleImagesRemovalTask->execute($this->context);
 		foreach ($generator as $_) {
 		}
 		$this->assertEquals(true, $generator->getReturn());
@@ -69,7 +61,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	 */
 	public function testMissingImageRemoval() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$image = new Image();
+		$image       = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(2);
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
@@ -90,12 +82,12 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$view->file_put_contents("dir_nomedia/foo2.jpg", "content");
 		// Create these two images in database by calling add missing images task
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$imageMapper          = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService          = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$settingsService      = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
-		$this->context->user = $this->user;
-		$generator = $addMissingImagesTask->execute($this->context);
+		$this->context->user  = $this->user;
+		$generator            = $addMissingImagesTask->execute($this->context);
 		foreach ($generator as $_) {
 		}
 		// TODO: add faces and person for those images, so we can exercise person
@@ -140,10 +132,10 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	}
 
 	private function createStaleImagesRemovalTask() {
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$imageMapper     = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$faceMapper      = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$personMapper    = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
+		$fileService     = $this->container->query('OCA\FaceRecognition\Service\FileService');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		return new StaleImagesRemovalTask($imageMapper, $faceMapper, $personMapper, $fileService, $settingsService);
 	}

@@ -23,24 +23,16 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 
 use OCA\FaceRecognition\Db\Image;
 
 use OCA\FaceRecognition\Model\ModelManager;
-
-use Test\TestCase;
 
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
@@ -59,12 +51,12 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
 		// Create these two images in database by calling add missing images task
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$imageMapper          = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService          = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$settingsService      = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
-		$this->context->user = $this->user;
-		$generator = $addMissingImagesTask->execute($this->context);
+		$this->context->user  = $this->user;
+		$generator            = $addMissingImagesTask->execute($this->context);
 		foreach ($generator as $_) {
 		}
 
@@ -106,7 +98,7 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 	}
 
 	private function createDisabledUserRemovalTask() {
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$imageMapper     = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		return new DisabledUserRemovalTask($imageMapper, $faceMgmtService, $settingsService);

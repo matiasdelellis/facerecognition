@@ -24,7 +24,6 @@
 namespace OCA\FaceRecognition\Tests\Integration;
 
 use OC;
-use OC\Files\View;
 
 use OCP\IConfig;
 use OCP\IUser;
@@ -33,7 +32,6 @@ use OCP\AppFramework\IAppContainer;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
 use Test\TestCase;
 
@@ -62,18 +60,18 @@ abstract class IntegrationTestCase extends TestCase {
 
 		// Create user on which we will upload images and do testing
 		$userManager = OC::$server->getUserManager();
-		$username = 'testuser' . rand(0, PHP_INT_MAX);
-		$this->user = $userManager->createUser($username, 'password');
+		$username    = 'testuser' . rand(0, PHP_INT_MAX);
+		$this->user  = $userManager->createUser($username, 'password');
 		$this->loginAsUser($username);
 		// Get container to get classes using DI
-		$app = new App('facerecognition');
+		$app             = new App('facerecognition');
 		$this->container = $app->getContainer();
 
 		// Insantiate our context, that all tasks need
-		$userManager = $this->container->query('OCP\IUserManager');
-		$this->config = $this->container->query('OCP\IConfig');
-		$this->context = new FaceRecognitionContext($userManager, $this->config);
-		$logger = $this->container->query('OCP\ILogger');
+		$userManager           = $this->container->query('OCP\IUserManager');
+		$this->config          = $this->container->query('OCP\IConfig');
+		$this->context         = new FaceRecognitionContext($userManager, $this->config);
+		$logger                = $this->container->query('OCP\ILogger');
 		$this->context->logger = new FaceRecognitionLogger($logger);
 
 		// The tests, by default, are with the analysis activated.

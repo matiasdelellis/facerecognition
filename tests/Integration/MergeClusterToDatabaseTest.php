@@ -23,28 +23,17 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
-
-use OCP\IConfig;
-use OCP\IUser;
-use OCP\AppFramework\App;
 use OCP\AppFramework\Db\DoesNotExistException;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Model\ModelManager;
 
-use Test\TestCase;
-
 class MergeClusterToDatabaseTest extends IntegrationTestCase {
-
 	public function testMergeEmptyClusterToDatabase() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$personMapper->mergeClusterToDatabase($this->user->getUid(), array(), array());
+		$personMapper->mergeClusterToDatabase($this->user->getUid(), [], []);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
@@ -58,9 +47,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 
 		$image = $this->createImage();
-		$face = $this->createFace($image->getId());
+		$face  = $this->createFace($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(), array(), array(100=>[$face->getId()]));
+		$personMapper->mergeClusterToDatabase($this->user->getUid(), [], [100 => [$face->getId()]]);
 
 		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
@@ -74,13 +63,15 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 
 		$person = $this->createPerson();
-		$image = $this->createImage();
-		$face = $this->createFace($image->getId(), $person->getId());
+		$image  = $this->createImage();
+		$face   = $this->createFace($image->getId(), $person->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array($person->getId() => [$face->getId()]),
-			array($person->getId() => [$face->getId()]));
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[$person->getId() => [$face->getId()]],
+			[$person->getId() => [$face->getId()]]
+		);
 
 		$personId = $this->assertOnePerson("foo");
 		$this->assertFaces([$personId => [$face->getId()]]);
@@ -94,13 +85,14 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 
 		$person = $this->createPerson();
-		$image = $this->createImage();
-		$face = $this->createFace($image->getId(), $person->getId());
+		$image  = $this->createImage();
+		$face   = $this->createFace($image->getId(), $person->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array($person->getId() => [$face->getId()]),
-			array($person->getId()+1 => [$face->getId()])
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[$person->getId()     => [$face->getId()]],
+			[$person->getId() + 1 => [$face->getId()]]
 		);
 
 		$this->assertPersonDoNotExist($person->getId());
@@ -114,15 +106,17 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testNoPersons() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person = $this->createPerson();
-		$image = $this->createImage();
-		$face = $this->createFace($image->getId(), $person->getId());
+		$image  = $this->createImage();
+		$face   = $this->createFace($image->getId(), $person->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array($person->getId() => [$face->getId()]),
-			array());
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[$person->getId() => [$face->getId()]],
+			[]
+		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
@@ -149,26 +143,27 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 
 		$person = $this->createPerson();
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person->getId());
-		$face2 = $this->createFace($image->getId(), $person->getId());
+		$image  = $this->createImage();
+		$face1  = $this->createFace($image->getId(), $person->getId());
+		$face2  = $this->createFace($image->getId(), $person->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person->getId() => [$face1->getId(), $face2->getId()]
-			),
-			array(
-				$person->getId()+1 => [$face1->getId()],
-				$person->getId()+2 => [$face2->getId()]
-			)
+			],
+			[
+				$person->getId() + 1 => [$face1->getId()],
+				$person->getId() + 2 => [$face2->getId()]
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertTrue(is_null($persons[0]->getName()));
@@ -190,26 +185,27 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 
 		$person = $this->createPerson();
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person->getId());
-		$face2 = $this->createFace($image->getId(), $person->getId());
+		$image  = $this->createImage();
+		$face1  = $this->createFace($image->getId(), $person->getId());
+		$face2  = $this->createFace($image->getId(), $person->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person->getId() => [$face1->getId(), $face2->getId()]
-			),
-			array(
-				$person->getId() => [$face1->getId()],
-				$person->getId()+1 => [$face2->getId()]
-			)
+			],
+			[
+				$person->getId()     => [$face1->getId()],
+				$person->getId() + 1 => [$face2->getId()]
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertTrue($persons[0]->getName() === 'foo');
@@ -229,23 +225,24 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testMergeToSamePersons() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson('foo');
 		$person2 = $this->createPerson('bar');
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person1->getId());
-		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person2->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
-			),
-			array(
+			],
+			[
 				$person1->getId() => [$face1->getId(), $face2->getId()]
-			)
+			]
 		);
 
 		$this->assertPersonDoNotExist($person2->getId());
@@ -260,23 +257,24 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testMergeToNewPersons() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson('foo');
 		$person2 = $this->createPerson('bar');
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person1->getId());
-		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person2->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
-			),
-			array(
-				$person1->getId()+5 => [$face1->getId(), $face2->getId()]
-			)
+			],
+			[
+				$person1->getId() + 5 => [$face1->getId(), $face2->getId()]
+			]
 		);
 
 		$this->assertPersonDoNotExist($person1->getId());
@@ -291,31 +289,32 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testSwap() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson('foo');
 		$person2 = $this->createPerson('bar');
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person1->getId());
-		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person2->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
-			),
-			array(
+			],
+			[
 				$person1->getId() => [$face2->getId()],
 				$person2->getId() => [$face1->getId()],
-			)
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertTrue(strpos($persons[0]->getName(), 'foo') !== false);
@@ -334,31 +333,32 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testHalfSwap() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson('foo');
 		$person2 = $this->createPerson('bar');
-		$image = $this->createImage();
-		$face1 = $this->createFace($image->getId(), $person1->getId());
-		$face2 = $this->createFace($image->getId(), $person2->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person2->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
-			),
-			array(
-				$person1->getId() => [$face2->getId()],
-				$person2->getId()+5 => [$face1->getId()],
-			)
+			],
+			[
+				$person1->getId()     => [$face2->getId()],
+				$person2->getId() + 5 => [$face1->getId()],
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertTrue($persons[0]->getName() === 'foo');
@@ -384,62 +384,63 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testComplexToSamePerson() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson('foo-p1');
 		$person2 = $this->createPerson('foo-p2');
 		$person3 = $this->createPerson('foo-p3');
 		$person4 = $this->createPerson('foo-p4');
-		$image = $this->createImage();
-		$face1  = $this->createFace($image->getId(), $person1->getId());
-		$face2  = $this->createFace($image->getId(), $person1->getId());
-		$face3  = $this->createFace($image->getId(), $person1->getId());
-		$face4  = $this->createFace($image->getId(), $person1->getId());
-		$face5  = $this->createFace($image->getId(), $person2->getId());
-		$face6  = $this->createFace($image->getId(), $person2->getId());
-		$face7  = $this->createFace($image->getId(), $person2->getId());
-		$face8  = $this->createFace($image->getId(), $person2->getId());
-		$face9  = $this->createFace($image->getId(), $person3->getId());
-		$face10 = $this->createFace($image->getId(), $person3->getId());
-		$face11 = $this->createFace($image->getId(), $person3->getId());
-		$face12 = $this->createFace($image->getId(), $person3->getId());
-		$face13 = $this->createFace($image->getId(), $person4->getId());
-		$face14 = $this->createFace($image->getId(), $person4->getId());
-		$face15 = $this->createFace($image->getId(), $person4->getId());
-		$face16 = $this->createFace($image->getId(), $person4->getId());
-		$face17 = $this->createFace($image->getId());
-		$face18 = $this->createFace($image->getId());
-		$face19 = $this->createFace($image->getId());
-		$face20 = $this->createFace($image->getId());
-		$face21 = $this->createFace($image->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person1->getId());
+		$face3   = $this->createFace($image->getId(), $person1->getId());
+		$face4   = $this->createFace($image->getId(), $person1->getId());
+		$face5   = $this->createFace($image->getId(), $person2->getId());
+		$face6   = $this->createFace($image->getId(), $person2->getId());
+		$face7   = $this->createFace($image->getId(), $person2->getId());
+		$face8   = $this->createFace($image->getId(), $person2->getId());
+		$face9   = $this->createFace($image->getId(), $person3->getId());
+		$face10  = $this->createFace($image->getId(), $person3->getId());
+		$face11  = $this->createFace($image->getId(), $person3->getId());
+		$face12  = $this->createFace($image->getId(), $person3->getId());
+		$face13  = $this->createFace($image->getId(), $person4->getId());
+		$face14  = $this->createFace($image->getId(), $person4->getId());
+		$face15  = $this->createFace($image->getId(), $person4->getId());
+		$face16  = $this->createFace($image->getId(), $person4->getId());
+		$face17  = $this->createFace($image->getId());
+		$face18  = $this->createFace($image->getId());
+		$face19  = $this->createFace($image->getId());
+		$face20  = $this->createFace($image->getId());
+		$face21  = $this->createFace($image->getId());
 		$personMapper->invalidatePersons($image->getId());
 
 		// First person is not invalid (it will remain same, so change it back to valid)
 		$person1->setIsValid(true);
 		$personMapper->update($person1);
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
 				$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId()],
 				$person3->getId() => [$face9->getId(), $face10->getId(), $face11->getId(), $face12->getId()],
 				$person4->getId() => [$face13->getId(), $face14->getId(), $face15->getId(), $face16->getId()],
-			),
-			array(
-				$person1->getId() => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
-				$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
-				$person3->getId() => [$face9->getId(), $face10->getId(), $face11->getId()],
-				$person4->getId() => [$face13->getId(), $face14->getId(), $face15->getId()],
+			],
+			[
+				$person1->getId()       => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
+				$person2->getId()       => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
+				$person3->getId()       => [$face9->getId(), $face10->getId(), $face11->getId()],
+				$person4->getId()       => [$face13->getId(), $face14->getId(), $face15->getId()],
 				$person1->getId() + 100 => [$face16->getId(), $face18->getId()],
 				$person1->getId() + 101 => [$face19->getId(), $face20->getId(), $face21->getId()],
-			)
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertTrue($persons[0]->getName() === 'foo-p1');
@@ -463,9 +464,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
 			$person3->getId() => [$face9->getId(), $face10->getId(), $face11->getId()],
 			$person4->getId() => [$face13->getId(), $face14->getId(), $face15->getId()],
-			$person5Id => [$face16->getId(), $face18->getId()],
-			$person6Id => [$face19->getId(), $face20->getId(), $face21->getId()],
-			null => [$face12->getId()]
+			$person5Id        => [$face16->getId(), $face18->getId()],
+			$person6Id        => [$face19->getId(), $face20->getId(), $face21->getId()],
+			null              => [$face12->getId()]
 		]);
 	}
 
@@ -483,58 +484,59 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	public function testComplexToNewPerson() {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper   = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 
 		$person1 = $this->createPerson();
 		$person2 = $this->createPerson();
 		$person3 = $this->createPerson();
 		$person4 = $this->createPerson();
-		$image = $this->createImage();
-		$face1  = $this->createFace($image->getId(), $person1->getId());
-		$face2  = $this->createFace($image->getId(), $person1->getId());
-		$face3  = $this->createFace($image->getId(), $person1->getId());
-		$face4  = $this->createFace($image->getId(), $person1->getId());
-		$face5  = $this->createFace($image->getId(), $person2->getId());
-		$face6  = $this->createFace($image->getId(), $person2->getId());
-		$face7  = $this->createFace($image->getId(), $person2->getId());
-		$face8  = $this->createFace($image->getId(), $person2->getId());
-		$face9  = $this->createFace($image->getId(), $person3->getId());
-		$face10 = $this->createFace($image->getId(), $person3->getId());
-		$face11 = $this->createFace($image->getId(), $person3->getId());
-		$face12 = $this->createFace($image->getId(), $person3->getId());
-		$face13 = $this->createFace($image->getId(), $person4->getId());
-		$face14 = $this->createFace($image->getId(), $person4->getId());
-		$face15 = $this->createFace($image->getId(), $person4->getId());
-		$face16 = $this->createFace($image->getId(), $person4->getId());
-		$face17 = $this->createFace($image->getId());
-		$face18 = $this->createFace($image->getId());
-		$face19 = $this->createFace($image->getId());
-		$face20 = $this->createFace($image->getId());
-		$face21 = $this->createFace($image->getId());
+		$image   = $this->createImage();
+		$face1   = $this->createFace($image->getId(), $person1->getId());
+		$face2   = $this->createFace($image->getId(), $person1->getId());
+		$face3   = $this->createFace($image->getId(), $person1->getId());
+		$face4   = $this->createFace($image->getId(), $person1->getId());
+		$face5   = $this->createFace($image->getId(), $person2->getId());
+		$face6   = $this->createFace($image->getId(), $person2->getId());
+		$face7   = $this->createFace($image->getId(), $person2->getId());
+		$face8   = $this->createFace($image->getId(), $person2->getId());
+		$face9   = $this->createFace($image->getId(), $person3->getId());
+		$face10  = $this->createFace($image->getId(), $person3->getId());
+		$face11  = $this->createFace($image->getId(), $person3->getId());
+		$face12  = $this->createFace($image->getId(), $person3->getId());
+		$face13  = $this->createFace($image->getId(), $person4->getId());
+		$face14  = $this->createFace($image->getId(), $person4->getId());
+		$face15  = $this->createFace($image->getId(), $person4->getId());
+		$face16  = $this->createFace($image->getId(), $person4->getId());
+		$face17  = $this->createFace($image->getId());
+		$face18  = $this->createFace($image->getId());
+		$face19  = $this->createFace($image->getId());
+		$face20  = $this->createFace($image->getId());
+		$face21  = $this->createFace($image->getId());
 		$personMapper->invalidatePersons($image->getId());
 
-		$personMapper->mergeClusterToDatabase($this->user->getUid(),
-			array(
+		$personMapper->mergeClusterToDatabase(
+			$this->user->getUid(),
+			[
 				$person1->getId() => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
 				$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId()],
 				$person3->getId() => [$face9->getId(), $face10->getId(), $face11->getId(), $face12->getId()],
 				$person4->getId() => [$face13->getId(), $face14->getId(), $face15->getId(), $face16->getId()],
-			),
-			array(
+			],
+			[
 				$person1->getId() + 100 => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
 				$person1->getId() + 101 => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
 				$person1->getId() + 102 => [$face9->getId(), $face10->getId(), $face11->getId()],
 				$person1->getId() + 103 => [$face13->getId(), $face14->getId(), $face15->getId()],
 				$person1->getId() + 104 => [$face16->getId(), $face18->getId()],
 				$person1->getId() + 105 => [$face19->getId(), $face20->getId(), $face21->getId()],
-			)
+			]
 		);
 
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, count($persons));
-		usort($persons, function($p1, $p2) {
+		usort($persons, function ($p1, $p2) {
 			return $p1->getId() - $p2->getId();
 		});
 		$this->assertPersonDoNotExist($person1->getId());
@@ -550,27 +552,27 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		foreach ($persons as $person) {
 			$this->assertTrue($person->getIsValid());
 		}
-		$person5Id = $persons[0]->getId();
-		$person6Id = $persons[1]->getId();
-		$person7Id = $persons[2]->getId();
-		$person8Id = $persons[3]->getId();
-		$person9Id = $persons[4]->getId();
+		$person5Id  = $persons[0]->getId();
+		$person6Id  = $persons[1]->getId();
+		$person7Id  = $persons[2]->getId();
+		$person8Id  = $persons[3]->getId();
+		$person9Id  = $persons[4]->getId();
 		$person10Id = $persons[5]->getId();
 
 		$this->assertFaces([
-			$person5Id => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
-			$person6Id => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
-			$person7Id => [$face9->getId(), $face10->getId(), $face11->getId()],
-			$person8Id => [$face13->getId(), $face14->getId(), $face15->getId()],
-			$person9Id => [$face16->getId(), $face18->getId()],
+			$person5Id  => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
+			$person6Id  => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId(), $face17->getId()],
+			$person7Id  => [$face9->getId(), $face10->getId(), $face11->getId()],
+			$person8Id  => [$face13->getId(), $face14->getId(), $face15->getId()],
+			$person9Id  => [$face16->getId(), $face18->getId()],
 			$person10Id => [$face19->getId(), $face20->getId(), $face21->getId()],
-			null => [$face12->getId()]
+			null        => [$face12->getId()]
 		]);
 	}
 
 	private function createPerson($name = 'foo'): Person {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$person = new Person();
+		$person       = new Person();
 		$person->setUser($this->user->getUID());
 		$person->setName($name);
 		$person->setIsValid(true);
@@ -581,7 +583,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	private function createImage(): Image {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$image = new Image();
+		$image       = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
@@ -592,7 +594,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	private function createFace($imageId, $personId = null) {
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$face = Face::fromModel($imageId, array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
+		$face       = Face::fromModel($imageId, ["left" => 0, "right" => 100, "top" => 0, "bottom" => 100, "detection_confidence" => 1.0]);
 		if ($personId !== null) {
 			$face->setPerson($personId);
 		}
@@ -602,7 +604,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	private function assertOnePerson($name = null): int {
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount  = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 		$persons = $personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
@@ -642,20 +644,20 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	 */
 	private function assertFaces(array $personToFaces) {
 		$totalFaces = 0;
-		foreach ($personToFaces as $person=>$faces) {
+		foreach ($personToFaces as $person => $faces) {
 			$totalFaces += count($faces);
 		}
 
 		// Check total faces in DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faceCount  = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals($totalFaces, $faceCount);
 
 		// Check those faces have given persons
 		$facesDb = $faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals($totalFaces, count($facesDb));
-		foreach($facesDb as $faceDb) {
-			foreach ($personToFaces as $person=>$faces) {
+		foreach ($facesDb as $faceDb) {
+			foreach ($personToFaces as $person => $faces) {
 				if (in_array($faceDb->getId(), $faces)) {
 					if ($person !== "") {
 						$this->assertEquals($faceDb->getPerson(), $person);
@@ -667,7 +669,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		}
 
 		// Check that each person have those faces (and no more)
-		foreach($personToFaces as $person=>$faces) {
+		foreach ($personToFaces as $person => $faces) {
 			if ($person === "") {
 				continue;
 			}
@@ -675,7 +677,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			$facesFromPerson = $faceMapper->findFacesFromPerson($this->user->getUID(), $person, ModelManager::DEFAULT_FACE_MODEL_ID);
 			$this->assertEquals(count($faces), count($facesFromPerson));
 
-			usort($facesFromPerson, function($f1, $f2) {
+			usort($facesFromPerson, function ($f1, $f2) {
 				return $f1->getId() - $f2->getId();
 			});
 			for ($i = 0; $i < count($faces); $i++) {

@@ -27,14 +27,11 @@ use OCP\IConfig;
 use OCP\ILogger;
 use OCP\IUserManager;
 
-use OCP\App\IAppManager;
-use OCP\Files\IRootFolder;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\UnlockTask;
-use OCA\FaceRecognition\Service\ModelService;
 
 use Test\TestCase;
 
@@ -53,14 +50,14 @@ class LockTaskTest extends TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 		$this->context = new FaceRecognitionContext($userManager, $config);
-		$logger = $this->getMockBuilder(ILogger::class)
+		$logger        = $this->getMockBuilder(ILogger::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 
 	public function testLockUnlock() {
-		$lockTask = new LockTask();
+		$lockTask   = new LockTask();
 		$unlockTask = new UnlockTask();
 		$this->assertTrue($lockTask->execute($this->context));
 		$this->assertTrue($unlockTask->execute($this->context));
@@ -69,7 +66,7 @@ class LockTaskTest extends TestCase {
 	}
 
 	public function testDoubleLock() {
-		$lockTask = new LockTask();
+		$lockTask   = new LockTask();
 		$unlockTask = new UnlockTask();
 		$this->assertTrue($lockTask->execute($this->context));
 		$this->assertFalse($lockTask->execute($this->context));
@@ -82,7 +79,7 @@ class LockTaskTest extends TestCase {
 	}
 
 	public function testDoubleUnlock() {
-		$lockTask = new LockTask();
+		$lockTask   = new LockTask();
 		$unlockTask = new UnlockTask();
 		$this->assertTrue($lockTask->execute($this->context));
 		$this->assertTrue($unlockTask->execute($this->context));

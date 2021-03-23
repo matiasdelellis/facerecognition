@@ -28,7 +28,6 @@ use OCA\FaceRecognition\Helper\MemoryLimits;
 use Test\TestCase;
 
 class MemoryLimitsTest extends TestCase {
-
 	public function testReturnBytes() {
 		$this->assertEquals(0, MemoryLimits::returnBytes(''));
 		$this->assertEquals(0, MemoryLimits::returnBytes('foo'));

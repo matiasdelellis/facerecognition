@@ -23,16 +23,11 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
 use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
 use OCA\FaceRecognition\Model\ModelManager;
@@ -118,9 +113,9 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$imageMapper          = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService          = $this->container->query('OCA\FaceRecognition\Service\FileService');
+		$settingsService      = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
 		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
 		$this->assertNotEquals("", $addMissingImagesTask->description());
 
@@ -134,5 +129,4 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		$this->assertEquals(true, $generator->getReturn());
 	}
-
 }

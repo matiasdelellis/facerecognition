@@ -33,7 +33,7 @@
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-photos-integration.jpeg</screenshot>
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-assign-initial-name.jpeg</screenshot>
 	<dependencies>
-		<php min-version="7.3" max-version="7.4" />
+		<php min-version="7.3" max-version="8.0" />
 		<lib>pdlib</lib>
 		<lib>bz2</lib>
 		<nextcloud min-version="21" max-version="21"/>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once './test/coding-standard/Config.php;
+require_once './test/coding-standard/Config.php';
 
 use FaceRecognition\CodingStandard\Config;
 

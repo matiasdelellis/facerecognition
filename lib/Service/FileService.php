@@ -43,6 +43,8 @@ class FileService {
 
 	const NOMEDIA_FILE = ".nomedia";
 
+	const NOIMAGE_FILE = ".noimage";
+
 	const FACERECOGNITION_SETTINGS_FILE = ".facerecognition.json";
 
 	/**  @var string|null */
@@ -143,20 +145,26 @@ class FileService {
 	 */
 	public function getDescendantDetection(Folder $folder): bool {
 		try {
-			if ($folder->nodeExists(FileService::NOMEDIA_FILE)) {
+			if ($folder->nodeExists(FileService::NOMEDIA_FILE) ||
+			    $folder->nodeExists(FileService::NOIMAGE_FILE)) {
 				return false;
 			}
-			if ($folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
-				$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
-				if (!($file instanceof File)) // Maybe the node exists but it can be a folder.
-					return true;
 
-				$settings = json_decode($file->getContent(), true);
-				if ($settings === null || !array_key_exists('detection', $settings))
-					return true;
+			if (!$folder->nodeExists(FileService::FACERECOGNITION_SETTINGS_FILE)) {
+				return true;
+			}
 
-				if ($settings['detection'] === 'off')
-					return false;
+			$file = $folder->get(FileService::FACERECOGNITION_SETTINGS_FILE);
+			if (!($file instanceof File)) // Maybe the node exists but it can be a folder.
+				return true;
+
+			$settings = json_decode($file->getContent(), true);
+			if ($settings === null || !array_key_exists('detection', $settings)) {
+				return true;
+			}
+
+			if ($settings['detection'] === 'off') {
+				return false;
 			}
 		} catch (StorageNotAvailableException $e) {
 			return false;

@@ -157,7 +157,8 @@ class FileHooks {
 			return;
 		}
 
-		if ($node->getName() === FileService::NOMEDIA_FILE) {
+		if ($node->getName() === FileService::NOMEDIA_FILE ||
+		    $node->getName() === FileService::NOIMAGE_FILE) {
 			// If user added this file, it means all images in this and all child directories should be removed.
 			// Instead of doing that here, it's better to just add flag that image removal should be done.
 			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
@@ -251,7 +252,8 @@ class FileHooks {
 			return;
 		}
 
-		if ($node->getName() === FileService::NOMEDIA_FILE) {
+		if ($node->getName() === FileService::NOMEDIA_FILE ||
+		    $node->getName() === FileService::NOIMAGE_FILE) {
 			// If user deleted file named .nomedia, that means all images in this and all child directories should be added.
 			// But, instead of doing that here, better option seem to be to just reset flag that image scan is not done.
 			// This will trigger another round of image crawling in AddMissingImagesTask for this user and those images will be added.

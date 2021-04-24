@@ -88,6 +88,19 @@ const FrDialogs = {
 				}
 			});
 
+			new AutoComplete({
+				input: document.getElementById(dialogName + "-input"),
+				lookup (query) {
+					return new Promise(resolve => {
+						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
+							resolve(names);
+						});
+					});
+				},
+				silent: true,
+				highlight: false
+			});
+
 			input.focus();
 			input.select();
 		});
@@ -154,6 +167,19 @@ const FrDialogs = {
 						callback(false, '');
 					}
 				}
+			});
+
+			new AutoComplete({
+				input: document.getElementById(dialogName + "-input"),
+				lookup (query) {
+					return new Promise(resolve => {
+						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
+							resolve(names);
+						});
+					});
+				},
+				silent: true,
+				highlight: false
 			});
 
 			input.focus();

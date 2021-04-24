@@ -191,4 +191,25 @@ class PersonController extends Controller {
 		return $this->find($name);
 	}
 
+	/**
+	 * @NoAdminRequired
+	 */
+	public function autocomplete(string $query) {
+		$resp = array();
+
+		if (!$this->settingsService->getUserEnabled($this->userId))
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$persons = $this->personMapper->findPersonsLike($this->userId, $modelId, $query);
+		foreach ($persons as $person) {
+			$name = [];
+			$name['name'] = $person->getName();
+			$name['value'] = $person->getName();
+			$resp[] = $name;
+		}
+		return new DataResponse($resp);
+    }
+
 }

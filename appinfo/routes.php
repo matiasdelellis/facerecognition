@@ -22,6 +22,12 @@ return ['routes' =>
 		'url'  => '/person/{personName}',
 		'verb' => 'PUT'
 	],
+	// Get all names filtered by an query.
+	[
+		'name' => 'person#autocomplete',
+		'url'  => '/autocomplete/{query}',
+		'verb' => 'GET'
+	],
 	/*
 	 * Clusters
 	 */

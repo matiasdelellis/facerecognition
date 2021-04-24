@@ -1,4 +1,5 @@
 <?php
+script('facerecognition', 'vendor/autocomplete');
 script('facerecognition', 'vendor/handlebars');
 script('facerecognition', 'vendor/lozad');
 script('facerecognition', 'vendor/egg');

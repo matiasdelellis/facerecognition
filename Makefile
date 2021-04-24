@@ -56,11 +56,15 @@ js/vendor/lozad.js: npm-deps
 	mkdir -p js/vendor
 	cp node_modules/lozad/dist/lozad.js -f js/vendor/lozad.js
 
+js/vendor/autocomplete.js:
+	mkdir -p js/vendor
+	wget https://raw.githubusercontent.com/realsuayip/autocomplete/master/dist/autocomplete.js -O js/vendor/autocomplete.js
+
 js/vendor/egg.js:
 	mkdir -p js/vendor
 	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O js/vendor/egg.js
 
-javascript-deps: js/vendor/handlebars.js js/vendor/lozad.js js/vendor/egg.js
+javascript-deps: js/vendor/handlebars.js js/vendor/autocomplete.js js/vendor/lozad.js js/vendor/egg.js
 
 vendor-deps: composer javascript-deps
 

@@ -182,8 +182,21 @@ class ClusterController extends Controller {
 
 			$faces = [];
 			foreach ($personFaces as $personFace) {
+				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+
+				$fileId = $image->getFile();
+				if ($fileId === null) continue;
+
+				$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
+				if ($fileUrl === null) continue;
+
+				$thumbUrl = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				if ($thumbUrl === null) continue;
+
 				$face = [];
-				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['thumbUrl'] = $thumbUrl;
+				$face['fileUrl'] = $fileUrl;
+
 				$faces[] = $face;
 			}
 

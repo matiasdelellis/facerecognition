@@ -65,7 +65,7 @@ class PersonMapper extends QBMapper {
 			->where($sub->expr()->eq('p.id', 'f.person'))
 			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')))
-			->andwhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')));
+			->andWhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name', 'is_valid')

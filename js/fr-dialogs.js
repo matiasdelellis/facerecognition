@@ -41,8 +41,11 @@ const FrDialogs = {
 			$dlg.append(div);
 
 			for (var face of faces) {
-				var thumb = $('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>');
-				div.append(thumb);
+				if (face['fileUrl'] !== undefined) {
+					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
+				} else {
+					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
+				}
 			}
 
 			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
@@ -122,8 +125,11 @@ const FrDialogs = {
 			$dlg.append(div);
 
 			for (var face of faces) {
-				var thumb = $('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>');
-				div.append(thumb);
+				if (face['fileUrl'] !== undefined) {
+					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
+				} else {
+					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
+				}
 			}
 
 			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));

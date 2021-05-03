@@ -15,6 +15,7 @@
 		"@nextcloud/axios": "^1.6.0",
 		"@nextcloud/vue": "^2.9.0",
 		"babel-loader": "^8.2.2",
+		"browserslist-config-nextcloud": "^0.1.0",
 		"css-loader": "^3.6.0",
 		"eslint": "^6.8.0",
 		"eslint-loader": "^4.0.2",

@@ -70,6 +70,12 @@ class Person extends Entity implements JsonSerializable {
 	*/
 	protected $linkedUser;
 
+	public function __construct() {
+		$this->addType('id', 'integer');
+		$this->addType('user', 'string');
+		$this->addType('isValid', 'bool');
+	}
+
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,

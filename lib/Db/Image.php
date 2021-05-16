@@ -101,6 +101,10 @@ class Image extends Entity implements JsonSerializable {
 	protected $processingDuration;
 
 	public function __construct() {
+		$this->addType('id', 'integer');
+		$this->addType('user', 'string');
+		$this->addType('file', 'integer');
+		$this->addType('model', 'integer');
 		$this->addType('isProcessed', 'bool');
 	}
 
@@ -125,4 +129,5 @@ class Image extends Entity implements JsonSerializable {
 		}
 		$this->markFieldUpdated('isProcessed');
 	}
+
 }

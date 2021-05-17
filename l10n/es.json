@@ -66,7 +66,7 @@
     "Save" : "Guardar",
     "Clustering threshold" : "Umbral de agrupación",
     "Persons are determined as groups of similar faces and to obtain them, all the faces found must be compared. When they are compared, a threshold is used to determine if they should be grouped." : "Las personas se determinan como grupos de caras similares y para obtenerlas se deben comparar todas las caras encontradas. Cuando se comparan, se utiliza un umbral para determinar si deben agruparse.",
-    "A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces, obtaining fewer groups, but being able to confuse similar persons." : "Un umbral pequeño solo agrupará caras muy similares, pero inicialmente tendrá muchos grupos para nombrar. Un umbral mayor es más flexible para agrupar las caras, obteniendo menos grupos, pero pudiendo confundir a personas similares.",
+    "A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces and obtaining fewer groups, but being able to confuse similar persons." : "Un umbral pequeño solo agrupará caras muy similares, pero inicialmente tendrá muchos grupos para nombrar. Un umbral mayor es más flexible para agrupar las caras y obtendrá menos grupos, pero pudiendo confundir a personas similares.",
     "Small threshold" : "Umbral pequeño",
     "Higher threshold" : "Umbral más alto",
     "Minimum confidence" : "Confianza mínima",

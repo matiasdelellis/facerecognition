@@ -138,6 +138,7 @@ test: build
 
 clean: l10n-clean
 	rm -rf js/vendor
+	rm -f js/*.map
 	rm -rf build
 	rm -rf vendor
 	rm -rf node_modules

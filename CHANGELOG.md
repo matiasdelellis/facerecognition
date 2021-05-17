@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.2] - 2021-05-17
+### Added
+- Add links in thumbnails of rename persons dialogs. Issue #396
+- Initial autocomplete feature for names. Issue #306
+
+### Fixed
+- Respect .noimage file, since it is also used in Photos. Issue #446
+- Fix delete files due some change on ORM with NC21. Issue #471
+- Some fixes on make clean.
+
+### Translations
+- New Italian translation thanks to axl84, and update others. Thank you so much
+  everyone.
+
 ## [0.8.1] - 2021-03-18
 ### Fixed
 - Register the Hooks within the Bootstrap mechanism, removing many undesirable

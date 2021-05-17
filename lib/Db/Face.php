@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>

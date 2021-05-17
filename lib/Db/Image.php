@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2018, 2020-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -101,6 +101,10 @@ class Image extends Entity implements JsonSerializable {
 	protected $processingDuration;
 
 	public function __construct() {
+		$this->addType('id', 'integer');
+		$this->addType('user', 'string');
+		$this->addType('file', 'integer');
+		$this->addType('model', 'integer');
 		$this->addType('isProcessed', 'bool');
 	}
 
@@ -125,4 +129,5 @@ class Image extends Entity implements JsonSerializable {
 		}
 		$this->markFieldUpdated('isProcessed');
 	}
+
 }

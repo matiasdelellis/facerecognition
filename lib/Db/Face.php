@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -31,6 +31,7 @@ use OCP\AppFramework\Db\Entity;
  * Face represents one found face from one image.
  *
  * @method int getImage()
+ * @method int getPerson()
  * @method int getLeft()
  * @method int getRight()
  * @method int getTop()
@@ -115,6 +116,12 @@ class Face extends Entity implements JsonSerializable {
 	 * @var \DateTime
 	 * */
 	public $creationTime;
+
+	public function __construct() {
+		$this->addType('id', 'integer');
+		$this->addType('image', 'integer');
+		$this->addType('person', 'integer');
+	}
 
 	/**
 	 * Factory method to create Face from face structure that is returned as output of the model.

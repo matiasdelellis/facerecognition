@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020-2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -69,6 +69,12 @@ class Person extends Entity implements JsonSerializable {
 	 * @var string|null
 	*/
 	protected $linkedUser;
+
+	public function __construct() {
+		$this->addType('id', 'integer');
+		$this->addType('user', 'string');
+		$this->addType('isValid', 'bool');
+	}
 
 	public function jsonSerialize() {
 		return [

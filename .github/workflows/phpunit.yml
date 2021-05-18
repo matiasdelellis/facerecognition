@@ -49,6 +49,10 @@ jobs:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
 
+      - name: Install dlib
+          run: |
+          sudo apt-get install dlib-devel
+
       - name: Checkout submodules
         shell: bash
         run: |

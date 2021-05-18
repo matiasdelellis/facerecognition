@@ -50,7 +50,7 @@ jobs:
           ref: ${{ matrix.server-versions }}
 
       - name: Install dlib
-          run: |
+        run: |
           sudo apt-get install libdlib-dev
 
       - name: Checkout submodules

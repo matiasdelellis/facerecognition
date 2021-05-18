@@ -51,7 +51,7 @@ jobs:
 
       - name: Install dlib
           run: |
-          sudo apt-get install dlib-devel
+          sudo apt-get install libdlib-dev
 
       - name: Checkout submodules
         shell: bash

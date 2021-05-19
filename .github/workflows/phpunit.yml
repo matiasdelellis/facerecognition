@@ -95,7 +95,10 @@ jobs:
 
       - name: PHPUnit
         working-directory: apps/${{ env.APP_NAME }}
-        run: ./vendor/phpunit/phpunit/phpunit -c tests/phpunit.xml
+        run: |
+          ../../occ face:setup --model 3 || true
+          ../../occ face:setup --model 1
+          make test
 
       - name: PHPUnit integration
         working-directory: apps/${{ env.APP_NAME }}

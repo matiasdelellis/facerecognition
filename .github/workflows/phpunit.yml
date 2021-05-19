@@ -9,7 +9,7 @@ on:
 
 env:
   APP_NAME: facerecognition
-
+  TRAVIS: 1
 
 jobs:
   integration:

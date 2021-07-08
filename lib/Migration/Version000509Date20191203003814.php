@@ -66,7 +66,7 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 				'length' => 256,
 			]);
 			$table->addColumn('is_valid', 'boolean', [
-				'notnull' => true,
+				'notnull' => false,
 				'default' => false,
 			]);
 			$table->addColumn('last_generation_time', 'datetime', [
@@ -100,7 +100,7 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 				'length' => 4,
 			]);
 			$table->addColumn('is_processed', 'boolean', [
-				'notnull' => true,
+				'notnull' => false,
 				'default' => false,
 			]);
 			$table->addColumn('error', 'string', [

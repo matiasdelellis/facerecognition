@@ -20,6 +20,9 @@ env:
     - DB=mysql
     - DB=pgsql
     - DB=sqlite
+    - DB=mysql CORE_BRANCH=stable22
+    - DB=pgsql CORE_BRANCH=stable22
+    - DB=sqlite CORE_BRANCH=stable22
 
 before_install:
   # Installing pdlib (install dlib from repo and compile pdlib on top of it)

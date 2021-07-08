@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.3] - 2021-07-08
+### Added
+- Initial support for NC22.
+- Update translations.
+
 ## [0.8.2] - 2021-05-17
 ### Added
 - Add links in thumbnails of rename persons dialogs. Issue #396

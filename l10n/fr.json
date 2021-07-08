@@ -66,6 +66,7 @@
     "Save" : "Enregistrer",
     "Clustering threshold" : "Seuil de groupement",
     "Persons are determined as groups of similar faces and to obtain them, all the faces found must be compared. When they are compared, a threshold is used to determine if they should be grouped." : "Les personnes sont déterminées comme des groupes de visages similaires et pour les obtenir, tous les visages trouvés doivent être comparés. Lorsqu'ils sont comparés, un seuil est utilisé pour déterminer s'ils doivent être regroupés.",
+    "A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces and obtaining fewer groups, but being able to confuse similar persons." : "Un petit seuil ne regroupera que des visages très similaires, mais vous aurez initialement de nombreux groupes à nommer. Un seuil plus grand est plus flexible pour regrouper les visages, obtenant moins de groupes, mais peut confondre des personnes similaires.",
     "Small threshold" : "Petit seuil",
     "Higher threshold" : "Seuil plus élevé",
     "Minimum confidence" : "Confiance minimale ",

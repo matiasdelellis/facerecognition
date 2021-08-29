@@ -95,17 +95,20 @@ class ProgressCommand extends Command {
 		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
 
 		$remainingImages = $totalImages - $processedImages;
-		if ($remainingImages)
+		if ($remainingImages) {
 			$estimatedTime = $this->dateTimeFormatter->formatTimeSpan(time() + $remainingImages * $avgProcessingTime/1000);
-		else {
-			$estimatedTime = '-';
+            $progress = ($processedImages * 100) / (float) $totalImages;
 		}
-
+        else {
+			$estimatedTime = '-';
+            $progress = 0;
+		}
+        $progress = strval(number_format((float)$progress, 4, '.', '')) . "%";
 
 		$table = new Table($output);
 		$table
-			->setHeaders(['Images', 'Remaining', 'ETA'])
-			->setRows([[strval($totalImages), strval($remainingImages), $estimatedTime]]);
+			->setHeaders(['Images', 'Remaining', 'Progress', 'ETA'])
+			->setRows([[strval($totalImages), strval($remainingImages), $progress, $estimatedTime]]);
 		$table->render();
 
 		return 0;

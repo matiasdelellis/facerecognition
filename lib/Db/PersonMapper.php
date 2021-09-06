@@ -131,6 +131,31 @@ class PersonMapper extends QBMapper {
 
 	/**
 	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @return Person[]
+	 */
+	public function findAllNamed(string $userId, int $modelId): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name', 'is_valid')
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->andWhere($qb->expr()->isNotNull('p.name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
+
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId ID of the user
 	 */
 	public function findDistinctNames(string $userId, int $modelId) {
 		$qb = $this->db->getQueryBuilder();

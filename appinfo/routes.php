@@ -120,4 +120,13 @@ return ['routes' =>
 		'verb' => 'GET'
 	],
 
+], 'ocs' => [
+	/*
+	 * OCS Person API
+	 */
+	[
+		'name' => 'PersonApi#getPersons',
+		'url' => '/api/v1/persons',
+		'verb' => 'GET',
+	],
 ]];

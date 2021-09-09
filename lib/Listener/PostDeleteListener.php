@@ -3,9 +3,11 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
  * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021 Ming Tsang <nkming2@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
+ * @author Ming Tsang <nkming2@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
  *

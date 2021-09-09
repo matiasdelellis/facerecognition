@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021 Ming Tsang <nkming2@gmail.com>
  *
- * @author Matias De lellis <mati86dl@gmail.com>
+ * @author Ming Tsang <nkming2@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -23,14 +23,10 @@
 
 namespace OCA\FaceRecognition\Controller;
 
-use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Service\SettingsService;
-use OCA\FaceRecognition\Service\UrlService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
@@ -50,9 +46,6 @@ class PersonApiController extends OCSController {
 	/** @var SettingsService */
 	private $settingsService;
 
-	/** @var UrlService */
-	private $urlService;
-
 	/** @var string */
 	private $userId;
 
@@ -62,7 +55,6 @@ class PersonApiController extends OCSController {
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personmapper,
 	                            SettingsService $settingsService,
-	                            UrlService      $urlService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
@@ -71,12 +63,19 @@ class PersonApiController extends OCSController {
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personmapper;
 		$this->settingsService = $settingsService;
-		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
 	}
 
 	/**
-	 * Get all persons with faces and file asociated
+	 * Get all named persons
+	 *
+	 * - Endpoint: /persons
+	 * - Method: GET
+	 * - Response: Array of persons
+	 * 		- Person:
+	 * 			- name: Name of the person
+	 * 			- thumbFaceId: Face representing this person
+	 * 			- count: Number of images associated to this person
 	 *
 	 * @NoAdminRequired
 	 */
@@ -90,25 +89,65 @@ class PersonApiController extends OCSController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findAllNamed($this->userId, $modelId);
-		foreach ($persons as $person) {
-			$respPerson = [];
-			$respPerson['name'] = $person->getName();
-			$respPerson['id'] = $person->getId();
-			$respPerson['faces'] = array();
-
-			$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-			foreach ($personFaces as $personFace) {
-				$respFace = [];
-				$respFace['id'] = $personFace->id;
-
-				$image = $this->imageMapper->find($this->userId, $personFace->image);
-				$respFace['file-id'] = $image->file;
-
-				$respPerson['faces'][] = $respFace;
+		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
+		foreach ($personsNames as $personNamed) {
+			$facesCount = 0;
+			$thumbFaceId = null;
+			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
+			foreach ($persons as $person) {
+				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
+				if (is_null($thumbFaceId)) {
+					$thumbFaceId = $personFaces[0]->getId();
+				}
+				$facesCount += count($personFaces);
 			}
 
+			$respPerson = [];
+			$respPerson['name'] = $personNamed->getName();
+			$respPerson['thumbFaceId'] = $thumbFaceId;
+			$respPerson['count'] = $facesCount;
+
 			$resp[] = $respPerson;
+		}
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * Get all faces associated to a person
+	 *
+	 * - Endpoint: /person/<name>/faces
+	 * - Method: GET
+	 * - URL Arguments: name - (string) name of the person
+	 * - Response: Array of faces
+	 * 		- Face:
+	 * 			- id: Face ID
+	 * 			- fileId: The file where this face was found
+	 *
+	 * @NoAdminRequired
+	 */
+	public function getFacesByPerson(string $name) {
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+
+		$resp = array();
+
+		if (!$userEnabled)
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$clusters = $this->personMapper->findByName($this->userId, $modelId, $name);
+		foreach ($clusters as $cluster) {
+			$faces = $this->faceMapper->findFacesFromPerson($this->userId, $cluster->getId(), $modelId);
+			foreach ($faces as $face) {
+				$image = $this->imageMapper->find($this->userId, $face->getImage());
+
+				$respFace = [];
+				$respFace['id'] = $face->getId();
+				$respFace['fileId'] = $image->getFile();
+
+				$resp[] = $respFace;
+			}
 		}
 
 		return new DataResponse($resp);

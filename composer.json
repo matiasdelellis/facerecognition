@@ -20,7 +20,8 @@
     },
     "require-dev": {
         "christophwurst/nextcloud": "^21",
-        "phpunit/phpunit": "^8"
+        "phpunit/phpunit": "^8",
+        "vimeo/psalm": "^4.10"
     },
     "scripts": {
         "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l"

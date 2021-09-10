@@ -120,4 +120,20 @@ return ['routes' =>
 		'verb' => 'GET'
 	],
 
+], 'ocs' => [
+	/*
+	 * OCS Person API
+	 */
+	// Get all named persons
+	[
+		'name' => 'PersonApi#getPersons',
+		'url' => '/api/v1/persons',
+		'verb' => 'GET',
+	],
+	// Get all faces associated to a person
+	[
+		'name' => 'PersonApi#getFacesByPerson',
+		'url' => '/api/v1/person/{name}/faces',
+		'verb' => 'GET',
+	],
 ]];

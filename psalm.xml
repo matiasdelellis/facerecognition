@@ -15,4 +15,19 @@
 	<extraFiles>
 		<directory name="vendor" />
 	</extraFiles>
+	<issueHandlers>
+		<UndefinedClass>
+			<errorLevel type="info">
+				<referencedClass name="OC" />
+			</errorLevel>
+		</UndefinedClass>
+		<UndefinedDocblockClass>
+			<errorLevel type="suppress">
+				<referencedClass name="Doctrine\DBAL\Driver\Statement" />
+				<referencedClass name="Doctrine\DBAL\Schema\Schema" />
+				<referencedClass name="Doctrine\DBAL\Schema\SchemaException" />
+				<referencedClass name="Doctrine\DBAL\Schema\Table" />
+			</errorLevel>
+		</UndefinedDocblockClass>
+	</issueHandlers>
 </psalm>

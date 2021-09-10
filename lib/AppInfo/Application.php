@@ -69,4 +69,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(NodeDeletedEvent::class, PostDeleteListener::class);
 	}
 
+	public function boot(IBootContext $context): void {
+	}
+
 }

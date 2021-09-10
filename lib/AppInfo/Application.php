@@ -29,18 +29,19 @@ namespace OCA\FaceRecognition\AppInfo;
 
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootstrap;
-use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Bootstrap\IBootContext;
-use OCP\AppFramework\IAppContainer;
+use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 use OCP\EventDispatcher\IEventDispatcher;
 
 use OCA\Files\Event\LoadSidebar;
+use OCP\Files\Events\Node\NodeDeletedEvent;
+use OCP\Files\Events\Node\NodeWrittenEvent;
 use OCP\User\Events\UserDeletedEvent;
 
-use OCA\FaceRecognition\Hooks\FileHooks;
-
 use OCA\FaceRecognition\Listener\LoadSidebarListener;
+use OCA\FaceRecognition\Listener\PostDeleteListener;
+use OCA\FaceRecognition\Listener\PostWriteListener;
 use OCA\FaceRecognition\Listener\UserDeletedListener;
 
 use OCA\FaceRecognition\Search\PersonSearchProvider;
@@ -64,10 +65,12 @@ class Application extends App implements IBootstrap {
 
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);
+
+		$context->registerEventListener(NodeWrittenEvent::class, PostWriteListener::class);
+		$context->registerEventListener(NodeDeletedEvent::class, PostDeleteListener::class);
 	}
 
 	public function boot(IBootContext $context): void {
-		$context->getAppContainer()->get(FileHooks::class)->register();
 	}
 
 }

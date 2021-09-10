@@ -3,9 +3,11 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
  * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021 Ming Tsang <nkming2@gmail.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Matias De lellis <mati86dl@gmail.com>
+ * @author Ming Tsang <nkming2@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -24,34 +26,24 @@ declare(strict_types=1);
  *
  */
 
-namespace OCA\FaceRecognition\Hooks;
+namespace OCA\FaceRecognition\Listener;
 
-use OCP\Files\IRootFolder;
-use OCP\Files\Folder;
-use OCP\Files\Node;
+use OCP\EventDispatcher\Event;
+use OCP\EventDispatcher\IEventListener;
+use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\ILogger;
-use OCP\IUserManager;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
-
-use OCA\FaceRecognition\Db\Face;
-use OCA\FaceRecognition\Db\Image;
-
 use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
-class FileHooks {
-
-	/** @var IRootFolder */
-	private $root;
+class PostDeleteListener implements IEventListener {
 
 	/** @var ILogger Logger */
 	private $logger;
-
-	/** @var IUserManager */
-	private $userManager;
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -68,30 +60,14 @@ class FileHooks {
 	/** @var FileService */
 	private $fileService;
 
-	/**
-	 * Watcher constructor.
-	 *
-	 * @param IRootFolder $root
-	 * @param ILogger $logger
-	 * @param IUserManager $userManager
-	 * @param FaceMapper $faceMapper
-	 * @param ImageMapper $imageMapper
-	 * @param PersonMapper $personMapper
-	 * @param SettingsService $settingsService
-	 * @param FileService $fileService
-	 */
-	public function __construct(IRootFolder           $root,
-	                            ILogger               $logger,
-	                            IUserManager          $userManager,
+	public function __construct(ILogger               $logger,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService)
 	{
-		$this->root                  = $root;
 		$this->logger                = $logger;
-		$this->userManager           = $userManager;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
 		$this->personMapper          = $personMapper;
@@ -99,127 +75,17 @@ class FileHooks {
 		$this->fileService           = $fileService;
 	}
 
-	public function register() {
-		// Watch on postWrite to handle new and changes files
-		$this->root->listen('\OC\Files', 'postWrite', function (Node $node) {
-			$this->postWrite($node);
-		});
-
-		// We want to react on postDelete and not preDelete as in preDelete we don't know if
-		// file actually got deleted (locked, other errors...)
-		$this->root->listen('\OC\Files', 'postDelete', function (Node $node) {
-			$this->postDelete($node);
-		});
-	}
-
-	/**
-	 * A node has been updated. We just store the file id
-	 * with the current user in the DB
-	 *
-	 * @param Node $node
-	 */
-	public function postWrite(Node $node) {
-		if (!$this->fileService->isAllowedNode($node)) {
-			// Nextcloud sends the Hooks when create thumbnails for example.
-			return;
-		}
-
-		if ($node instanceof Folder) {
-			return;
-		}
-
-		$modelId = $this->settingsService->getCurrentFaceModel();
-		if ($modelId === SettingsService::FALLBACK_CURRENT_MODEL) {
-			$this->logger->debug("Skipping inserting file since there are no configured model");
-			return;
-		}
-
-		$owner = null;
-		if ($this->fileService->isUserFile($node)) {
-			$owner = $node->getOwner()->getUid();
-		} else {
-			if (!\OC::$server->getUserSession()->isLoggedIn()) {
-				$this->logger->debug('Skipping interting file ' . $node->getName() . ' since we cannot determine the owner.');
-				return;
-			}
-			$owner = \OC::$server->getUserSession()->getUser()->getUID();
-		}
-
-		if (!$this->userManager->userExists($owner)) {
-			$this->logger->debug(
-				"Skipping inserting file " . $node->getName() . " because it seems that user  " . $owner . " doesn't exist");
-			return;
-		}
-
-		$enabled = $this->settingsService->getUserEnabled($owner);
-		if (!$enabled) {
-			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
-			return;
-		}
-
-		if ($node->getName() === FileService::NOMEDIA_FILE ||
-		    $node->getName() === FileService::NOIMAGE_FILE) {
-			// If user added this file, it means all images in this and all child directories should be removed.
-			// Instead of doing that here, it's better to just add flag that image removal should be done.
-			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
-			return;
-		}
-
-		if ($node->getName() === FileService::FACERECOGNITION_SETTINGS_FILE) {
-			// This file can enable or disable the analysis, so I have to look for new files and forget others.
-			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
-			$this->settingsService->setUserFullScanDone(false, $owner);
-			return;
-		}
-
-		if (!$this->settingsService->isAllowedMimetype($node->getMimeType())) {
-			// The file is not an image or the model does not support it
-			return;
-		}
-
-		if ($this->fileService->isUnderNoDetection($node)) {
-			$this->logger->debug(
-				"Skipping inserting image " . $node->getName() . " because is inside an folder that contains a .nomedia file");
-			return;
-		}
-
-		$this->logger->debug("Inserting/updating image " . $node->getName() . " for face recognition");
-
-		$image = new Image();
-		$image->setUser($owner);
-		$image->setFile($node->getId());
-		$image->setModel($modelId);
-
-		$imageId = $this->imageMapper->imageExists($image);
-		if ($imageId === null) {
-			// todo: can we have larger transaction with bulk insert?
-			$this->imageMapper->insert($image);
-		} else {
-			$this->imageMapper->resetImage($image);
-			// note that invalidatePersons depends on existence of faces for a given image,
-			// and we must invalidate before we delete faces!
-			$this->personMapper->invalidatePersons($imageId);
-
-			// Fetch all faces to be deleted before deleting them, and then delete them
-			$facesToRemove = $this->faceMapper->findByImage($imageId);
-			$this->faceMapper->removeFromImage($imageId);
-
-			// If any person is now without faces, remove those (empty) persons
-			foreach ($facesToRemove as $faceToRemove) {
-				if ($faceToRemove->getPerson() !== null) {
-					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
-				}
-			}
-		}
-	}
 
 	/**
 	 * A node has been deleted. Remove faces with file id
 	 * with the current user in the DB
-	 *
-	 * @param Node $node
 	 */
-	public function postDelete(Node $node) {
+	public function handle(Event $event): void {
+		if (!($event instanceof NodeDeletedEvent)) {
+			return;
+		}
+
+		$node = $event->getNode();
 		if (!$this->fileService->isAllowedNode($node)) {
 			// Nextcloud sends the Hooks when create thumbnails for example.
 			return;
@@ -301,4 +167,5 @@ class FileHooks {
 			}
 		}
 	}
+
 }

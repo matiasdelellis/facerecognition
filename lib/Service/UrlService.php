@@ -120,7 +120,7 @@ class UrlService {
 	/**
 	 * Redirects to the facerecognition page to show photos of an person.
 	 *
-	 * @param int $personName person name used as Id to show
+	 * @param string $personName
 	 */
 	public function getRedirectToPersonUrl(string $personName) {
 		$params = [

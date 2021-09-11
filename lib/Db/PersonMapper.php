@@ -370,7 +370,7 @@ class PersonMapper extends QBMapper {
 	 * Deletes all persons from that user and model
 	 *
 	 * @param string $userId ID of user for drop from table
-	 * @param string $modelId model for drop from table
+	 * @param int $modelId
 	 */
 	public function deleteUserModel(string $userId, int $modelId) {
 		//TODO: Make it atomic

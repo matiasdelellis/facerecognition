@@ -22,7 +22,9 @@
 				<referencedClass name="FaceLandmarkDetection" />
 				<referencedClass name="FaceRecognition" />
 				<referencedClass name="OC" />
+				<referencedClass name="OC_App" />
 				<referencedClass name="OC_Util" />
+				<referencedClass name="OC\DB\QueryBuilder\Literal" />
 				<referencedClass name="OC\Files\View" />
 				<referencedClass name="OC\Hooks\Emitter" />
 				<referencedClass name="OCA\Files\Event\LoadSidebar" />

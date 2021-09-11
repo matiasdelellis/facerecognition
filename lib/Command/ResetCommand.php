@@ -187,19 +187,31 @@ class ResetCommand extends Command {
 		return $this->questionHelper->ask($this->input, $this->output, $question);
 	}
 
-	private function resetClusters($user): void {
+	/**
+	 * @param \OCP\IUser|null $user
+	 */
+	private function resetClusters(?\OCP\IUser $user): void {
 		$this->faceManagementService->resetClusters($user);
 	}
 
-	private function resetImageErrors($user): void {
+	/**
+	 * @param \OCP\IUser|null $user
+	 */
+	private function resetImageErrors(?\OCP\IUser $user): void {
 		$this->faceManagementService->resetImageErrors($user);
 	}
 
-	private function resetAll($user): void {
+	/**
+	 * @param \OCP\IUser|null $user
+	 */
+	private function resetAll(?\OCP\IUser $user): void {
 		$this->faceManagementService->resetAll($user);
 	}
 
-	private function resetModel($user): void {
+	/**
+	 * @param \OCP\IUser|null $user
+	 */
+	private function resetModel(?\OCP\IUser $user): void {
 		$this->faceManagementService->resetModel($user);
 	}
 

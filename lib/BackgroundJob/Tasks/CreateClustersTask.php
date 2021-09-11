@@ -192,7 +192,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * (basically, we want to avoid recreating cluster for each new face being uploaded,
 	 *  however, we don't want to wait too much as clusters could be changed a lot)
 	 */
-	private function hasNewFacesToRecreate($userId, $modelId): bool {
+	private function hasNewFacesToRecreate(string $userId, int $modelId): bool {
 		//
 		$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
 		$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
@@ -219,15 +219,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return false;
 	}
 
-	private function hasStalePersonsToRecreate($userId, $modelId): bool {
+	private function hasStalePersonsToRecreate(string $userId, int $modelId): bool {
 		return $this->personMapper->countPersons($userId, $modelId, true) > 0;
 	}
 
-	private function needRecreateBySettings($userId): bool {
+	private function needRecreateBySettings(string $userId): bool {
 		return $this->settingsService->getNeedRecreateClusters($userId);
 	}
 
-	private function needCreateFirstTime($userId, $modelId): bool {
+	private function needCreateFirstTime(string $userId, int $modelId): bool {
 		// User should not be able to use this directly, used in tests
 		if ($this->settingsService->_getForceCreateClusters($userId))
 			return true;

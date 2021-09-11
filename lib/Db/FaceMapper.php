@@ -134,7 +134,7 @@ class FaceMapper extends QBMapper {
 		return $face;
 	}
 
-	public function getFaces(string $userId, $model): array {
+	public function getFaces(string $userId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.person', 'f.left', 'f.right', 'f.top', 'f.bottom', 'f.confidence', 'f.descriptor')
 			->from($this->getTableName(), 'f')
@@ -146,7 +146,10 @@ class FaceMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	public function findFacesFromPerson(string $userId, int $personId, int $model, $limit = null, $offset = null): array {
+	/**
+	 * @param int|null $limit
+	 */
+	public function findFacesFromPerson(string $userId, int $personId, int $model, ?int $limit = null, $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.image', 'f.person')
 			->from($this->getTableName(), 'f')

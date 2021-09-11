@@ -156,7 +156,7 @@ class ImageMapper extends QBMapper {
 		return (int)$data[0];
 	}
 
-	public function countUserImages(string $userId, int $model, $processed = false): int {
+	public function countUserImages(string $userId, int $model, bool $processed = false): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))

@@ -155,8 +155,10 @@ class PersonMapper extends QBMapper {
 	/**
 	 * Search Person by name
 	 *
+	 * @param int|null $offset
+	 * @param int|null $limit
 	 */
-	public function findPersonsLike(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
+	public function findPersonsLike(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')

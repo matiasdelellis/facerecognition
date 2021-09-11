@@ -97,7 +97,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Node | null
 	 */
-	public function getFileById($fileId, $userId = null): ?Node {
+	public function getFileById(int $fileId, $userId = null): ?Node {
 		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->getById($fileId);
 		if (count($files) === 0) {
 			return null;

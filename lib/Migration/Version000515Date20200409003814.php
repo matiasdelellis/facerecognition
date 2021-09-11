@@ -63,7 +63,11 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options) {
 	}
 
-	protected function migratePreferencesKey($table, $appName, $key, $toKey): void {
+	/**
+	 * @param string $table
+	 * @param string $appName
+	 */
+	protected function migratePreferencesKey(string $table, string $appName, string $key, string $toKey): void {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->update($table)
 			->set('configkey', $qb->createNamedParameter($toKey))
@@ -72,7 +76,12 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 		$qb->execute();
 	}
 
-	protected function deletePreferencesKey($table, $appName, $key): void {
+	/**
+	 * @param string $table
+	 * @param string $appName
+	 * @param string $key
+	 */
+	protected function deletePreferencesKey(string $table, string $appName, string $key): void {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->delete($table)
 			->where($qb->expr()->eq('appid', $qb->createNamedParameter($appName)))

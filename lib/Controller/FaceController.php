@@ -33,6 +33,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
+use OCP\AppFramework\Db\Entity;
+
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -136,7 +138,7 @@ class FaceController extends Controller {
 	/**
 	 * @return void
 	 */
-	private function hipsterize(&$image, &$face) {
+	private function hipsterize(OCP_Image &$image, Entity &$face) {
 		$imgResource = $image->resource();
 
 		$landmarks = json_decode($face->getLandmarks(), true);

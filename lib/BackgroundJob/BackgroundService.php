@@ -63,7 +63,7 @@ class BackgroundService {
 		$this->context = $context;
 	}
 
-	public function setLogger($logger): void {
+	public function setLogger(OutputInterface $logger): void {
 		if (!is_null($this->context->logger)) {
 			// If you get this exception, it means you already initialized context->logger. Double-check your flow.
 			throw new \LogicException('You cannot call setLogger after you set it once');

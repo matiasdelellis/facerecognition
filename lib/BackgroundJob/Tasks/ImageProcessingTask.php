@@ -153,7 +153,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
-				$duration = max($endMillis - $startMillis, 0);
+				$duration = (int) max($endMillis - $startMillis, 0);
 				$this->imageMapper->imageProcessed($image, $faces, $duration);
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {

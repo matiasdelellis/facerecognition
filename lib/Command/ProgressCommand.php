@@ -95,12 +95,13 @@ class ProgressCommand extends Command {
 
 		$totalImages = $this->imageMapper->countImages($modelId);
 		$processedImages = $this->imageMapper->countProcessedImages($modelId);
-		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
 
 		$remainingImages = $totalImages - $processedImages;
-		if ($remainingImages)
-			$estimatedTime = $this->dateTimeFormatter->formatTimeSpan(time() + $remainingImages * $avgProcessingTime/1000);
-		else {
+		if ($remainingImages) {
+			$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
+			$estimated = (int) time() + $remainingImages * $avgProcessingTime/1000;
+			$estimatedTime = $this->dateTimeFormatter->formatTimeSpan($estimated);
+		} else {
 			$estimatedTime = '-';
 		}
 

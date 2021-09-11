@@ -186,7 +186,7 @@ class SettingsService {
 	}
 
 	public function setLastStaleImageChecked (int $lastCheck, $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, $lastCheck);
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, strval($lastCheck));
 	}
 
 	public function getNeedRecreateClusters ($userId = null): bool {
@@ -213,7 +213,7 @@ class SettingsService {
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, self::FALLBACK_CURRENT_MODEL));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, strval(self::FALLBACK_CURRENT_MODEL)));
 	}
 
 	public function setCurrentFaceModel(int $model): void {
@@ -221,7 +221,7 @@ class SettingsService {
 	}
 
 	public function getAnalysisImageArea(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, self::DEFAULT_ANALYSIS_IMAGE_AREA));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval(self::DEFAULT_ANALYSIS_IMAGE_AREA)));
 	}
 
 	public function setAnalysisImageArea(int $imageArea): void {

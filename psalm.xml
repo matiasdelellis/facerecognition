@@ -17,17 +17,33 @@
 	</extraFiles>
 	<issueHandlers>
 		<UndefinedClass>
-			<errorLevel type="info">
+			<errorLevel type="suppress">
+				<referencedClass name="CnnFaceDetection" />
+				<referencedClass name="FaceLandmarkDetection" />
+				<referencedClass name="FaceRecognition" />
 				<referencedClass name="OC" />
+				<referencedClass name="OC_Util" />
+				<referencedClass name="OC\Files\View" />
+				<referencedClass name="OC\Hooks\Emitter" />
+				<referencedClass name="OCA\Files\Event\LoadSidebar" />
 			</errorLevel>
 		</UndefinedClass>
 		<UndefinedDocblockClass>
 			<errorLevel type="suppress">
+				<referencedClass name="CnnFaceDetection" />
+				<referencedClass name="FaceLandmarkDetection" />
+				<referencedClass name="FaceRecognition" />
 				<referencedClass name="Doctrine\DBAL\Driver\Statement" />
 				<referencedClass name="Doctrine\DBAL\Schema\Schema" />
 				<referencedClass name="Doctrine\DBAL\Schema\SchemaException" />
 				<referencedClass name="Doctrine\DBAL\Schema\Table" />
 			</errorLevel>
 		</UndefinedDocblockClass>
+		<UndefinedFunction>
+			<errorLevel type="suppress">
+				<referencedFunction name="dlib_vector_length"/>
+				<referencedFunction name="dlib_chinese_whispers"/>
+			</errorLevel>
+		</UndefinedFunction>
 	</issueHandlers>
 </psalm>

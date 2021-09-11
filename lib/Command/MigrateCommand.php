@@ -118,9 +118,11 @@ class MigrateCommand extends Command {
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
+	 *
 	 * @return int
+	 *
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$this->output = $output;
 
 		/**
@@ -188,6 +190,8 @@ class MigrateCommand extends Command {
 		}
 
 		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+
+		return 0;
 	}
 
 	/**

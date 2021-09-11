@@ -75,6 +75,9 @@ class ProgressCommand extends Command {
 		$this->settingsService   = $settingsService;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:progress')

@@ -77,7 +77,10 @@ class FaceController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
 	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse|JSONResponse
 	 */
 	public function getThumb ($id, $size) {
 		$face = $this->faceMapper->find($id);
@@ -130,6 +133,9 @@ class FaceController extends Controller {
 		return $resp;
 	}
 
+	/**
+	 * @return void
+	 */
 	private function hipsterize(&$image, &$face) {
 		$imgResource = $image->resource();
 

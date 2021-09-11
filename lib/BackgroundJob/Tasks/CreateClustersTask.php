@@ -103,6 +103,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return true;
 	}
 
+	/**
+	 * @return void
+	 */
 	private function createClusterIfNeeded(string $userId) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 

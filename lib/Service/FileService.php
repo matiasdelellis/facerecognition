@@ -72,8 +72,10 @@ class FileService {
 
 	/**
 	 * TODO: Describe exactly when necessary.
+	 *
+	 * @return void
 	 */
-	public function setupFS(string $userId) {
+	public function setupFS(string $userId): void {
 		\OC_Util::tearDownFS();
 		\OC_Util::setupFS($userId);
 
@@ -373,8 +375,10 @@ class FileService {
 	 * @param string $out
 	 *
 	 * @throws \Exception
+	 *
+	 * @return void
 	 */
-	public function bunzip2(string $inputFile, string $outputFile) {
+	public function bunzip2(string $inputFile, string $outputFile): void {
 		if (!file_exists ($inputFile) || !is_readable ($inputFile))
 			throw new \Exception('The file ' . $inputFile . ' not exists or is not readable');
 
@@ -410,8 +414,10 @@ class FileService {
 
 	/**
 	 * Remove any temporary file from the service.
+	 *
+	 * @return void
 	 */
-	public function clean() {
+	public function clean(): void {
 		$this->tempManager->clean();
 	}
 

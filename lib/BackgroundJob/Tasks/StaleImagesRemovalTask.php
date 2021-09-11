@@ -202,7 +202,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		return $imagesRemoved;
 	}
 
-	private function deleteImage(Image $image, string $userId) {
+	private function deleteImage(Image $image, string $userId): void {
 		$this->logInfo(sprintf('Removing stale image %d for user %s', $image->id, $userId));
 		// note that invalidatePersons depends on existence of faces for a given image,
 		// and we must invalidate before we delete faces!

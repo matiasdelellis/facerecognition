@@ -159,7 +159,7 @@ class SettingsService {
 		return ($enabled === 'true');
 	}
 
-	public function setUserEnabled (bool $enabled, $userId = null) {
+	public function setUserEnabled (bool $enabled, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? "true" : "false");
 	}
 
@@ -168,7 +168,7 @@ class SettingsService {
 		return ($fullScanDone === 'true');
 	}
 
-	public function setUserFullScanDone (bool $fullScanDone, $userId = null) {
+	public function setUserFullScanDone (bool $fullScanDone, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? "true" : "false");
 	}
 
@@ -177,7 +177,7 @@ class SettingsService {
 		return ($needRemoval === 'true');
 	}
 
-	public function setNeedRemoveStaleImages (bool $needRemoval, $userId = null) {
+	public function setNeedRemoveStaleImages (bool $needRemoval, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? "true" : "false");
 	}
 
@@ -185,7 +185,7 @@ class SettingsService {
 		return intval($this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, self::DEFAULT_STALE_IMAGES_LAST_CHECKED));
 	}
 
-	public function setLastStaleImageChecked (int $lastCheck, $userId = null) {
+	public function setLastStaleImageChecked (int $lastCheck, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, $lastCheck);
 	}
 
@@ -194,7 +194,7 @@ class SettingsService {
 		return ($needRecreate === 'true');
 	}
 
-	public function setNeedRecreateClusters (bool $needRecreate, $userId = null) {
+	public function setNeedRecreateClusters (bool $needRecreate, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? "true" : "false");
 	}
 
@@ -205,7 +205,7 @@ class SettingsService {
 	}
 
 	// Private function used only on tests
-	public function _setForceCreateClusters (bool $forceCreate, $userId = null) {
+	public function _setForceCreateClusters (bool $forceCreate, $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? "true" : "false");
 	}
 
@@ -216,7 +216,7 @@ class SettingsService {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, self::FALLBACK_CURRENT_MODEL));
 	}
 
-	public function setCurrentFaceModel(int $model) {
+	public function setCurrentFaceModel(int $model): void {
 		$this->config->setAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, strval($model));
 	}
 
@@ -224,7 +224,7 @@ class SettingsService {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, self::DEFAULT_ANALYSIS_IMAGE_AREA));
 	}
 
-	public function setAnalysisImageArea(int $imageArea) {
+	public function setAnalysisImageArea(int $imageArea): void {
 		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
 	}
 
@@ -232,7 +232,7 @@ class SettingsService {
 		return floatval($this->config->getAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, self::DEFAULT_SENSITIVITY));
 	}
 
-	public function setSensitivity($sensitivity) {
+	public function setSensitivity($sensitivity): void {
 		$this->config->setAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, $sensitivity);
 	}
 
@@ -240,7 +240,7 @@ class SettingsService {
 		return floatval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, self::DEFAULT_MINIMUM_CONFIDENCE));
 	}
 
-	public function setMinimumConfidence($confidence) {
+	public function setMinimumConfidence($confidence): void {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
 	}
 
@@ -283,7 +283,7 @@ class SettingsService {
 		return ($obfuscate === 'true');
 	}
 
-	public function setObfuscateFaces(bool $obfuscate) {
+	public function setObfuscateFaces(bool $obfuscate): void {
 		$this->config->setAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, $obfuscate ? 'true' : 'false');
 	}
 

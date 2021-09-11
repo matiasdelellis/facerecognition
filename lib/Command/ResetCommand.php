@@ -66,6 +66,9 @@ class ResetCommand extends Command {
 		$this->questionHelper        = $questionHelper;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:reset')
@@ -184,19 +187,19 @@ class ResetCommand extends Command {
 		return $this->questionHelper->ask($this->input, $this->output, $question);
 	}
 
-	private function resetClusters($user) {
+	private function resetClusters($user): void {
 		$this->faceManagementService->resetClusters($user);
 	}
 
-	private function resetImageErrors($user) {
+	private function resetImageErrors($user): void {
 		$this->faceManagementService->resetImageErrors($user);
 	}
 
-	private function resetAll($user) {
+	private function resetAll($user): void {
 		$this->faceManagementService->resetAll($user);
 	}
 
-	private function resetModel($user) {
+	private function resetModel($user): void {
 		$this->faceManagementService->resetModel($user);
 	}
 

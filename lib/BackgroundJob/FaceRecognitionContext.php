@@ -66,7 +66,7 @@ class FaceRecognitionContext {
 		return $this->isRunningThroughCommand;
 	}
 
-	public function setRunningThroughCommand() {
+	public function setRunningThroughCommand(): void {
 		$this->isRunningThroughCommand = true;
 	}
 }

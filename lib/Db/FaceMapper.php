@@ -30,6 +30,7 @@ use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\AppFramework\Db\Entity;
 
 class FaceMapper extends QBMapper {
 
@@ -37,7 +38,7 @@ class FaceMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
-	public function find (int $faceId) {
+	public function find (int $faceId): ?Entity {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
@@ -166,8 +167,9 @@ class FaceMapper extends QBMapper {
 	 * Note that this is independent of any Model
 	 *
 	 * @param int $imageId Image for which to find all faces for
+	 *
 	 */
-	public function findByImage(int $imageId) {
+	public function findByImage(int $imageId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person')
 			->from($this->getTableName())
@@ -181,8 +183,10 @@ class FaceMapper extends QBMapper {
 	 * Note that this is independent of any Model
 	 *
 	 * @param int $imageId Image for which to delete faces for
+	 *
+	 * @return void
 	 */
-	public function removeFromImage(int $imageId) {
+	public function removeFromImage(int $imageId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
@@ -193,8 +197,10 @@ class FaceMapper extends QBMapper {
 	 * Deletes all faces from that user.
 	 *
 	 * @param string $userId User to drop faces from table.
+	 *
+	 * @return void
 	 */
-	public function deleteUserFaces(string $userId) {
+	public function deleteUserFaces(string $userId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
@@ -213,8 +219,10 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @param string $userId User to drop faces from table.
 	 * @param int $modelId model to drop faces from table.
+	 *
+	 * @return void
 	 */
-	public function deleteUserModel(string $userId, $modelId) {
+	public function deleteUserModel(string $userId, $modelId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
@@ -234,8 +242,10 @@ class FaceMapper extends QBMapper {
 	 * Unset relation beetwen faces and persons from that user in order to reset clustering
 	 *
 	 * @param string $userId User to drop fo unset relation.
+	 *
+	 * @return void
 	 */
-	public function unsetPersonsRelationForUser(string $userId, int $model) {
+	public function unsetPersonsRelationForUser(string $userId, int $model): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
@@ -259,8 +269,10 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @param Face $face Face to insert
 	 * @param IDBConnection $db Existing connection, if we need to reuse it. Null if we commit immediatelly.
+	 *
+	 * @return Face
 	 */
-	public function insertFace(Face $face, IDBConnection $db = null) {
+	public function insertFace(Face $face, IDBConnection $db = null): Face {
 		if ($db !== null) {
 			$qb = $db->getQueryBuilder();
 		} else {

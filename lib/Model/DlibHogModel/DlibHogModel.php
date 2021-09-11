@@ -149,6 +149,9 @@ class DlibHogModel implements IModel {
 		return static::PREFERRED_MIMETYPE;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function install() {
 		if ($this->isInstalled()) {
 			return;
@@ -189,6 +192,9 @@ class DlibHogModel implements IModel {
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function open() {
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));

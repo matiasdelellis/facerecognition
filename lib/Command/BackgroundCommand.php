@@ -56,6 +56,9 @@ class BackgroundCommand extends Command {
 		$this->userManager = $userManager;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:background_job')

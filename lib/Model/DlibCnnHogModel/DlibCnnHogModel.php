@@ -111,6 +111,9 @@ class DlibCnnHogModel implements IModel {
 		return $this->dlibCnn5Model->getPreferredMimeType();
 	}
 
+	/**
+	 * @return void
+	 */
 	public function install() {
 		if ($this->isInstalled()) {
 			return;
@@ -138,6 +141,9 @@ class DlibCnnHogModel implements IModel {
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function open() {
 		$this->dlibCnn5Model->open();
 	}

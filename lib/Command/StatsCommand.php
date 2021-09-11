@@ -76,6 +76,9 @@ class StatsCommand extends Command {
 		$this->settingsService = $settingsService;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:stats')
@@ -129,7 +132,7 @@ class StatsCommand extends Command {
 		return 0;
 	}
 
-	private function printTabledStats(OutputInterface $output, array $users) {
+	private function printTabledStats(OutputInterface $output, array $users): void {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
@@ -148,7 +151,7 @@ class StatsCommand extends Command {
 		$table->render();
 	}
 
-	private function printJsonStats(OutputInterface $output, array $users) {
+	private function printJsonStats(OutputInterface $output, array $users): void {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 

@@ -121,7 +121,7 @@ class Image extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function setIsProcessed($isProcessed) {
+	public function setIsProcessed($isProcessed): void {
 		if (is_bool($isProcessed)) {
 			$this->isProcessed = $isProcessed;
 		} else {

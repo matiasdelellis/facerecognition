@@ -58,7 +58,7 @@ class FaceRecognitionLogger {
 		return $this->logger;
 	}
 
-	public function logInfo(string $message) {
+	public function logInfo(string $message): void {
 		if (!is_null($this->logger)) {
 			$this->logger->info($message);
 		} else if (!is_null($this->output)) {
@@ -68,7 +68,7 @@ class FaceRecognitionLogger {
 		}
 	}
 
-	public function logDebug(string $message) {
+	public function logDebug(string $message): void {
 		if (!is_null($this->logger)) {
 			$this->logger->debug($message);
 		} else if (!is_null($this->output)) {

@@ -183,7 +183,7 @@ class Face extends Entity implements JsonSerializable {
 		return json_encode($this->landmarks);
 	}
 
-	public function setLandmarks($landmarks) {
+	public function setLandmarks($landmarks): void {
 		$this->landmarks = json_decode($landmarks);
 		$this->markFieldUpdated('landmarks');
 	}
@@ -192,12 +192,12 @@ class Face extends Entity implements JsonSerializable {
 		return json_encode($this->descriptor);
 	}
 
-	public function setDescriptor($descriptor) {
+	public function setDescriptor($descriptor): void {
 		$this->descriptor = json_decode($descriptor);
 		$this->markFieldUpdated('descriptor');
 	}
 
-	public function setCreationTime($creationTime) {
+	public function setCreationTime($creationTime): void {
 		if (is_a($creationTime, 'DateTime')) {
 			$this->creationTime = $creationTime;
 		} else {

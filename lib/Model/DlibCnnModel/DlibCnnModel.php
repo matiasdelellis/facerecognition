@@ -144,6 +144,9 @@ class DlibCnnModel implements IModel {
 		return static::PREFERRED_MIMETYPE;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function install() {
 		if ($this->isInstalled()) {
 			return;
@@ -187,6 +190,9 @@ class DlibCnnModel implements IModel {
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function open() {
 		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));

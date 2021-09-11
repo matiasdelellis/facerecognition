@@ -78,8 +78,10 @@ class PersonApiController extends OCSController {
 	 * 			- count: Number of images associated to this person
 	 *
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function getPersons() {
+	public function getPersons(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -125,8 +127,10 @@ class PersonApiController extends OCSController {
 	 * 			- fileId: The file where this face was found
 	 *
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function getFacesByPerson(string $name) {
+	public function getFacesByPerson(string $name): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();

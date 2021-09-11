@@ -62,24 +62,30 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	 * Currently public, because of tests (ideally it should be protected).
 	 *
 	 * @param FaceRecognitionContext $context Context
+	 *
+	 * @return void
 	 */
-	public function setContext(FaceRecognitionContext $context) {
+	public function setContext(FaceRecognitionContext $context): void {
 		$this->context = $context;
 	}
 
 	/**
 	 * Wrapper for info logging. It using this log call, it will indent log messages,
 	 * so there is nice visual that those messages belongs to particular task.
+	 *
+	 * @return void
 	 */
-	protected function logInfo(string $message) {
+	protected function logInfo(string $message): void {
 		$this->context->logger->logInfo("\t" . $message);
 	}
 
 	/**
 	 * Wrapper for debug logging. It using this log call, it will indent log messages,
 	 * so there is nice visual that those messages belongs to particular task.
+	 *
+	 * @return void
 	 */
-	protected function logDebug(string $message) {
+	protected function logDebug(string $message): void {
 		if ($this->context->verbose) {
 			$this->context->logger->logDebug("\t" . $message);
 		}

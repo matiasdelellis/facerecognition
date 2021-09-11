@@ -90,6 +90,9 @@ class MigrateCommand extends Command {
 		$this->imageMapper           = $imageMapper;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:migrate')
@@ -186,6 +189,9 @@ class MigrateCommand extends Command {
 		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
 	}
 
+	/**
+	 * @return void
+	 */
 	private function migrateUser($currentModel, $oldModelId, $userId) {
 		if (!$this->faceManagementService->hasDataForUser($userId, $oldModelId)) {
 			$this->output->writeln("User <$userId> has no data in model <$oldModelId> to migrate.");
@@ -232,7 +238,7 @@ class MigrateCommand extends Command {
 		return $this->imageMapper->insert($image);
 	}
 
-	private function migrateFace($model, $oldFace, $image, $filePath) {
+	private function migrateFace($model, $oldFace, $image, $filePath): void {
 		// Get the rectangle and the confidence of the original face.
 		$faceRect = $this->getFaceRect($oldFace);
 

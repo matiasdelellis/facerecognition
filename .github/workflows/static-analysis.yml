@@ -5,14 +5,13 @@ on:
   push:
     branches:
       - master
-      - stable*
 
 jobs:
   static-psalm-analysis:
       runs-on: ubuntu-latest
       strategy:
           matrix:
-              ocp-version: [ 'dev-master', 'dev-stable22', 'v20.0.4' ]
+              ocp-version: [ 'dev-master', 'dev-stable22', 'v21.0.0' ]
       name: Nextcloud ${{ matrix.ocp-version }}
       steps:
           - name: Checkout

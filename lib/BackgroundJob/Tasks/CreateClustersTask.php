@@ -382,7 +382,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Starting with new cluster, convert all new person IDs with old person IDs
 		$maxOldPersonId = 1;
 		if (count($oldCluster) > 0) {
-			$maxOldPersonId = max(array_keys($oldCluster)) + 1;
+			$maxOldPersonId = (int) max(array_keys($oldCluster)) + 1;
 		}
 
 		$result = array();

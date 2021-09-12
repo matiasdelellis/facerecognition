@@ -246,7 +246,7 @@ class MigrateCommand extends Command {
 	/**
 	 * @param string $filePath
 	 */
-	private function migrateFace(IModel $model, $oldFace, Image $image, string $filePath): void {
+	private function migrateFace(IModel $model, Face $oldFace, Image $image, string $filePath): void {
 		// Get the rectangle and the confidence of the original face.
 		$faceRect = $this->getFaceRect($oldFace);
 

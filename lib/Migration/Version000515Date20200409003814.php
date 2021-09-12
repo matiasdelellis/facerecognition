@@ -37,7 +37,8 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 	 * @param IOutput $output
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
 	 * @param array $options
-	 * @return null|ISchemaWrapper
+	 *
+	 * @return void
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options) {
 		$this->migratePreferencesKey('preferences', 'facerecognition', 'recreate-clusters', 'recreate_clusters');

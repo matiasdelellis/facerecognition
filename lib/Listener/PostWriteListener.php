@@ -30,7 +30,10 @@ namespace OCA\FaceRecognition\Listener;
 
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+
+use OCP\Files\Folder;
 use OCP\Files\Events\Node\NodeWrittenEvent;
+
 use OCP\ILogger;
 use OCP\IUserManager;
 

@@ -30,7 +30,10 @@ namespace OCA\FaceRecognition\Listener;
 
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+
+use OCP\Files\Folder;
 use OCP\Files\Events\Node\NodeDeletedEvent;
+
 use OCP\ILogger;
 
 use OCA\FaceRecognition\Service\FileService;

@@ -296,7 +296,7 @@ class FaceMapper extends QBMapper {
 			])
 			->execute();
 
-		$face->setId((int) $qb->getLastInsertId());
+		$face->setId($qb->getLastInsertId());
 
 		return $face;
 	}

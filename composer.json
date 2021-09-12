@@ -21,7 +21,7 @@
     },
     "require-dev": {
         "christophwurst/nextcloud": "^21",
-        "phpunit/phpunit": "^8",
+        "phpunit/phpunit": "^9",
         "psalm/phar": "^4.10"
     },
     "scripts": {

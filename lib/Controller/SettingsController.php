@@ -179,7 +179,7 @@ class SettingsController extends Controller {
 				// If any validation error saves the value
 				if ($status !== self::STATE_ERROR) {
 					$message = $this->l10n->t("The changes were saved. It will be taken into account in the next analysis.");
-					$this->settingsService->setAnalysisImageArea($value);
+					$this->settingsService->setAnalysisImageArea((int) $value);
 				}
 				break;
 			case SettingsService::SENSITIVITY_KEY:

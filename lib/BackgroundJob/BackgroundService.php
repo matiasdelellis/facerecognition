@@ -28,6 +28,8 @@ use OCP\IUser;
 use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
+use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckRequirementsTask;
@@ -55,7 +57,7 @@ class BackgroundService {
 	/** @var Application $application */
 	private $application;
 
-	/** @var FaceRecognitionContext */
+	/** @var FaceRecognitionContext $context */
 	private $context;
 
 	public function __construct(Application $application, FaceRecognitionContext $context) {

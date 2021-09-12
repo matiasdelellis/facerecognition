@@ -52,10 +52,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private $settingsService;
 
 	/**
-	 * @param PersonMapper
-	 * @param ImageMapper
-	 * @param FaceMapper
-	 * @param SettingsService
+	 * @param PersonMapper $personMapper
+	 * @param ImageMapper $imageMapper
+	 * @param FaceMapper $faceMapper
+	 * @param SettingsService $settingsService
 	 */
 	public function __construct(PersonMapper    $personMapper,
 	                            ImageMapper     $imageMapper,

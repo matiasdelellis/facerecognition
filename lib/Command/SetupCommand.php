@@ -41,7 +41,7 @@ class SetupCommand extends Command {
 	protected $logger;
 
 	/**
-	 * @param ModelManager
+	 * @param ModelManager $modelManager
 	 */
 	public function __construct(ModelManager $modelManager)
 	{

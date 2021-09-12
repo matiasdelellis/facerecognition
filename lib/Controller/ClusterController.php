@@ -196,7 +196,6 @@ class ClusterController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$thumbUrl = $this->urlService->getThumbUrl($personFace->getId(), 50);
-				if ($thumbUrl === null) continue;
 
 				$face = [];
 				$face['thumbUrl'] = $thumbUrl;

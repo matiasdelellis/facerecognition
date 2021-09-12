@@ -94,7 +94,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		if (!Requirements::hasEnoughMemory()) {
 			$error_message =
 				"Your system does not meet the minimum of memory requirements.\n" .
-				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n" .
+				"Face recognition application requires at least " . OCP_Util::humanFileSize((int) SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n" .
 				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);

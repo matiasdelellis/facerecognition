@@ -60,13 +60,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var SettingsService */
 	protected $settingsService;
 
-	/** @var ModelManager */
+	/** @var ModelManager $modelManager */
 	protected $modelManager;
 
-	/** @var IModel */
+	/** @var IModel $model */
 	private $model;
 
-	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
+	/** @var int|null $maxImageAreaCached Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
 	/**

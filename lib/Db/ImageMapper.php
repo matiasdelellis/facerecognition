@@ -29,7 +29,6 @@ use OCP\IUser;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\AppFramework\Db\Entity;
 
 class ImageMapper extends QBMapper {
 	/** @var FaceMapper Face mapper*/
@@ -45,7 +44,7 @@ class ImageMapper extends QBMapper {
 	 * @param int $imageId Id of Image to get
 	 *
 	 */
-	public function find(string $userId, int $imageId): ?Entity {
+	public function find(string $userId, int $imageId): ?Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName(), 'i')
@@ -78,7 +77,7 @@ class ImageMapper extends QBMapper {
 	 * @param int $fileId Id of file to get Image
 	 *
 	 */
-	public function findFromFile(string $userId, int $modelId, int $fileId): ?Entity {
+	public function findFromFile(string $userId, int $modelId, int $fileId): ?Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
 			->from($this->getTableName(), 'i')

@@ -30,7 +30,6 @@ use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\AppFramework\Db\Entity;
 
 class FaceMapper extends QBMapper {
 
@@ -38,7 +37,7 @@ class FaceMapper extends QBMapper {
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
-	public function find (int $faceId): ?Entity {
+	public function find (int $faceId): ?Face {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
@@ -58,7 +57,7 @@ class FaceMapper extends QBMapper {
 	 * @param int $modelId ID of the model that faces belgon to
 	 * @param int $fileId ID of file for which to search faces.
 	 *
-	 * @return array Array of faces on that file
+	 * @return Face[]
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();

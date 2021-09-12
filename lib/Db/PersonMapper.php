@@ -42,9 +42,9 @@ class PersonMapper extends QBMapper {
 	 * @param string $userId ID of the user
 	 * @param int $personId ID of the person
 	 *
-	 * @return \OCP\AppFramework\Db\Entity
+	 * @return Person
 	 */
-	public function find(string $userId, int $personId): \OCP\AppFramework\Db\Entity {
+	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from($this->getTableName(), 'p')
@@ -134,9 +134,7 @@ class PersonMapper extends QBMapper {
 	/**
 	 * @param string $userId ID of the user
 	 *
-	 * @return \OCP\AppFramework\Db\Entity[]
-	 *
-	 * @psalm-return array<\OCP\AppFramework\Db\Entity>
+	 * @return Person[]
 	 */
 	public function findDistinctNames(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();

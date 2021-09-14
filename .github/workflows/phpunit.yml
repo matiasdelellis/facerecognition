@@ -99,3 +99,9 @@ jobs:
           ../../occ face:setup --model 3 || true
           ../../occ face:setup --model 1
           make test
+
+      - name: Coverage
+        working-directory: apps/${{ env.APP_NAME }}
+        run: |
+          wget https://scrutinizer-ci.com/ocular.phar
+          ocular.phar code-coverage:upload --format=php-clover clover.xml

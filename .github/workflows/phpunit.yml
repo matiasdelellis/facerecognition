@@ -76,7 +76,7 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
           extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql
-          coverage: none
+          coverage: xdebug
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}

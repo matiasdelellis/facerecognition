@@ -39,6 +39,7 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
@@ -90,6 +91,9 @@ class MigrateCommand extends Command {
 		$this->imageMapper           = $imageMapper;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:migrate')
@@ -114,9 +118,11 @@ class MigrateCommand extends Command {
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
+	 *
 	 * @return int
+	 *
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$this->output = $output;
 
 		/**
@@ -184,9 +190,14 @@ class MigrateCommand extends Command {
 		}
 
 		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+
+		return 0;
 	}
 
-	private function migrateUser($currentModel, $oldModelId, $userId) {
+	/**
+	 * @return void
+	 */
+	private function migrateUser(IModel $currentModel, int $oldModelId, $userId) {
 		if (!$this->faceManagementService->hasDataForUser($userId, $oldModelId)) {
 			$this->output->writeln("User <$userId> has no data in model <$oldModelId> to migrate.");
 			return;
@@ -205,6 +216,9 @@ class MigrateCommand extends Command {
 			$oldFaces = $this->faceMapper->findFromFile($userId, $oldModelId, $newImage->getFile());
 			if (count($oldFaces) > 0) {
 				$filePath = $this->getImageFilePath($newImage);
+				if ($filePath === null)
+					continue;
+
 				foreach ($oldFaces as $oldFace) {
 					$this->migrateFace($currentModel, $oldFace, $newImage, $filePath);
 				}
@@ -218,7 +232,7 @@ class MigrateCommand extends Command {
 		$this->output->writeln("Done");
 	}
 
-	private function migrateImage($oldImage, $userId, $modelId): Image {
+	private function migrateImage($oldImage, string $userId, int $modelId): Image {
 		$image = new Image();
 
 		$image->setUser($userId);
@@ -232,7 +246,10 @@ class MigrateCommand extends Command {
 		return $this->imageMapper->insert($image);
 	}
 
-	private function migrateFace($model, $oldFace, $image, $filePath) {
+	/**
+	 * @param string $filePath
+	 */
+	private function migrateFace(IModel $model, Face $oldFace, Image $image, string $filePath): void {
 		// Get the rectangle and the confidence of the original face.
 		$faceRect = $this->getFaceRect($oldFace);
 

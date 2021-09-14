@@ -39,7 +39,11 @@ use OCP\AppFramework\Db\Entity;
  * @method integer getModel()
  * @method void setModel(integer $model)
  *
+ * @method string|null getError()
  * @method void setError(string $error)
+ *
+ * @method bool getIsProcessed()
+ * @method void setIsProcessed($isProcessed)
  *
  * @method void setLastProcessedTime($lastProcessedTime)
  *
@@ -121,7 +125,7 @@ class Image extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function setIsProcessed($isProcessed) {
+	public function setIsProcessed($isProcessed): void {
 		if (is_bool($isProcessed)) {
 			$this->isProcessed = $isProcessed;
 		} else {

@@ -16,13 +16,16 @@
         }
     },
     "require": {
-        "php": ">=7.3"
+        "php": ">=7.3",
+        "symfony/console": "^5.3"
     },
     "require-dev": {
         "christophwurst/nextcloud": "^21",
-        "phpunit/phpunit": "^8"
+        "phpunit/phpunit": "^9",
+        "psalm/phar": "^4.10"
     },
     "scripts": {
-        "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l"
+        "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
+        "psalm": "psalm.phar"
     }
 }

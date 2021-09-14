@@ -57,8 +57,10 @@ class ProcessController extends Controller {
 
 	/**
 	 * Just print a global status of the analysis.
+	 *
+	 * @return JSONResponse
 	 */
-	public function index() {
+	public function index(): JSONResponse {
 
 		$model = $this->settingsService->getCurrentFaceModel();
 

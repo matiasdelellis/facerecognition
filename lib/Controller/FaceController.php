@@ -33,6 +33,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
+use OCP\AppFramework\Db\Entity;
+
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -77,7 +79,10 @@ class FaceController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
 	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse|JSONResponse
 	 */
 	public function getThumb ($id, $size) {
 		$face = $this->faceMapper->find($id);
@@ -130,7 +135,10 @@ class FaceController extends Controller {
 		return $resp;
 	}
 
-	private function hipsterize(&$image, &$face) {
+	/**
+	 * @return void
+	 */
+	private function hipsterize(OCP_Image &$image, Entity &$face) {
 		$imgResource = $image->resource();
 
 		$landmarks = json_decode($face->getLandmarks(), true);

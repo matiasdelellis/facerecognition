@@ -28,6 +28,8 @@ use OCP\IUser;
 use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
+use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckRequirementsTask;
@@ -55,7 +57,7 @@ class BackgroundService {
 	/** @var Application $application */
 	private $application;
 
-	/** @var FaceRecognitionContext */
+	/** @var FaceRecognitionContext $context */
 	private $context;
 
 	public function __construct(Application $application, FaceRecognitionContext $context) {
@@ -63,7 +65,7 @@ class BackgroundService {
 		$this->context = $context;
 	}
 
-	public function setLogger($logger) {
+	public function setLogger(OutputInterface $logger): void {
 		if (!is_null($this->context->logger)) {
 			// If you get this exception, it means you already initialized context->logger. Double-check your flow.
 			throw new \LogicException('You cannot call setLogger after you set it once');
@@ -74,11 +76,14 @@ class BackgroundService {
 
 	/**
 	 * Starts background tasks sequentially.
+	 *
 	 * @param int $timeout Maximum allowed time (in seconds) to execute
 	 * @param bool $verbose Whether to be more verbose
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
 	 * @param bool $deferClustering defer the grouping at the end of the analysis.
+	 *
+	 * @return void
 	 */
 	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, bool $deferClustering) {
 		// Put to context all the stuff we are figuring only now

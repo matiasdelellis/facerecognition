@@ -60,6 +60,8 @@ class RemoveFullImageScanDoneFlag implements IRepairStep {
 
 	/**
 	 * @inheritdoc
+	 *
+	 * @return void
 	 */
 	public function run(IOutput $output) {
 		$this->userManager->callForSeenUsers(function (IUser $user) {

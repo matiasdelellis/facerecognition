@@ -86,8 +86,10 @@ class PersonController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function index() {
+	public function index(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -125,8 +127,10 @@ class PersonController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function find(string $personName) {
+	public function find(string $personName): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -180,8 +184,10 @@ class PersonController extends Controller {
 	 *
 	 * @param string $personName
 	 * @param string $name
+	 *
+	 * @return DataResponse
 	 */
-	public function updateName($personName, $name) {
+	public function updateName($personName, $name): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($clusters as $person) {
@@ -193,8 +199,10 @@ class PersonController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function autocomplete(string $query) {
+	public function autocomplete(string $query): DataResponse {
 		$resp = array();
 
 		if (!$this->settingsService->getUserEnabled($this->userId))

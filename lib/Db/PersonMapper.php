@@ -41,8 +41,10 @@ class PersonMapper extends QBMapper {
 	/**
 	 * @param string $userId ID of the user
 	 * @param int $personId ID of the person
+	 *
+	 * @return Person
 	 */
-	public function find(string $userId, int $personId) {
+	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'name')
 			->from($this->getTableName(), 'p')
@@ -131,8 +133,10 @@ class PersonMapper extends QBMapper {
 
 	/**
 	 * @param string $userId ID of the user
+	 *
+	 * @return Person[]
 	 */
-	public function findDistinctNames(string $userId, int $modelId) {
+	public function findDistinctNames(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('name')
 			->from($this->getTableName(), 'p')
@@ -149,8 +153,10 @@ class PersonMapper extends QBMapper {
 	/**
 	 * Search Person by name
 	 *
+	 * @param int|null $offset
+	 * @param int|null $limit
 	 */
-	public function findPersonsLike(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
+	public function findPersonsLike(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')
@@ -215,8 +221,10 @@ class PersonMapper extends QBMapper {
 	 * and invalidates all person that those faces belongs to.
 	 *
 	 * @param int $imageId ID of image for which to invalidate persons for
+	 *
+	 * @return void
 	 */
-	public function invalidatePersons(int $imageId) {
+	public function invalidatePersons(int $imageId): void {
 		$sub = $this->db->getQueryBuilder();
 		$tableNameWithPrefixWithoutQuotes = trim($sub->getTableName($this->getTableName()), '`');
 		$sub->select(new Literal('1'));
@@ -244,8 +252,10 @@ class PersonMapper extends QBMapper {
 	 * @param string $userId ID of the user that clusters belong to
 	 * @param array $currentClusters Current clusters
 	 * @param array $newClusters New clusters
+	 *
+	 * @return void
 	 */
-	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters) {
+	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
 
@@ -358,8 +368,10 @@ class PersonMapper extends QBMapper {
 	 * Deletes all persons from that user.
 	 *
 	 * @param string $userId User to drop persons from a table.
+	 *
+	 * @return void
 	 */
-	public function deleteUserPersons(string $userId) {
+	public function deleteUserPersons(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
@@ -370,9 +382,11 @@ class PersonMapper extends QBMapper {
 	 * Deletes all persons from that user and model
 	 *
 	 * @param string $userId ID of user for drop from table
-	 * @param string $modelId model for drop from table
+	 * @param int $modelId
+	 *
+	 * @return void
 	 */
-	public function deleteUserModel(string $userId, int $modelId) {
+	public function deleteUserModel(string $userId, int $modelId): void {
 		//TODO: Make it atomic
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
@@ -388,8 +402,10 @@ class PersonMapper extends QBMapper {
 	 * Deletes person if it is empty (have no faces associated to it)
 	 *
 	 * @param int $personId Person to check if it should be deleted
+	 *
+	 * @return void
 	 */
-	public function removeIfEmpty(int $personId) {
+	public function removeIfEmpty(int $personId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_faces', 'f')
@@ -437,8 +453,10 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @param int $faceId ID of the face
 	 * @param int|null $personId ID of the person
+	 *
+	 * @return void
 	 */
-	private function updateFace(int $faceId, $personId) {
+	private function updateFace(int $faceId, $personId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_faces')
 			->set("person", $qb->createNamedParameter($personId))

@@ -41,7 +41,7 @@ class SetupCommand extends Command {
 	protected $logger;
 
 	/**
-	 * @param ModelManager
+	 * @param ModelManager $modelManager
 	 */
 	public function __construct(ModelManager $modelManager)
 	{
@@ -50,6 +50,9 @@ class SetupCommand extends Command {
 		$this->modelManager = $modelManager;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function configure() {
 		$this
 			->setName('face:setup')
@@ -114,8 +117,10 @@ class SetupCommand extends Command {
 
 	/**
 	 * Print list of models
+	 *
+	 * @return void
 	 */
-	private function dumpModels() {
+	private function dumpModels(): void {
 		$table = new Table($this->logger);
 		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
 

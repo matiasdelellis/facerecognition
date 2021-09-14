@@ -86,8 +86,10 @@ class ClusterController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function find(int $id) {
+	public function find(int $id): DataResponse {
 		$person = $this->personMapper->find($this->userId, $id);
 
 		$resp = [];
@@ -115,8 +117,10 @@ class ClusterController extends Controller {
 
 	/**
 	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
 	 */
-	public function findByName(string $personName) {
+	public function findByName(string $personName): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -161,8 +165,9 @@ class ClusterController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
+	 * @return DataResponse
 	 */
-	public function findUnassigned() {
+	public function findUnassigned(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -191,7 +196,6 @@ class ClusterController extends Controller {
 				if ($fileUrl === null) continue;
 
 				$thumbUrl = $this->urlService->getThumbUrl($personFace->getId(), 50);
-				if ($thumbUrl === null) continue;
 
 				$face = [];
 				$face['thumbUrl'] = $thumbUrl;
@@ -215,8 +219,10 @@ class ClusterController extends Controller {
 	 *
 	 * @param int $id
 	 * @param string $name
+	 *
+	 * @return DataResponse
 	 */
-	public function updateName($id, $name) {
+	public function updateName($id, $name): DataResponse {
 		$person = $this->personMapper->find ($this->userId, $id);
 		$person->setName($name);
 		$this->personMapper->update($person);

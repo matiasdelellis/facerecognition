@@ -66,8 +66,10 @@ class UrlService {
 	 *
 	 * @param int $faceId face id to show
 	 * @param int $size Size of face thumbnails
+	 *
+	 * @return string
 	 */
-	public function getThumbUrl(int $faceId, int $size) {
+	public function getThumbUrl(int $faceId, int $size): string {
 		$params = [];
 		$params['id'] = $faceId;
 		$params['size'] = $size;
@@ -97,8 +99,10 @@ class UrlService {
 	 * Redirects to the file list and highlight the given file id
 	 *
 	 * @param int $fileId file id to show
+	 *
+	 * @return null|string
 	 */
-	public function getRedirectToFileUrl(int $fileId) {
+	public function getRedirectToFileUrl(int $fileId): ?string {
 		$uid        = $this->userSession->getUser()->getUID();
 		$baseFolder = $this->rootFolder->getUserFolder($uid);
 		$files      = $baseFolder->getById($fileId);
@@ -120,9 +124,11 @@ class UrlService {
 	/**
 	 * Redirects to the facerecognition page to show photos of an person.
 	 *
-	 * @param int $personName person name used as Id to show
+	 * @param string $personName
+	 *
+	 * @return string
 	 */
-	public function getRedirectToPersonUrl(string $personName) {
+	public function getRedirectToPersonUrl(string $personName): string {
 		$params = [
 			'section' => 'facerecognition',
 			'name' => $personName

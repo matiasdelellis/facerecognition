@@ -42,8 +42,9 @@ class ImageMapper extends QBMapper {
 	/**
 	 * @param string $userId Id of user
 	 * @param int $imageId Id of Image to get
+	 *
 	 */
-	public function find(string $userId, int $imageId) {
+	public function find(string $userId, int $imageId): ?Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName(), 'i')
@@ -59,8 +60,9 @@ class ImageMapper extends QBMapper {
 	/**
 	 * @param string $userId Id of user
 	 * @param int $modelId Id of model to get
+	 *
 	 */
-	public function findAll(string $userId, int $modelId) {
+	public function findAll(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'file', 'is_processed', 'error', 'last_processed_time', 'processing_duration')
 			->from($this->getTableName())
@@ -73,8 +75,9 @@ class ImageMapper extends QBMapper {
 	 * @param string $userId Id of user
 	 * @param int $modelId Id of model
 	 * @param int $fileId Id of file to get Image
+	 *
 	 */
-	public function findFromFile(string $userId, int $modelId, int $fileId) {
+	public function findFromFile(string $userId, int $modelId, int $fileId): ?Image {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'is_processed', 'error')
 			->from($this->getTableName(), 'i')
@@ -89,7 +92,7 @@ class ImageMapper extends QBMapper {
 		}
 	}
 
-	public function imageExists(Image $image) {
+	public function imageExists(Image $image): ?int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select(['id'])
@@ -152,7 +155,7 @@ class ImageMapper extends QBMapper {
 		return (int)$data[0];
 	}
 
-	public function countUserImages(string $userId, int $model, $processed = false): int {
+	public function countUserImages(string $userId, int $model, bool $processed = false): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
@@ -231,8 +234,10 @@ class ImageMapper extends QBMapper {
 	 * @param Face[] $faces Faces to insert
 	 * @param int $duration Processing time, in milliseconds
 	 * @param \Exception|null $e Any exception that happened during image processing
+	 *
+	 * @return void
 	 */
-	public function imageProcessed(Image $image, array $faces, int $duration, \Exception $e = null) {
+	public function imageProcessed(Image $image, array $faces, int $duration, \Exception $e = null): void {
 		$this->db->beginTransaction();
 		try {
 			// Update image itself
@@ -275,8 +280,10 @@ class ImageMapper extends QBMapper {
 	 * Resets image by deleting all associated faces and prepares it to be processed again
 	 *
 	 * @param Image $image Image to reset
+	 *
+	 * @return void
 	 */
-	public function resetImage(Image $image) {
+	public function resetImage(Image $image): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
@@ -292,8 +299,10 @@ class ImageMapper extends QBMapper {
 	 * Resets all image with error from that user and prepares it to be processed again
 	 *
 	 * @param string $userId User to reset errors
+	 *
+	 * @return void
 	 */
-	public function resetErrors(string $userId) {
+	public function resetErrors(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
@@ -308,8 +317,10 @@ class ImageMapper extends QBMapper {
 	 * Deletes all images from that user.
 	 *
 	 * @param string $userId User to drop images from table.
+	 *
+	 * @return void
 	 */
-	public function deleteUserImages(string $userId) {
+	public function deleteUserImages(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
@@ -321,8 +332,10 @@ class ImageMapper extends QBMapper {
 	 *
 	 * @param string $userId User to drop images from table.
 	 * @param int $modelId model to drop images from table.
+	 *
+	 * @return void
 	 */
-	public function deleteUserModel(string $userId, $modelId) {
+	public function deleteUserModel(string $userId, $modelId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))

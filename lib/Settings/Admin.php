@@ -98,9 +98,9 @@ class Admin implements ISettings {
 			'meet-dependencies' => $meetDependencies,
 			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
 			'pdlib-version' => $pdlibVersion ? $pdlibVersion : $this->l10n->t("Not installed"),
-			'system-memory' => $systemMemory > 0 ? OCP_Util::humanFileSize($systemMemory) : $this->l10n->t("Unknown"),
-			'php-memory' => $phpMemory > 0 ? OCP_Util::humanFileSize($phpMemory) : $this->l10n->t("Unknown"),
-			'available-memory' => $availableMemory > 0 ? OCP_Util::humanFileSize($availableMemory) : $this->l10n->t("Unknown"),
+			'system-memory' => $systemMemory > 0 ? OCP_Util::humanFileSize((int) $systemMemory) : $this->l10n->t("Unknown"),
+			'php-memory' => $phpMemory > 0 ? OCP_Util::humanFileSize((int) $phpMemory) : $this->l10n->t("Unknown"),
+			'available-memory' => $availableMemory > 0 ? OCP_Util::humanFileSize((int) $availableMemory) : $this->l10n->t("Unknown"),
 			'resume' => $resume,
 		];
 

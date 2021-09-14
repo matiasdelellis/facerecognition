@@ -27,6 +27,8 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 	 * @param IOutput $output
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
 	 * @param array $options
+	 *
+	 * @return void
 	 */
 	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options) {
 	}
@@ -35,7 +37,8 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 	 * @param IOutput $output
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
 	 * @param array $options
-	 * @return null|ISchemaWrapper
+	 *
+	 * @return void
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options) {
 		$this->migratePreferencesKey('preferences', 'facerecognition', 'recreate-clusters', 'recreate_clusters');
@@ -55,11 +58,17 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 	 * @param IOutput $output
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
 	 * @param array $options
+	 *
+	 * @return void
 	 */
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options) {
 	}
 
-	protected function migratePreferencesKey($table, $appName, $key, $toKey) {
+	/**
+	 * @param string $table
+	 * @param string $appName
+	 */
+	protected function migratePreferencesKey(string $table, string $appName, string $key, string $toKey): void {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->update($table)
 			->set('configkey', $qb->createNamedParameter($toKey))
@@ -68,7 +77,12 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 		$qb->execute();
 	}
 
-	protected function deletePreferencesKey($table, $appName, $key) {
+	/**
+	 * @param string $table
+	 * @param string $appName
+	 * @param string $key
+	 */
+	protected function deletePreferencesKey(string $table, string $appName, string $key): void {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->delete($table)
 			->where($qb->expr()->eq('appid', $qb->createNamedParameter($appName)))

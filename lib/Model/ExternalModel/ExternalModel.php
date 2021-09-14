@@ -116,10 +116,16 @@ class ExternalModel implements IModel {
 		return $this->preferredMimetype;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function install() {
 		return;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function open() {
 		$this->modelUrl = $this->settingsService->getExternalModelUrl();
 		$this->modelApiKey = $this->settingsService->getExternalModelApiKey();

@@ -38,7 +38,7 @@ class Personal implements ISettings {
 		return 'facerecognition';
 	}
 
-	public function getSectionID()
+	public function getSectionID(): string
 	{
 		return 'facerecognition';
 	}
@@ -49,7 +49,7 @@ class Personal implements ISettings {
 		return new TemplateResponse('facerecognition', 'settings/personal', $params, '');
 	}
 
-	public function getPanel()
+	public function getPanel(): TemplateResponse
 	{
 		return $this->getForm();
 	}

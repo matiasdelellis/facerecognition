@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<psalm
+	errorLevel="4"
+	resolveFromConfigFile="true"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="https://getpsalm.org/schema/config"
+	xsi:schemaLocation="https://getpsalm.org/schema/config"
+	errorBaseline="tests/psalm-baseline.xml"
+>
+	<projectFiles>
+		<directory name="lib" />
+		<ignoreFiles>
+			<directory name="vendor" />
+		</ignoreFiles>
+	</projectFiles>
+	<extraFiles>
+		<directory name="vendor" />
+	</extraFiles>
+	<issueHandlers>
+		<UndefinedClass>
+			<errorLevel type="suppress">
+				<referencedClass name="CnnFaceDetection" />
+				<referencedClass name="FaceLandmarkDetection" />
+				<referencedClass name="FaceRecognition" />
+				<referencedClass name="OC" />
+				<referencedClass name="OC_App" />
+				<referencedClass name="OC_Util" />
+				<referencedClass name="OC\DB\QueryBuilder\Literal" />
+				<referencedClass name="OC\Files\View" />
+				<referencedClass name="OC\Hooks\Emitter" />
+				<referencedClass name="OCA\Files\Event\LoadSidebar" />
+			</errorLevel>
+		</UndefinedClass>
+		<UndefinedDocblockClass>
+			<errorLevel type="suppress">
+				<referencedClass name="CnnFaceDetection" />
+				<referencedClass name="FaceLandmarkDetection" />
+				<referencedClass name="FaceRecognition" />
+				<referencedClass name="Doctrine\DBAL\Driver\Statement" />
+				<referencedClass name="Doctrine\DBAL\Schema\Schema" />
+				<referencedClass name="Doctrine\DBAL\Schema\SchemaException" />
+				<referencedClass name="Doctrine\DBAL\Schema\Table" />
+			</errorLevel>
+		</UndefinedDocblockClass>
+	</issueHandlers>
+</psalm>

@@ -60,13 +60,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var SettingsService */
 	protected $settingsService;
 
-	/** @var ModelManager */
+	/** @var ModelManager $modelManager */
 	protected $modelManager;
 
-	/** @var IModel */
+	/** @var IModel $model */
 	private $model;
 
-	/** @var int|null Maximum image area (cached, so it is not recalculated for each image) */
+	/** @var int|null $maxImageAreaCached Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
 	/**
@@ -153,14 +153,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
-				$duration = max($endMillis - $startMillis, 0);
+				$duration = (int) max($endMillis - $startMillis, 0);
 				$this->imageMapper->imageProcessed($image, $faces, $duration);
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");
 				}
 				$this->logInfo('Faces found: 0. Image will be skipped because of the following error: ' . $e->getMessage());
-				$this->logDebug($e);
+				$this->logDebug((string) $e);
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
 				// Clean temporary image.

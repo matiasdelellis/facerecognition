@@ -7,12 +7,12 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 class Requirements
 {
-	public static function hasEnoughMemory() {
+	public static function hasEnoughMemory(): bool {
 		$memory = MemoryLimits::getSystemMemory();
 		return ($memory > SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS);
 	}
 
-	public static function pdlibLoaded() {
+	public static function pdlibLoaded(): bool {
 		return extension_loaded('pdlib');
 	}
 

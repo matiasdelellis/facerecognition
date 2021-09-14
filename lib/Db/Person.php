@@ -87,7 +87,7 @@ class Person extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function setIsValid($isValid) {
+	public function setIsValid($isValid): void {
 		if (is_bool($isValid)) {
 			$this->isValid = $isValid;
 		} else {

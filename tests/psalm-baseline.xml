@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="4.x-dev@">
+  <file src="lib/AppInfo/Application.php">
+    <InvalidArgument occurrences="1">
+      <code>registerEventListener</code>
+    </InvalidArgument>
+    <MissingDependency occurrences="3">
+      <code>NodeDeletedEvent</code>
+      <code>NodeWrittenEvent</code>
+      <code>UserDeletedEvent</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/BackgroundJob/Tasks/ImageProcessingTask.php">
+    <MissingDependency occurrences="6">
+      <code>$tempImage</code>
+      <code>$tempImage</code>
+      <code>$tempImage</code>
+      <code>$tempImage</code>
+      <code>?TempImage</code>
+      <code>TempImage</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/BackgroundJob/Tasks/CreateClustersTask.php">
+    <UndefinedFunction occurrences="2">
+      <referencedFunction name="dlib_vector_length"/>
+      <referencedFunction name="dlib_chinese_whispers"/>
+    </UndefinedFunction>
+  </file>
+
+  <file src="lib/Command/MigrateCommand.php">
+    <MissingDependency occurrences="1">
+      <code>OCP_Image</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Controller/FaceController.php">
+    <MissingDependency occurrences="10">
+      <code>$img</code>
+      <code>$img</code>
+      <code>$img</code>
+      <code>$img</code>
+      <code>$img</code>
+      <code>$this-&gt;rootFolder</code>
+      <code>IRootFolder</code>
+      <code>IRootFolder</code>
+      <code>OCP_Image</code>
+      <code>OCP_Image</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Db/Face.php">
+    <InvalidArgument occurrences="1">
+      <code>$creationTime</code>
+    </InvalidArgument>
+    <RedundantCondition occurrences="1">
+      <code>is_a($creationTime, 'DateTime')</code>
+    </RedundantCondition>
+  </file>
+  <file src="lib/Helper/TempImage.php">
+    <MissingDependency occurrences="1">
+      <code>Image</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Listener/LoadSidebarListener.php">
+    <MissingDependency occurrences="1">
+      <code>LoadSidebarListener</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Listener/PostDeleteListener.php">
+    <MissingDependency occurrences="2">
+      <code>NodeDeletedEvent</code>
+      <code>PostDeleteListener</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Listener/PostWriteListener.php">
+    <MissingDependency occurrences="2">
+      <code>NodeWrittenEvent</code>
+      <code>PostWriteListener</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Listener/UserDeletedListener.php">
+    <MissingDependency occurrences="2">
+      <code>UserDeletedEvent</code>
+      <code>UserDeletedListener</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Model/ExternalModel/ExternalModel.php">
+    <InvalidScalarArgument occurrences="3">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </InvalidScalarArgument>
+  </file>
+  <file src="lib/Search/PersonSearchProvider.php">
+    <MissingDependency occurrences="2">
+      <code>IRootFolder</code>
+      <code>IRootFolder</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Service/FileService.php">
+    <InvalidCatch occurrences="1"/>
+    <InvalidReturnStatement occurrences="1">
+      <code>($localPath !== false) ? $localPath : null</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>string|null</code>
+    </InvalidReturnType>
+    <MissingDependency occurrences="6">
+      <code>$this-&gt;rootFolder</code>
+      <code>$this-&gt;rootFolder</code>
+      <code>$this-&gt;rootFolder</code>
+      <code>IRootFolder</code>
+      <code>IRootFolder</code>
+      <code>StorageNotAvailableException</code>
+    </MissingDependency>
+    <TypeDoesNotContainType occurrences="2">
+      <code>$buffer === false</code>
+      <code>$buffer === false</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="lib/Service/ModelService.php">
+    <MissingDependency occurrences="3">
+      <code>$this-&gt;rootFolder</code>
+      <code>IRootFolder</code>
+      <code>IRootFolder</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Service/UrlService.php">
+    <MissingDependency occurrences="4">
+      <code>$this-&gt;rootFolder</code>
+      <code>$this-&gt;rootFolder</code>
+      <code>IRootFolder</code>
+      <code>IRootFolder</code>
+    </MissingDependency>
+  </file>
+  <file src="lib/Model/DlibHogModel/DlibHogModel.php">
+    <UndefinedFunction occurrences="1">
+      <referencedFunction name="dlib_face_detection"/>
+    </UndefinedFunction>
+  </file>
+</files>

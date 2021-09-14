@@ -52,10 +52,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private $settingsService;
 
 	/**
-	 * @param PersonMapper
-	 * @param ImageMapper
-	 * @param FaceMapper
-	 * @param SettingsService
+	 * @param PersonMapper $personMapper
+	 * @param ImageMapper $imageMapper
+	 * @param FaceMapper $faceMapper
+	 * @param SettingsService $settingsService
 	 */
 	public function __construct(PersonMapper    $personMapper,
 	                            ImageMapper     $imageMapper,
@@ -103,6 +103,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return true;
 	}
 
+	/**
+	 * @return void
+	 */
 	private function createClusterIfNeeded(string $userId) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
@@ -189,7 +192,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * (basically, we want to avoid recreating cluster for each new face being uploaded,
 	 *  however, we don't want to wait too much as clusters could be changed a lot)
 	 */
-	private function hasNewFacesToRecreate($userId, $modelId): bool {
+	private function hasNewFacesToRecreate(string $userId, int $modelId): bool {
 		//
 		$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
 		$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
@@ -216,15 +219,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		return false;
 	}
 
-	private function hasStalePersonsToRecreate($userId, $modelId): bool {
+	private function hasStalePersonsToRecreate(string $userId, int $modelId): bool {
 		return $this->personMapper->countPersons($userId, $modelId, true) > 0;
 	}
 
-	private function needRecreateBySettings($userId): bool {
+	private function needRecreateBySettings(string $userId): bool {
 		return $this->settingsService->getNeedRecreateClusters($userId);
 	}
 
-	private function needCreateFirstTime($userId, $modelId): bool {
+	private function needCreateFirstTime(string $userId, int $modelId): bool {
 		// User should not be able to use this directly, used in tests
 		if ($this->settingsService->_getForceCreateClusters($userId))
 			return true;
@@ -379,7 +382,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Starting with new cluster, convert all new person IDs with old person IDs
 		$maxOldPersonId = 1;
 		if (count($oldCluster) > 0) {
-			$maxOldPersonId = max(array_keys($oldCluster)) + 1;
+			$maxOldPersonId = (int) max(array_keys($oldCluster)) + 1;
 		}
 
 		$result = array();

@@ -77,8 +77,10 @@ class FaceManagementService {
 	 *
 	 * @param IUser|null $user Optional user to check
 	 * @param Int $modelId Optional model to check
+	 *
+	 * @return bool
 	 */
-	public function hasData(IUser $user = null, int $modelId = -1) {
+	public function hasData(IUser $user = null, int $modelId = -1): bool {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -96,8 +98,10 @@ class FaceManagementService {
 	 *
 	 * @param string $user ID of user to check
 	 * @param Int $modelId model to check
+	 *
+	 * @return bool
 	 */
-	public function hasDataForUser(string $userId, int $modelId) {
+	public function hasDataForUser(string $userId, int $modelId): bool {
 		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
 		return ($facesCount > 0);
 	}
@@ -106,8 +110,10 @@ class FaceManagementService {
 	 * Deletes all faces, images and persons found. IF no user is given, resetting is executed for all users.
 	 *
 	 * @param IUser|null $user Optional user to execute resetting for
+	 *
+	 * @return void
 	 */
-	public function resetAll(IUser $user = null) {
+	public function resetAll(IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetAllForUser($user);
@@ -118,8 +124,10 @@ class FaceManagementService {
 	 * Deletes all faces, images and persons found for a given user.
 	 *
 	 * @param string $user ID of user to execute resetting for
+	 *
+	 * @return void
 	 */
-	public function resetAllForUser(string $userId) {
+	public function resetAllForUser(string $userId): void {
 		$this->faceMapper->deleteUserFaces($userId);
 		$this->personMapper->deleteUserPersons($userId);
 		$this->imageMapper->deleteUserImages($userId);
@@ -132,8 +140,10 @@ class FaceManagementService {
 	 *
 	 * @param IUser|null $user Optional user to execute resetting for
 	 * @param Int $modelId Optional model to clean
+	 *
+	 * @return void
 	 */
-	public function resetModel(IUser $user = null, int $modelId = -1) {
+	public function resetModel(IUser $user = null, int $modelId = -1): void {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -148,8 +158,10 @@ class FaceManagementService {
 	 *
 	 * @param string $user ID of user to execute resetting for
 	 * @param Int $modelId model to clean
+	 *
+	 * @return void
 	 */
-	public function resetModelForUser(string $userId, $modelId) {
+	public function resetModelForUser(string $userId, $modelId): void {
 		$this->personMapper->deleteUserModel($userId, $modelId);
 		$this->faceMapper->deleteUserModel($userId, $modelId);
 		$this->imageMapper->deleteUserModel($userId, $modelId);
@@ -162,8 +174,10 @@ class FaceManagementService {
 	 * If no user is given, resetting is executed for all users.
 	 *
 	 * @param IUser|null $user Optional user to execute resetting for
+	 *
+	 * @return void
 	 */
-	public function resetImageErrors(IUser $user = null) {
+	public function resetImageErrors(IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $userId) {
 			$this->imageMapper->resetErrors($userId);
@@ -176,8 +190,10 @@ class FaceManagementService {
 	 * If no user is given, resetting is executed for all users.
 	 *
 	 * @param IUser|null $user Optional user to execute resetting for
+	 *
+	 * @return void
 	 */
-	public function resetClusters(IUser $user = null) {
+	public function resetClusters(IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetClustersForUser($user);
@@ -188,8 +204,10 @@ class FaceManagementService {
 	 * Eliminate all faces relations with person.
 	 *
 	 * @param string $user ID of user to execute resetting for
+	 *
+	 * @return void
 	 */
-	public function resetClustersForUser(string $userId) {
+	public function resetClustersForUser(string $userId): void {
 		$model = $this->settingsService->getCurrentFaceModel();
 
 		$this->faceMapper->unsetPersonsRelationForUser($userId, $model);

@@ -103,5 +103,7 @@ jobs:
       - name: Coverage
         working-directory: apps/${{ env.APP_NAME }}
         run: |
-          wget https://scrutinizer-ci.com/ocular.phar
-          ocular.phar code-coverage:upload --format=php-clover clover.xml
+          if [ "${{ matrix.databases }}" = "mysql" ]; then
+            wget https://scrutinizer-ci.com/ocular.phar
+            ./ocular.phar code-coverage:upload --format=php-clover clover.xml
+          fi

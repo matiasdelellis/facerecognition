@@ -42,11 +42,5 @@
 				<referencedClass name="Doctrine\DBAL\Schema\Table" />
 			</errorLevel>
 		</UndefinedDocblockClass>
-		<UndefinedFunction>
-			<errorLevel type="suppress">
-				<referencedFunction name="dlib_vector_length"/>
-				<referencedFunction name="dlib_chinese_whispers"/>
-			</errorLevel>
-		</UndefinedFunction>
 	</issueHandlers>
 </psalm>

@@ -20,6 +20,13 @@
       <code>TempImage</code>
     </MissingDependency>
   </file>
+  <file src="lib/BackgroundJob/Tasks/CreateClustersTask.php">
+    <UndefinedFunction occurrences="2">
+      <referencedFunction name="dlib_vector_length"/>
+      <referencedFunction name="dlib_chinese_whispers"/>
+    </UndefinedFunction>
+  </file>
+
   <file src="lib/Command/MigrateCommand.php">
     <MissingDependency occurrences="1">
       <code>OCP_Image</code>
@@ -75,18 +82,6 @@
       <code>UserDeletedListener</code>
     </MissingDependency>
   </file>
-  <file src="lib/Model/DlibCnnModel/DlibCnnModel.php">
-    <TooFewArguments occurrences="2">
-      <code>computeDescriptor</code>
-      <code>computeDescriptor</code>
-    </TooFewArguments>
-  </file>
-  <file src="lib/Model/DlibHogModel/DlibHogModel.php">
-    <TooFewArguments occurrences="2">
-      <code>computeDescriptor</code>
-      <code>computeDescriptor</code>
-    </TooFewArguments>
-  </file>
   <file src="lib/Model/ExternalModel/ExternalModel.php">
     <InvalidScalarArgument occurrences="3">
       <code>$response</code>
@@ -136,9 +131,9 @@
       <code>IRootFolder</code>
     </MissingDependency>
   </file>
-  <file src="vendor/phpunit/php-code-coverage/tests/_files/Crash.php">
-    <ParseError occurrences="1">
-      <code>{</code>
-    </ParseError>
+  <file src="lib/Model/DlibHogModel/DlibHogModel.php">
+    <UndefinedFunction occurrences="1">
+      <referencedFunction name="dlib_face_detection"/>
+    </UndefinedFunction>
   </file>
 </files>

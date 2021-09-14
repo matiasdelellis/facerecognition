@@ -99,10 +99,6 @@ jobs:
           ../../occ face:setup --model 3 || true
           ../../occ face:setup --model 1
           make test
-
-      - name: Upload coverage report
-        working-directory: apps/${{ env.APP_NAME }}
-        run: |
           if [ "${{ matrix.databases }}" = "mysql" ] && [ "${{ matrix.php-versions }}" = "7.3" ] && [ "${{ matrix.server-versions }}" = "stable21" ]; then
             vendor/bin/ocular code-coverage:upload --format=php-clover clover.xml
           fi

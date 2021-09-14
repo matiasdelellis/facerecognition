@@ -11,6 +11,7 @@ services:
 php:
   - 7.3
   - 7.4
+  - 8.0
 
 env:
   global:
@@ -31,9 +32,9 @@ before_install:
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
   - sudo apt update
   - sudo apt-get install libdlib-dev
-  - wget https://github.com/goodspb/pdlib/archive/v1.0.tar.gz
-  - tar -xzf v1.0.tar.gz
-  - pushd pdlib-1.0
+  - wget https://github.com/goodspb/pdlib/archive/v1.0.2.tar.gz
+  - tar -xzf v1.0.2.tar.gz
+  - pushd pdlib-1.0.2
   - phpize
   - ./configure --enable-debug && make && sudo make install
   - echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`

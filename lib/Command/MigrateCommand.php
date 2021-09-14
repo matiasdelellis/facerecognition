@@ -216,6 +216,9 @@ class MigrateCommand extends Command {
 			$oldFaces = $this->faceMapper->findFromFile($userId, $oldModelId, $newImage->getFile());
 			if (count($oldFaces) > 0) {
 				$filePath = $this->getImageFilePath($newImage);
+				if ($filePath === null)
+					continue;
+
 				foreach ($oldFaces as $oldFace) {
 					$this->migrateFace($currentModel, $oldFace, $newImage, $filePath);
 				}

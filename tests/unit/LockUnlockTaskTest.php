@@ -24,7 +24,6 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCP\IConfig;
-use OCP\ILogger;
 use OCP\IUserManager;
 
 use OCP\App\IAppManager;
@@ -35,6 +34,8 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\UnlockTask;
 use OCA\FaceRecognition\Service\ModelService;
+
+use Psr\Log\LoggerInterface;
 
 use Test\TestCase;
 
@@ -53,7 +54,7 @@ class LockTaskTest extends TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 		$this->context = new FaceRecognitionContext($userManager, $config);
-		$logger = $this->getMockBuilder(ILogger::class)
+		$logger = $this->getMockBuilder(LoggerInterface::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$this->context->logger = new FaceRecognitionLogger($logger);

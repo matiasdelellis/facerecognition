@@ -23,7 +23,7 @@
  */
 namespace OCA\FaceRecognition\BackgroundJob;
 
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * well as background job, so we need a way to unify logging for both.
  */
 class FaceRecognitionLogger {
-	/** @var ILogger */
+	/** @var LoggerInterface */
 	private $logger;
 
 	/** @var OutputInterface */
@@ -45,14 +45,14 @@ class FaceRecognitionLogger {
 		} else if ($logger instanceof OutputInterface) {
 			$this->output = $logger;
 		} else {
-			throw new \InvalidArgumentException("Logger must be either instance of ILogger or OutputInterface");
+			throw new \InvalidArgumentException("Logger must be either instance of LoggerInterface or OutputInterface");
 		}
 	}
 
 	/**
 	 * Returns logger, if it is set
 	 *
-	 * @return ILogger|null Logger, if it is set.
+	 * @return LoggerInterface|null Logger, if it is set.
 	 */
 	public function getLogger() {
 		return $this->logger;

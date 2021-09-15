@@ -34,7 +34,6 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\Files\Folder;
 use OCP\Files\Events\Node\NodeWrittenEvent;
 
-use OCP\ILogger;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\Service\FileService;
@@ -44,9 +43,11 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use Psr\Log\LoggerInterface;
+
 class PostWriteListener implements IEventListener {
 
-	/** @var ILogger Logger */
+	/** @var LoggerInterface $logger */
 	private $logger;
 
 	/** @var IUserManager */
@@ -67,7 +68,7 @@ class PostWriteListener implements IEventListener {
 	/** @var FileService */
 	private $fileService;
 
-	public function __construct(ILogger               $logger,
+	public function __construct(LoggerInterface       $logger,
 	                            IUserManager          $userManager,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,

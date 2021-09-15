@@ -25,7 +25,6 @@ declare(strict_types=1);
 namespace OCA\FaceRecognition\Helper;
 
 use OCP\Image;
-use OCP\ILogger;
 use OCP\ITempManager;
 
 class TempImage extends Image {

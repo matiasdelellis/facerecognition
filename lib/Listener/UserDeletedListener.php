@@ -26,21 +26,22 @@ namespace OCA\FaceRecognition\Listener;
 
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCP\ILogger;
 use OCP\User\Events\UserDeletedEvent;
+
+use Psr\Log\LoggerInterface;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 
 
 class UserDeletedListener implements IEventListener {
 
-	/** @var ILogger Logger */
+	/** @var LoggerInterface $logger */
 	private $logger;
 
 	/** @var FaceManagementService */
 	private $service;
 
-	public function __construct(ILogger               $logger,
+	public function __construct(LoggerInterface       $logger,
 	                            FaceManagementService $service)
 	{
 		$this->logger  = $logger;

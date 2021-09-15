@@ -23,7 +23,8 @@
         "christophwurst/nextcloud": "^21",
         "phpunit/phpunit": "^9",
         "psalm/phar": "^4.10",
-        "scrutinizer/ocular": "^1.8"
+        "scrutinizer/ocular": "^1.8",
+        "psr/log": "^1.1"
     },
     "scripts": {
         "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",

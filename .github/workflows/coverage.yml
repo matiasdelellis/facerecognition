@@ -1,10 +1,6 @@
-name: PHPUnit
+name: Coverage
 
-on:
-  pull_request:
-  push:
-    branches:
-      - master
+on: [push, pull_request]
 
 env:
   APP_NAME: facerecognition
@@ -17,22 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.3', '7.4', '8.0']
-        databases: ['sqlite', 'mysql', 'pgsql']
-        server-versions: ['stable21', 'stable22']
+        php-versions: ['7.3']
+        databases: ['mysql']
+        server-versions: ['stable21']
 
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
     services:
-      postgres:
-        image: postgres
-        ports:
-          - 4445:5432/tcp
-        env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: rootpassword
-          POSTGRES_DB: nextcloud
-        options: --health-cmd pg_isready --health-interval 5s --health-timeout 2s --health-retries 5
       mysql:
         image: mariadb:10.5
         ports:
@@ -74,8 +61,8 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
-          extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql
-          coverage: none
+          extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, mysql, pdo_mysql
+          coverage: xdebug
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}
@@ -83,19 +70,15 @@ jobs:
 
       - name: Set up Nextcloud
         run: |
-          if [ "${{ matrix.databases }}" = "mysql" ]; then
-            export DB_PORT=4444
-          elif [ "${{ matrix.databases }}" = "pgsql" ]; then
-            export DB_PORT=4445
-          fi
+          export DB_PORT=4444
           mkdir data
           ./occ maintenance:install --verbose --database=${{ matrix.databases }} --database-name=nextcloud --database-host=127.0.0.1 --database-port=$DB_PORT --database-user=root --database-pass=rootpassword --admin-user admin --admin-pass admin
           ./occ app:enable --force ${{ env.APP_NAME }}
           php -S localhost:8080 &
 
-      - name: PHPUnit
+      - name: Upload coverage to scrutinizer-ci
         working-directory: apps/${{ env.APP_NAME }}
         run: |
-          ../../occ face:setup --model 3 || true
           ../../occ face:setup --model 1
           make test
+          vendor/bin/ocular code-coverage:upload --format=php-clover clover.xml

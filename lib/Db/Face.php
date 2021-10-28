@@ -197,7 +197,7 @@ class Face extends Entity implements JsonSerializable {
 		$this->markFieldUpdated('descriptor');
 	}
 
-	public function setCreationTime(\DateTime $creationTime): void {
+	public function setCreationTime($creationTime): void {
 		if (is_a($creationTime, 'DateTime')) {
 			$this->creationTime = $creationTime;
 		} else {

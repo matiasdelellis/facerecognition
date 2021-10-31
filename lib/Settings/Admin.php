@@ -77,8 +77,11 @@ class Admin implements ISettings {
 		$model = $this->modelManager->getCurrentModel();
 
 		if (is_null($model)) {
+			$maxRange = "8294400";
 			$resume = $this->l10n->t("It seems you don't have any model installed.");
 			// TODO: Document models and add link here.
+		} else {
+			$maxRange = strval($model->getMaximumArea());
 		}
 
 		$error_message = '';
@@ -102,6 +105,7 @@ class Admin implements ISettings {
 			'php-memory' => $phpMemory > 0 ? OCP_Util::humanFileSize((int) $phpMemory) : $this->l10n->t("Unknown"),
 			'available-memory' => $availableMemory > 0 ? OCP_Util::humanFileSize((int) $availableMemory) : $this->l10n->t("Unknown"),
 			'resume' => $resume,
+			'max-range' => $maxRange,
 		];
 
 		return new TemplateResponse('facerecognition', 'settings/admin', $params, '');

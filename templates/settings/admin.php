@@ -18,7 +18,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="image-area-range"><?php p($l->t('Smaller images'));?></label>
-			<span><input type="range" id="image-area-range" min="307200" max="8294400" value="-1" step="1200" class="ui-slider"></span>
+			<span><input type="range" id="image-area-range" min="307200" max="<?php p($_['max-range']);?>" value="-1" step="1200" class="ui-slider"></span>
 			<label for="image-area-range"><?php p($l->t('Larger images'));?></label>
 			<span id="image-area-value"class="span-highlighted">...</span>
 			<a id="restore-image-area" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>

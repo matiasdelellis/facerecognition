@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.5] - 2021-11-20
+### Added
+- Initial support for php 8. See issue #456
+- Add link to show photos of person on sidebar.
+- Add static analysis, phpunit and lintian test using github workflow.
+- Add an real OCS public API to get all persons. See PR  #512.
+
+### Fixed
+- Fix sidebar view when user has disable it.
+- Set the Image Area slider to the maximum allowed by the model. See issue #527
+- Don't try to force the setCreationTime argument to be DateTime. See PR #526
+- Migrate hooks to OCP event listeners. See PR #511
+
+### Translations
+- New Czech translation thanks to Pavel Borecki, and update others. Thank you so
+  much everyone.
+
 ## [0.8.3] - 2021-07-08
 ### Added
 - Initial support for NC22.

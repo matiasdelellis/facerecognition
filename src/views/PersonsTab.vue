@@ -228,6 +228,10 @@ export default {
 			this.isProcessed = isDirectory ? false : data.is_processed
 			this.isChildrensEnabled = !isDirectory ? false : data.descendant_detection
 			this.persons = []
+
+			if (!data.enabled)
+				return;
+
 			if (!isDirectory) {
 				this.persons = data.persons.sort(function(a, b) {
 					if (a.name == b.name)

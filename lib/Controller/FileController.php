@@ -105,11 +105,13 @@ class FileController extends Controller {
 			}
 
 			$person = $this->personMapper->find($this->userId, $face->getPerson());
+			$personName = $person->getName();
 
 			$facePerson = array();
-			$facePerson['name'] = $person->getName();
+			$facePerson['name'] = $personName;
 			$facePerson['person_id'] = $person->getId();
 			$facePerson['thumb_url'] = $this->urlService->getThumbUrl($face->getId(), 50);
+			$facePerson['photos_url'] = $personName ? $this->urlService->getRedirectToPersonUrl($personName) : null;
 			$facePerson['face_left'] = $face->getLeft();
 			$facePerson['face_right'] = $face->getRight();
 			$facePerson['face_top'] = $face->getTop();

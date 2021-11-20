@@ -44,6 +44,7 @@
 					<li class='face-entry' :data-id='person.person_id'>
 						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
 						<h5 v-bind:class="['face-name', person.name ? '' : 'unknown-name']">{{ person.name ? person.name : t('facerecognition', 'Unknown') }}</h5>
+						<a v-if="person.photos_url" :href="person.photos_url" rel="noreferrer noopener" class="icon-external" target="_blank"/>
 						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
 					</li>
 				</template>

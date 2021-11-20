@@ -1,9 +1,10 @@
 # Face Recognition
 
-[![Build Status](https://travis-ci.org/matiasdelellis/facerecognition.svg?branch=master)](https://travis-ci.org/matiasdelellis/facerecognition)
+![PHPUnit Status](https://img.shields.io/github/workflow/status/matiasdelellis/facerecognition/PHPUnit)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/matiasdelellis/facerecognition/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/matiasdelellis/facerecognition/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/matiasdelellis/facerecognition/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/matiasdelellis/facerecognition/?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4b035bd1283349009ad88235d37ddae1)](https://www.codacy.com/app/stalker314314/facerecognition?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=matiasdelellis/facerecognition&amp;utm_campaign=Badge_Grade)
+![Downloads](https://img.shields.io/github/downloads/matiasdelellis/facerecognition/total)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
 Nextcloud app that implement a basic facial recognition system.
@@ -34,13 +35,24 @@ Finally the user can use the application in three ways
  2. In the file application the user can search by typing your friend's name,
     and it will show all the photos.
  3. In the side panel of the file application, a 'Persons' tab is added where
+    you can see a list of your friends in the photo, and rename them. Also you can
+    select the folders you want to ignore for the process.
+ 3. In the side panel of the Photos application, a 'Persons' tab is added where
     you can see a list of your friends in the photo, and rename them.
+
+## Donate
+
+If you'd like to support the creation and maintenance of this software, consider donating.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue)](https://github.com/matiasdelellis/facerecognition/wiki/Donate)
+[![Donate](https://img.shields.io/badge/Donate-Bitcoin-orange)](https://github.com/matiasdelellis/facerecognition/wiki/Donate)
+[![Donate](https://img.shields.io/badge/Donate-Ethereum-blueviolet)](https://github.com/matiasdelellis/facerecognition/wiki/Donate)
 
 ## Installation, configuration and usage
 
 #### Requirements
 
- * Nextcloud 16+
+ * Nextcloud 20+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
  * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
  * 1GB of RAM

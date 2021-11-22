@@ -171,7 +171,7 @@ class DlibCnnHogModel implements IModel {
 
 	private function validateFace($proposedFace, array $validateFaces) {
 		foreach ($validateFaces as $validateFace) {
-			$overlayPercent = FaceRect::getOverlayPercent($proposedFace, $validateFace);
+			$overlapPercent = FaceRect::overlapPercent($proposedFace, $validateFace);
 			/**
 			 * The weak link in our default model is the landmark detector that
 			 * can't align profile or rotate faces correctly.
@@ -180,11 +180,11 @@ class DlibCnnHogModel implements IModel {
 			 * consider if Hog detector can detect it, to infer when the predictor
 			 * will give good results.
 			 *
-			 * If Hog detects it (Overlay > 35%), we can assume that landmark
+			 * If Hog detects it (Overlap > 35%), we can assume that landmark
 			 * detector will do it too. In this case, we consider the face valid,
 			 * and just return it.
 			 */
-			if ($overlayPercent >= 0.35) {
+			if ($overlapPercent >= 0.35) {
 				return $proposedFace;
 			}
 		}

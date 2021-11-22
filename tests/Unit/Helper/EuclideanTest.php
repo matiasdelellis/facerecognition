@@ -30,9 +30,9 @@ use Test\TestCase;
 class EuclideanTest extends TestCase {
 
 	public function testEuclideans() {
-		$this->assertEquals(Euclidean::distance([0.0, 0.0], [0.0, 1.0], 1.0);
-		$this->assertEquals(Euclidean::distance([0.0, 0.0, -1.0], [0.0, 0.0, 1.0], 2.0);
-		$this->assertEquals(Euclidean::distance([0.0, 2.5, 1.0], [0.0, 1.0, 1.0], 1.5);
+		$this->assertEquals(Euclidean::distance([0.0, 0.0], [0.0, 1.0]), 1.0);
+		$this->assertEquals(Euclidean::distance([0.0, 0.0, -1.0], [0.0, 0.0, 1.0]), 2.0);
+		$this->assertEquals(Euclidean::distance([0.0, 2.5, 1.0], [0.0, 1.0, 1.0]), 1.5);
 	}
 
 }

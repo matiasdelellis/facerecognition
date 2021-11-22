@@ -31,7 +31,7 @@ class RequirementsTest extends TestCase {
 
 	public function testReturnBool() {
 		$this->assertTrue(Requirements::pdlibLoaded());
-		$this->assertFalse(Requirements::hasEnoughMemory());
+		$this->assertTrue(Requirements::hasEnoughMemory());
 	}
 
 }

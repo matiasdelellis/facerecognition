@@ -30,8 +30,8 @@ use Test\TestCase;
 class RequirementsTest extends TestCase {
 
 	public function testReturnBool() {
-		$this->assertTrue(MemoryLimits::pdlibLoaded());
-		$this->assertFalse(MemoryLimits::hasEnoughMemory());
+		$this->assertTrue(Requirements::pdlibLoaded());
+		$this->assertFalse(Requirements::hasEnoughMemory());
 	}
 
 }

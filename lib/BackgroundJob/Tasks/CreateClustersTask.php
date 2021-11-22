@@ -298,7 +298,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				}
 			}
 		} else {
-			$euclidean = new Euclidean();
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
@@ -313,8 +312,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
-					// todo: can't this distance be a method in $face1->distance($face2)?
-					$distance = $euclidean->distance($face1->descriptor, $face2->descriptor);
+					$distance = Euclidean::distance($face1->descriptor, $face2->descriptor);
 					if ($distance < $sensitivity) {
 						$edges[] = array($i, $j);
 					}

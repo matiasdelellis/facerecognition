@@ -41,7 +41,7 @@ class FaceRectTest extends TestCase {
 		$rectB['right'] = 20;
 		$rectB['top'] = 10;
 		$rectB['bottom'] = 20;
-		$this->assertEquals(FaceRect::overlapPercent($rectA, $rectB), 100.0);
+		$this->assertEquals(FaceRect::overlapPercent($rectA, $rectB), 1.0);
 
 		$rectB['left'] = 25;
 		$rectB['right'] = 35;
@@ -53,7 +53,7 @@ class FaceRectTest extends TestCase {
 		$rectB['right'] = 25;
 		$rectB['top'] = 10;
 		$rectB['bottom'] = 20;
-		$this->assertEqualsWithDelta(FaceRect::overlapPercent($rectA, $rectB), 33.3, 0.1);
+		$this->assertEqualsWithDelta(FaceRect::overlapPercent($rectA, $rectB), 0.33, 0.01);
 	}
 
 }

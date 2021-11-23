@@ -25,7 +25,7 @@ namespace OCA\FaceRecognition\Helper;
 
 class FaceRect {
 
-	public static function getOverlayPercent($rectA, $rectB): float {
+	public static function overlapPercent(array $rectA, array $rectB): float {
 		// Firts face rect
 		$leftA = $rectA['left'];
 		$rightA = $rectA['right'];

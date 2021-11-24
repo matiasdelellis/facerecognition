@@ -71,36 +71,30 @@ class Admin implements ISettings {
 
 	public function getForm() {
 
-		$meetDependencies = true;
-		$resume = "";
+		$isConfigured = true;
+		$maxImageRange = "8294400";
+		$resume = '';
 
 		$model = $this->modelManager->getCurrentModel();
-
-		if (is_null($model)) {
-			$maxRange = "8294400";
-			$resume = $this->l10n->t("It seems you don't have any model installed.");
-			// TODO: Document models and add link here.
-		} else {
+		if (!is_null($model)) {
 			$maxRange = strval($model->getMaximumArea());
+		} else {
+			$resume .= $this->l10n->t("It seems you don't have any model installed.");
+			$isConfigured = false;
 		}
 
-		$error_message = '';
-		if (!is_null($model) && !$model->meetDependencies($error_message)) {
-			$resume .= $this->l10n->t("It seems that you do not meet the dependencies to use the current model.");
-			// TODO: Apply message
-			$meetDependencies = false;
-		}
-
-		$pdlibVersion = phpversion('pdlib');
 		$assignedMemory = $this->settingsService->getAssignedMemory();
+		if ($assignedMemory < 0) {
+			$resume = $this->l10n->t("Seems that you still have to configure the assigned memory for image processing.");
+			$isConfigured = false;
+		}
 
 		$params = [
-			'meet-dependencies' => $meetDependencies,
-			'pdlib-version' => $pdlibVersion ? $pdlibVersion : $this->l10n->t("Not installed"),
+			'is-configured' => $isConfigured,
 			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
 			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize((int) $assignedMemory) : $this->l10n->t("Not configured."),
+			'max-image-range' => $maxImageRange,
 			'resume' => $resume,
-			'max-range' => $maxRange,
 		];
 
 		return new TemplateResponse('facerecognition', 'settings/admin', $params, '');

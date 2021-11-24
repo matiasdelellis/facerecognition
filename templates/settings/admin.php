@@ -18,7 +18,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="image-area-range"><?php p($l->t('Smaller images'));?></label>
-			<span><input type="range" id="image-area-range" min="307200" max="<?php p($_['max-range']);?>" value="-1" step="1200" class="ui-slider"></span>
+			<span><input type="range" id="image-area-range" min="307200" max="<?php p($_['max-image-range']);?>" value="-1" step="1200" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="image-area-range"><?php p($l->t('Larger images'));?></label>
 			<span id="image-area-value"class="span-highlighted">...</span>
 			<a id="restore-image-area" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -34,7 +34,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="sensitivity-range"><?php p($l->t('Small threshold'));?></label>
-			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider"></span>
+			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="sensitivity-range"><?php p($l->t('Higher threshold'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -49,7 +49,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="min-confidence-range"><?php p($l->t('Lower minimum confidence'));?></label>
-			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider"></span>
+			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="min-confidence-range"><?php p($l->t('Higher minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -58,9 +58,8 @@
 		<br>
 		<h3>
 			<?php p($l->t('Configuration information'));?>
-			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
+			<span class="status success<?php if(!($_['is-configured'])):?> error<?php endif;?>"></span>
 		</h3>
-		<p><?php p($l->t('Pdlib version:'));?> <em><?php p($_['pdlib-version']);?></em></p>
 		<p><?php p($l->t('Current model:'));?> <em><?php p($_['model-version']);?></em></p>
 		<p><?php p($l->t('Maximum memory assigned for image processing:'));?> <em><?php p($_['assigned-memory']);?></em></p>
 		<p><span><?php p($_['resume']); ?></span></p>

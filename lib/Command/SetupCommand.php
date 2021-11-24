@@ -78,7 +78,7 @@ class SetupCommand extends Command {
 			->addOption(
 				'model',
 				'm',
-				InputOption::VALUE_OPTIONAL,
+				InputOption::VALUE_REQUIRED,
 				'The identifier number of the model to install',
 				-1
 			);
@@ -101,11 +101,8 @@ class SetupCommand extends Command {
 		if ($modelId > 0) {
 			return $this->setupModel($modelId);
 		}
-		else {
-			$this->logger->writeln('You must indicate the ID of the model to install...');
-			$this->dumpModels();
-			return 0;
-		}
+
+		$this->dumpCurrentSetup();
 
 		return 0;
 	}
@@ -139,6 +136,8 @@ class SetupCommand extends Command {
 	}
 
 	private function setupModel (int $modelId): int {
+		$this->logger->writeln("");
+
 		$model = $this->modelManager->getModel($modelId);
 		if (is_null($model)) {
 			$this->logger->writeln('Invalid model Id');
@@ -173,13 +172,19 @@ class SetupCommand extends Command {
 		return 0;
 	}
 
-	/**
-	 * Print list of models
-	 *
-	 * @return void
-	 */
-	private function dumpModels(): void {
+	private function dumpCurrentSetup (): void {
+		$this->logger->writeln("Current setup:");
 		$this->logger->writeln('');
+		$this->logger->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
+		$availableMemory = MemoryLimits::getAvailableMemory();
+		$this->logger->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
+		$assignedMemory = $this->settingsService->getAssignedMemory();
+		$this->logger->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
+
+
+
+		$this->logger->writeln('');
+		$this->logger->writeln("Available models:");
 		$table = new Table($this->logger);
 		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
 
@@ -198,7 +203,7 @@ class SetupCommand extends Command {
 		$table->render();
 	}
 
-	private function getHumanMemory (int $memory): string {
+	private function getHumanMemory ($memory): string {
 		return OCP_Util::humanFileSize($memory) . " (" . $memory . "B)";
 	}
 

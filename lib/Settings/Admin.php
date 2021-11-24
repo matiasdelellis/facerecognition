@@ -92,18 +92,13 @@ class Admin implements ISettings {
 		}
 
 		$pdlibVersion = phpversion('pdlib');
-
-		$systemMemory = $this->memoryLimits->getSystemMemory();
-		$phpMemory = $this->memoryLimits->getPhpMemory();
-		$availableMemory = $this->memoryLimits->getAvailableMemory();
+		$assignedMemory = $this->settingsService->getAssignedMemory();
 
 		$params = [
 			'meet-dependencies' => $meetDependencies,
-			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
 			'pdlib-version' => $pdlibVersion ? $pdlibVersion : $this->l10n->t("Not installed"),
-			'system-memory' => $systemMemory > 0 ? OCP_Util::humanFileSize((int) $systemMemory) : $this->l10n->t("Unknown"),
-			'php-memory' => $phpMemory > 0 ? OCP_Util::humanFileSize((int) $phpMemory) : $this->l10n->t("Unknown"),
-			'available-memory' => $availableMemory > 0 ? OCP_Util::humanFileSize((int) $availableMemory) : $this->l10n->t("Unknown"),
+			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
+			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize((int) $assignedMemory) : $this->l10n->t("Not configured."),
 			'resume' => $resume,
 			'max-range' => $maxRange,
 		];

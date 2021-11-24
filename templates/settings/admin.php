@@ -60,13 +60,9 @@
 			<?php p($l->t('Configuration information'));?>
 			<span class="status success<?php if(!($_['model-version'] > 0 && $_['meet-dependencies'])):?> error<?php endif;?>"></span>
 		</h3>
-		<p><?php p($l->t('System memory:'));?> <em><?php p($_['system-memory']);?></em></p>
-		<p><?php p($l->t('Memory assigned to PHP:'));?> <em><?php p($_['php-memory']);?></em></p>
-		<p><?php p($l->t('Maximum memory for facial recognition:'));?> <em><?php p($_['available-memory']);?></em></p>
-		<br>
 		<p><?php p($l->t('Pdlib version:'));?> <em><?php p($_['pdlib-version']);?></em></p>
-		<br>
 		<p><?php p($l->t('Current model:'));?> <em><?php p($_['model-version']);?></em></p>
+		<p><?php p($l->t('Maximum memory assigned for image processing:'));?> <em><?php p($_['assigned-memory']);?></em></p>
 		<p><span><?php p($_['resume']); ?></span></p>
 		<br>
 		<h3>

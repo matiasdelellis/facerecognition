@@ -45,6 +45,12 @@ class SettingsService {
 	const CURRENT_MODEL_KEY = 'model';
 	const FALLBACK_CURRENT_MODEL = -1;
 
+	/* Assigned memory for image processing */
+	const ASSIGNED_MEMORY_KEY = 'assigned_memory';
+	const MINIMUM_ASSIGNED_MEMORY = (1 * 1024 * 1024 * 1024) * 2.0 / 3.0;
+	const DEFAULT_ASSIGNED_MEMORY = -1;
+	const MAXIMUN_ASSIGNED_MEMORY = 8 * 1024 * 1024 * 1024;
+
 	/** Image area that used used for analysis */
 	const ANALYSIS_IMAGE_AREA_KEY = 'analysis_image_area';
 	const MINIMUM_ANALYSIS_IMAGE_AREA = 640*480;
@@ -254,6 +260,10 @@ class SettingsService {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval(self::DEFAULT_ANALYSIS_IMAGE_AREA)));
 	}
 
+	public function setAssignedMemory(int $assignedMemory): void {
+		$this->config->setAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, strval($assignedMemory));
+	}
+
 	public function setAnalysisImageArea(int $imageArea): void {
 		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
 	}
@@ -306,6 +316,10 @@ class SettingsService {
 
 	public function getMaximumImageArea(): int {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
+	}
+
+	public function getAssignedMemory(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, self::DEFAULT_ASSIGNED_MEMORY));
 	}
 
 	public function getObfuscateFaces(): bool {

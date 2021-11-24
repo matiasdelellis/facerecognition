@@ -96,6 +96,7 @@ jobs:
       - name: PHPUnit
         working-directory: apps/${{ env.APP_NAME }}
         run: |
+          ../../occ face:setup --memory 1G
           ../../occ face:setup --model 3 || true
           ../../occ face:setup --model 1
           make test

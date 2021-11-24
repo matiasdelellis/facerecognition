@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -129,15 +129,21 @@ class DlibCnnModel implements IModel {
 			$error_message = "The PDlib PHP extension is not loaded";
 			return false;
 		}
-		if (MemoryLimits::getAvailableMemory() < static::MINIMUM_MEMORY_REQUIREMENTS) {
-			$error_message = "Your system does not meet the minimum memory requirements";
+		$availableMemory = $this->settingsService->getAssignedMemory();
+		if ($availableMemory < 0) {
+			$error_message = "Seems that you still have to configure the assigned memory for image processing.";
+			return false;
+		}
+		if ($availableMemory < static::MINIMUM_MEMORY_REQUIREMENTS) {
+			$error_message = "Your system does not meet the minimum memory requirements.";
 			return false;
 		}
 		return true;
 	}
 
 	public function getMaximumArea(): int {
-		return intval(MemoryLimits::getAvailableMemory()/static::MEMORY_AREA_RELATIONSHIP);
+		$assignedMemory = $this->settingsService->getAssignedMemory();
+		return intval($assignedMemory/static::MEMORY_AREA_RELATIONSHIP);
 	}
 
 	public function getPreferredMimeType(): string {

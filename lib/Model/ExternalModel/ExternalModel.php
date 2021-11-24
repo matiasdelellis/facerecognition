@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021, Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -33,7 +33,7 @@ class ExternalModel implements IModel {
 	 */
 	const FACE_MODEL_ID = 5;
 	const FACE_MODEL_NAME = 'ExternalModel';
-	const FACE_MODEL_DESC = 'External Model (EXPERIMENTAL)';
+	const FACE_MODEL_DESC = 'External model to separate image processing from the web server';
 	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition-external-model#run-service';
 
 	/** This model practically does not consume memory. Directly set the limits. */
@@ -120,6 +120,7 @@ class ExternalModel implements IModel {
 	 * @return void
 	 */
 	public function install() {
+		$this->open();
 		return;
 	}
 

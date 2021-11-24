@@ -79,6 +79,7 @@ jobs:
       - name: Upload coverage to scrutinizer-ci
         working-directory: apps/${{ env.APP_NAME }}
         run: |
+          ../../occ face:setup --memory 1G
           ../../occ face:setup --model 1
           make test
           vendor/bin/ocular code-coverage:upload --format=php-clover clover.xml

@@ -36,7 +36,7 @@ class DlibCnn5Model extends DlibCnnModel implements IModel {
 	const FACE_MODEL_NAME = 'Default';
 
 	/** Defines description for default face model */
-	const FACE_MODEL_DESC = 'Main model, using dlib defaults: mmod_human_face_detector.dat, shape_predictor_5_face_landmarks.dat and dlib_face_recognition_resnet_model_v1.dat';
+	const FACE_MODEL_DESC = 'Main model, using dlib defaults.';
 
 	/** Defines documentation for default face model */
 	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition/wiki/Models#model-1';

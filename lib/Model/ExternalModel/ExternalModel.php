@@ -33,7 +33,7 @@ class ExternalModel implements IModel {
 	 */
 	const FACE_MODEL_ID = 5;
 	const FACE_MODEL_NAME = 'ExternalModel';
-	const FACE_MODEL_DESC = 'External Model';
+	const FACE_MODEL_DESC = 'External model to separate image processing from the web server';
 	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition-external-model#run-service';
 
 	/** This model practically does not consume memory. Directly set the limits. */

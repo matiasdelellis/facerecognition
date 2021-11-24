@@ -23,6 +23,8 @@
  */
 namespace OCA\FaceRecognition\Helper;
 
+use OCA\FaceRecognition\Service\SettingsService;
+
 /**
  * Tries to get total amount of memory on the host, given to PHP.
  */
@@ -49,7 +51,8 @@ class MemoryLimits {
 			$systemMemory = MemoryLimits::getSystemMemory();
 			if ($systemMemory < 0)
 				return -1;
-			$availableMemory = ($systemMemory / 2);
+			$availableMemory = ($systemMemory * 2 / 3);
+			$availableMemory = min($availableMemory, SettingsService::MAXIMUN_ASSIGNED_MEMORY);
 		}
 		return $availableMemory;
 	}

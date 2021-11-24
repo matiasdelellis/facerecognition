@@ -319,7 +319,7 @@ class SettingsService {
 	}
 
 	public function getAssignedMemory(): int {
-		return intval($this->config->getAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, self::DEFAULT_ASSIGNED_MEMORY));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, strval(self::DEFAULT_ASSIGNED_MEMORY)));
 	}
 
 	public function getObfuscateFaces(): bool {

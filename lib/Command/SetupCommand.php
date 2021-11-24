@@ -181,8 +181,6 @@ class SetupCommand extends Command {
 		$assignedMemory = $this->settingsService->getAssignedMemory();
 		$this->logger->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
 
-
-
 		$this->logger->writeln('');
 		$this->logger->writeln("Available models:");
 		$table = new Table($this->logger);

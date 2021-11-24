@@ -84,7 +84,7 @@ class Admin implements ISettings {
 		}
 
 		$assignedMemory = $this->settingsService->getAssignedMemory();
-		if ($assignedMemory < 0) {
+		if ($assignedMemory === SettingsService::DEFAULT_ASSIGNED_MEMORY) {
 			$resume = $this->l10n->t("Seems that you still have to configure the assigned memory for image processing.");
 			$isConfigured = false;
 		}
@@ -92,7 +92,7 @@ class Admin implements ISettings {
 		$params = [
 			'is-configured' => $isConfigured,
 			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
-			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize((int) $assignedMemory) : $this->l10n->t("Not configured."),
+			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize($assignedMemory) : $this->l10n->t("Not configured."),
 			'max-image-range' => $maxImageRange,
 			'resume' => $resume,
 		];

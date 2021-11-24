@@ -93,13 +93,24 @@ some ways to configure it within our documentation about [Schedule Background Ta
 
 The application add commands to the [Nexcloud's command-line interface](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html).
 
-#### Configure models
+#### Initial setup
 
-`occ face:setup -m|--model [MODEL_ID]`
+`occ face:setup [-M|--memory MEMORY] [-m|--model MODEL]`
 
-This command is responsible for installing pretrained models. You must supply
-`MODEL_ID` indicating the model to install. If not supplied, it will list all
-available models.
+This command is responsible for making the necessary settings to use the
+application.
+
+If `MEMORY` is supplied, it will establish the maximum memory to be used for the
+processing of the images. This value will be limited according to the memory
+available by the system and the php configuration. You can use numbers as bytes
+(1073741824 for 1Gb), or subfixed with units (1024M or 1G).
+
+If `MODEL_ID` is supplied. the pre-trained model for facial recognition will be
+installed.
+
+You must perform both settings before continuing with any application command.
+If you do not supply any of these options, the command will return the current
+configuration
 
 #### Face analysis
 

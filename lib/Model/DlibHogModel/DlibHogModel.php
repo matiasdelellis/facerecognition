@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -41,7 +41,7 @@ class DlibHogModel implements IModel {
 	 */
 	const FACE_MODEL_ID = 3;
 	const FACE_MODEL_NAME = 'DlibHog';
-	const FACE_MODEL_DESC = 'DDlib HOG Model which needs lower requirements';
+	const FACE_MODEL_DESC = 'Dlib HOG Model which needs lower requirements';
 	const FACE_MODEL_DOC = 'https://github.com/matiasdelellis/facerecognition/wiki/Models#model-3';
 
 	/** This model practically does not consume memory. Directly set the limits. */
@@ -132,6 +132,11 @@ class DlibHogModel implements IModel {
 		}
 		if (!version_compare(phpversion('pdlib'), '1.0.1', '>=')) {
 			$error_message = "The PDlib PHP extension version is too old";
+			return false;
+		}
+		$assignedMemory = $this->settingsService->getAssignedMemory();
+		if ($assignedMemory < 0) {
+			$error_message = "Seems that you still have to configure the assigned memory for image processing.";
 			return false;
 		}
 		if (MemoryLimits::getAvailableMemory() < static::MINIMUM_MEMORY_REQUIREMENTS) {

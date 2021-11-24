@@ -204,7 +204,7 @@ class SetupCommand extends Command {
 	}
 
 	private function getHumanMemory ($memory): string {
-		return OCP_Util::humanFileSize($memory) . " (" . $memory . "B)";
+		return OCP_Util::humanFileSize($memory) . " (" . intval($memory) . "B)";
 	}
 
 }

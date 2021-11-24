@@ -103,14 +103,15 @@ application.
 If `MEMORY` is supplied, it will establish the maximum memory to be used for the
 processing of the images. This value will be limited according to the memory
 available by the system and the php configuration. You can use numbers as bytes
-(1073741824 for 1Gb), or subfixed with units (1024M or 1G).
+(1073741824 for 1GB), or subfixed with units (1024M or 1G) but note that it is
+without space.
 
 If `MODEL_ID` is supplied. the pre-trained model for facial recognition will be
 installed.
 
 You must perform both settings before continuing with any application command.
 If you do not supply any of these options, the command will return the current
-configuration
+configuration.
 
 #### Face analysis
 

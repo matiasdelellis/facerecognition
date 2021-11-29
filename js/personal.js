@@ -163,6 +163,22 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
+    setVisibility: function (clusterId, visibility) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { visible: visibility };
+        $.ajax({url: this._baseUrl + '/cluster/' + clusterId + '/visibility',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(opt)
+        }).done(function (data) {
+            self._mustReload = true;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
     unsetActive: function () {
 //        this._persons = [];
 
@@ -236,15 +252,22 @@ View.prototype = {
         FrDialogs.assignName(cluster.faces,
             function(result, name) {
                 if (result === true) {
-                    if (name.length > 0) {
-                        self._persons.renameCluster(cluster.id, name).done(function () {
+                    if (name !== null) {
+                        if (name.length > 0) {
+                            self._persons.renameCluster(cluster.id, name).done(function () {
+                                self.renameUnassignedClusterDialog();
+                            }).fail(function () {
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            });
+                        } else {
+                            self.renameUnassignedClusterDialog();
+                        }
+                    } else {
+                        self._persons.setVisibility(cluster.id, false).done(function () {
                             self.renameUnassignedClusterDialog();
                         }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
                         });
-                    } else {
-                        // Fake ignore.
-                        self.renameUnassignedClusterDialog();
                     }
                 } else {
                     // Cancelled

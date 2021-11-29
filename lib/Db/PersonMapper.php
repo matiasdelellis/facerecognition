@@ -99,10 +99,12 @@ class PersonMapper extends QBMapper {
 			->from($this->getTableName(), 'p')
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->eq('is_visible', $qb->createParameter('is_visible')))
 			->andWhere($qb->expr()->isNull('name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
-			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_visible', true, IQueryBuilder::PARAM_BOOL);
 
 		return $this->findEntities($qb);
 	}
@@ -446,6 +448,22 @@ class PersonMapper extends QBMapper {
 				->execute();
 		}
 		return $orphaned;
+	}
+
+	/*
+	 * Mark the cluster as hidden or visible to user.
+	 *
+	 * @param int $personId ID of the person
+	 * @param bool $visible visibility of the person
+	 *
+	 * @return void
+	 */
+	public function setVisibility (int $personId, bool $visible): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('is_visible', $qb->createNamedParameter($visible ? 1 : 0))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+			->execute();
 	}
 
 	/**

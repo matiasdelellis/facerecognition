@@ -218,6 +218,20 @@ class ClusterController extends Controller {
 	 * @NoAdminRequired
 	 *
 	 * @param int $id
+	 * @param bool $visible
+	 *
+	 * @return DataResponse
+	 */
+	public function setVisibility (int $id, bool $visible): DataResponse {
+		$resp = array();
+		$this->personMapper->setVisibility($id, $visible);
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @param int $id
 	 * @param string $name
 	 *
 	 * @return DataResponse

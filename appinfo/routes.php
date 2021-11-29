@@ -49,6 +49,12 @@ return ['routes' =>
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
+	// Change visibility to person/cluster
+	[
+		'name' => 'cluster#setVisibility',
+		'url'  => '/cluster/{id}/visibility',
+		'verb' => 'POST'
+	],
 	// Change name to a cluster.
 	[
 		'name' => 'cluster#updateName',

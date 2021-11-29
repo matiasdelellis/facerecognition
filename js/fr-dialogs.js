@@ -1,5 +1,5 @@
 /*
- * @copyright 2019 Matias De lellis <mati86dl@gmail.com>
+ * @copyright 2019-2021 Matias De lellis <mati86dl@gmail.com>
  *
  * @author 2019 Matias De lellis <mati86dl@gmail.com>
  *
@@ -145,6 +145,14 @@ const FrDialogs = {
 			}
 
 			var buttonlist = [{
+				text: t('facerecognition', 'Ignore'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, null);
+					}
+				},
+			}, {
 				text: t('facerecognition', 'I am not sure'),
 				click: function () {
 					$(dialogId).ocdialog('close');
@@ -152,8 +160,9 @@ const FrDialogs = {
 						callback(true, '');
 					}
 				},
+				defaultButton: false
 			}, {
-				text: t('facerecognition', 'Rename'),
+				text: t('facerecognition', 'Save'),
 				click: function () {
 					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {

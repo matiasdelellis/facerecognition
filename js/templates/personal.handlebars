@@ -8,8 +8,9 @@
 	<div id="persons-navigation">
 		{{#each clustersByName}}
 			<h2 class="cluster-title">
-				<span>{{this.name}}</span>
+				<span class="title-name">{{this.name}}</span>
 				<a id="rename-cluster" class="title-icon icon-rename" data-id="{{this.id}}"></a>
+				<a id="hide-cluster" class="title-icon icon-disabled-user" data-id="{{this.id}}"></a>
 			</h2>
 			<div class="faces-previews">
 				{{#each this.faces}}
@@ -23,7 +24,7 @@
 {{else if personName}}
 	<h2>
 		<a class="title-icon icon-back"></a>
-		{{personName}}
+		<span class="title-name">{{personName}}</span>
 		<a id="rename-person" class="title-icon icon-rename" data-id="{{personName}}"></a>
 	</h2>
 	<div class="persons-previews">

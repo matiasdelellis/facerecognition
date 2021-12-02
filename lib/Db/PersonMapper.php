@@ -460,10 +460,18 @@ class PersonMapper extends QBMapper {
 	 */
 	public function setVisibility (int $personId, bool $visible): void {
 		$qb = $this->db->getQueryBuilder();
-		$qb->update($this->getTableName())
-			->set('is_visible', $qb->createNamedParameter($visible ? 1 : 0))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-			->execute();
+		if ($visible) {
+			$qb->update($this->getTableName())
+				->set('is_visible', $qb->createNamedParameter(1))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		} else {
+			$qb->update($this->getTableName())
+				->set('is_visible', $qb->createNamedParameter(0))
+				->set('name', $qb->createNamedParameter(null))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		}
 	}
 
 	/**

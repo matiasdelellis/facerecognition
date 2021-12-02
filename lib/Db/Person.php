@@ -49,6 +49,13 @@ class Person extends Entity implements JsonSerializable {
 	protected $name;
 
 	/**
+	 * Whether this person is visible/relevant to user.
+	 *
+	 * @var bool
+	 */
+	protected $isVisible;
+
+	/**
 	 * Whether this person is still valid
 	 *
 	 * @var bool
@@ -73,6 +80,7 @@ class Person extends Entity implements JsonSerializable {
 	public function __construct() {
 		$this->addType('id', 'integer');
 		$this->addType('user', 'string');
+		$this->addType('isVisible', 'bool');
 		$this->addType('isValid', 'bool');
 	}
 
@@ -81,10 +89,20 @@ class Person extends Entity implements JsonSerializable {
 			'id' => $this->id,
 			'user' => $this->user,
 			'name' => $this->name,
+			'is_visible' => $this->isVisible,
 			'is_valid' => $this->isValid,
 			'last_generation_time' => $this->lastGenerationTime,
 			'linked_user' => $this->linkedUser
 		];
+	}
+
+	public function setIsVisible($isVisible): void {
+		if (is_bool($isVisible)) {
+			$this->isVisible = $isVisible;
+		} else {
+			$this->isVisible = filter_var($isVisible, FILTER_VALIDATE_BOOLEAN);
+		}
+		$this->markFieldUpdated('isVisible');
 	}
 
 	public function setIsValid($isValid): void {

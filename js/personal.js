@@ -395,6 +395,23 @@ View.prototype = {
             );
         });
 
+        $('#facerecognition #hide-cluster').click(function () {
+            var id = $(this).data('id');
+            var person = self._persons.getNamedClusterById(id);
+            FrDialogs.hide(
+                [person.faces[0]],
+                function(result) {
+                    if (result === true) {
+                        self._persons.setVisibility(id, false).done(function () {
+                            self.renderContent();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'An error occurred while hiding this group of faces'));
+                        });
+                    }
+                }
+            );
+        });
+
         $('#facerecognition #show-more-clusters').click(function () {
             $(this).css("cursor", "wait");
             var person = self._persons.getActivePerson();

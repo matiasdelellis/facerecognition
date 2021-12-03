@@ -353,7 +353,7 @@ class PersonMapper extends QBMapper {
 						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
 						'linked_user' => $qb->createNamedParameter(null)])
 					->execute();
-				$insertedPersonId = $this->db->lastInsertId($this->getTableName());
+				$insertedPersonId = $qb->getLastInsertId();
 				foreach ($newFaces as $newFace) {
 					$this->updateFace($newFace, $insertedPersonId);
 				}
@@ -483,8 +483,6 @@ class PersonMapper extends QBMapper {
 	 * @return void
 	 */
 	public function detachFace(int $personId, int $faceId, $name = null): void {
-		$single = $this->countClusterFaces($personId) === 1;
-
 		// Mark the face as non groupable.
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_faces')
@@ -517,7 +515,7 @@ class PersonMapper extends QBMapper {
 				'linked_user' => $qb->createNamedParameter(null),
 				'is_visible' => $qb->createNamedParameter(true)
 			])->execute();;
-			$newPersonId = $this->db->lastInsertId($this->getTableName());
+			$newPersonId = $qb->getLastInsertId();
 
 			$qb = $this->db->getQueryBuilder();
 			$qb->update('facerecog_faces')

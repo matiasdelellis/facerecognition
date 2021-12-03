@@ -55,6 +55,12 @@ return ['routes' =>
 		'url'  => '/cluster/{id}/visibility',
 		'verb' => 'POST'
 	],
+	// Detach Face from person/cluster
+	[
+		'name' => 'cluster#detachFace',
+		'url'  => '/cluster/{id}/detach',
+		'verb' => 'PUT'
+	],
 	// Change name to a cluster.
 	[
 		'name' => 'cluster#updateName',

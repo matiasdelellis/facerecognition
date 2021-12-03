@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2021 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -225,6 +225,21 @@ class ClusterController extends Controller {
 	public function setVisibility (int $id, bool $visible): DataResponse {
 		$resp = array();
 		$this->personMapper->setVisibility($id, $visible);
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @param int $id if of cluster
+	 * @param int $face id of face.
+	 * @param string|null $name optional name to rename it.
+	 *
+	 * @return DataResponse
+	 */
+	public function detachFace (int $id, int $face, $name = null): DataResponse {
+		$resp = array();
+		$this->personMapper->detachFace($id, $face, $name);
 		return new DataResponse($resp);
 	}
 

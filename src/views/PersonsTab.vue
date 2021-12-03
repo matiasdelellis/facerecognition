@@ -46,6 +46,7 @@
 						<h5 v-bind:class="['face-name', person.name ? '' : 'unknown-name']">{{ person.name ? person.name : t('facerecognition', 'Unknown') }}</h5>
 						<a v-if="person.photos_url" :href="person.photos_url" rel="noreferrer noopener" class="icon-external" target="_blank"/>
 						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
+						<a v-if="person.name" rel="noreferrer noopener" class="icon-disabled-user" target="_blank" v-on:click="detachFace(person)"/>
 					</li>
 				</template>
 			</ul>
@@ -182,6 +183,28 @@ export default {
 			}
 		},
 
+		detachFace: function(person) {
+			const self = this
+			FrDialogs.detachFace(
+				{thumbUrl: person.thumb_url},
+				person.name,
+				function(result, newName) {
+					if (result === true) {
+						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id + '/detach')
+						Axios.put(infoUrl, {
+							face: person.face_id,
+							name: newName
+						}).then(function (response) {
+							self.getFacesInfo(self.fileInfo)
+						}).catch(function (error) {
+							self.error = error
+							console.error('There was an error applying that change', error)
+						})
+					}
+				}
+			)
+		},
+
 		renamePerson: function(person) {
 			const self = this
 			if (person.name) {
@@ -276,8 +299,19 @@ export default {
 	width: 32px;
 }
 
+.icon-external {
+	padding: 14px;
+	opacity: 0.7;
+}
+
 .icon-rename {
 	padding: 14px;
 	opacity: 0.7;
 }
+
+.icon-disabled-user {
+	padding: 14px;
+	opacity: 0.7;
+}
+
 </style>

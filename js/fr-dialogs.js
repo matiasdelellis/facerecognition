@@ -173,6 +173,84 @@ const FrDialogs = {
 			input.select();
 		});
 	},
+
+	detachFace: function (face, oldName, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-detach-face-dialog';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'This person is not {name}', {name: oldName}),
+				message: t('facerecognition', 'Optionally you can assign the correct name'),
+				type: 'none'
+			});
+
+			$dlg.append($('<br/>'));
+
+			var div = $('<div/>').attr('style', 'text-align: center');
+			$dlg.append(div);
+console.log (face);
+			div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
+
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
+			$dlg.append(input);
+
+			$('body').append($dlg);
+
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'Cancel'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(false, null);
+					}
+				},
+			}, {
+				text: t('facerecognition', 'Save'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, input.val().trim().length > 0 ? input.val().trim() : null);
+					}
+				},
+				defaultButton: true
+			}];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false, null);
+					}
+				}
+			});
+
+			new AutoComplete({
+				input: document.getElementById(dialogName + "-input"),
+				lookup (query) {
+					return new Promise(resolve => {
+						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
+							resolve(names);
+						});
+					});
+				},
+				silent: true,
+				highlight: false
+			});
+
+			input.focus();
+		});
+	},
 	assignName: function (faces, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog';
@@ -265,6 +343,7 @@ const FrDialogs = {
 			input.focus();
 		});
 	},
+
 	_getMessageTemplate: function () {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {

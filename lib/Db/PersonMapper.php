@@ -474,6 +474,74 @@ class PersonMapper extends QBMapper {
 		}
 	}
 
+	/*
+	 * Mark the cluster as hidden or visible to user.
+	 *
+	 * @param int $personId ID of the person
+	 * @param int $faceId visibility of the person
+	 *
+	 * @return void
+	 */
+	public function detachFace(int $personId, int $faceId, $name = null): void {
+		$single = $this->countClusterFaces($personId) === 1;
+
+		// Mark the face as non groupable.
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('facerecog_faces')
+			->set('is_groupable', $qb->createParameter('is_groupable'))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->execute();
+
+		if ($this->countClusterFaces($personId) === 1) {
+			// If cluster is an single face just rename it.
+			$qb = $this->db->getQueryBuilder();
+			$qb->update($this->getTableName())
+				->set('name', $qb->createNamedParameter($name))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		} else {
+			// If there are other faces, must create a new perso for that face.
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('user')
+				->from($this->getTableName())
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+			$oldPerson = $this->findEntity($qb);
+
+			$qb = $this->db->getQueryBuilder();
+			$qb->insert($this->getTableName())->values([
+				'user' => $qb->createNamedParameter($oldPerson->getUser()),
+				'name' => $qb->createNamedParameter($name),
+				'is_valid' => $qb->createNamedParameter(true),
+				'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE),
+				'linked_user' => $qb->createNamedParameter(null),
+				'is_visible' => $qb->createNamedParameter(true)
+			])->execute();;
+			$newPersonId = $this->db->lastInsertId($this->getTableName());
+
+			$qb = $this->db->getQueryBuilder();
+			$qb->update('facerecog_faces')
+				->set('person', $qb->createParameter('person'))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+				->setParameter('person', $newPersonId)
+				->execute();
+		}
+	}
+
+	public function countClusterFaces(int $personId): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('facerecog_faces')
+			->where($qb->expr()->eq('person', $qb->createParameter('person')))
+			->setParameter('person', $personId);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
 	/**
 	 * Updates one face with $faceId to database to person ID $personId.
 	 *

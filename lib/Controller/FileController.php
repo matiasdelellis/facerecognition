@@ -110,6 +110,7 @@ class FileController extends Controller {
 			$facePerson = array();
 			$facePerson['name'] = $personName;
 			$facePerson['person_id'] = $person->getId();
+			$facePerson['person_visible'] = $person->getIsVisible();
 			$facePerson['face_id'] = $face->getId();
 			$facePerson['thumb_url'] = $this->urlService->getThumbUrl($face->getId(), 50);
 			$facePerson['photos_url'] = $personName ? $this->urlService->getRedirectToPersonUrl($personName) : null;

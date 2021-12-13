@@ -240,7 +240,8 @@ export default {
 						if (result === true && newName) {
 							var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
 							Axios.put(infoUrl, {
-								name: newName
+								name: newName,
+								face_id: person.person_visible ? null : person.face_id
 							}).then(function (response) {
 								self.getFacesInfo(self.fileInfo)
 							}).catch(function (error) {

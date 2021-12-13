@@ -189,7 +189,7 @@ const FrDialogs = {
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
-console.log (face);
+
 			div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
 
 			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));

@@ -238,26 +238,28 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
-		$resp = array();
-		$this->personMapper->detachFace($id, $face, $name);
-		return new DataResponse($resp);
+		$person = $this->personMapper->detachFace($id, $face, $name);
+		return new DataResponse($person);
 	}
 
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $id
-	 * @param string $name
+	 * @param int $id of cluster
+	 * @param string $name to rename them.
+	 * @param int|null $face_id optional face id if you just want to name that face
 	 *
-	 * @return DataResponse
+	 * @return DataResponse new person with that update.
 	 */
-	public function updateName($id, $name): DataResponse {
-		$person = $this->personMapper->find ($this->userId, $id);
-		$person->setName($name);
-		$this->personMapper->update($person);
-
-		$newPerson = $this->personMapper->find($this->userId, $id);
-		return new DataResponse($newPerson);
+	public function updateName($id, $name, $face_id = null): DataResponse {
+		if (is_null($face_id)) {
+			$person = $this->personMapper->find($this->userId, $id);
+			$person->setName($name);
+			$this->personMapper->update($person);
+		} else {
+			$person = $this->personMapper->detachFace($id, $face_id, $name);
+		}
+		return new DataResponse($person);
 	}
 
 }

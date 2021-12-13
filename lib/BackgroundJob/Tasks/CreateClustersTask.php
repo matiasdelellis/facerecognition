@@ -280,14 +280,16 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if (($face1->confidence < $min_confidence) ||
+				if ((!$face1->isGroupable) ||
+				    ($face1->confidence < $min_confidence) ||
 				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if (($face2->confidence < $min_confidence) ||
+					if ((!$face2->isGroupable) ||
+					    ($face2->confidence < $min_confidence) ||
 					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}
@@ -301,14 +303,16 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if (($face1->confidence < $min_confidence) ||
+				if ((!$face1->isGroupable) ||
+				    ($face1->confidence < $min_confidence) ||
 				    (max($face1->height(), $face1->width()) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if (($face2->confidence < $min_confidence) ||
+					if ((!$face2->isGroupable) ||
+					    ($face2->confidence < $min_confidence) ||
 					    (max($face2->height(), $face2->width()) < $min_face_size)) {
 						continue;
 					}

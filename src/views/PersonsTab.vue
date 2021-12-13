@@ -44,8 +44,9 @@
 					<li class='face-entry' :data-id='person.person_id'>
 						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
 						<h5 v-bind:class="['face-name', person.name ? '' : 'unknown-name']">{{ person.name ? person.name : t('facerecognition', 'Unknown') }}</h5>
-						<a v-if="person.photos_url" :href="person.photos_url" rel="noreferrer noopener" class="icon-external" target="_blank"/>
-						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)"/>
+						<a v-if="person.photos_url" :href="person.photos_url" rel="noreferrer noopener" class="icon-external" target="_blank" :title='seePhotosTitle'/>
+						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)" :title='renamePersonTitle'/>
+						<a v-if="person.name" rel="noreferrer noopener" class="icon-disabled-user" target="_blank" v-on:click="detachFace(person)" :title='wrongPersonTitle'/>
 					</li>
 				</template>
 			</ul>
@@ -123,6 +124,15 @@ export default {
 		faqUrl() {
 			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
 		},
+		seePhotosTitle() {
+			return t('facerecognition', 'See all the photos')
+		},
+		renamePersonTitle() {
+			return t('facerecognition', 'Rename person')
+		},
+		wrongPersonTitle() {
+			return t('facerecognition', 'This person is wrong')
+		},
 	},
 
 	methods: {
@@ -182,6 +192,28 @@ export default {
 			}
 		},
 
+		detachFace: function(person) {
+			const self = this
+			FrDialogs.detachFace(
+				{thumbUrl: person.thumb_url},
+				person.name,
+				function(result, newName) {
+					if (result === true) {
+						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id + '/detach')
+						Axios.put(infoUrl, {
+							face: person.face_id,
+							name: newName
+						}).then(function (response) {
+							self.getFacesInfo(self.fileInfo)
+						}).catch(function (error) {
+							self.error = error
+							console.error('There was an error applying that change', error)
+						})
+					}
+				}
+			)
+		},
+
 		renamePerson: function(person) {
 			const self = this
 			if (person.name) {
@@ -208,7 +240,8 @@ export default {
 						if (result === true && newName) {
 							var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
 							Axios.put(infoUrl, {
-								name: newName
+								name: newName,
+								face_id: person.person_visible ? null : person.face_id
 							}).then(function (response) {
 								self.getFacesInfo(self.fileInfo)
 							}).catch(function (error) {
@@ -276,8 +309,19 @@ export default {
 	width: 32px;
 }
 
+.icon-external {
+	padding: 14px;
+	opacity: 0.7;
+}
+
 .icon-rename {
 	padding: 14px;
 	opacity: 0.7;
 }
+
+.icon-disabled-user {
+	padding: 14px;
+	opacity: 0.7;
+}
+
 </style>

@@ -96,6 +96,22 @@ Persons.prototype = {
         });
         return deferred.promise();
     },
+    setVisibility: function (personName, visibility) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { visible: visibility };
+        $.ajax({url: this._baseUrl + '/person/' + encodeURIComponent(personName) + '/visibility',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(opt)
+        }).done(function (data) {
+            self._mustReload = true;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
     /*
      * Clusters
      */
@@ -156,6 +172,24 @@ Persons.prototype = {
                     cluster.name = personName;
                 }
             });
+            self._mustReload = true;
+            deferred.resolve();
+        }).fail(function () {
+            deferred.reject();
+        });
+        return deferred.promise();
+    },
+    setClusterVisibility: function (clusterId, visibility) {
+        var self = this;
+        var deferred = $.Deferred();
+        var opt = { visible: visibility };
+        $.ajax({url: this._baseUrl + '/cluster/' + clusterId + '/visibility',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(opt)
+        }).done(function (data) {
+            var index = self._clustersByName.findIndex((cluster) => cluster.id === clusterId);
+            self._clustersByName.splice(index, 1);
             self._mustReload = true;
             deferred.resolve();
         }).fail(function () {
@@ -236,15 +270,22 @@ View.prototype = {
         FrDialogs.assignName(cluster.faces,
             function(result, name) {
                 if (result === true) {
-                    if (name.length > 0) {
-                        self._persons.renameCluster(cluster.id, name).done(function () {
+                    if (name !== null) {
+                        if (name.length > 0) {
+                            self._persons.renameCluster(cluster.id, name).done(function () {
+                                self.renameUnassignedClusterDialog();
+                            }).fail(function () {
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            });
+                        } else {
+                            self.renameUnassignedClusterDialog();
+                        }
+                    } else {
+                        self._persons.setVisibility(cluster.id, false).done(function () {
                             self.renameUnassignedClusterDialog();
                         }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
                         });
-                    } else {
-                        // Fake ignore.
-                        self.renameUnassignedClusterDialog();
                     }
                 } else {
                     // Cancelled
@@ -264,6 +305,8 @@ View.prototype = {
             showMoreButton: t('facerecognition', 'Show all groups with the same name'),
             emptyMsg: t('facerecognition', 'The analysis is disabled'),
             emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
+            renameHint: t('facerecognition', 'Rename'),
+            hideHint: t('facerecognition', 'Hide it'),
             loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
@@ -354,6 +397,23 @@ View.prototype = {
             );
         });
 
+        $('#facerecognition #hide-person').click(function () {
+            var person = self._persons.getActivePerson();
+            FrDialogs.hide(
+                [person],
+                function(result) {
+                    if (result === true) {
+                        self._persons.setVisibility(person.name, false).done(function () {
+                            self._persons.unsetActive();
+                            self.reload();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'An error occurred while hiding this person'));
+                        });
+                    }
+                }
+            );
+        });
+
         $('#facerecognition #rename-cluster').click(function () {
             var id = $(this).data('id');
             var person = self._persons.getNamedClusterById(id);
@@ -366,6 +426,23 @@ View.prototype = {
                             self.renderContent();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this cluster of faces'));
+                        });
+                    }
+                }
+            );
+        });
+
+        $('#facerecognition #hide-cluster').click(function () {
+            var id = $(this).data('id');
+            var person = self._persons.getNamedClusterById(id);
+            FrDialogs.hide(
+                [person.faces[0]],
+                function(result) {
+                    if (result === true) {
+                        self._persons.setClusterVisibility(id, false).done(function () {
+                            self.renderContent();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'An error occurred while hiding this group of faces'));
                         });
                     }
                 }

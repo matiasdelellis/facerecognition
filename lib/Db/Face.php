@@ -97,6 +97,13 @@ class Face extends Entity implements JsonSerializable {
 	public $confidence;
 
 	/**
+	 * If it can be grouped according to the configurations
+	 *
+	 * @var bool
+	 **/
+	public $isGroupable;
+
+	/**
 	 * landmarks for this face.
 	 *
 	 * @var array
@@ -121,6 +128,7 @@ class Face extends Entity implements JsonSerializable {
 		$this->addType('id', 'integer');
 		$this->addType('image', 'integer');
 		$this->addType('person', 'integer');
+		$this->addType('isGroupable', 'bool');
 	}
 
 	/**
@@ -173,6 +181,7 @@ class Face extends Entity implements JsonSerializable {
 			'top' => $this->top,
 			'bottom' => $this->bottom,
 			'confidence' => $this->confidence,
+			'is_groupable' => $this->isGroupable,
 			'landmarks' => $this->landmarks,
 			'descriptor' => $this->descriptor,
 			'creation_time' => $this->creationTime

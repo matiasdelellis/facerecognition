@@ -67,6 +67,10 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 				'notnull' => true,
 				'length' => 256,
 			]);
+			$table->addColumn('is_visible', 'boolean', [
+				'notnull' => false,
+				'default' => true,
+			]);
 			$table->addColumn('is_valid', 'boolean', [
 				'notnull' => false,
 				'default' => false,
@@ -152,6 +156,10 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 			$table->addColumn('bottom', 'integer', [
 				'notnull' => true,
 				'length' => 4,
+			]);
+			$table->addColumn('is_groupable', 'boolean', [
+				'notnull' => false,
+				'default' => true,
 			]);
 			$table->addColumn('confidence', 'float', [
 				'notnull' => true,

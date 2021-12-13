@@ -46,7 +46,7 @@ class PersonMapper extends QBMapper {
 	 */
 	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name')
+		$qb->select('id', 'name', 'is_visible')
 			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)));
@@ -99,10 +99,12 @@ class PersonMapper extends QBMapper {
 			->from($this->getTableName(), 'p')
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->eq('is_visible', $qb->createParameter('is_visible')))
 			->andWhere($qb->expr()->isNull('name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
-			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_visible', true, IQueryBuilder::PARAM_BOOL);
 
 		return $this->findEntities($qb);
 	}
@@ -351,7 +353,7 @@ class PersonMapper extends QBMapper {
 						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
 						'linked_user' => $qb->createNamedParameter(null)])
 					->execute();
-				$insertedPersonId = $this->db->lastInsertId($this->getTableName());
+				$insertedPersonId = $qb->getLastInsertId();
 				foreach ($newFaces as $newFace) {
 					$this->updateFace($newFace, $insertedPersonId);
 				}
@@ -446,6 +448,105 @@ class PersonMapper extends QBMapper {
 				->execute();
 		}
 		return $orphaned;
+	}
+
+	/*
+	 * Mark the cluster as hidden or visible to user.
+	 *
+	 * @param int $personId ID of the person
+	 * @param bool $visible visibility of the person
+	 *
+	 * @return void
+	 */
+	public function setVisibility (int $personId, bool $visible): void {
+		$qb = $this->db->getQueryBuilder();
+		if ($visible) {
+			$qb->update($this->getTableName())
+				->set('is_visible', $qb->createNamedParameter(1))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		} else {
+			$qb->update($this->getTableName())
+				->set('is_visible', $qb->createNamedParameter(0))
+				->set('name', $qb->createNamedParameter(null))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		}
+	}
+
+	/*
+	 * Mark the cluster as hidden or visible to user.
+	 *
+	 * @param int $personId ID of the person
+	 * @param int $faceId visibility of the person
+	 * @param string|null $name optional name to rename them.
+	 *
+	 * @return Person
+	 */
+	public function detachFace(int $personId, int $faceId, $name = null): Person {
+		// Mark the face as non groupable.
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('facerecog_faces')
+			->set('is_groupable', $qb->createParameter('is_groupable'))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->execute();
+
+		if ($this->countClusterFaces($personId) === 1) {
+			// If cluster is an single face just rename it.
+			$qb = $this->db->getQueryBuilder();
+			$qb->update($this->getTableName())
+				->set('name', $qb->createNamedParameter($name))
+				->set('is_visible', $qb->createNamedParameter(true))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
+				->execute();
+		} else {
+			// If there are other faces, must create a new person for that face.
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('user')
+				->from($this->getTableName())
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+			$oldPerson = $this->findEntity($qb);
+
+			$qb = $this->db->getQueryBuilder();
+			$qb->insert($this->getTableName())->values([
+				'user' => $qb->createNamedParameter($oldPerson->getUser()),
+				'name' => $qb->createNamedParameter($name),
+				'is_valid' => $qb->createNamedParameter(true),
+				'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE),
+				'linked_user' => $qb->createNamedParameter(null),
+				'is_visible' => $qb->createNamedParameter(true)
+			])->execute();
+
+			$personId = $qb->getLastInsertId();
+
+			$qb = $this->db->getQueryBuilder();
+			$qb->update('facerecog_faces')
+				->set('person', $qb->createParameter('person'))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+				->setParameter('person', $personId)
+				->execute();
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'name', 'is_valid', 'is_visible')
+		   ->from($this->getTableName())
+		   ->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+		return $this->findEntity($qb);
+	}
+
+	public function countClusterFaces(int $personId): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
+			->from('facerecog_faces')
+			->where($qb->expr()->eq('person', $qb->createParameter('person')))
+			->setParameter('person', $personId);
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
 	}
 
 	/**

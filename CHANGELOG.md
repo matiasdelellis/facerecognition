@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2021-12-13
+### Added
+- Add an extra step to setup. You must indicate exactly how much memory you want
+  to assing for image processing. See occ face:setup --memory doc on readme.
+- Adds the option to effectively ignore persons when assigning names. See issue
+  #486 #504.
+- It also allows you to hide persons that you have already named. Issue #405
+- Implement the option of: This is not such a person. Issue #506 and part of
+  #158
+- Enable NC23
+
+### Translations
+- Update some translations. Thank you so much everyone.
+
 ## [0.8.5] - 2021-11-20
 ### Added
 - Initial support for php 8. See issue #456

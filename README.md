@@ -52,7 +52,7 @@ If you'd like to support the creation and maintenance of this software, consider
 
 #### Requirements
 
- * Nextcloud 20+
+ * Nextcloud 22+
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
  * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
  * 1GB of RAM
@@ -65,7 +65,8 @@ about [installation](https://github.com/matiasdelellis/facerecognition/wiki/Inst
 
 #### Configuration
 
-Before proceeding to analyze the images, you must properly install and configure
+Before proceeding to analyze the images, you must indicate how much memory you
+want to assigns to image processing and then must properly install and configure
 the pretrained models using the `occ face:setup` command. For details and
 advanced information read the documentation about [models](https://github.com/matiasdelellis/facerecognition/wiki/Models#install-models).
 

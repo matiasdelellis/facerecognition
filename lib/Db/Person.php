@@ -32,6 +32,7 @@ use OCP\AppFramework\Db\Entity;
  *
  * @method string getName()
  * @method void setName(string $name)
+ * @method bool getIsVisible()
  */
 class Person extends Entity implements JsonSerializable {
 	/**

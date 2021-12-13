@@ -479,7 +479,7 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @param int $personId ID of the person
 	 * @param int $faceId visibility of the person
-	 * @param string|null optional name to rename them.
+	 * @param string|null $name optional name to rename them.
 	 *
 	 * @return Person
 	 */

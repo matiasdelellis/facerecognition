@@ -200,6 +200,23 @@ class PersonController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
+	 * @param string $personName
+	 * @param bool $visible
+	 *
+	 * @return DataResponse
+	*/
+	public function setVisibility ($personName, bool $visible): DataResponse {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		foreach ($clusters as $cluster) {
+			$this->personMapper->setVisibility($cluster->getId(), $visible);
+		}
+		return $this->find($personName);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
 	 * @return DataResponse
 	 */
 	public function autocomplete(string $query): DataResponse {
@@ -218,6 +235,6 @@ class PersonController extends Controller {
 			$resp[] = $name;
 		}
 		return new DataResponse($resp);
-    }
+	}
 
 }

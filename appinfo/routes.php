@@ -22,6 +22,12 @@ return ['routes' =>
 		'url'  => '/person/{personName}',
 		'verb' => 'PUT'
 	],
+	// Change visibility to a person.
+	[
+		'name' => 'person#setVisibility',
+		'url'  => '/person/{personName}/visibility',
+		'verb' => 'POST'
+	],
 	// Get all names filtered by an query.
 	[
 		'name' => 'person#autocomplete',
@@ -49,13 +55,13 @@ return ['routes' =>
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
-	// Change visibility to person/cluster
+	// Change visibility to cluster
 	[
 		'name' => 'cluster#setVisibility',
 		'url'  => '/cluster/{id}/visibility',
 		'verb' => 'POST'
 	],
-	// Detach Face from person/cluster
+	// Detach Face from cluster
 	[
 		'name' => 'cluster#detachFace',
 		'url'  => '/cluster/{id}/detach',

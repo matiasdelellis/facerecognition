@@ -9,8 +9,8 @@
 		{{#each clustersByName}}
 			<h2 class="cluster-title">
 				<span class="title-name">{{this.name}}</span>
-				<a id="rename-cluster" class="title-icon icon-rename" data-id="{{this.id}}"></a>
-				<a id="hide-cluster" class="title-icon icon-disabled-user" data-id="{{this.id}}"></a>
+				<a id="rename-cluster" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{this.id}}"></a>
+				<a id="hide-cluster" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{this.id}}"></a>
 			</h2>
 			<div class="faces-previews">
 				{{#each this.faces}}
@@ -25,7 +25,8 @@
 	<h2>
 		<a class="title-icon icon-back"></a>
 		<span class="title-name">{{personName}}</span>
-		<a id="rename-person" class="title-icon icon-rename" data-id="{{personName}}"></a>
+		<a id="rename-person" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{personName}}"></a>
+		<a id="hide-person" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{personName}}"></a>
 	</h2>
 	<div class="persons-previews">
 		{{#each personImages}}

@@ -281,7 +281,7 @@ View.prototype = {
                             self.renameUnassignedClusterDialog();
                         }
                     } else {
-                        self._persons.setVisibility(cluster.id, false).done(function () {
+                        self._persons.setClusterVisibility(cluster.id, false).done(function () {
                             self.renameUnassignedClusterDialog();
                         }).fail(function () {
                             OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));

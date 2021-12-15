@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] - 2021-12-15
+### Fixed
+- Fix Ignore persons feature. Issue #542
+
+### Translations
+- Update Czech translation thanks to Pavel Borecki.
+- Update Italian translation thanks to axl84.
+
 ## [0.9.0] - 2021-12-13
 ### Added
 - Add an extra step to setup. You must indicate exactly how much memory you want

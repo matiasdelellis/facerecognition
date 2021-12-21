@@ -32,12 +32,16 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
+use OCP\SabrePluginEvent;
+
 use OCP\EventDispatcher\IEventDispatcher;
 
 use OCA\Files\Event\LoadSidebar;
 use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Files\Events\Node\NodeWrittenEvent;
 use OCP\User\Events\UserDeletedEvent;
+
+use OCA\FaceRecognition\Dav\DavPlugin;
 
 use OCA\FaceRecognition\Listener\LoadSidebarListener;
 use OCA\FaceRecognition\Listener\PostDeleteListener;
@@ -50,6 +54,15 @@ class Application extends App implements IBootstrap {
 
 	/** @var string */
 	public const APP_NAME = 'facerecognition';
+
+	public const STATE_UNDEFINED = 0;
+	public const STATE_DISABLED = 1;
+	public const STATE_NOT_SUPPORTED = 2;
+	public const STATE_HAS_PERSONS = 3;
+	public const STATE_NO_PERSONS = 4;
+
+	public const DAV_NS_FACE_RECOGNITION = 'http://github.com/matiasdelellis/facerecognition/ns';
+	public const DAV_PROPERTY_PERSONS = '{' . self::DAV_NS_FACE_RECOGNITION . '}persons';
 
 	/**
 	 * Application constructor.
@@ -71,6 +84,17 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function boot(IBootContext $context): void {
+		$eventDispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
+		$eventDispatcher->addListener('OCA\DAV\Connector\Sabre::addPlugin', function (SabrePluginEvent $event) use ($context) {
+			$eventServer = $event->getServer();
+			if ($eventServer !== null) {
+				// We have to register the DavPlugin here and not info.xml,
+				// because info.xml plugins are loaded, after the
+				// beforeMethod:* hook has already been emitted.
+				$plugin = $context->getAppContainer()->get(DavPlugin::class);
+				$eventServer->addPlugin($plugin);
+			}
+		});
 	}
 
 }

@@ -91,7 +91,7 @@ class DavService {
 	}
 
 	/**
-	 * Get approval state of a given file for a given user
+	 * Get Face Recognition state of a given file for a given user
 	 * @param int $fileId
 	 * @param string|null $userId
 	 * @return array state and rule id
@@ -110,7 +110,7 @@ class DavService {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$image = $this->imageMapper->findFromFile($userId, $modelId, $fileId);
-		if (!$image->getIsProcessed()) {
+		if (!$image || !$image->getIsProcessed()) {
 			$response['state'] = Application::STATE_UNDEFINED;
 			return $response;
 		}
@@ -157,8 +157,9 @@ class DavService {
 
 		$nodeId = $node->getId();
 		$image = $this->getFaceRecognitionImage($nodeId, $this->userId);
+
 		$propFind->handle(
-			Application::DAV_PROPERTY_PERSONS, function() use ($nodeId, $image) {
+			Application::DAV_PROPERTY_FACES, function() use ($image) {
 				if (isset($image['persons'])) {
 					return new PersonsList($image['persons']);
 				}

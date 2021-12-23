@@ -48,10 +48,11 @@ class PersonsList implements XmlSerializable {
 	 *
 	 *   * name - Optional, name of person.
 	 *   * id - Optional, id of person cluster.
-	 *   * top - Top position of the face in the image
-	 *   * left - Left position of the face in the image.
-	 *   * width - Width of the face in the image
-	 *   * height - Height of the face in the image.
+	 *   * count - Optional count of images of that person
+	 *   * top - Optional top position of the face in some image
+	 *   * left - Optional left position of the face in some image.
+	 *   * width - Optional width of the face in some image
+	 *   * height - Optional height of the face in some image.
 	 *
 	 * @param array $persons
 	 */
@@ -98,10 +99,21 @@ class PersonsList implements XmlSerializable {
 			if (isset($person['name'])) {
 				$writer->writeElement($cs . 'name', $person['name']);
 			}
-			$writer->writeElement($cs . 'top', $person['top']);
-			$writer->writeElement($cs . 'left', $person['left']);
-			$writer->writeElement($cs . 'width', $person['width']);
-			$writer->writeElement($cs . 'height', $person['height']);
+			if (isset($person['count'])) {
+				$writer->writeElement($cs . 'count', $person['count']);
+			}
+			if (isset($person['top'])) {
+				$writer->writeElement($cs . 'top', $person['top']);
+			}
+			if (isset($person['left'])) {
+				$writer->writeElement($cs . 'left', $person['left']);
+			}
+			if (isset($person['width'])) {
+				$writer->writeElement($cs . 'width', $person['width']);
+			}
+			if (isset($person['height'])) {
+				$writer->writeElement($cs . 'height', $person['height']);
+			}
 			$writer->endElement();
 		}
 	}

@@ -62,7 +62,8 @@ class Application extends App implements IBootstrap {
 	public const STATE_NO_PERSONS = 4;
 
 	public const DAV_NS_FACE_RECOGNITION = 'http://github.com/matiasdelellis/facerecognition/ns';
-	public const DAV_PROPERTY_PERSONS = '{' . self::DAV_NS_FACE_RECOGNITION . '}persons';
+
+	public const DAV_PROPERTY_FACES = '{' . self::DAV_NS_FACE_RECOGNITION . '}faces';
 
 	/**
 	 * Application constructor.

@@ -47,7 +47,7 @@ class DavPlugin extends ServerPlugin {
 	 */
 	public function initialize(Server $server) {
 		$this->server = $server;
-		$server->on('propFind', [$this, 'getPersons']);
+		$server->on('propFind', [$this, 'onPropFind']);
 	}
 
 
@@ -55,7 +55,7 @@ class DavPlugin extends ServerPlugin {
 	 * @param PropFind $propFind
 	 * @param INode $node
 	 */
-	public function getPersons(PropFind $propFind, INode $node) {
+	public function onPropFind(PropFind $propFind, INode $node) {
 		// we instantiate the DavService here to make sure sabre auth backend was triggered
 		$davService = \OC::$server->get(DavService::class);
 		$davService->propFind($propFind, $node);
@@ -90,4 +90,5 @@ class DavPlugin extends ServerPlugin {
 			'description' => 'Provides information on Face Recognition in PROPFIND WebDav requests',
 		];
 	}
+
 }

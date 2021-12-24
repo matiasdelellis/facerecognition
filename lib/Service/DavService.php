@@ -23,11 +23,14 @@
 
 namespace OCA\FaceRecognition\Service;
 
-use OCA\FaceRecognition\AppInfo\Application;
-
+use OC\Files\View;
+use OCA\DAV\Connector\Sabre\File;
 use OCA\DAV\Connector\Sabre\Node as SabreNode;
+
 use Sabre\DAV\INode;
 use Sabre\DAV\PropFind;
+
+use OCA\FaceRecognition\AppInfo\Application;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
@@ -166,6 +169,25 @@ class DavService {
 				return $image['state'];
 			}
 		);
+	}
+
+	/**
+	 * Get files filtered by name
+	 *
+	 */
+	public function getFilesNamedFilter(array $filterNames): array {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$view = \OC\Files\Filesystem::getView();
+		$files = [];
+		foreach ($filterNames as $name) {
+			$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $name);
+			foreach ($images as $image) {
+				$file = $this->fileService->getFileById($image->getFile(), $this->userId);
+				$files[] = new File($view, $file);
+			}
+		}
+
+		return $files;
 	}
 
 }

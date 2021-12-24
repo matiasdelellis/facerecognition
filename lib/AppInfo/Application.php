@@ -64,6 +64,9 @@ class Application extends App implements IBootstrap {
 	public const DAV_NS_FACE_RECOGNITION = 'http://github.com/matiasdelellis/facerecognition/ns';
 
 	public const DAV_PROPERTY_FACES = '{' . self::DAV_NS_FACE_RECOGNITION . '}faces';
+	public const DAV_REPORT_FILES = '{' . self::DAV_NS_FACE_RECOGNITION . '}filter-files';
+	public const DAV_REPORT_FILTER_RULES = '{' . self::DAV_NS_FACE_RECOGNITION . '}filter-rules';
+	public const DAV_REPORT_FILTER_NAME = '{' . self::DAV_NS_FACE_RECOGNITION . '}filter-name';
 
 	/**
 	 * Application constructor.

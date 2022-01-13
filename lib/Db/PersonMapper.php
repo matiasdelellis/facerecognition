@@ -179,15 +179,26 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
-	 * Returns count of persons (clusters) found for a given user.
+	 * Returns count of persons found for a given user.
 	 *
 	 * @param string $userId ID of the user
 	 * @param int $modelId ID of the model
-	 * @param bool $onlyInvalid True if client wants count of invalid persons only,
-	 *  false if client want count of all persons
 	 * @return int Count of persons
 	 */
 	public function countPersons(string $userId, int $modelId, bool $onlyInvalid=false): int {
+		return count($this->findDistinctNames($userId, $modelId));
+	}
+
+	/**
+	 * Returns count of clusters found for a given user.
+	 *
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @param bool $onlyInvalid True if client wants count of invalid clusters only,
+	 *  false if client want count of all clusters
+	 * @return int Count of clusters
+	 */
+	public function countClusters(string $userId, int $modelId, bool $onlyInvalid=false): int {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))
 			->from('facerecog_faces', 'f')

@@ -74,24 +74,26 @@ class Admin implements ISettings {
 		$isConfigured = true;
 		$maxImageRange = "8294400";
 		$resume = '';
+		$modelId = ModelManager::DEFAULT_FACE_MODEL_ID;
 
 		$model = $this->modelManager->getCurrentModel();
 		if (!is_null($model)) {
 			$maxImageRange = strval($model->getMaximumArea());
+			$modelId = $model->getId();
 		} else {
 			$resume .= $this->l10n->t("It seems you don't have any model installed.");
 			$isConfigured = false;
 		}
 
 		$assignedMemory = $this->settingsService->getAssignedMemory();
-		if ($model->getId() != 5 && $assignedMemory === SettingsService::DEFAULT_ASSIGNED_MEMORY) {
+		if ($modelId != 5 && $assignedMemory === SettingsService::DEFAULT_ASSIGNED_MEMORY) {
 			$resume = $this->l10n->t("Seems that you still have to configure the assigned memory for image processing.");
 			$isConfigured = false;
 		}
 
 		$params = [
 			'is-configured' => $isConfigured,
-			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
+			'model-version' => $modelId === ModelManager::DEFAULT_FACE_MODEL_ID ? $this->l10n->t("Not installed") : $modelId,
 			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize($assignedMemory) : $this->l10n->t("Not configured."),
 			'max-image-range' => $maxImageRange,
 			'resume' => $resume,

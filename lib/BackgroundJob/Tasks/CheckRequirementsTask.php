@@ -91,22 +91,22 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			return false;
 		}
 
-		if (!Requirements::hasEnoughMemory()) {
-			$error_message =
-				"Your system does not meet the minimum of memory requirements.\n" .
-				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n" .
-				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details\n\n" .
-				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
-			$this->logInfo($error_message);
-			return false;
-		}
-
 		$model = $this->modelManager->getCurrentModel();
 		if (is_null($model)) {
 			$error_message =
 				"Seems there are no installed models.\n" .
 				"Please read the documentation about this: https://github.com/matiasdelellis/facerecognition/wiki/Models#install-models\n" .
 				"and install them with the 'occ face:setup --model MODEL_ID' command.\n\n" .
+				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
+			$this->logInfo($error_message);
+			return false;
+		}
+
+		if ($model->getId() != 5 && !Requirements::hasEnoughMemory()) {
+			$error_message =
+				"Your system does not meet the minimum of memory requirements.\n" .
+				"Face recognition application requires at least " . OCP_Util::humanFileSize(SettingsService::MINIMUM_SYSTEM_MEMORY_REQUIREMENTS) . " of system memory.\n" .
+				"See https://github.com/matiasdelellis/facerecognition/wiki/Performance-analysis-of-DLib%E2%80%99s-CNN-face-detection for more details\n\n" .
 				"Fill an issue here if that doesn't help: https://github.com/matiasdelellis/facerecognition/issues";
 			$this->logInfo($error_message);
 			return false;

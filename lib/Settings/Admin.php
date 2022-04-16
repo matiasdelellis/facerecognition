@@ -84,7 +84,7 @@ class Admin implements ISettings {
 		}
 
 		$assignedMemory = $this->settingsService->getAssignedMemory();
-		if ($assignedMemory === SettingsService::DEFAULT_ASSIGNED_MEMORY) {
+		if ($model->getId() != 5 && $assignedMemory === SettingsService::DEFAULT_ASSIGNED_MEMORY) {
 			$resume = $this->l10n->t("Seems that you still have to configure the assigned memory for image processing.");
 			$isConfigured = false;
 		}

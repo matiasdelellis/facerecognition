@@ -12,15 +12,15 @@
     ],
     "config": {
         "platform": {
-            "php": "7.3"
+            "php": "7.4"
         }
     },
     "require": {
-        "php": ">=7.3",
+        "php": ">=7.4",
         "symfony/console": "^5.3"
     },
     "require-dev": {
-        "christophwurst/nextcloud": "^21",
+        "christophwurst/nextcloud": "^23",
         "phpunit/phpunit": "^9",
         "psalm/phar": "^4.10",
         "scrutinizer/ocular": "^1.8",

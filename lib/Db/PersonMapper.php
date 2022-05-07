@@ -185,7 +185,7 @@ class PersonMapper extends QBMapper {
 	 * @param int $modelId ID of the model
 	 * @return int Count of persons
 	 */
-	public function countPersons(string $userId, int $modelId, bool $onlyInvalid=false): int {
+	public function countPersons(string $userId, int $modelId): int {
 		return count($this->findDistinctNames($userId, $modelId));
 	}
 

@@ -30,6 +30,7 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Person represent one cluster, set of faces. It belongs to $user_id.
  *
+ * @method string getUser()
  * @method string getName()
  * @method void setName(string $name)
  * @method bool getIsVisible()

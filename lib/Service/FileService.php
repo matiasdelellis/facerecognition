@@ -132,7 +132,12 @@ class FileService {
 			$allowDetection = $this->getDescendantDetection($parentNode);
 			if (!$allowDetection)
 				return true;
-			$parentNode = $parentNode->getParent();
+
+			try {
+				$parentNode = $parentNode->getParent();
+			} catch (NotFoundException $e) {
+				return false;
+			}
 		}
 		return false;
 	}

@@ -220,7 +220,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	}
 
 	private function hasStalePersonsToRecreate(string $userId, int $modelId): bool {
-		return $this->personMapper->countPersons($userId, $modelId, true) > 0;
+		return $this->personMapper->countClusters($userId, $modelId, true) > 0;
 	}
 
 	private function needRecreateBySettings(string $userId): bool {

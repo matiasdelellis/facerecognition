@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.5] - 2022-05-07
+### Added
+- Just enable Nextcloud 24
+
+### Fixed
+- Fix NotFoundException on NC24. Issue #574
+
 ## [0.9.1] - 2021-12-15
 ### Fixed
 - Fix Ignore persons feature. Issue #542

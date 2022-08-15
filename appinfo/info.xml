@@ -49,6 +49,7 @@
 		<command>OCA\FaceRecognition\Command\ProgressCommand</command>
 		<command>OCA\FaceRecognition\Command\ResetCommand</command>
 		<command>OCA\FaceRecognition\Command\SetupCommand</command>
+		<command>OCA\FaceRecognition\Command\SearchCommand</command>
 		<command>OCA\FaceRecognition\Command\StatsCommand</command>
 	</commands>
 	<settings>

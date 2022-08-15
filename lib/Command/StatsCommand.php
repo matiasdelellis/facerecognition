@@ -148,7 +148,7 @@ class StatsCommand extends Command {
 		}
 
 		$table = new Table($output);
-		$table->setHeaders(['User', 'Images', 'Faces', 'Cluster', 'Persons'])->setRows($stats);
+		$table->setHeaders(['User', 'Images', 'Faces', 'Clusters', 'Persons'])->setRows($stats);
 		$table->render();
 	}
 

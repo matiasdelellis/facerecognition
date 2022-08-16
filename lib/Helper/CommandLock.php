@@ -21,42 +21,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\BackgroundJob\Tasks;
-
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+namespace OCA\FaceRecognition\Helper;
 
 /**
  * Tasks that do flock over file and acts as a global mutex,
  * so we don't run more than one background task in parallel.
  */
-class LockTask extends FaceRecognitionBackgroundTask {
-	const LOCK_FILENAME = 'nextcloud_face_recognition_lock.pid';
+class CommandLock {
 
-	/**
-	 * @inheritdoc
-	 */
-	public function description() {
-		return "Acquire lock so that only one background task can run";
+	private static function LockFile(): string {
+		return sys_get_temp_dir() . '/' . 'nextcloud_face_recognition_lock.pid';
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public static function IsLockedBy(): string {
+		$fp = fopen(self::LockFile(), 'r');
+		$lockDescription = fread($fp, filesize(self::LockFile()));
+		//fclose($fp);
+		return $lockDescription;
+	}
 
-		$lock_file = sys_get_temp_dir() . '/' . LockTask::LOCK_FILENAME;
-		$fp = fopen($lock_file, 'w');
-
+	public static function lock(string $lockDescription) {
+		$fp = fopen(self::LockFile(), 'c');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
-			$message = "Background job is already running. Quitting";
-			$this->logInfo($message);
-			return false;
+			return null;
 		}
-
-		$context->propertyBag['lock'] = $fp;
-		$context->propertyBag['lock_filename'] = $lock_file;
-		return true;
+		fwrite($fp, $lockDescription);
+		return $fp;
 	}
+
+	public static function unlock($lockFile): void {
+		flock($lockFile, LOCK_UN);
+		unlink(self::LockFile());
+	}
+
 }

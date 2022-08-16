@@ -99,27 +99,23 @@ class BackgroundService {
 			$task_classes = [
 				CheckRequirementsTask::class,
 				CheckCronTask::class,
-				LockTask::class,
 				DisabledUserRemovalTask::class,
 				StaleImagesRemovalTask::class,
 				AddMissingImagesTask::class,
 				EnumerateImagesMissingFacesTask::class,
 				ImageProcessingTask::class,
 				CreateClustersTask::class,
-				UnlockTask::class
 			];
 		} else {
 			$task_classes = [
 				CheckRequirementsTask::class,
 				CheckCronTask::class,
-				LockTask::class,
 				DisabledUserRemovalTask::class,
 				StaleImagesRemovalTask::class,
 				CreateClustersTask::class,
 				AddMissingImagesTask::class,
 				EnumerateImagesMissingFacesTask::class,
 				ImageProcessingTask::class,
-				UnlockTask::class
 			];
 		};
 

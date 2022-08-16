@@ -34,6 +34,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Helper\CommandLock;
+
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
 
 class BackgroundCommand extends Command {
@@ -146,9 +148,21 @@ class BackgroundCommand extends Command {
 		//
 		$verbose = $input->getOption('verbose');
 
+		// Acquire lock so that only one background task can run
+		//
+		$lock = CommandLock::Lock('face:background_job');
+		if (!$lock) {
+			$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			return 1;
+		}
+
 		// Main thing
 		//
 		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $deferClustering);
+
+		// Release obtained lock
+		//
+		CommandLock::Unlock($lock);
 
 		return 0;
 	}

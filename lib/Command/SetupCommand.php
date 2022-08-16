@@ -33,6 +33,8 @@ use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\SettingsService;
+
+use OCA\FaceRecognition\Helper\CommandLock;
 use OCA\FaceRecognition\Helper\MemoryLimits;
 
 use OCP\Util as OCP_Util;
@@ -93,16 +95,32 @@ class SetupCommand extends Command {
 		$this->logger = $output;
 
 		$assignMemory = $input->getOption('memory');
+		$modelId = $input->getOption('model');
+
+		if ($assignMemory < 0 && $modelId < 0) {
+			$this->dumpCurrentSetup();
+			return 0;
+		}
+
+		// Get lock to avoid potential errors.
+		//
+		$lock = CommandLock::Lock("face:setup");
+		if (!$lock) {
+			$output->writeln("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			return 1;
+		}
+
 		if ($assignMemory > 0) {
 			return $this->setupAssignedMemory(OCP_Util::computerFileSize($assignMemory));
 		}
 
-		$modelId = $input->getOption('model');
 		if ($modelId > 0) {
 			return $this->setupModel($modelId);
 		}
 
-		$this->dumpCurrentSetup();
+		// Release obtained lock
+		//
+		CommandLock::Unlock($lock);
 
 		return 0;
 	}

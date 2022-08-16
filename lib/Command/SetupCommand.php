@@ -111,11 +111,19 @@ class SetupCommand extends Command {
 		}
 
 		if ($assignMemory > 0) {
-			return $this->setupAssignedMemory(OCP_Util::computerFileSize($assignMemory));
+			$ret = $this->setupAssignedMemory(OCP_Util::computerFileSize($assignMemory));
+			if ($ret > 0) {
+				CommandLock::Unlock($lock);
+				return $ret;
+			}
 		}
 
 		if ($modelId > 0) {
-			return $this->setupModel($modelId);
+			$ret = $this->setupModel($modelId);
+			if ($ret > 0) {
+				CommandLock::Unlock($lock);
+				return $ret;
+			}
 		}
 
 		// Release obtained lock

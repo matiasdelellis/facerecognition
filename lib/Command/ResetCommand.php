@@ -32,6 +32,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
+use OCA\FaceRecognition\Helper\CommandLock;
+
 use OCA\FaceRecognition\Service\FaceManagementService;
 
 class ResetCommand extends Command {
@@ -136,15 +138,24 @@ class ResetCommand extends Command {
 			}
 		}
 
+		// Get lock to avoid potential errors.
+		//
+		$lock = CommandLock::Lock('face:reset');
+		if (!$lock) {
+			$output->writeln("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			return 1;
+		}
+
 		// Main thing
 		//
+		$ret = 0;
 		if ($input->getOption('all')) {
 			if ($this->confirmate()) {
 				$this->resetAll($user);
 				$output->writeln('Reset successfully done');
 			} else {
 				$output->writeln('Aborted');
-				return 1;
+				$ret = 1;
 			}
 		}
 		else if ($input->getOption('model')) {
@@ -153,7 +164,7 @@ class ResetCommand extends Command {
 				$output->writeln('Reset model successfully done');
 			} else {
 				$output->writeln('Aborted');
-				return 1;
+				$ret = 1;
 			}
 		}
 		else if ($input->getOption('image-errors')) {
@@ -162,7 +173,7 @@ class ResetCommand extends Command {
 				$output->writeln('Reset image errors done');
 			} else {
 				$output->writeln('Aborted');
-				return 1;
+				$ret = 1;
 			}
 		}
 		else if ($input->getOption('clustering')) {
@@ -171,15 +182,19 @@ class ResetCommand extends Command {
 				$output->writeln('Reset clustering done');
 			} else {
 				$output->writeln('Aborted');
-				return 1;
+				$ret = 1;
 			}
 		}
 		else {
 			$output->writeln('You must specify what you want to reset');
-			return 1;
+			$ret = 1;
 		}
 
-		return 0;
+		// Release obtained lock
+		//
+		CommandLock::Unlock($lock);
+
+		return $ret;
 	}
 
 	private function confirmate() {

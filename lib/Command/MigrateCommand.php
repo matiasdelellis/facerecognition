@@ -45,6 +45,8 @@ use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 
+use OCA\FaceRecognition\Helper\CommandLock;
+
 use OCP\Image as OCP_Image;
 
 class MigrateCommand extends Command {
@@ -180,6 +182,14 @@ class MigrateCommand extends Command {
 			}
 		}
 
+		// Get lock to avoid potential errors.
+		//
+		$lock = CommandLock::Lock("face:migrate");
+		if (!$lock) {
+			$output->writeln("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			return 1;
+		}
+
 		/**
 		 * Open the model and migrate to users.
 		 */
@@ -190,6 +200,10 @@ class MigrateCommand extends Command {
 		}
 
 		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+
+		// Release obtained lock
+		//
+		CommandLock::Unlock($lock);
 
 		return 0;
 	}

@@ -89,6 +89,7 @@ const FrDialogs = {
 			});
 		});
 	},
+
 	rename: function (name, faces, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-rename-dialog';
@@ -167,6 +168,15 @@ const FrDialogs = {
 				},
 				silent: true,
 				highlight: false
+			});
+
+			$(dialogId + "-input").keydown(function(event) {
+				// It only prevents the that change the image when you press arrow keys.
+				event.stopPropagation();
+				if (event.key === "Enter") {
+					// It only prevents the that change the image when you press enter.
+					event.preventDefault();
+				}
 			});
 
 			input.focus();
@@ -248,9 +258,19 @@ const FrDialogs = {
 				highlight: false
 			});
 
+			$(dialogId + "-input").keydown(function(event) {
+				// It only prevents the that change the image when you press arrow keys.
+				event.stopPropagation();
+				if (event.key === "Enter") {
+					// It only prevents the that change the image when you press enter.
+					event.preventDefault();
+				}
+			});
+
 			input.focus();
 		});
 	},
+
 	assignName: function (faces, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog';
@@ -338,6 +358,15 @@ const FrDialogs = {
 				},
 				silent: true,
 				highlight: false
+			});
+
+			$(dialogId + "-input").keydown(function(event) {
+				// It only prevents the that change the image when you press arrow keys.
+				event.stopPropagation();
+				if (event.key === "Enter") {
+					// It only prevents the that change the image when you press enter.
+					event.preventDefault();
+				}
 			});
 
 			input.focus();

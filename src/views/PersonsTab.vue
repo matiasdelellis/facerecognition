@@ -102,7 +102,7 @@ export default {
 			icon: 'icon-contacts-dark',
 			loading: true,
 			fileInfo: null,
-			name: t('facerecognition', 'Persons'),
+			name: t('facerecognition', 'People'),
 			isEnabledByUser: false,
 			isAllowedFile: false,
 			isParentEnabled: false,

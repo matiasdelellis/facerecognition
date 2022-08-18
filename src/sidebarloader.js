@@ -40,7 +40,7 @@ const View = Vue.extend(PersonsTab)
 let TabInstance = null
 const personTab = new OCA.Files.Sidebar.Tab({
 	id: 'facerecognition',
-	name: t('facerecognition', 'Persons'),
+	name: t('facerecognition', 'People'),
 	icon: 'icon-contacts-dark',
 	async mount(el, fileInfo, context) {
 		if (TabInstance) {

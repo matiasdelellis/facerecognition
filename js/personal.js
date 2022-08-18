@@ -248,12 +248,12 @@ View.prototype = {
         var self = this;
         self._persons.loadUnassignedClusters().done(function () {
             if (self._persons.getUnassignedClusters().length > 0) {
-                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'Recognize persons found') + "</button>");
+                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'Review people found') + "</button>");
                 $('#optional-buttons-div').append(button);
                 button.click(function () {
                     self.renameUnassignedClusterDialog();
                 });
-                OC.Notification.showTemporary(t('facerecognition', 'There are some persons to recognize'));
+                OC.Notification.showTemporary(t('facerecognition', 'You got some people to recognize'));
             }
         });
     },
@@ -302,7 +302,7 @@ View.prototype = {
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
-            showMoreButton: t('facerecognition', 'Show all groups with the same name'),
+            showMoreButton: t('facerecognition', 'Review face groups'),
             emptyMsg: t('facerecognition', 'The analysis is disabled'),
             emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
             renameHint: t('facerecognition', 'Rename'),

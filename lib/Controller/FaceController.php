@@ -114,7 +114,7 @@ class FaceController extends Controller {
 		$w = $face->getRight () - $x;
 		$h = $face->getBottom () - $y;
 
-		$padding = $h*0.25;
+		$padding = $h*0.35;
 		$x -= $padding;
 		$y -= $padding;
 		$w += $padding*2;

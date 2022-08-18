@@ -38,22 +38,35 @@
 			<div class="icon icon-contacts-dark"/>
 			<p>{{ t('facerecognition', 'The type of storage is not supported to analyze your photos') }}</p>
 		</div>
-		<div v-else-if="isProcessed && this.persons.length > 0">
-			<ul class='faces-list'>
-				<template v-for="person in this.persons">
-					<li class='face-entry' :data-id='person.person_id'>
-						<img class='face-preview' :src='person.thumb_url' width="32" height="32"/>
-						<h5 v-bind:class="['face-name', person.name ? '' : 'unknown-name']">{{ person.name ? person.name : t('facerecognition', 'Unknown') }}</h5>
-						<a v-if="person.photos_url" :href="person.photos_url" rel="noreferrer noopener" class="icon-external" target="_blank" :title='seePhotosTitle'/>
-						<a rel="noreferrer noopener" class="icon-rename" target="_blank" v-on:click="renamePerson(person)" :title='renamePersonTitle'/>
-						<a v-if="person.name" rel="noreferrer noopener" class="icon-disabled-user" target="_blank" v-on:click="detachFace(person)" :title='wrongPersonTitle'/>
-					</li>
-				</template>
-			</ul>
-		</div>
-		<div v-else-if="isProcessed" class='emptycontent'>
-			<div class='icon icon-contacts-dark'/>
-			<p>{{ t('facerecognition', 'No people found') }}</p>
+		<div v-else-if="isProcessed">
+			<template v-if="this.knownPersons.length > 0">
+				<ul class='faces-list'>
+					<template v-for="person in this.knownPersons">
+						<li class='face-entry' :data-id='person.person_id'>
+							<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" style="width: 48px;height: 48px;"><img class='face-preview' :src='person.thumb_url' width="48" height="48"/></a>
+							<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" class="face-name"><h5>{{ person.name }}</h5></a>
+							<a rel="noreferrer noopener" class="icon-action icon-disabled-user" v-on:click="detachFace(person)" :title='wrongPersonTitle(person.name)'/>
+						</li>
+					</template>
+				</ul>
+			</template>
+			<template v-if="this.unknownPersons.length > 0">
+				<ul class='faces-list'>
+					<template v-for="person in this.unknownPersons">
+						<li class='face-entry' :data-id='person.person_id'>
+							<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;" v-on:click="renamePerson(person)"><img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/></a>
+							<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="renamePerson(person)"><h5>{{ t('facerecognition', 'Unknown') }}</h5></a>
+							<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="renamePerson(person)"/>
+						</li>
+					</template>
+				</ul>
+			</template>
+			<template v-if="!this.knownPersons.length && !this.unknownPersons.length">
+				<div class='emptycontent'>
+					<div class='icon icon-contacts-dark'/>
+					<p>{{ t('facerecognition', 'No people found') }}</p>
+				</div>
+			</template>
 		</div>
 		<div v-else-if="!isProcessed && !isDirectory && !loading" class='emptycontent'>
 			<div class='icon icon-contacts-dark'/>
@@ -95,7 +108,8 @@ export default {
 			isParentEnabled: false,
 			isProcessed: false,
 			isDirectory: false,
-			persons: [],
+			knownPersons: [],
+			unknownPersons: [],
 		}
 	},
 
@@ -125,13 +139,10 @@ export default {
 			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
 		},
 		seePhotosTitle() {
-			return t('facerecognition', 'See all the photos')
+			return t('facerecognition', 'See other photos')
 		},
-		renamePersonTitle() {
-			return t('facerecognition', 'Rename person')
-		},
-		wrongPersonTitle() {
-			return t('facerecognition', 'This person is wrong')
+		addNamePersonTitle() {
+			return t('facerecognition', 'Add name')
 		},
 	},
 
@@ -142,11 +153,16 @@ export default {
 			this.getFacesInfo()
 		},
 
+		wrongPersonTitle(name) {
+			return t('facerecognition', 'This person is not {name}', {name: name})
+		},
+
 		resetState() {
 			this.loading = true
 			this.error = ''
 			this.isProcessed = false
-			this.persons = []
+			this.knownPersons = []
+			this.unknownPersons = []
 		},
 
 		async getFacesInfo() {
@@ -261,19 +277,21 @@ export default {
 			this.isParentEnabled = data.parent_detection
 			this.isProcessed = isDirectory ? false : data.is_processed
 			this.isChildrensEnabled = !isDirectory ? false : data.descendant_detection
-			this.persons = []
+			this.knownPersons = []
+			this.unknownPersons = []
 
 			if (!data.enabled)
 				return;
 
 			if (!isDirectory) {
-				this.persons = data.persons.sort(function(a, b) {
-					if (a.name == b.name)
-						return 0;
-					if (a.name == null)
-						return 1;
-					if (b.name == null)
-						return -1;
+				var _self = this;
+				data.persons.forEach(function(person) {
+					if (person.name != null)
+						_self.knownPersons.push(person);
+					else
+						_self.unknownPersons.push(person);
+				});
+				this.knownPersons = this.knownPersons.sort(function(a, b) {
 					if (a.name > b.name)
 						return 1;
 					if (a.name < b.name)
@@ -287,10 +305,15 @@ export default {
 </script>
 
 <style scoped>
+
+.faces-list {
+	padding: 10px 0 15px;
+}
+
 .face-entry {
 	display: flex;
 	align-items: center;
-	min-height: 44px;
+	margin-bottom: 8px;
 }
 
 .face-name {
@@ -305,23 +328,24 @@ export default {
 .face-preview {
 	background-color: rgba(210, 210, 210, .75);
 	border-radius: 50%;
-	height: 32px;
-	width: 32px;
+	height: 48px;
+	width: 48px;
 }
 
-.icon-external {
-	padding: 14px;
+.face-preview.unknown-name:hover {
+	opacity: 1;
+}
+
+.icon-action {
+	min-width: 36px;
+	min-height: 36px;
+	border-radius: 18px;
 	opacity: 0.7;
 }
 
-.icon-rename {
-	padding: 14px;
-	opacity: 0.7;
-}
-
-.icon-disabled-user {
-	padding: 14px;
-	opacity: 0.7;
+.icon-action:hover {
+	opacity: 1;
+	background-color: rgba(127,127,127,.25) !important;
 }
 
 </style>

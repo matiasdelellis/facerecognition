@@ -277,7 +277,7 @@ const FrDialogs = {
 			var dialogId = '#' + dialogName;
 			var $dlg = $tmpl.octemplate({
 				dialog_name: dialogName,
-				title: t('facerecognition', 'Rename person'),
+				title: t('facerecognition', 'Add name'),
 				message: t('facerecognition', 'Please assign a name to this person.'),
 				type: 'none'
 			});
@@ -316,7 +316,7 @@ const FrDialogs = {
 					}
 				},
 			}, {
-				text: t('facerecognition', 'I am not sure'),
+				text: t('facerecognition', 'Skip for now'),
 				click: function () {
 					$(dialogId).ocdialog('close');
 					if (callback !== undefined) {

@@ -2,6 +2,9 @@
 
 namespace OCA\FaceRecognition\Settings;
 
+use OCA\Viewer\Event\LoadViewer;
+
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 use OCP\App\IAppManager;
@@ -9,6 +12,9 @@ use OCP\IConfig;
 use OCP\IL10N;
 
 class Personal implements ISettings {
+
+	/** @var IEventDispatcher */
+	private $eventDispatcher;
 
 	/** @var IConfig */
 	protected $config;
@@ -19,10 +25,12 @@ class Personal implements ISettings {
 	/** @var IL10N */
 	protected $l;
 
-	public function __construct(IConfig     $config,
-	                            IAppManager $appManager,
-	                            IL10N       $l)
+	public function __construct(IEventDispatcher $eventDispatcher,
+	                            IConfig          $config,
+	                            IAppManager      $appManager,
+	                            IL10N            $l)
 	{
+		$this->eventDispatcher = $eventDispatcher;
 		$this->config = $config;
 		$this->appManager = $appManager;
 		$this->l = $l;
@@ -46,6 +54,7 @@ class Personal implements ISettings {
 	public function getForm()
 	{
 		$params = [];
+		$this->eventDispatcher->dispatch(LoadViewer::class, new LoadViewer());
 		return new TemplateResponse('facerecognition', 'settings/personal', $params, '');
 	}
 

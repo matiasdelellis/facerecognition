@@ -37,9 +37,7 @@
 	<div class="persons-previews">
 		{{#each personImages}}
 			<div class="image-box">
-				<a target="_blank" href="{{fileUrl}}">
-					<div class="file-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumbUrl}}}" width="128" height="128"></div>
-				</a>
+				<div class="file-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumbUrl}}}" width="128" height="128" data-id="{{filename}}"></div>
 			</div>
 		{{/each}}
 	</div>

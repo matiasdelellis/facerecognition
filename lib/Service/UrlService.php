@@ -48,17 +48,22 @@ class UrlService {
 	/** @var string */
 	private $userId;
 
+	/** */
+	private $userFolder;
+
 	public function __construct(IRootFolder     $rootFolder,
 	                            IUserSession    $userSession,
 	                            IURLGenerator   $urlGenerator,
 	                            SettingsService $settingsService,
-	                            $UserId)
+	                            $userId)
 	{
 		$this->rootFolder      = $rootFolder;
 		$this->userSession     = $userSession;
 		$this->urlGenerator    = $urlGenerator;
 		$this->settingsService = $settingsService;
-		$this->userId          = $UserId;
+		$this->userId          = $userId;
+
+		$this->userFolder      = $rootFolder->getUserFolder($userId);
 	}
 
 	/**
@@ -77,22 +82,43 @@ class UrlService {
 	}
 
 	/**
-	 * Get thumbnail of the give file id
+	 * Get to the Node file
 	 *
 	 * @param int $fileId file id to show
-	 * @param int $sideSize side lenght to show
+	 *
+	 * @return null|File
 	 */
-	public function getPreviewUrl(int $fileId, int $sideSize): ?string {
-		$userFolder = $this->rootFolder->getUserFolder($this->userId);
-		$file = current($userFolder->getById($fileId));
-
-		if (!($file instanceof File)) {
+	public function getFileNode(int $fileId): ?File {
+		$files = $this->userFolder->getById($fileId);
+		$file  = current($files);
+		if(!($file instanceof File)) {
 			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
 			$this->settingsService->setNeedRemoveStaleImages(true, $this->userId);
 			return null;
 		}
+		return $file;
+	}
 
-		return $this->urlGenerator->getAbsoluteURL('index.php/core/preview?fileId=' . $fileId .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag());
+	/**
+	 * Get thumbnail of the give file id
+	 *
+	 * @param File $file file to show
+	 * @param int $sideSize side lenght to show
+	 */
+	public function getPreviewUrl(File $file, int $sideSize): string {
+		return $this->urlGenerator->getAbsoluteURL('index.php/core/preview?fileId=' . $file->getId() .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag());
+	}
+
+	public function getBasename(File $node): string {
+		return $node->getName();
+	}
+
+	public function getFilename(File $node): string {
+		return $this->userFolder->getRelativePath($node->getPath());
+	}
+
+	public function getMimetype(File $node): string {
+		return $node->getMimetype();
 	}
 
 	/**
@@ -102,22 +128,10 @@ class UrlService {
 	 *
 	 * @return null|string
 	 */
-	public function getRedirectToFileUrl(int $fileId): ?string {
-		$uid        = $this->userSession->getUser()->getUID();
-		$baseFolder = $this->rootFolder->getUserFolder($uid);
-		$files      = $baseFolder->getById($fileId);
-		$file       = current($files);
-
-		if(!($file instanceof File)) {
-			// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-			$this->settingsService->setNeedRemoveStaleImages(true, $this->userId);
-			return null;
-		}
-
+	public function getRedirectToFileUrl(File $file): ?string {
 		$params = [];
-		$params['dir'] = $baseFolder->getRelativePath($file->getParent()->getPath());
+		$params['dir'] = $this->userFolder->getRelativePath($file->getParent()->getPath());
 		$params['scrollto'] = $file->getName();
-
 		return $this->urlGenerator->linkToRoute('files.view.index', $params);
 	}
 

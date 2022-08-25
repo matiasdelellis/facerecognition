@@ -370,6 +370,28 @@ View.prototype = {
             }
         });
 
+        $('#facerecognition .file-preview-big').click(function () {
+            var filename = $(this).data('id');
+            if (window.event.ctrlKey) {
+                var file = self._persons.getActivePerson().images.find(function(element) {
+                    return element.filename == filename;
+                });
+                window.open(file.fileUrl, '_blank');
+            } else {
+                var images = self._persons.getActivePerson().images.map(function(element) {
+                    return {
+                        basename: element.basename,
+                        filename: element.filename,
+                        mime:     element.mimetype
+                    };
+                });
+                OCA.Viewer.open({
+                    path: filename,
+                    list: images,
+                });
+            }
+        });
+
         $('#facerecognition .face-preview-big').click(function () {
             $(this).css("cursor", "wait");
             var name = $(this).parent().data('id');

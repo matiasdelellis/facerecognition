@@ -155,22 +155,19 @@ class PersonController extends Controller {
 				$faceUrl = $this->urlService->getThumbUrl($faces[0]->getId(), 128);
 				$resp['thumbUrl'] = $faceUrl;
 			}
+
 			foreach ($faces as $face) {
 				$image = $this->imageMapper->find($this->userId, $face->getImage());
 
-
-				$fileId = $image->getFile();
-				if ($fileId === null) continue;
-
-				$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
-				if ($fileUrl === null) continue;
-
-				$thumbUrl = $this->urlService->getPreviewUrl($fileId, 256);
-				if ($thumbUrl === null) continue;
+				$node = $this->urlService->getFileNode($image->getFile());
+				if ($node === null) continue;
 
 				$image = [];
-				$image['thumbUrl'] = $thumbUrl;
-				$image['fileUrl'] = $fileUrl;
+				$image['basename'] = $this->urlService->getBasename($node);
+				$image['filename'] = $this->urlService->getFilename($node);
+				$image['mimetype'] = $this->urlService->getMimetype($node);
+				$image['fileUrl']  = $this->urlService->getRedirectToFileUrl($node);
+				$image['thumbUrl'] = $this->urlService->getPreviewUrl($node, 256);
 
 				$resp['images'][] = $image;
 			}

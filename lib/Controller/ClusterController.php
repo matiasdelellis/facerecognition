@@ -97,15 +97,13 @@ class ClusterController extends Controller {
 		$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-			$fileId = $image->getFile();
-			if ($fileId === null) continue;
 
-			$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
-			if ($fileUrl === null) continue;
+			$file =  $this->urlService->getNode($image->getFile());
+			if ($file === null) continue;
 
 			$face = [];
 			$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
-			$face['fileUrl'] = $fileUrl;
+			$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($node);
 			$faces[] = $face;
 		}
 		$resp['name'] = $person->getName();
@@ -139,15 +137,13 @@ class ClusterController extends Controller {
 			$faces = [];
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
-				$fileId = $image->getFile();
-				if ($fileId === null) continue;
 
-				$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
-				if ($fileUrl === null) continue;
+				$file = $this->urlService->getFileNode($image->getFile());
+				if ($file === null) continue;
 
 				$face = [];
 				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
-				$face['fileUrl'] = $fileUrl;
+				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 				$faces[] = $face;
 			}
 
@@ -189,17 +185,12 @@ class ClusterController extends Controller {
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 
-				$fileId = $image->getFile();
-				if ($fileId === null) continue;
-
-				$fileUrl = $this->urlService->getRedirectToFileUrl($fileId);
-				if ($fileUrl === null) continue;
-
-				$thumbUrl = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$file = $this->urlService->getFileNode($image->getFile());
+				if ($file === null) continue;
 
 				$face = [];
-				$face['thumbUrl'] = $thumbUrl;
-				$face['fileUrl'] = $fileUrl;
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 
 				$faces[] = $face;
 			}

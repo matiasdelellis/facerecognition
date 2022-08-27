@@ -139,6 +139,25 @@ class ImageMapper extends QBMapper {
 		return (int)$data[0];
 	}
 
+	public function getPersonCount(string $userId, int $modelId, string $name): int {
+		$qb = $this->db->getQueryBuilder();
+		$query = $qb
+			->select($qb->createFunction('COUNT(' . $qb->getColumnName('i.id') . ')'))
+			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
+
+		$resultStatement = $query->execute();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0];
+	}
+
 	public function avgProcessingDuration(int $model): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
@@ -225,6 +244,24 @@ class ImageMapper extends QBMapper {
 
 		return $this->findEntities($qb);
 	}
+
+	public function findFromPerson(string $userId, int $model, string $name, $offset = null, $limit = null): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('i.id', 'i.file')
+			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
+
+		$qb->setFirstResult($offset);
+		$qb->setMaxResults($limit);
+
+		return $this->findEntities($qb);
+	}
+
 
 	/**
 	 * Writes to DB that image has been processed. Previously found faces are deleted and new ones are inserted.

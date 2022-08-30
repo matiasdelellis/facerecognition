@@ -66,20 +66,6 @@ class UrlService {
 		$this->userFolder      = $rootFolder->getUserFolder($userId);
 	}
 
-	/**
-	 * Url to thumb face
-	 *
-	 * @param int $faceId face id to show
-	 * @param int $size Size of face thumbnails
-	 *
-	 * @return string
-	 */
-	public function getThumbUrl(int $faceId, int $size): string {
-		$params = [];
-		$params['id'] = $faceId;
-		$params['size'] = $size;
-		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
-	}
 
 	/**
 	 * Get to the Node file
@@ -99,16 +85,6 @@ class UrlService {
 		return $file;
 	}
 
-	/**
-	 * Get thumbnail of the give file id
-	 *
-	 * @param File $file file to show
-	 * @param int $sideSize side lenght to show
-	 */
-	public function getPreviewUrl(File $file, int $sideSize): string {
-		return $this->urlGenerator->getAbsoluteURL('index.php/core/preview?fileId=' . $file->getId() .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag());
-	}
-
 	public function getBasename(File $node): string {
 		return $node->getName();
 	}
@@ -119,6 +95,16 @@ class UrlService {
 
 	public function getMimetype(File $node): string {
 		return $node->getMimetype();
+	}
+
+	/**
+	 * Get thumbnail of the give file id
+	 *
+	 * @param File $file file to show
+	 * @param int $sideSize side lenght to show
+	 */
+	public function getPreviewUrl(File $file, int $sideSize): string {
+		return $this->urlGenerator->getAbsoluteURL('index.php/core/preview?fileId=' . $file->getId() .'&x=' . $sideSize . '&y=' . $sideSize . '&a=false&v=' . $file->getETag());
 	}
 
 	/**
@@ -148,6 +134,21 @@ class UrlService {
 			'name' => $personName
 		];
 		return $this->urlGenerator->linkToRoute('settings.PersonalSettings.index', $params);
+	}
+
+	/**
+	 * Url to thumb face
+	 *
+	 * @param int $faceId face id to show
+	 * @param int $size Size of face thumbnails
+	 *
+	 * @return string
+	 */
+	public function getThumbUrl(int $faceId, int $size): string {
+		$params = [];
+		$params['id'] = $faceId;
+		$params['size'] = $size;
+		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 
 }

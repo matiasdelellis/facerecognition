@@ -103,21 +103,13 @@ class PersonController extends Controller {
 
 		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
 		foreach ($personsNames as $personNamed) {
-			$facesCount = 0;
-			$faceUrl = null;
-			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
-			foreach ($persons as $person) {
-				$personFaces = $this->faceMapper->findFacesFromPerson($this->userId, $person->getId(), $modelId);
-				if (is_null($faceUrl)) {
-					$faceUrl = $this->urlService->getThumbUrl($personFaces[0]->getId(), 128);
-				}
-				$facesCount += count($personFaces);
-			}
+			$name = $personNamed->getName();
+			$personFace = current($this->faceMapper->findFacesFromPerson($this->userId, $name, $modelId, 1));
 
 			$person = [];
-			$person['name'] = $personNamed->getName();
-			$person['thumbUrl'] = $faceUrl;
-			$person['count'] = $facesCount;
+			$person['name'] = $name;
+			$person['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+			$person['count'] = count($this->imageMapper->findFromPerson($this->userId, $modelId, $name));
 
 			$resp['persons'][] = $person;
 		}
@@ -136,42 +128,30 @@ class PersonController extends Controller {
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
 		$resp['name'] = $personName;
-		$resp['thumbUrl'] = null;
 		$resp['clusters'] = 0;
 		$resp['images'] = array();
 
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
-		$faceUrl = null;
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($clusters as $cluster) {
-			$resp['clusters']++;
+		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
+		foreach ($images as $image) {
+			$node = $this->urlService->getFileNode($image->getFile());
+			if ($node === null) continue;
 
-			$faces = $this->faceMapper->findFacesFromPerson($this->userId, $cluster->getId(), $modelId);
-			if (is_null($faceUrl)) {
-				$faceUrl = $this->urlService->getThumbUrl($faces[0]->getId(), 128);
-				$resp['thumbUrl'] = $faceUrl;
-			}
+			$photo = [];
+			$photo['basename'] = $this->urlService->getBasename($node);
+			$photo['filename'] = $this->urlService->getFilename($node);
+			$photo['mimetype'] = $this->urlService->getMimetype($node);
+			$photo['fileUrl']  = $this->urlService->getRedirectToFileUrl($node);
+			$photo['thumbUrl'] = $this->urlService->getPreviewUrl($node, 256);
 
-			foreach ($faces as $face) {
-				$image = $this->imageMapper->find($this->userId, $face->getImage());
-
-				$node = $this->urlService->getFileNode($image->getFile());
-				if ($node === null) continue;
-
-				$image = [];
-				$image['basename'] = $this->urlService->getBasename($node);
-				$image['filename'] = $this->urlService->getFilename($node);
-				$image['mimetype'] = $this->urlService->getMimetype($node);
-				$image['fileUrl']  = $this->urlService->getRedirectToFileUrl($node);
-				$image['thumbUrl'] = $this->urlService->getPreviewUrl($node, 256);
-
-				$resp['images'][] = $image;
-			}
+			$resp['images'][] = $photo;
 		}
+
+		$resp['clusters'] = 2;
 
 		return new DataResponse($resp);
 	}

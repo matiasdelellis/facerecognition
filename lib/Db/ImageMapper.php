@@ -226,6 +226,23 @@ class ImageMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('i.file')
+			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
+
+		$qb->setFirstResult($offset);
+		$qb->setMaxResults($limit);
+
+		return $this->findEntities($qb);
+	}
+
 	/**
 	 * Writes to DB that image has been processed. Previously found faces are deleted and new ones are inserted.
 	 * If there is exception, its stack trace is also updated.

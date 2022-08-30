@@ -91,7 +91,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$this->assertEquals(1, count($faces));
 		$this->assertNotNull($faces[0]->getPerson());
 
-		$faces = $faceMapper->findFacesFromCluster($this->user->getUID(), $personId, ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faces = $faceMapper->findFromCluster($this->user->getUID(), $personId, ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 	}
 

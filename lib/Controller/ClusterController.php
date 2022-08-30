@@ -94,7 +94,7 @@ class ClusterController extends Controller {
 
 		$resp = [];
 		$faces = [];
-		$personFaces = $this->faceMapper->findFacesFromCluster($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
+		$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 
@@ -132,7 +132,7 @@ class ClusterController extends Controller {
 
 		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromCluster($this->userId, $person->getId(), $modelId);
+			$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId);
 
 			$faces = [];
 			foreach ($personFaces as $personFace) {
@@ -177,7 +177,7 @@ class ClusterController extends Controller {
 
 		$persons = $this->personMapper->findUnassigned($this->userId, $modelId);
 		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFacesFromCluster($this->userId, $person->getId(), $modelId, 40);
+			$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId, 40);
 			if (count($personFaces) === 1)
 				continue;
 

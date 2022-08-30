@@ -104,7 +104,7 @@ class PersonController extends Controller {
 		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
 		foreach ($personsNames as $personNamed) {
 			$name = $personNamed->getName();
-			$personFace = current($this->faceMapper->findFacesFromPerson($this->userId, $name, $modelId, 1));
+			$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
 
 			$person = [];
 			$person['name'] = $name;
@@ -128,13 +128,16 @@ class PersonController extends Controller {
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
 		$resp['name'] = $personName;
-		$resp['clusters'] = 0;
+		$resp['thumbUrl'] = null;
 		$resp['images'] = array();
 
 		if (!$userEnabled)
 			return new DataResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$personFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
+		$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
 
 		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
 		foreach ($images as $image) {

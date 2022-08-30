@@ -151,8 +151,6 @@ class PersonController extends Controller {
 			$resp['images'][] = $photo;
 		}
 
-		$resp['clusters'] = 2;
-
 		return new DataResponse($resp);
 	}
 

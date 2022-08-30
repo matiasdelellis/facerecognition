@@ -322,7 +322,6 @@ View.prototype = {
         if (person != undefined) {
             context.personName = person.name;
             context.personImages = person.images;
-            context.multipleClusters = (person.clusters > 1);
         }
 
         var clustersByName = this._persons.getClustersByName();

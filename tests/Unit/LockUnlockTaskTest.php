@@ -23,7 +23,7 @@
  */
 namespace OCA\FaceRecognition\Tests\Unit;
 
-OCA\FaceRecognition\Helper\CommandLock;
+use OCA\FaceRecognition\Helper\CommandLock;
 
 use Psr\Log\LoggerInterface;
 

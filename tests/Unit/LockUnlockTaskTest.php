@@ -23,71 +23,40 @@
  */
 namespace OCA\FaceRecognition\Tests\Unit;
 
-use OCP\IConfig;
-use OCP\IUserManager;
-
-use OCP\App\IAppManager;
-use OCP\Files\IRootFolder;
-
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
-use OCA\FaceRecognition\BackgroundJob\Tasks\UnlockTask;
-use OCA\FaceRecognition\Service\ModelService;
+OCA\FaceRecognition\Helper\CommandLock;
 
 use Psr\Log\LoggerInterface;
 
 use Test\TestCase;
 
 class LockTaskTest extends TestCase {
-	/** @var FaceRecognitionContext Context */
-	private $context;
-
 	/**
 	 * {@inheritDoc}
 	 */
 	public function setUp(): void {
-		$userManager = $this->getMockBuilder(IUserManager::class)
-			->disableOriginalConstructor()
-			->getMock();
-		$config = $this->getMockBuilder(IConfig::class)
-			->disableOriginalConstructor()
-			->getMock();
-		$this->context = new FaceRecognitionContext($userManager, $config);
-		$logger = $this->getMockBuilder(LoggerInterface::class)
-			->disableOriginalConstructor()
-			->getMock();
-		$this->context->logger = new FaceRecognitionLogger($logger);
 	}
 
 	public function testLockUnlock() {
-		$lockTask = new LockTask();
-		$unlockTask = new UnlockTask();
-		$this->assertTrue($lockTask->execute($this->context));
-		$this->assertTrue($unlockTask->execute($this->context));
-		$this->assertNotEquals("", $lockTask->description());
-		$this->assertNotEquals("", $unlockTask->description());
+		$lock = CommandLock::Lock("testLockUnlock");
+		$this->assertNull($lock);
+		$this->assertNotEquals("testLockUnlock", CommandLock::IsLockedBy());
+		CommandLock::Unlock($lock);
 	}
 
 	public function testDoubleLock() {
-		$lockTask = new LockTask();
-		$unlockTask = new UnlockTask();
-		$this->assertTrue($lockTask->execute($this->context));
-		$this->assertFalse($lockTask->execute($this->context));
-		$this->assertTrue($unlockTask->execute($this->context));
+		$lock = CommandLock::Lock("testDoubleLock");
+		$this->asserNull($lock);
+		$lock = CommandLock::Lock("testDoubleLockt2");
+		$this->assertNotNull($lock);
+		$this->assertNotEquals("testDoubleLock", CommandLock::IsLockedBy());
+		CommandLock::Unlock($lock);
 	}
 
 	public function testEmptyUnlock() {
-		$unlockTask = new UnlockTask();
-		$this->assertFalse($unlockTask->execute($this->context));
+		//TODO:
 	}
 
 	public function testDoubleUnlock() {
-		$lockTask = new LockTask();
-		$unlockTask = new UnlockTask();
-		$this->assertTrue($lockTask->execute($this->context));
-		$this->assertTrue($unlockTask->execute($this->context));
-		// Double unlock is OK, nobody cares if second time we failed
-		$this->assertTrue($unlockTask->execute($this->context));
+		//TODO:
 	}
 }

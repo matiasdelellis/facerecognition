@@ -98,12 +98,12 @@ class ClusterController extends Controller {
 		foreach ($personFaces as $personFace) {
 			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
 
-			$file =  $this->urlService->getNode($image->getFile());
+			$file =  $this->urlService->getFileNode($image->getFile());
 			if ($file === null) continue;
 
 			$face = [];
 			$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
-			$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($node);
+			$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 			$faces[] = $face;
 		}
 		$resp['name'] = $person->getName();

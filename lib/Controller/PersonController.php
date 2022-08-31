@@ -109,7 +109,7 @@ class PersonController extends Controller {
 			$person = [];
 			$person['name'] = $name;
 			$person['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
-			$person['count'] = count($this->imageMapper->findFromPerson($this->userId, $modelId, $name));
+			$person['count'] = $this->imageMapper->countFromPerson($this->userId, $modelId, $name);
 
 			$resp['persons'][] = $person;
 		}

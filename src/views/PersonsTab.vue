@@ -41,24 +41,18 @@
 		<div v-else-if="isProcessed">
 			<template v-if="this.knownPersons.length > 0">
 				<ul class='faces-list'>
-					<template v-for="person in this.knownPersons">
-						<li class='face-entry' :data-id='person.person_id'>
-							<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" style="width: 48px;height: 48px;"><img class='face-preview' :src='person.thumb_url' width="48" height="48"/></a>
-							<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" class="face-name"><h5>{{ person.name }}</h5></a>
-							<a rel="noreferrer noopener" class="icon-action icon-disabled-user" v-on:click="detachFace(person)" :title='wrongPersonTitle(person.name)'/>
-						</li>
-					</template>
+					<PersonRow v-for="person in this.knownPersons"
+						:key="person.person_id"
+						:person="person"
+					/>
 				</ul>
 			</template>
 			<template v-if="this.unknownPersons.length > 0">
 				<ul class='faces-list'>
-					<template v-for="person in this.unknownPersons">
-						<li class='face-entry' :data-id='person.person_id'>
-							<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;" v-on:click="renamePerson(person)"><img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/></a>
-							<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="renamePerson(person)"><h5>{{ t('facerecognition', 'Unknown') }}</h5></a>
-							<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="renamePerson(person)"/>
-						</li>
-					</template>
+					<PersonRow v-for="person in this.unknownPersons"
+						:key="person.person_id"
+						:person="person"
+					/>
 				</ul>
 			</template>
 			<template v-if="!this.knownPersons.length && !this.unknownPersons.length">
@@ -87,6 +81,9 @@
 <script>
 import Tab from '@nextcloud/vue/dist/Components/AppSidebarTab'
 import Axios from '@nextcloud/axios'
+import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+
+import PersonRow from './PersonRow'
 
 export default {
 
@@ -94,6 +91,7 @@ export default {
 
 	components: {
 		Tab,
+		PersonRow,
 	},
 
 	data() {
@@ -138,23 +136,25 @@ export default {
 		faqUrl() {
 			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
 		},
-		seePhotosTitle() {
-			return t('facerecognition', 'See other photos')
-		},
-		addNamePersonTitle() {
-			return t('facerecognition', 'Add name')
-		},
+	},
+
+	mounted() {
+		subscribe('facerecognition:person:updated', this.handlePersonUpdate)
+	},
+
+	beforeDestroy() {
+		unsubscribe('facerecognition:person:updated', this.handlePersonUpdate)
 	},
 
 	methods: {
+		handlePersonUpdate() {
+			this.getFacesInfo(this.fileInfo)
+		},
+
 		async update(fileInfo) {
 			this.resetState()
 			this.fileInfo = fileInfo
 			this.getFacesInfo()
-		},
-
-		wrongPersonTitle(name) {
-			return t('facerecognition', 'This person is not {name}', {name: name})
 		},
 
 		resetState() {
@@ -205,68 +205,6 @@ export default {
 			} catch (error) {
 				this.error = error
 				console.error('Error enabling/disabling directory', error)
-			}
-		},
-
-		detachFace: function(person) {
-			const self = this
-			FrDialogs.detachFace(
-				{thumbUrl: person.thumb_url},
-				person.name,
-				function(result, newName) {
-					if (result === true) {
-						var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id + '/detach')
-						Axios.put(infoUrl, {
-							face: person.face_id,
-							name: newName
-						}).then(function (response) {
-							self.getFacesInfo(self.fileInfo)
-						}).catch(function (error) {
-							self.error = error
-							console.error('There was an error applying that change', error)
-						})
-					}
-				}
-			)
-		},
-
-		renamePerson: function(person) {
-			const self = this
-			if (person.name) {
-				FrDialogs.rename(
-					person.name,
-					[{thumbUrl: person.thumb_url}],
-					function(result, newName) {
-						if (result === true && newName) {
-							var infoUrl = OC.generateUrl('/apps/facerecognition/person/' + person.name)
-							Axios.put(infoUrl, {
-								name: newName
-							}).then(function (response) {
-								self.getFacesInfo(self.fileInfo)
-							}).catch(function (error) {
-								self.error = error
-								console.error('Error renaming person', error)
-							})
-						}
-					}
-				)
-			} else {
-				FrDialogs.assignName([{thumbUrl: person.thumb_url}],
-					function(result, newName) {
-						if (result === true && newName) {
-							var infoUrl = OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id)
-							Axios.put(infoUrl, {
-								name: newName,
-								face_id: person.person_visible ? null : person.face_id
-							}).then(function (response) {
-								self.getFacesInfo(self.fileInfo)
-							}).catch(function (error) {
-								self.error = error
-								console.error('Error renaming person', error)
-							})
-						}
-					}
-				)
 			}
 		},
 

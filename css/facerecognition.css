@@ -61,7 +61,16 @@
 	flex-wrap: wrap;
 }
 
-.face-preview-big,
+.face-preview-big {
+	background-color: rgba(210, 210, 210, .75);
+	background-size: cover;
+	border-radius: 50%;
+	height: 128px;
+	width: 128px;
+	margin: 0 auto;
+	cursor: pointer;
+}
+
 .file-preview-big {
 	background-color: rgba(210, 210, 210, .75);
 	background-size: cover;

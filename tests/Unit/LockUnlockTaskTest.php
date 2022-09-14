@@ -45,18 +45,10 @@ class LockTaskTest extends TestCase {
 
 	public function testDoubleLock() {
 		$lock = CommandLock::Lock("testDoubleLock");
-		$this->asserNull($lock);
+		$this->assertNull($lock);
 		$lock = CommandLock::Lock("testDoubleLockt2");
 		$this->assertNotNull($lock);
 		$this->assertNotEquals("testDoubleLock", CommandLock::IsLockedBy());
 		CommandLock::Unlock($lock);
-	}
-
-	public function testEmptyUnlock() {
-		//TODO:
-	}
-
-	public function testDoubleUnlock() {
-		//TODO:
 	}
 }

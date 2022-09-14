@@ -175,7 +175,8 @@ class FaceMapper extends QBMapper {
 			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($personId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
+			->orderBy('i.file', 'DESC');
 
 		$qb->setMaxResults($limit);
 		$qb->setFirstResult($offset);

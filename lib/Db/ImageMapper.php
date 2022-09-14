@@ -235,7 +235,8 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
-			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
+			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)))
+			->orderBy('i.file', 'DESC');
 
 		$qb->setFirstResult($offset);
 		$qb->setMaxResults($limit);

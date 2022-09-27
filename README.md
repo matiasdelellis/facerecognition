@@ -147,6 +147,21 @@ If use the `--defer-clustering` option, it changes the order of execution of the
 process deferring the face clustering at the end of the analysis to get persons
 in a simple execution of the command.
 
+#### Create albums in the Photos app
+
+`face:sync-albums [-u|--user_id USER_ID]`
+
+This command creates photo albums within the Nexcloud Photos app, with photos of
+each person found.
+
+Note that these albums are editable in the Photos app, and any changes will be
+ignored and reverted on the next run of this command.
+
+This command is also designed to be run regularly to sync any user changes, as
+this command is the only one that will update albums.
+
+If `USER_ID` is provided, it will just sync albums for this user.
+
 #### Resetting information
 
 `occ face:reset [--all] [--model] [--image-errors] [--clustering] [-u|--user_id USER_ID]`

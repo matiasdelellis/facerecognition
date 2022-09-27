@@ -1,6 +1,33 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.10-beta.1] - 2022-09-27
+### Added
+- Support Nextcloud 25
+- A little love to the whole application to improve styles and texts.
+- Show the image viewer when click come image on our "gallery".
+  Is press Control+Click it will open the file as before.
+- Don´t allow run two face:commands simultaneously to prevent errors.
+- Some optimizations on several queries of main view.
+- Add a new command <face:sync-albums> to create photos albums of persons.
+
+### Fixed
+- Rephrase I'm not sure button to better indicate what it does. Issue #544
+
+### Changed
+- Change Person to people since Persons in a very formal word of lawyers.
+- Edit people's names in the same side tab instead of using dialogs.
+  This is really forced by changes to the viewer which retains focus, and
+  avoids typing anywhere.
+  It also has a regression that misses the autocomplete. :disapointed:
+- Typo fix. Just use plurals on stats table.
+- Show the faces of the latest photos, and sort photos by upload order.
+
+### Translations
+- Update German translation thanks to lollos78.
+- Update Italian (Italy) translation thanks to lollos78.
+- Update of many other translations. Thank you so much everyone.
+
 ## [0.9.5] - 2022-05-07
 ### Added
 - Just enable Nextcloud 24

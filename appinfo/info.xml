@@ -51,6 +51,7 @@
 		<command>OCA\FaceRecognition\Command\SetupCommand</command>
 		<command>OCA\FaceRecognition\Command\StatsCommand</command>
 		<command>OCA\FaceRecognition\Command\SyncAlbumsCommand</command>
+		<command>OCA\FaceRecognition\Command\BumpComparisonCommand</command>
 	</commands>
 	<settings>
 		<admin>OCA\FaceRecognition\Settings\Admin</admin>

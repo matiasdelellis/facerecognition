@@ -140,18 +140,64 @@ return ['routes' =>
 
 ], 'ocs' => [
 	/*
-	 * OCS Person API
+	 * OCS Person API V1
 	 */
 	// Get all named persons
 	[
-		'name' => 'PersonApi#getPersons',
+		'name' => 'Api#getPersonsV1',
 		'url' => '/api/v1/persons',
 		'verb' => 'GET',
 	],
 	// Get all faces associated to a person
 	[
-		'name' => 'PersonApi#getFacesByPerson',
+		'name' => 'Api#getFacesByPerson',
 		'url' => '/api/v1/person/{name}/faces',
 		'verb' => 'GET',
 	],
+	/*
+	 * OCS Person API V2
+	 */
+	// Get all named persons
+	[
+		'name' => 'Api#getPersonsV2',
+		'url' => '/api/2.0/persons',
+		'verb' => 'GET',
+	],
+	// Get all photos associated to a person
+	[
+		'name' => 'Api#getPerson',
+		'url' => '/api/2.0/person/{personName}',
+		'verb' => 'GET',
+	],
+	// Change name to a person or hide it
+	[
+		'name' => 'Api#updatePerson',
+		'url'  => '/api/2.0/person/{personName}',
+		'verb' => 'PUT'
+	],
+	// Change name to a cluster or hide it.
+	[
+		'name' => 'Api#updateCluster',
+		'url'  => '/api/2.0/cluster/{clusterId}',
+		'verb' => 'PUT'
+	],
+	// Get all names filtered by an query.
+	[
+		'name' => 'Api#autocomplete',
+		'url'  => '/api/2.0/autocomplete',
+		'verb' => 'GET'
+	],
+	// Get all unassigned clusters to name
+	[
+		'name' => 'Api#discoverPerson',
+		'url'  => '/api/2.0/discover',
+		'verb' => 'GET'
+	],
+	// Detach Face from cluster
+	[
+		'name' => 'Api#detachFace',
+		'url'  => '/api/2.0/face/{faceId}/detach',
+		'verb' => 'PUT'
+	],
+
 ]];

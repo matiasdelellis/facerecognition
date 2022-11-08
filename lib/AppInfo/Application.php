@@ -52,7 +52,7 @@ class Application extends App implements IBootstrap {
 	public const APP_NAME = 'facerecognition';
 
 	/** @var string */
-	public const API_VERSIONS = ['1.0', '2.0'];
+	public const API_VERSIONS = ['v1', '2.0'];
 
 	/**
 	 * Application constructor.

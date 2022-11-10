@@ -39,7 +39,7 @@ class FaceMapper extends QBMapper {
 
 	public function find (int $faceId): ?Face {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image', 'person', 'left', 'right', 'top', 'bottom', 'landmarks', 'descriptor', 'confidence')
+		$qb->select('id', 'image', 'person', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
 			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		try {
@@ -61,7 +61,7 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'left', 'right', 'top', 'bottom', 'person', 'confidence', 'creation_time')
+		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
@@ -135,7 +135,7 @@ class FaceMapper extends QBMapper {
 
 	public function getFaces(string $userId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.person', 'f.left', 'f.right', 'f.top', 'f.bottom', 'f.confidence', 'f.descriptor', 'f.is_groupable')
+		$qb->select('f.id', 'f.person', 'f.x', 'f.y', 'f.width', 'f.height', 'f.confidence', 'f.descriptor', 'f.is_groupable')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
@@ -307,10 +307,10 @@ class FaceMapper extends QBMapper {
 			->values([
 				'image' => $qb->createNamedParameter($face->image),
 				'person' => $qb->createNamedParameter($face->person),
-				'left' => $qb->createNamedParameter($face->left),
-				'right' => $qb->createNamedParameter($face->right),
-				'top' => $qb->createNamedParameter($face->top),
-				'bottom' => $qb->createNamedParameter($face->bottom),
+				'x' => $qb->createNamedParameter($face->x),
+				'y' => $qb->createNamedParameter($face->y),
+				'width' => $qb->createNamedParameter($face->width),
+				'height' => $qb->createNamedParameter($face->height),
 				'confidence' => $qb->createNamedParameter($face->confidence),
 				'landmarks' => $qb->createNamedParameter(json_encode($face->landmarks)),
 				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),

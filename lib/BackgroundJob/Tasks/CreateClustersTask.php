@@ -282,7 +282,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$face1 = $faces[$i];
 				if ((!$face1->isGroupable) ||
 				    ($face1->confidence < $min_confidence) ||
-				    (max($face1->height(), $face1->width()) < $min_face_size)) {
+				    (max($face1->height, $face1->width) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
@@ -290,7 +290,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					$face2 = $faces[$j];
 					if ((!$face2->isGroupable) ||
 					    ($face2->confidence < $min_confidence) ||
-					    (max($face2->height(), $face2->width()) < $min_face_size)) {
+					    (max($face2->height, $face2->width) < $min_face_size)) {
 						continue;
 					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
@@ -305,7 +305,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$face1 = $faces[$i];
 				if ((!$face1->isGroupable) ||
 				    ($face1->confidence < $min_confidence) ||
-				    (max($face1->height(), $face1->width()) < $min_face_size)) {
+				    (max($face1->height, $face1->width) < $min_face_size)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
@@ -313,7 +313,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					$face2 = $faces[$j];
 					if ((!$face2->isGroupable) ||
 					    ($face2->confidence < $min_confidence) ||
-					    (max($face2->height(), $face2->width()) < $min_face_size)) {
+					    (max($face2->height, $face2->width) < $min_face_size)) {
 						continue;
 					}
 					$distance = Euclidean::distance($face1->descriptor, $face2->descriptor);

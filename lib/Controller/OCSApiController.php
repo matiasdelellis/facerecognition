@@ -44,7 +44,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 
-class ApiController extends OCSController {
+class OCSApiController extends OCSController {
 
 	/** @var FaceMapper */
 	private $faceMapper;

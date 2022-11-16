@@ -105,8 +105,8 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		$face = $faceMapper->find($face->getId());
 		$this->assertEquals(49, $face->getX());
 		$this->assertEquals(62, $face->getY());
-		$this->assertEquals(62, $face->getWidth());
-		$this->assertEquals(88, $face->getHeight());
+		$this->assertEquals(75, $face->getWidth());
+		$this->assertEquals(75, $face->getHeight());
 	}
 
 	/**

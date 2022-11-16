@@ -138,34 +138,18 @@ return ['routes' =>
 		'verb' => 'GET'
 	],
 
-], 'ocs' => [
 	/*
-	 * OCS Person API V1
+	 * Face Recognition API V2
 	 */
 	// Get all named persons
 	[
-		'name' => 'Api#getPersonsV1',
-		'url' => '/api/v1/persons',
-		'verb' => 'GET',
-	],
-	// Get all faces associated to a person
-	[
-		'name' => 'Api#getFacesByPerson',
-		'url' => '/api/v1/person/{name}/faces',
-		'verb' => 'GET',
-	],
-	/*
-	 * OCS Person API V2
-	 */
-	// Get all named persons
-	[
-		'name' => 'Api#getPersonsV2',
+		'name' => 'api#getPersonsV2',
 		'url' => '/api/2.0/persons',
 		'verb' => 'GET',
 	],
 	// Get all photos associated to a person
 	[
-		'name' => 'Api#getPerson',
+		'name' => 'api#getPerson',
 		'url' => '/api/2.0/person/{personName}',
 		'verb' => 'GET',
 	],
@@ -198,6 +182,24 @@ return ['routes' =>
 		'name' => 'Api#detachFace',
 		'url'  => '/api/2.0/face/{faceId}/detach',
 		'verb' => 'PUT'
+	],
+
+], 'ocs' => [
+
+	/*
+	 * OCS Person API V1
+	 */
+	// Get all named persons
+	[
+		'name' => 'ocs_api#getPersonsV1',
+		'url' => '/api/v1/persons',
+		'verb' => 'GET',
+	],
+	// Get all faces associated to a person
+	[
+		'name' => 'ocs_api#getFacesByPerson',
+		'url' => '/api/v1/person/{name}/faces',
+		'verb' => 'GET',
 	],
 
 ]];

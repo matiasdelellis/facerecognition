@@ -31,7 +31,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
-use OCP\AppFramework\OCSController;
+use OCP\AppFramework\ApiController as NCApiController;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
@@ -45,7 +45,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 
-class ApiController extends OCSController {
+class ApiController extends NcApiController {
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -186,7 +186,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
-	 *
+	 * @CORS
+	 * @NoCSRFRequired
 	 */
 	public function getPersonsV2($thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -212,6 +213,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 */
 	public function getPerson(string $personName, $thumb_size = 128): JSONResponse {
@@ -250,6 +253,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 * @return DataResponse
 	 */
@@ -289,6 +294,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 */
 	public function updateCluster(int $clusterId, $name = null, $visible = null): JSONResponse {
@@ -316,6 +323,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 */
 	public function discoverPerson($minimum_count = 2, $max_previews = 40, $thumb_size = 128): JSONResponse {
@@ -365,6 +374,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 */
 	public function autocomplete(string $query, $thumb_size = 128): JSONResponse {
@@ -394,6 +405,8 @@ class ApiController extends OCSController {
 
 	/**
 	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
 	 *
 	 */
 	public function detachFace(int $faceId, $name = null): JSONResponse {

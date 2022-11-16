@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, Roeland Jago Douma <roeland@famdouma.nl>
- * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2022 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2020 Xiangbin Li >dassio@icloud.com>
  *
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -51,6 +51,9 @@ class Application extends App implements IBootstrap {
 	/** @var string */
 	public const APP_NAME = 'facerecognition';
 
+	/** @var string */
+	public const API_VERSIONS = ['v1', '2.0'];
+
 	/**
 	 * Application constructor.
 	 *
@@ -62,6 +65,8 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		$context->registerSearchProvider(PersonSearchProvider::class);
+
+		$context->registerCapability(Capabilities::class);
 
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);

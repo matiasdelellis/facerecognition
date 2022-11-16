@@ -39,10 +39,10 @@ use OCP\AppFramework\Db\Entity;
  * @method float getConfidence()
  * @method void setImage(int $image)
  * @method void setPerson(int $person)
- * @method void setLeft(int $left)
- * @method void setRight(int $right)
- * @method void setTop(int $top)
- * @method void setBottom(int $bottom)
+ * @method void setX(int $x)
+ * @method void setY(int $y)
+ * @method void setWidth(int $width)
+ * @method void setHeight(int $height)
  * @method void setConfidence(float $confidence)
  */
 class Face extends Entity implements JsonSerializable {
@@ -66,28 +66,28 @@ class Face extends Entity implements JsonSerializable {
 	 *
 	 * @var int
 	 * */
-	public $left;
-
-	/**
-	 * Right border of bounding rectangle for this face
-	 *
-	 * @var int
-	 * */
-	public $right;
+	public $x;
 
 	/**
 	 * Top border of bounding rectangle for this face
 	 *
 	 * @var int
 	 * */
-	public $top;
+	public $y;
 
 	/**
-	 * Bottom border of bounding rectangle for this face
+	 * Width of this face from the left border
 	 *
 	 * @var int
 	 * */
-	public $bottom;
+	public $width;
+
+	/**
+	 * Height of this face from top border
+	 *
+	 * @var int
+	 * */
+	public $height;
 
 	/**
 	 * Confidence of face detection obtained from the model
@@ -142,10 +142,10 @@ class Face extends Entity implements JsonSerializable {
 		$face = new Face();
 		$face->image      = $imageId;
 		$face->person     = null;
-		$face->left       = $faceFromModel['left'];
-		$face->right      = $faceFromModel['right'];
-		$face->top        = $faceFromModel['top'];
-		$face->bottom     = $faceFromModel['bottom'];
+		$face->x          = $faceFromModel['left'];
+		$face->y          = $faceFromModel['top'];
+		$face->width      = $faceFromModel['right'] - $faceFromModel['left'];
+		$face->height     = $faceFromModel['bottom'] - $faceFromModel['top'];
 		$face->confidence = $faceFromModel['detection_confidence'];
 		$face->landmarks  = isset($faceFromModel['landmarks']) ? $faceFromModel['landmarks'] : [];
 		$face->descriptor = isset($faceFromModel['descriptor']) ? $faceFromModel['descriptor'] : [];
@@ -153,33 +153,15 @@ class Face extends Entity implements JsonSerializable {
 		return $face;
 	}
 
-	/**
-	 * Gets face width
-	 *
-	 * @return int Face width
-	 */
-	public function width(): int {
-		return $this->right - $this->left;
-	}
-
-	/**
-	 * Gets face height
-	 *
-	 * @return int Face height
-	 */
-	public function height(): int {
-		return $this->bottom - $this->top;
-	}
-
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,
 			'image' => $this->image,
 			'person' => $this->person,
-			'left' => $this->left,
-			'right' => $this->right,
-			'top' => $this->top,
-			'bottom' => $this->bottom,
+			'x' => $this->x,
+			'y' => $this->y,
+			'width' => $this->width,
+			'height' => $this->height,
 			'confidence' => $this->confidence,
 			'is_groupable' => $this->isGroupable,
 			'landmarks' => $this->landmarks,

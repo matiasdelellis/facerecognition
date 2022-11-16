@@ -23,16 +23,28 @@
 
 namespace OCA\FaceRecognition\Controller;
 
-use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
-use OCA\FaceRecognition\Service\SettingsService;
+use OCP\IRequest;
+use OCP\Files\File;
+
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IRequest;
 
-class PersonApiController extends OCSController {
+use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\FaceMapper;
+
+use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\ImageMapper;
+
+use OCA\FaceRecognition\Db\Person;
+use OCA\FaceRecognition\Db\PersonMapper;
+
+use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Service\UrlService;
+
+class ApiController extends OCSController {
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -46,16 +58,21 @@ class PersonApiController extends OCSController {
 	/** @var SettingsService */
 	private $settingsService;
 
+	/** @var UrlService */
+	private $urlService;
+
 	/** @var string */
 	private $userId;
 
-	public function __construct($AppName,
-	                            IRequest        $request,
-	                            FaceMapper      $faceMapper,
-	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personmapper,
-	                            SettingsService $settingsService,
-	                            $UserId)
+	public function __construct(
+		$AppName,
+		IRequest        $request,
+		FaceMapper      $faceMapper,
+		ImageMapper     $imageMapper,
+		PersonMapper    $personmapper,
+		SettingsService $settingsService,
+		UrlService      $urlService,
+		$UserId)
 	{
 		parent::__construct($AppName, $request);
 
@@ -63,8 +80,13 @@ class PersonApiController extends OCSController {
 		$this->imageMapper     = $imageMapper;
 		$this->personMapper    = $personmapper;
 		$this->settingsService = $settingsService;
+		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
 	}
+
+	/**
+	 * API V1
+	 */
 
 	/**
 	 * Get all named persons

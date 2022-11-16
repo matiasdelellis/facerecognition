@@ -109,10 +109,10 @@ class FaceController extends Controller {
 		$img->loadFromFile($fileName);
 		$img->fixOrientation();
 
-		$x = $face->getLeft ();
-		$y = $face->getTop ();
-		$w = $face->getRight () - $x;
-		$h = $face->getBottom () - $y;
+		$x = $face->getX();
+		$y = $face->getY();
+		$w = $face->getWidth();
+		$h = $face->getHeight();
 
 		$padding = $h*0.35;
 		$x -= $padding;

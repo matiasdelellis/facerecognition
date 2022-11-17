@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.10-beta.2] - 2022-11-17
+### Added
+- Adds an API version 2 that theoretically is enough for any client.
+- Note that can change minimally until we release the stable version.
+
+### Fixed
+- Only fix tests.
+
+### Changed
+- Use x, y, width, height to save face detections on database.
+
 ## [0.9.10-beta.1] - 2022-09-27
 ### Added
 - Support Nextcloud 25

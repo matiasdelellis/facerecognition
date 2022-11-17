@@ -89,7 +89,7 @@ class UrlService {
 		return $node->getName();
 	}
 
-	public function getFilename(File $node): string {
+	public function getFilename(File $node): ?string {
 		return $this->userFolder->getRelativePath($node->getPath());
 	}
 

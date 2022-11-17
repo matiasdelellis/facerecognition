@@ -28,9 +28,7 @@ use OCP\IRequest;
 use OCP\Files\File;
 
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\ApiController as NCApiController;
 
 use OCA\FaceRecognition\Db\Face;
@@ -102,9 +100,9 @@ class ApiController extends NcApiController {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @return DataResponse
+	 * @return JSONResponse
 	 */
-	public function getPersons(): DataResponse {
+	public function getPersons(): JSONResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -135,7 +133,7 @@ class ApiController extends NcApiController {
 			$resp[] = $respPerson;
 		}
 
-		return new DataResponse($resp);
+		return new JSONResponse($resp);
 	}
 
 	/**
@@ -151,9 +149,9 @@ class ApiController extends NcApiController {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @return DataResponse
+	 * @return JSONResponse
 	 */
-	public function getFacesByPerson(string $name): DataResponse {
+	public function getFacesByPerson(string $name): JSONResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
@@ -177,7 +175,7 @@ class ApiController extends NcApiController {
 			}
 		}
 
-		return new DataResponse($resp);
+		return new JSONResponse($resp);
 	}
 
 	/**
@@ -188,6 +186,8 @@ class ApiController extends NcApiController {
 	 * @NoAdminRequired
 	 * @CORS
 	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
 	 */
 	public function getPersonsV2($thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -216,6 +216,7 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
+	 * @return JSONResponse
 	 */
 	public function getPerson(string $personName, $thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -256,7 +257,7 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
-	 * @return DataResponse
+	 * @return JSONResponse
 	 */
 	public function updatePerson(string $personName, $name = null, $visible = null): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -297,13 +298,13 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
+	 * @return JSONResponse
 	 */
 	public function updateCluster(int $clusterId, $name = null, $visible = null): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$modelId = $this->settingsService->getCurrentFaceModel();
-
+		$cluster = [];
 		if (!is_null($name)) {
 			$cluster = $this->personMapper->find($this->userId, $clusterId);
 			$cluster->setName($name);
@@ -326,6 +327,7 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
+	 * @return JSONResponse
 	 */
 	public function discoverPerson($minimum_count = 2, $max_previews = 40, $thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -377,6 +379,7 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
+	 * @return JSONResponse
 	 */
 	public function autocomplete(string $query, $thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
@@ -408,13 +411,14 @@ class ApiController extends NcApiController {
 	 * @CORS
 	 * @NoCSRFRequired
 	 *
+	 * @return JSONResponse
 	 */
 	public function detachFace(int $faceId, $name = null): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$face = $this->faceMapper->find($face_id);
-		$person = $this->personMapper->detachFace($face->getPerson(), $face_id, $name);
+		$face = $this->faceMapper->find($faceId);
+		$person = $this->personMapper->detachFace($face->getPerson(), $faceId, $name);
 		return new JSONResponse($person, Http::STATUS_OK);
 	}
 

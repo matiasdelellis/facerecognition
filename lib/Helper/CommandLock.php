@@ -33,6 +33,9 @@ class CommandLock {
 		return sys_get_temp_dir() . '/' . 'nextcloud_face_recognition_lock.pid';
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function IsLockedBy(): string {
 		$fp = fopen(self::LockFile(), 'r');
 		$lockDescription = fread($fp, filesize(self::LockFile()));
@@ -40,7 +43,10 @@ class CommandLock {
 		return $lockDescription;
 	}
 
-	public static function lock(string $lockDescription) {
+	/**
+	 * @return resource|null
+	 */
+	public static function lock(string $lockDescription): ?resource {
 		$fp = fopen(self::LockFile(), 'c');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;

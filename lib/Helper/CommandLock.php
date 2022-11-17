@@ -43,10 +43,7 @@ class CommandLock {
 		return $lockDescription;
 	}
 
-	/**
-	 * @return resource|null
-	 */
-	public static function lock(string $lockDescription): ?resource {
+	public static function lock(string $lockDescription) {
 		$fp = fopen(self::LockFile(), 'c');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;

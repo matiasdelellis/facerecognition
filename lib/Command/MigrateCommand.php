@@ -297,10 +297,10 @@ class MigrateCommand extends Command {
 
 	private function getFaceRect(Face $face): array {
 		$rect = [];
-		$rect['left'] = (int)$face->getLeft();
-		$rect['right'] = (int)$face->getRight();
-		$rect['top'] =  (int)$face->getTop();
-		$rect['bottom'] = (int)$face->getBottom();
+		$rect['left']   = (int)$face->getX();
+		$rect['right']  = (int)$face->getX() + $face->getWidth();
+		$rect['top']    = (int)$face->getY();
+		$rect['bottom'] = (int)$face->getY() + $face->getHeight();
 		$rect['detection_confidence'] = $face->getConfidence();
 		return $rect;
 	}

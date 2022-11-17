@@ -45,7 +45,7 @@ class ExternalModel implements IModel {
 	/** @var String model api key */
 	private $modelApiKey = null;
 
-	/** @var String preferred mimetype */
+	/** @var String|null preferred mimetype */
 	private $preferredMimetype = null;
 
 	/** @var int maximun image area */

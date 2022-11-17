@@ -23,8 +23,6 @@ declare(strict_types=1);
 
 namespace OCA\FaceRecognition\Album;
 
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use OCA\Photos\Exception\AlreadyInAlbumException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files\IMimeTypeLoader;
@@ -116,7 +114,7 @@ class AlbumMapper {
 
 	/**
 	 * @param int $albumId
-	 * @return ids[]
+	 * @return int[]
 	 */
 	public function getFiles(int $albumId): array {
 		$query = $this->connection->getQueryBuilder();
@@ -130,26 +128,6 @@ class AlbumMapper {
 			$result[] = (int)$row['file_id'];
 		}
 		return $result;
-	}
-
-	/**
-	 * @param int $albumId
-	 * @param int $fileId
-	 * @return bool
-	 */
-	public function hasFile(int $albumId, int $fileId): bool {
-		$qb = $this->db->getQueryBuilder();
-		$query = $this->connection->getQueryBuilder();
-		$query->select('file_id')
-			->from('photos_albums_files')
-			->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId)));
-
-		try {
-			$row = $this->findEntity($qb);
-			return $row['file_id'] > 0;
-		} catch (DoesNotExistException $e) {
-			return false;
-		}
 	}
 
 	public function addFile(int $albumId, int $fileId, string $owner): void {

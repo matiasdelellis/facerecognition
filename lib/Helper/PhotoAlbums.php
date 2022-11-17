@@ -94,7 +94,7 @@ class PhotoAlbums {
 
 			/* Delete old photos. Maybe corrections. */
 			$imagesToDelete = array_diff ($albumImages, $personImages);
-			foreach ($imagesToAdd as $image) {
+			foreach ($imagesToDelete as $image) {
 				$this->albumMapper->removeFile($albumId, $image);
 			}
 

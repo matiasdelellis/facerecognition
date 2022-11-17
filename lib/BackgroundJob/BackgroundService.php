@@ -37,9 +37,7 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
-use OCA\FaceRecognition\BackgroundJob\Tasks\LockTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
-use OCA\FaceRecognition\BackgroundJob\Tasks\UnlockTask;
 
 use Symfony\Component\Console\Output\OutputInterface;
 

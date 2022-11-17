@@ -108,7 +108,7 @@ class ApiController extends NcApiController {
 		$resp = array();
 
 		if (!$userEnabled)
-			return new DataResponse($resp);
+			return new JSONResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
@@ -157,7 +157,7 @@ class ApiController extends NcApiController {
 		$resp = array();
 
 		if (!$userEnabled)
-			return new DataResponse($resp);
+			return new JSONResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 

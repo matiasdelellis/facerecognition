@@ -94,7 +94,7 @@ interface IModel {
 	 * Detect landmarks and compute descriptor of an face over an image.
 	 *
 	 * @param string $imagePath Image path to analyze
-	 * @param array with "top", "bottom", "left", "right" of an face in that imagePath
+	 * @param array $face with "top", "bottom", "left", "right" of an face in that imagePath
 	 * @return array as and copy of that face adding the values of the "landmarks" and the "descriptor"
 	 */
 	public function compute(string $imagePath, array $face): array;

@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.10] - 2022-12-12
+- Just bump version, to remove beta label and allow installing in NC25
+- **Gratitude**: @pulsejet, very kindly accept the integration of this
+  application into your super cool photo gallery called [Memories](https://github.com/pulsejet/memories).
+  If you didn't know about this project, I invite you to give it a try,
+  that will pleasantly surprise you. :tada:
+  Thanks again. :smiley:
+- New Russian translation thanks to Regardo.
+
 ## [0.9.10-beta.2] - 2022-11-17
 ### Added
 - Adds an API version 2 that theoretically is enough for any client.

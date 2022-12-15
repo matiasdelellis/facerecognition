@@ -100,8 +100,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 				continue;
 			}
 
-			$force = $this->context->propertyBag['crawl_missing'];
-			if (!$force && $this->settingsService->getUserFullScanDone($user)) {
+			if (!$this->forcedCrawlMissing() && $this->settingsService->getUserFullScanDone($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug('Skipping full image scan for user ' . $user);
 				continue;
@@ -157,6 +156,14 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		return $insertedImages;
+	}
+
+	private function forcedCrawlMissing(): bool {
+		if ((array_key_exists('crawl_missing', $this->context->propertyBag)) &&
+		    (!is_null($this->context->propertyBag['crawl_missing']))) {
+			return ($this->context->propertyBag['crawl_missing'] === true);
+		}
+		return false;
 	}
 
 }

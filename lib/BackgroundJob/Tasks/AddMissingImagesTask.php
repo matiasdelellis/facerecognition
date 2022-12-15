@@ -100,7 +100,8 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 				continue;
 			}
 
-			if ($this->settingsService->getUserFullScanDone($user)) {
+			$force = $this->context->propertyBag['crawl_missing'];
+			if (!$force && $this->settingsService->getUserFullScanDone($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug('Skipping full image scan for user ' . $user);
 				continue;

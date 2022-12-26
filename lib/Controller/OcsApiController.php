@@ -44,7 +44,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 
-class OCSApiController extends OCSController {
+class OcsApiController extends OCSController {
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -103,7 +103,7 @@ class OCSApiController extends OCSController {
 	 *
 	 * @return DataResponse
 	 */
-	public function getPersons(): DataResponse {
+	public function getPersonsV1(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.11] - 2022-12-28
+- Fix migrations on PostgreSQL. Issue #619 and #615
+- Fix OCS Api (API V1). Thanks to nkming2
+
 ## [0.9.10] - 2022-12-12
 - Just bump version, to remove beta label and allow installing in NC25
 - **Gratitude**: @pulsejet, very kindly accept the integration of this

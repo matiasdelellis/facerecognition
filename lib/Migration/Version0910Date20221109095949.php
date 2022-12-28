@@ -40,20 +40,28 @@ class Version0910Date20221109095949 extends SimpleMigrationStep {
 		if ($table->hasColumn('width'))
 			return null;
 
+		/**
+		 * NOTE: These columns should just be notnull.
+		 * In this migration add an default, since the previous rows would be null and cannot be migrated.
+		 */
 		$table->addColumn('x', 'integer', [
 			'notnull' => true,
+			'default' => -1,
 			'length' => 4,
 		]);
 		$table->addColumn('y', 'integer', [
 			'notnull' => true,
+			'default' => -1,
 			'length' => 4,
 		]);
 		$table->addColumn('width', 'integer', [
 			'notnull' => true,
+			'default' => -1,
 			'length' => 4,
 		]);
 		$table->addColumn('height', 'integer', [
 			'notnull' => true,
+			'default' => -1,
 			'length' => 4,
 		]);
 

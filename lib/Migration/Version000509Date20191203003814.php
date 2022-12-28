@@ -141,19 +141,19 @@ class Version000509Date20191203003814 extends SimpleMigrationStep {
 				'notnull' => false,
 				'length' => 4,
 			]);
-			$table->addColumn('left', 'integer', [
+			$table->addColumn('x', 'integer', [
 				'notnull' => true,
 				'length' => 4,
 			]);
-			$table->addColumn('right', 'integer', [
+			$table->addColumn('y', 'integer', [
 				'notnull' => true,
 				'length' => 4,
 			]);
-			$table->addColumn('top', 'integer', [
+			$table->addColumn('width', 'integer', [
 				'notnull' => true,
 				'length' => 4,
 			]);
-			$table->addColumn('bottom', 'integer', [
+			$table->addColumn('height', 'integer', [
 				'notnull' => true,
 				'length' => 4,
 			]);

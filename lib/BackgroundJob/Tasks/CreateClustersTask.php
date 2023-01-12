@@ -153,19 +153,30 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 		// Ok. If we are here, the clusters must be recreated.
 		//
-		$faces = $this->faceMapper->getFaces($userId, $modelId);
+
+		$min_face_size = $this->settingsService->getMinimumFaceSize();
+		$min_confidence = $this->settingsService->getMinimumConfidence();
+
+		$faces = array_merge(
+			$this->faceMapper->getGroupableFaces($userId, $modelId, $min_face_size, $min_confidence),
+			$this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence)
+		);
+
 		$this->logInfo(count($faces) . ' faces found for clustering');
 
 		// Cluster is associative array where key is person ID.
 		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
+
 		$currentClusters = $this->getCurrentClusters($faces);
+
 		$newClusters = $this->getNewClusters($faces);
-		$this->logInfo(count($newClusters) . ' persons found after clustering');
+		$this->logInfo(count($newClusters) . ' clusters found after clustering');
 
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
+
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
 		// Remove all orphaned persons (those without any faces)
@@ -280,17 +291,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if ((!$face1->isGroupable) ||
-				    ($face1->confidence < $min_confidence) ||
-				    (max($face1->height, $face1->width) < $min_face_size)) {
+				if (!isset($face1->descriptor)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if ((!$face2->isGroupable) ||
-					    ($face2->confidence < $min_confidence) ||
-					    (max($face2->height, $face2->width) < $min_face_size)) {
+					if (!isset($face2->descriptor)) {
 						continue;
 					}
 					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
@@ -303,17 +310,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if ((!$face1->isGroupable) ||
-				    ($face1->confidence < $min_confidence) ||
-				    (max($face1->height, $face1->width) < $min_face_size)) {
+				if (!isset($face1->descriptor)) {
 					$edges[] = array($i, $i);
 					continue;
 				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if ((!$face2->isGroupable) ||
-					    ($face2->confidence < $min_confidence) ||
-					    (max($face2->height, $face2->width) < $min_face_size)) {
+					if (!isset($face2->descriptor)) {
 						continue;
 					}
 					$distance = Euclidean::distance($face1->descriptor, $face2->descriptor);

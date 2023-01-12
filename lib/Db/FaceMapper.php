@@ -145,6 +145,46 @@ class FaceMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.person', 'f.descriptor')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->gte('width', $qb->createParameter('min_size')))
+			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
+			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
+			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
+			->setParameter('user', $userId)
+			->setParameter('model', $model)
+			->setParameter('min_size', $minSize)
+			->setParameter('min_confidence', $minConfidence)
+			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
+		return $this->findEntities($qb);
+	}
+
+	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.person')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->lt('width', $qb->createParameter('min_size')),
+				$qb->expr()->lt('height', $qb->createParameter('min_size')),
+				$qb->expr()->lt('confidence', $qb->createParameter('min_confidence')),
+				$qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable'))
+			))
+			->setParameter('user', $userId)
+			->setParameter('model', $model)
+			->setParameter('min_size', $minSize)
+			->setParameter('min_confidence', $minConfidence)
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
+		return $this->findEntities($qb);
+	}
+
 	/**
 	 * @param int|null $limit
 	 */

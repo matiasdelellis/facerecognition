@@ -115,6 +115,7 @@ class Imaginary {
 					'stripmeta' => 'true',
 					'type' => $type,
 					'norotation' => 'true',
+					'force' => 'true'
 				]
 			]
 		];

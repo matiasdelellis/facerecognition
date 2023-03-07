@@ -1,5 +1,5 @@
 <?php
-	script('facerecognition', 'admin');
+	script('facerecognition', 'facerecognition-admin');
 	style('facerecognition', 'facerecognition');
 ?>
 

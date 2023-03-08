@@ -79,7 +79,12 @@ class Imaginary {
 			return [];
 		}
 
-		return json_decode($response->getBody(), true);
+		// Rotates the size, since it is important and Imaginary do not do that.
+		$info = json_decode($response->getBody(), true);
+		return [
+			'width'  => $info['orientation'] < 5 ? $info['width']  : $info['height'],
+			'height' => $info['orientation'] < 5 ? $info['height'] : $info['width']
+		];
 	}
 
 	/**

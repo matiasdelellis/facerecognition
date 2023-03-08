@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2022, Matias De lellis
+ * @copyright Copyright (c) 2022-2023, Matias De lellis
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -52,6 +52,9 @@ class Imaginary {
 		return ($imaginaryUrl !== 'invalid');
 	}
 
+	/**
+	 * @return array Returns the array with the size of image.
+	 */
 	public function getInfo(string $filepath): array {
 
 		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
@@ -59,6 +62,7 @@ class Imaginary {
 
 		$httpClient = $this->service->newClient();
 
+		$options = [];
 		$options['multipart'] = [[
 			'name' => 'file',
 			'contents' => file_get_contents($filepath),
@@ -94,9 +98,6 @@ class Imaginary {
 
 		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
 		$imaginaryUrl = rtrim($imaginaryUrl, '/');
-
-		// Object store
-		$stream = fopen($filepath, 'r');
 
 		$httpClient = $this->service->newClient();
 

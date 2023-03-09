@@ -39,8 +39,8 @@ class LoadSidebarListener implements IEventListener {
 		}
 
 		Util::addScript('facerecognition', 'vendor/autocomplete');
-		Util::addScript('facerecognition', 'fr-dialogs');
-		Util::addScript('facerecognition', 'personssidebar');
+		Util::addScript('facerecognition', 'facerecognition-dialogs');
+		Util::addScript('facerecognition', 'facerecognition-sidebar');
 		Util::addStyle('facerecognition', 'fr-dialogs');
 	}
 

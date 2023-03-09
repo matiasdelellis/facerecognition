@@ -64,7 +64,10 @@ js/vendor/egg.js:
 	mkdir -p js/vendor
 	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O js/vendor/egg.js
 
-javascript-deps: js/vendor/handlebars.js js/vendor/autocomplete.js js/vendor/lozad.js js/vendor/egg.js
+js/vendor/facerecognition-dialogs.js:
+	cp src/dialogs.js -f js/facerecognition-dialogs.js
+
+javascript-deps: js/vendor/handlebars.js js/vendor/autocomplete.js js/vendor/lozad.js js/vendor/egg.js js/vendor/facerecognition-dialogs.js
 
 vendor-deps: composer javascript-deps
 
@@ -102,9 +105,9 @@ build-vue:
 	npm run build
 
 js-templates:
-	node_modules/handlebars/bin/handlebars js/templates -f js/templates.js
+	node_modules/handlebars/bin/handlebars src/templates -f js/facerecognition-templates.js
 
-build: test-bin-deps vendor-deps js-templates build-vue
+build: test-bin-deps build-vue vendor-deps js-templates
 	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 
@@ -133,7 +136,7 @@ appstore:
 		-C $(sign_dir) $(app_name)
 	openssl dgst -sha512 -sign $(cert_dir)/$(app_name).key $(build_dir)/$(app_name).tar.gz | openssl base64
 
-test: build
+test: composer
 	./vendor/bin/phpunit --coverage-clover clover.xml -c phpunit.xml
 
 clean: l10n-clean

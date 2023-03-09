@@ -86,6 +86,12 @@ class BackgroundCommand extends Command {
 				'Defer the face clustering at the end of the analysis to get persons in a simple execution of the command.'
 			)
 			->addOption(
+				'crawl-missing',
+				null,
+				InputOption::VALUE_NONE,
+				'Crawl for missing images for each user and insert them in DB.'
+			)
+			->addOption(
 				'timeout',
 				't',
 				InputOption::VALUE_REQUIRED,
@@ -144,6 +150,10 @@ class BackgroundCommand extends Command {
 		//
 		$deferClustering = $input->getOption('defer-clustering');
 
+		// Extract find images
+		//
+		$crawlMissing = $input->getOption('crawl-missing');
+
 		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
 		//
 		$verbose = $input->getOption('verbose');
@@ -158,7 +168,7 @@ class BackgroundCommand extends Command {
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $deferClustering);
+		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $crawlMissing, $deferClustering);
 
 		// Release obtained lock
 		//

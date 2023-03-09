@@ -79,7 +79,10 @@
 	</div>
 </template>
 <script>
-import Tab from '@nextcloud/vue/dist/Components/AppSidebarTab'
+
+import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar'
+import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab'
+
 import Axios from '@nextcloud/axios'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 
@@ -90,7 +93,8 @@ export default {
 	name: 'PersonsTabApp',
 
 	components: {
-		Tab,
+		NcAppSidebar,
+		NcAppSidebarTab,
 		PersonRow,
 	},
 

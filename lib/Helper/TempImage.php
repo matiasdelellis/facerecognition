@@ -26,8 +26,12 @@ namespace OCA\FaceRecognition\Helper;
 
 use OCP\Image;
 use OCP\ITempManager;
+use OCA\FaceRecognition\Helper\Imaginary;
 
 class TempImage extends Image {
+
+	/** @var Imaginary */
+	private $imaginary;
 
 	/** @var string */
 	private $imagePath;
@@ -66,6 +70,7 @@ class TempImage extends Image {
 		$this->minImageSide      = $minImageSide;
 
 		$this->tempManager       = \OC::$server->getTempManager();
+		$this->imaginary         = new Imaginary();
 
 		$this->prepareImage();
 	}
@@ -108,23 +113,52 @@ class TempImage extends Image {
 	 *
 	 */
 	private function prepareImage() {
-		$this->loadFromFile($this->imagePath);
-		$this->fixOrientation();
 
-		if (!$this->valid()) {
-			throw new \RuntimeException("Image is not valid, probably cannot be loaded");
+		if ($this->imaginary->isEnabled()) {
+			$fileInfo = $this->imaginary->getInfo($this->imagePath);
+
+			$widthOrig = $fileInfo['width'];
+			$heightOrig = $fileInfo['height'];
+			if (($widthOrig < $this->minImageSide) ||
+			    ($heightOrig < $this->minImageSide)) {
+				$this->skipped = true;
+				return;
+			}
+
+			$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
+
+			$newWidth = intval(round($widthOrig * $scaleFactor));
+			$newHeight = intval(round($heightOrig * $scaleFactor));
+
+			$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $this->preferredMimeType);
+			$this->loadFromData($resizedResource);
+
+			if (!$this->valid()) {
+				throw new \RuntimeException("Imaginary image response is not valid.");
+			}
+
+			$this->ratio = 1 / $scaleFactor;
+		}
+		else {
+			$this->loadFromFile($this->imagePath);
+			$this->fixOrientation();
+
+			if (!$this->valid()) {
+				throw new \RuntimeException("Local image is not valid, probably cannot be loaded");
+			}
+
+			if ((imagesx($this->resource()) < $this->minImageSide) ||
+			    (imagesy($this->resource()) < $this->minImageSide)) {
+				$this->skipped = true;
+				return;
+			}
+
+			$this->ratio = $this->resizeOCImage();
 		}
 
-		if ((imagesx($this->resource()) < $this->minImageSide) ||
-		    (imagesy($this->resource()) < $this->minImageSide)) {
-			$this->skipped = true;
-			return;
-		}
-
-		$this->ratio = $this->resizeImage();
 		$this->tempPath = $this->tempManager->getTemporaryFile();
-
 		$this->save($this->tempPath, $this->preferredMimeType);
+
 	}
 
 	/**
@@ -132,7 +166,7 @@ class TempImage extends Image {
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function resizeImage(): float {
+	private function resizeOCImage(): float {
 		$widthOrig = imagesx($this->resource());
 		$heightOrig = imagesy($this->resource());
 
@@ -141,8 +175,7 @@ class TempImage extends Image {
 			throw new \RuntimeException($message);
 		}
 
-		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
-		$scaleFactor = sqrt($areaRatio);
+		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
 
 		$newWidth = intval(round($widthOrig * $scaleFactor));
 		$newHeight = intval(round($heightOrig * $scaleFactor));
@@ -153,6 +186,16 @@ class TempImage extends Image {
 		}
 
 		return 1 / $scaleFactor;
+	}
+
+	/**
+	 * Resizes the image to reach max image area, but preserving ratio.
+	 *
+	 * @return float Ratio of resize. 1 if there was no resize
+	 */
+	private function getResizeRatio($widthOrig, $heightOrig): float {
+		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
+		return sqrt($areaRatio);
 	}
 
 }

@@ -105,7 +105,7 @@ class AlbumMapper {
 		$query->executeStatement();
 
 		$query = $this->connection->getQueryBuilder();
-		$query->delete("photos_collaborators")
+		$query->delete("photos_albums_collabs")
 			->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
 		$query->executeStatement();
 

@@ -16,7 +16,7 @@
 - **🚀 Build your own thing:** FaceRecognition app is just a basic building block. Through FaceRecognition API, you can build your advanced scenarios - automatically add tags to images, connect contacts and persons, share images from specific person… We want to hear your ideas!
 ]]>
 	</description>
-	<version>0.9.11</version>
+	<version>0.9.12</version>
 	<licence>agpl</licence>
 	<author>Matias De lellis</author>
 	<author>Branko Kokanovic</author>
@@ -33,10 +33,10 @@
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-photos-integration.jpeg</screenshot>
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-assign-initial-name.jpeg</screenshot>
 	<dependencies>
-		<php min-version="7.4" max-version="8.2" />
+		<php min-version="7.4" max-version="8.1" />
 		<lib>pdlib</lib>
 		<lib>bz2</lib>
-		<nextcloud min-version="25" max-version="26"/>
+		<nextcloud min-version="25" max-version="25"/>
 	</dependencies>
 	<repair-steps>
 		<uninstall>

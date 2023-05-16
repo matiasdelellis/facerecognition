@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.12] - 2023-03-25
+- Add support for using imaginary to create the temporary files.
+  This add support for images heic, tiff, and many more. Issue #494,
+  #215 and #348 among many other reports.
+- Memory optimization in face clustering task. Part of issue #339
+  In my tests, it reduces between 33% and 39% of memory, and as an
+  additional improvement, there was also a reduction in time of around
+  19%. There are still several improvements to be made, but it is a
+  good step.
+- Modernizes the construction of the javascript code. Issue #613
+- Fix Unhandled exception and Albums are not being created. Issue #634
+
 ## [0.9.11] - 2022-12-28
 - Fix migrations on PostgreSQL. Issue #619 and #615
 - Fix OCS Api (API V1). Thanks to nkming2

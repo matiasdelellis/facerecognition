@@ -194,6 +194,9 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
+			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
+				$this->settingsService->setMinimumFacesInCluster($value);
+				break;
 			case SettingsService::OBFUSCATE_FACE_THUMBS_KEY:
 				$this->settingsService->setObfuscateFaces(!$this->settingsService->getObfuscateFaces());
 				break;
@@ -226,6 +229,9 @@ class SettingsController extends Controller {
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
+				break;
+			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
+				$value = $this->settingsService->getMinimumFacesInCluster();
 				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();

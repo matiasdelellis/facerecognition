@@ -329,13 +329,15 @@ class ApiController extends NcApiController {
 	 *
 	 * @return JSONResponse
 	 */
-	public function discoverPerson($minimum_count = 2, $max_previews = 40, $thumb_size = 128): JSONResponse {
+	public function discoverPerson($minimum_count = NULL, $max_previews = 40, $thumb_size = 128): JSONResponse {
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
 		$discoveries = [];
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
+		if (is_null($minimum_count))
+			$minimum_count = $this->settingsService->getMinimumFacesInCluster();
 
 		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
 		foreach ($clusters as $cluster) {

@@ -215,6 +215,59 @@ $(document).ready(function() {
     });
 
     /*
+     * Min Cluster Size
+     */
+    function getMinFacesInCluster() {
+        $.ajax({
+            type: 'GET',
+            url: OC.generateUrl('apps/facerecognition/getappvalue'),
+            data: {
+                'type': 'min_faces_in_cluster',
+            },
+            success: function (data) {
+                if (data.status === state.OK) {
+                    var no_faces = parseInt(data.value);
+                    $('#min-no-faces-range').val(no_faces);
+                    $('#min-no-faces-value').html(no_faces);
+                }
+            }
+        });
+    }
+
+    $('#min-no-faces-range').on('input', function() {
+        $('#min-no-faces-value').html(this.value);
+        $('#restore-min-no-faces').show();
+        $('#save-min-no-faces').show();
+    });
+
+    $('#restore-min-no-faces').on('click', function(event) {
+        event.preventDefault();
+        getMinFacesInCluster();
+
+        $('#restore-min-no-faces').hide();
+        $('#save-min-no-faces').hide();
+    });
+
+    $('#save-min-no-faces').on('click', function(event) {
+        event.preventDefault();
+        var no_faces = $('#min-no-faces-range').val().toString();
+        $.ajax({
+            type: 'POST',
+            url: OC.generateUrl('apps/facerecognition/setappvalue'),
+            data: {
+                'type': 'min_faces_in_cluster',
+                'value': no_faces
+            },
+            success: function (data) {
+                if (data.status === state.SUCCESS) {
+                    OC.Notification.showTemporary(t('facerecognition', 'Done'));
+                    $('#restore-min-no-faces').hide();
+                    $('#save-min-no-faces').hide();
+                }
+            }
+        });
+    });
+    /*
      * Utils
      */
     function getFourByThreeRelation(area) {
@@ -230,6 +283,7 @@ $(document).ready(function() {
     getImageArea();
     getSensitivity();
     getMinConfidence();
+    getMinFacesInCluster();
 
     checkProgress();
 

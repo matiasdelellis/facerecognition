@@ -57,6 +57,20 @@
 		</p>
 		<br>
 		<h3>
+			<?php p($l->t('Minimum of faces in cluster'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('The minimum number of faces that a cluster must have to display it to the user.'));?></p>
+		<p class="settings-hint"><?php p($l->t('These faces clusters will not be shown as a suggestion, but can always be renamed eventually in the side panel.'));?></p>
+		<p class="settings-ranged">
+			<label for="min-no-faces"><?php p($l->t('Less faces'));?></label>
+			<span><input type="range" id="min-no-faces-range" min="1" max="20" value="5" step="1" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<label for="min-no-face"><?php p($l->t('More faces'));?></label>
+			<span id="min-no-faces-value"class="span-highlighted">...</span>
+			<a id="restore-min-no-faces" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-min-no-faces" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
 			<?php p($l->t('Configuration information'));?>
 			<span class="status success<?php if(!($_['is-configured'])):?> error<?php endif;?>"></span>
 		</h3>

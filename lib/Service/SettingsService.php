@@ -75,6 +75,12 @@ class SettingsService {
 	const DEFAULT_MINIMUM_FACE_SIZE = '40';
 	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
 
+	/** Minimum of faces in cluster */
+	const MINIMUM_FACES_IN_CLUSTER_KEY = 'min_faces_in_cluster';
+	const MINIMUM_MINIMUM_FACES_IN_CLUSTER = '1';
+	const DEFAULT_MINIMUM_FACES_IN_CLUSTER = '5';
+	const MAXIMUM_MINIMUM_FACES_IN_CLUSTER = '20';
+
 	/** User setting what indicates if has the analysis enabled */
 	const USER_ENABLED_KEY = 'enabled';
 	const DEFAULT_USER_ENABLED = 'false';
@@ -282,6 +288,14 @@ class SettingsService {
 
 	public function setMinimumConfidence($confidence): void {
 		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
+	}
+
+	public function getMinimumFacesInCluster(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, self::DEFAULT_MINIMUM_FACES_IN_CLUSTER));
+	}
+
+	public function setMinimumFacesInCluster($no_faces): void {
+		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, $no_faces);
 	}
 
 	/**

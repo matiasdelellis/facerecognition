@@ -174,13 +174,15 @@ class ClusterController extends Controller {
 			return new DataResponse($resp);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
+		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-		$persons = $this->personMapper->findUnassigned($this->userId, $modelId);
-		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId, 40);
-			if (count($personFaces) === 1)
+		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+		foreach ($clusters as $cluster) {
+			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			if (count($clusterSize) < $minClusterSize)
 				continue;
 
+			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
 			$faces = [];
 			foreach ($personFaces as $personFace) {
 				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
@@ -196,7 +198,7 @@ class ClusterController extends Controller {
 			}
 
 			$cluster = [];
-			$cluster['count'] = count($personFaces);
+			$cluster['count'] = $clusterSize;
 			$cluster['id'] = $person->getId();
 			$cluster['faces'] = $faces;
 			$resp['clusters'][] = $cluster;

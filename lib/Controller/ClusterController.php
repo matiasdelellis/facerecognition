@@ -179,7 +179,7 @@ class ClusterController extends Controller {
 		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
 			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
-			if (count($clusterSize) < $minClusterSize)
+			if ($clusterSize < $minClusterSize)
 				continue;
 
 			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
@@ -199,7 +199,7 @@ class ClusterController extends Controller {
 
 			$cluster = [];
 			$cluster['count'] = $clusterSize;
-			$cluster['id'] = $person->getId();
+			$cluster['id'] = $cluster->getId();
 			$cluster['faces'] = $faces;
 			$resp['clusters'][] = $cluster;
 		}

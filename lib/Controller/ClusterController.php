@@ -197,11 +197,11 @@ class ClusterController extends Controller {
 				$faces[] = $face;
 			}
 
-			$cluster = [];
-			$cluster['count'] = $clusterSize;
-			$cluster['id'] = $cluster->getId();
-			$cluster['faces'] = $faces;
-			$resp['clusters'][] = $cluster;
+			$entry = [];
+			$entry['count'] = $clusterSize;
+			$entry['id'] = $cluster->getId();
+			$entry['faces'] = $faces;
+			$resp['clusters'][] = $entry;
 		}
 
 		return new DataResponse($resp);

@@ -281,8 +281,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getNewClusters(array $faces): array {
 		// Clustering parameters
 		$sensitivity = $this->settingsService->getSensitivity();
-		$min_confidence = $this->settingsService->getMinimumConfidence();
-		$min_face_size = $this->settingsService->getMinimumFaceSize();
 
 		// Create edges for chinese whispers
 		$edges = array();

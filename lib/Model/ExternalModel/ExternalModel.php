@@ -39,14 +39,14 @@ class ExternalModel implements IModel {
 	/** This model practically does not consume memory. Directly set the limits. */
 	const MINIMUM_MEMORY_REQUIREMENTS = 128 * 1024 * 1024;
 
-	/** @var String model api endpoint */
+	/** @var String|null model api endpoint */
 	private $modelUrl = null;
 
-	/** @var String model api key */
+	/** @var String|null model api key */
 	private $modelApiKey = null;
 
-	/** @var String preferred mimetype */
-	private $preferredMimetype = 'image/png';
+	/** @var String|null preferred mimetype */
+	private $preferredMimetype = null;
 
 	/** @var int maximun image area */
 	private $maximumImageArea = -1;
@@ -104,14 +104,14 @@ class ExternalModel implements IModel {
 
 	public function getMaximumArea(): int {
 		if ($this->maximumImageArea < 0) {
-			$this->open();
+			throw new \Exception('It seems that the model did not open correctly');
 		}
 		return $this->maximumImageArea;
 	}
 
 	public function getPreferredMimeType(): string {
 		if (is_null($this->preferredMimetype)) {
-			$this->open();
+			throw new \Exception('It seems that the model did not open correctly');
 		}
 		return $this->preferredMimetype;
 	}

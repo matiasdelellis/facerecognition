@@ -45,8 +45,8 @@ class ExternalModel implements IModel {
 	/** @var String model api key */
 	private $modelApiKey = null;
 
-	/** @var String|null preferred mimetype */
-	private $preferredMimetype = null;
+	/** @var String preferred mimetype */
+	private $preferredMimetype = 'image/png';
 
 	/** @var int maximun image area */
 	private $maximumImageArea = -1;
@@ -137,11 +137,11 @@ class ExternalModel implements IModel {
 		}
 
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/open');
-		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: '  . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ' . $this->modelApiKey]);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
-		if ($response === false) {
+		if (is_bool($response)) {
 			throw new \Exception('Cannot connect to external model: ' . curl_error($ch));
 		}
 
@@ -174,7 +174,7 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
-		if ($response === false) {
+		if (is_bool($response)) {
 			throw new \Exception('External model dont response: ' . curl_error($ch));
 		}
 
@@ -207,7 +207,7 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
-		if ($response === false) {
+		if (is_bool($response)) {
 			throw new \Exception('External model dont response: ' . curl_error($ch));
 		}
 

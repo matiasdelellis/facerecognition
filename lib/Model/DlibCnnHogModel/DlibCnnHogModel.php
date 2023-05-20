@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020-2023, Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -22,8 +22,6 @@
  */
 
 namespace OCA\FaceRecognition\Model\DlibCnnHogModel;
-
-use OCP\IDBConnection;
 
 use OCA\FaceRecognition\Helper\FaceRect;
 
@@ -54,15 +52,12 @@ class DlibCnnHogModel implements IModel {
 	/**
 	 * DlibCnnHogModel __construct.
 	 *
-	 * @param IDBConnection $connection
 	 * @param DlibCnn5Model $dlibCnn5Model
 	 * @param DlibHogModel $dlibHogModel
 	 */
-	public function __construct(IDBConnection   $connection,
-	                            DlibCnn5Model   $dlibCnn5Model,
+	public function __construct(DlibCnn5Model   $dlibCnn5Model,
 	                            DlibHogModel    $dlibHogModel)
 	{
-		$this->connection       = $connection;
 		$this->dlibCnn5Model    = $dlibCnn5Model;
 		$this->dlibHogModel     = $dlibHogModel;
 	}
@@ -115,30 +110,7 @@ class DlibCnnHogModel implements IModel {
 	 * @return void
 	 */
 	public function install() {
-		if ($this->isInstalled()) {
-			return;
-		}
-
-		// Insert on database and enable it
-		$qb = $this->connection->getQueryBuilder();
-		$query = $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('facerecog_models')
-			->where($qb->expr()->eq('id', $qb->createParameter('id')))
-			->setParameter('id', $this->getId());
-		$resultStatement = $query->execute();
-		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
-		$resultStatement->closeCursor();
-
-		if ((int)$data[0] <= 0) {
-			$query = $this->connection->getQueryBuilder();
-			$query->insert('facerecog_models')
-			->values([
-				'id' => $query->createNamedParameter($this->getId()),
-				'name' => $query->createNamedParameter($this->getName()),
-				'description' => $query->createNamedParameter($this->getDescription())
-			])
-			->execute();
-		}
+		// This model reuses models 1 and 3 and should not install anything.
 	}
 
 	/**

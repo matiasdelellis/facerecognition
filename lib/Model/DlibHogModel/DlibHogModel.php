@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2021, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2021-2023, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -24,11 +24,10 @@
 
 namespace OCA\FaceRecognition\Model\DlibHogModel;
 
-use OCP\IDBConnection;
-
 use OCA\FaceRecognition\Helper\MemoryLimits;
 
-use OCA\FaceRecognition\Service\FileService;
+use OCA\FaceRecognition\Service\CompressionService;
+use OCA\FaceRecognition\Service\DownloadService;
 use OCA\FaceRecognition\Service\ModelService;
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -69,11 +68,11 @@ class DlibHogModel implements IModel {
 	/** @var \FaceRecognition */
 	private $fr;
 
-	/** @var IDBConnection */
-	private $connection;
+	/** @var CompressionService */
+	private $compressionService;
 
-	/** @var FileService */
-	private $fileService;
+	/** @var DownloadService */
+	private $downloadService;
 
 	/** @var ModelService */
 	private $modelService;
@@ -85,20 +84,20 @@ class DlibHogModel implements IModel {
 	/**
 	 * DlibCnnModel __construct.
 	 *
-	 * @param IDBConnection $connection
-	 * @param FileService $fileService
+	 * @param CompressionService $compressionService
+	 * @param DownloadService $downloadService
 	 * @param ModelService $modelService
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(IDBConnection   $connection,
-	                            FileService     $fileService,
-	                            ModelService    $modelService,
-	                            SettingsService $settingsService)
+	public function __construct(CompressionService $compressionService,
+	                            DownloadService    $downloadService,
+	                            ModelService       $modelService,
+	                            SettingsService    $settingsService)
 	{
-		$this->connection       = $connection;
-		$this->fileService      = $fileService;
-		$this->modelService     = $modelService;
-		$this->settingsService  = $settingsService;
+		$this->compressionService = $compressionService;
+		$this->downloadService    = $downloadService;
+		$this->modelService       = $modelService;
+		$this->settingsService    = $settingsService;
 	}
 
 	public function getId(): int {
@@ -166,35 +165,14 @@ class DlibHogModel implements IModel {
 		$this->modelService->prepareModelFolder($this->getId());
 
 		/* Download and install models */
-		$predictorModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
-		$this->fileService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$predictorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
+		$this->compressionService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 
-		$resnetModelBz2 = $this->fileService->downloaldFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
-		$this->fileService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$resnetModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
+		$this->compressionService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 
 		/* Clean temporary files */
-		$this->fileService->clean();
-
-		// Insert on database and enable it
-		$qb = $this->connection->getQueryBuilder();
-		$query = $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('facerecog_models')
-			->where($qb->expr()->eq('id', $qb->createParameter('id')))
-			->setParameter('id', $this->getId());
-		$resultStatement = $query->execute();
-		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
-		$resultStatement->closeCursor();
-
-		if ((int)$data[0] <= 0) {
-			$query = $this->connection->getQueryBuilder();
-			$query->insert('facerecog_models')
-			->values([
-				'id' => $query->createNamedParameter($this->getId()),
-				'name' => $query->createNamedParameter($this->getName()),
-				'description' => $query->createNamedParameter($this->getDescription())
-			])
-			->execute();
-		}
+		$this->downloadService->clean();
 	}
 
 	/**

@@ -45,7 +45,6 @@ OC.L10N.register(
     "Facial recognition is disabled" : "얼굴인식이 비활성화되어있습니다",
     "Facial recognition is disabled for this folder" : "이 폴더에 대한 얼굴인식 비활성화",
     "The type of storage is not supported to analyze your photos" : "이 유형의 저장소는 분석을 지원하지 않습니다",
-    "Unknown" : "알 수 없음",
     "No people found" : "발견된 사람 없음",
     "This image is not yet analyzed" : "이 이미지는 아직 분석되지 않았습니다",
     "Search for persons in the photos of this directory" : "이 폴더의 사진에서 사람 검색",

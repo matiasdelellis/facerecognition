@@ -46,7 +46,6 @@ OC.L10N.register(
     "Facial recognition is disabled" : "臉部識別已停用",
     "Facial recognition is disabled for this folder" : "此資料夾的臉部識別已被停用",
     "The type of storage is not supported to analyze your photos" : "不支援使用儲存類型來分析您的照片",
-    "Unknown" : "未知",
     "No people found" : "找不到人",
     "This image is not yet analyzed" : "此圖片尚未分析",
     "Search for persons in the photos of this directory" : "在此目錄中的照片搜尋人",

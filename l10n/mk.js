@@ -58,7 +58,6 @@ OC.L10N.register(
     "Facial recognition is disabled" : "Препознавањето на ликови е оневозможено",
     "Facial recognition is disabled for this folder" : "Препознавањето на ликови е оневозможено за оваа папка",
     "The type of storage is not supported to analyze your photos" : "Видот на складиштето не е поддржан за анализа на твојте слики",
-    "Unknown" : "Непознат",
     "No people found" : "Не се пронајдени лица",
     "This image is not yet analyzed" : "ОВаа слика сеуште не е анализирана",
     "Search for persons in the photos of this directory" : "Пребарувај лица на сликите во оваа папка",

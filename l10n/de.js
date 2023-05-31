@@ -58,7 +58,6 @@ OC.L10N.register(
     "Facial recognition is disabled" : "Gesichtserkennung ist deaktiviert",
     "Facial recognition is disabled for this folder" : "Gesichtserkennung ist für diesen Ordner deaktiviert",
     "The type of storage is not supported to analyze your photos" : "Der Speichertyp wird für die Analyse Deiner Bilder nicht unterstützt",
-    "Unknown" : "Unbekannt",
     "No people found" : "Keine Personen gefunden",
     "This image is not yet analyzed" : "Dieses Bild ist noch nicht analysiert",
     "Search for persons in the photos of this directory" : "Suche nach Personen auf den Bildern in diesem Ordner",

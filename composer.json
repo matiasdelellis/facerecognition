@@ -20,7 +20,7 @@
         "symfony/console": "^5.3"
     },
     "require-dev": {
-        "christophwurst/nextcloud": "^23",
+        "nextcloud/ocp": "dev-stable26",
         "phpunit/phpunit": "^9",
         "psalm/phar": "^4.10",
         "scrutinizer/ocular": "^1.8",

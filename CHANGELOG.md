@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.20] - 2023-06-14
+- Add support for (Now old) Nextcloud 26.
+- Add support to NC27 for early testing.
+- Clean some code an split great classed to improve maintenance.
+- Don't catch Imaginary exceptions. Issue #658
+- Update french translation thanks to Jérémie Tarot.
+
 ## [0.9.12] - 2023-03-25
 - Add support for using imaginary to create the temporary files.
   This add support for images heic, tiff, and many more. Issue #494,

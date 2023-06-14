@@ -116,12 +116,14 @@ appstore:
 	rsync -a \
 	--exclude='.*' \
 	--exclude=build \
+	--exclude=cli \
 	--exclude=composer* \
 	--exclude=translation* \
 	--exclude=node_modules \
 	--exclude=Makefile \
 	--exclude=package*json \
 	--exclude=phpunit*xml \
+	--exclude=psalm.xml \
 	--exclude=screenshots \
 	--exclude=src \
 	--exclude=tests \

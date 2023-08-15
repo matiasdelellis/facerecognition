@@ -81,7 +81,14 @@ class ProgressCommand extends Command {
 	protected function configure() {
 		$this
 			->setName('face:progress')
-			->setDescription('Get the progress of the analysis and an estimated time');
+			->setDescription('Get the progress of the analysis and an estimated time')
+			->addOption(
+				'json',
+				'j',
+				InputOption::VALUE_NONE,
+				'Print in a json format, useful to analyze it with another tool.',
+				null
+			);
 	}
 
 	/**
@@ -90,29 +97,44 @@ class ProgressCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
-
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$totalImages = $this->imageMapper->countImages($modelId);
 		$processedImages = $this->imageMapper->countProcessedImages($modelId);
 
 		$remainingImages = $totalImages - $processedImages;
-		if ($remainingImages) {
-			$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
-			$estimated = (int) (time() + $remainingImages * $avgProcessingTime/1000);
-			$estimatedTime = $this->dateTimeFormatter->formatTimeSpan($estimated);
+
+		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
+		$estimatedSeconds = (int) ($remainingImages * $avgProcessingTime/1000);
+
+		if ($input->getOption('json')) {
+			$this->printJsonProgress($output, $totalImages, $remainingImages, $estimatedSeconds);
+		} else {
+			$this->printTabledProgress($output, $totalImages, $remainingImages, $estimatedSeconds);
+		}
+		return 0;
+	}
+
+	private function printTabledProgress(OutputInterface $output, $totalImages, $remainingImages, $estimatedSeconds): void {
+		if ($estimatedSeconds) {
+			$estimatedTime = $this->dateTimeFormatter->formatTimeSpan((time() + $estimatedSeconds));
 		} else {
 			$estimatedTime = '-';
 		}
-
 
 		$table = new Table($output);
 		$table
 			->setHeaders(['Images', 'Remaining', 'ETA'])
 			->setRows([[strval($totalImages), strval($remainingImages), $estimatedTime]]);
 		$table->render();
-
-		return 0;
 	}
 
+	private function printJsonProgress(OutputInterface $output, $totalImages, $remainingImages, $estimatedSeconds): void {
+		$stats[] = array(
+			'images'    => $totalImages,
+			'remaining' => $remainingImages,
+			'eta'       => $estimatedSeconds
+		);
+		$output->writeln(json_encode($stats));
+	}
 }

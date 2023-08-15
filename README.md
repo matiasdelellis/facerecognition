@@ -208,3 +208,6 @@ to parse with other tools.
 
 This command just return the progress of the analysis and an estimated time to
 complete.
+
+If use the `--json` argument, it prints the stats in a json format more suitable
+to parse with other tools.

@@ -71,17 +71,24 @@ class Imaginary {
 		}
 
 		$info = json_decode($response->getBody(), true);
+
+		$type = $info['type'];
+		//NOTE: Imaginary has problems rorating heic images. Issue #662
+		$autorotate = ($info['orientation'] > 4 && $type != 'heif');
+
 		return [
+			'type'   => $type,
+			'autorotate' => $autorotate,
 			// Rotates the size, since it is important and Imaginary do not do that.
-			'width'  => $info['orientation'] < 5 ? $info['width']  : $info['height'],
-			'height' => $info['orientation'] < 5 ? $info['height'] : $info['width']
+			'width'  => $autorotate ? $info['height'] : $info['width'],
+			'height' => $autorotate ? $info['width'] :  $info['height']
 		];
 	}
 
 	/**
 	 * @return string|resource Returns the resized image
 	 */
-	public function getResized(string $filepath, int $width, int $height, string $mimeType) {
+	public function getResized(string $filepath, int $width, int $height, bool $autorotate, string $mimeType) {
 
 		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
 		$imaginaryUrl = rtrim($imaginaryUrl, '/');
@@ -96,20 +103,23 @@ class Imaginary {
 				$type = 'jpeg';
 		}
 
-		$operations = [
-			[
+		$operations = [];
+
+		if ($autorotate) {
+			$operations[] = [
 				'operation' => 'autorotate',
-			],
-			[
-				'operation' => 'resize',
-				'params' => [
-					'width' => $width,
-					'height' => $height,
-					'stripmeta' => 'true',
-					'type' => $type,
-					'norotation' => 'true',
-					'force' => 'true'
-				]
+			];
+		}
+
+		$operations[] = [
+			'operation' => 'resize',
+			'params' => [
+				'width' => $width,
+				'height' => $height,
+				'stripmeta' => 'true',
+				'type' => $type,
+				'norotation' => 'true',
+				'force' => 'true'
 			]
 		];
 

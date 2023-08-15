@@ -130,7 +130,7 @@ class TempImage extends Image {
 			$newWidth = intval(round($widthOrig * $scaleFactor));
 			$newHeight = intval(round($heightOrig * $scaleFactor));
 
-			$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $this->preferredMimeType);
+			$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $fileInfo['autorotate'], $this->preferredMimeType);
 			$this->loadFromData($resizedResource);
 
 			if (!$this->valid()) {

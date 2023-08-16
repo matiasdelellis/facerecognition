@@ -158,6 +158,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			return false;
 		}
 
+		$model->open();
 		$maxImageArea = $model->getMaximumArea();
 		if ($imageArea > $maxImageArea) {
 			$error_message =

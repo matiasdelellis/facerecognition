@@ -136,6 +136,19 @@ class FaceController extends Controller {
 	}
 
 	/**
+	 * @NoAdminRequired
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse|JSONResponse
+	 */
+	public function getPersonThumb (string $name, int $size) {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
+		return $this->getThumb($personFace->getId(), $size);
+	}
+
+	/**
 	 * @return void
 	 */
 	private function hipsterize(OCP_Image &$image, Entity &$face) {

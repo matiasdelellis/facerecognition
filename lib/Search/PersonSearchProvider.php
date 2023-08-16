@@ -122,9 +122,9 @@ class PersonSearchProvider implements IProvider {
 			array_map(function (Person $result) {
 				$personName = $result->getName();
 				return new SearchResultEntry(
-					'',
+					$this->urlService->getPersonThumbUrl($personName, 32),
 					$personName,
-					'',
+					$this->l10n->t('Images of %s', $personName),
 					$this->urlService->getRedirectToPersonUrl($personName),
 					'icon-contacts-dark',
 					true

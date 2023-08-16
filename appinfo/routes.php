@@ -82,6 +82,12 @@ return ['routes' =>
 		'url'  => '/face/{id}/thumb/{size}',
 		'verb' => 'GET'
 	],
+	// Get a face Thumb of some person
+	[
+		'name' => 'face#getPersonThumb',
+		'url'  => '/person/{name}/thumb/{size}',
+		'verb' => 'GET'
+	],
 	/*
 	 * File and Folders
 	 */

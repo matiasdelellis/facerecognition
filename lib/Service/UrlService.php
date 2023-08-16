@@ -151,4 +151,19 @@ class UrlService {
 		return $this->urlGenerator->linkToRoute('facerecognition.face.getThumb', $params);
 	}
 
+	/**
+	 * Url to thumb person
+	 *
+	 * @param string $name name person to show
+	 * @param int $size Size of face thumbnails
+	 *
+	 * @return string
+	 */
+	public function getPersonThumbUrl(string $name, int $size): string {
+		$params = [];
+		$params['name'] = $name;
+		$params['size'] = $size;
+		return $this->urlGenerator->linkToRoute('facerecognition.face.getPersonThumb', $params);
+	}
+
 }

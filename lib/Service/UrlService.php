@@ -28,6 +28,7 @@ use OCP\Files\File;
 use OCP\IUserSession;
 use OCP\IURLGenerator;
 
+use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Service\SettingsService;
 
 
@@ -129,6 +130,9 @@ class UrlService {
 	 * @return string
 	 */
 	public function getRedirectToPersonUrl(string $personName): string {
+		if (Requirements::memoriesIsInstalled()) {
+			return $this->urlGenerator->linkToRouteAbsolute('memories.Page.main') . 'facerecognition/' . $this->userId . '/' . $personName ;
+		}
 		$params = [
 			'section' => 'facerecognition',
 			'name' => $personName

@@ -108,6 +108,10 @@ class PersonSearchProvider implements IProvider {
 		    $routeParameters["section"] === 'facerecognition') {
 			return 0;
 		}
+		if ($route === 'memories.Page.main') {
+			return 0;
+		}
+
 		return 10;
 	}
 

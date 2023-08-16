@@ -47,13 +47,48 @@ class Imaginary {
 		return ($imaginaryUrl !== 'invalid');
 	}
 
+	public function getUrl(): ?string {
+		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
+		if ($imaginaryUrl === 'invalid')
+			return null;
+
+		return rtrim($imaginaryUrl, '/');
+	}
+
+	/**
+	 * @return string imaginary version
+	 */
+	public function getVersion(): ?string {
+		$imaginaryUrl = $this->getUrl();
+		if (!$imaginaryUrl) {
+			throw new \RuntimeException('Try to use imaginary without valid url');
+		}
+
+		$httpClient = $this->service->newClient();
+
+		try {
+			$response = $httpClient->get($imaginaryUrl . '/');
+		} catch (\Exception $e) {
+			return null;
+		}
+
+		if ($response->getStatusCode() !== 200) {
+			return null;
+		}
+
+		$info = json_decode($response->getBody(), true);
+
+		return $info['imaginary'];
+	}
+
 	/**
 	 * @return array Returns the array with the size of image.
 	 */
 	public function getInfo(string $filepath): array {
-
-		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
-		$imaginaryUrl = rtrim($imaginaryUrl, '/');
+		$imaginaryUrl = $this->getUrl();
+		if (!$imaginaryUrl) {
+			throw new \RuntimeException('Try to use imaginary without valid url');
+		}
 
 		$httpClient = $this->service->newClient();
 
@@ -90,8 +125,10 @@ class Imaginary {
 	 */
 	public function getResized(string $filepath, int $width, int $height, bool $autorotate, string $mimeType) {
 
-		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
-		$imaginaryUrl = rtrim($imaginaryUrl, '/');
+		$imaginaryUrl = $this->getUrl();
+		if (!$imaginaryUrl) {
+			throw new \RuntimeException('Try to use imaginary without valid url');
+		}
 
 		$httpClient = $this->service->newClient();
 

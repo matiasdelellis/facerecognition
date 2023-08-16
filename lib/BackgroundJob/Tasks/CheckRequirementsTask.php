@@ -29,6 +29,7 @@ use OCP\Util as OCP_Util;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
+use OCA\FaceRecognition\Helper\Imaginary;
 use OCA\FaceRecognition\Helper\MemoryLimits;
 use OCA\FaceRecognition\Helper\Requirements;
 
@@ -48,17 +49,23 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	/** @var SettingsService Settings service */
 	private $settingsService;
 
+	/** @var Imaginary imaginary helper */
+	private $imaginaryHelper;
+
 	/**
 	 * @param ModelManager $modelManager Model Manager
 	 * @param SettingsService $settingsService Settings service
+	 * @param Imaginary $imaginaryHelper imaginary helper
 	 */
 	public function __construct(ModelManager    $modelManager,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+	                            Imaginary       $imaginaryHelper)
 	{
 		parent::__construct();
 
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
+		$this->imaginaryHelper = $imaginaryHelper;
 	}
 
 	/**
@@ -82,6 +89,23 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 
 		$phpMemory = MemoryLimits::getPhpMemory();
 		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
+
+		if ($this->imaginaryHelper->isEnabled()) {
+			$this->logDebug("Backend of images: Imaginary");
+			$version = $this->imaginaryHelper->getVersion();
+			if ($version) {
+				$this->logDebug("Imaginary version: " . $version);
+			} else {
+				$imaginaryUrl = $this->imaginaryHelper->getUrl();
+				$error_message =
+					"An Imaginary service (" . $imaginaryUrl . ") was configured to manage temporary images, but it is inaccessible." .
+					"Check out the service, or set the 'preview_imaginary_url' key appropriately.";
+				$this->logInfo($error_message);
+				return false;
+			}
+		} else {
+			$this->logDebug("Backend of images: Imagick");
+		}
 
 		if (!Requirements::pdlibLoaded()) {
 			$error_message =

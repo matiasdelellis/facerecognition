@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2017-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2017-2023 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
  * @author Branko Kokanovic <branko@kokanovic.org>
@@ -33,6 +33,9 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Helper\Euclidean;
+use OCA\FaceRecognition\Helper\Requirements;
+
+use OCA\FaceRecognition\Clusterer\ChineseWhispers;
 
 use OCA\FaceRecognition\Service\SettingsService;
 /**
@@ -282,10 +285,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Clustering parameters
 		$sensitivity = $this->settingsService->getSensitivity();
 
-		// Create edges for chinese whispers
-		$edges = array();
-
-		if (version_compare(phpversion('pdlib'), '1.0.2', '>=')) {
+		if (Requirements::pdlibLoaded()) {
+			// Create edges (neighbors) for Chinese Whispers
+			$edges = array();
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
@@ -304,8 +306,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					}
 				}
 			}
+
+			// Given the edges get the list of labels (found clusters) for each face.
+			$newChineseClustersByIndex = dlib_chinese_whispers($edges);
 		} else {
+			// Create edges (neighbors) for Chinese Whispers
+			$edges = array();
 			$faces_count = count($faces);
+
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
 				if (!isset($face1->descriptor)) {
@@ -323,9 +331,20 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 					}
 				}
 			}
+
+			// The clustering algorithm actually expects ordered lists.
+			$oedges = [];
+			ChineseWhispers::convert_unordered_to_ordered($edges, $oedges);
+			usort($oedges, function($a, $b) {
+				if ($a[0] === $b[0]) return $a[1] - $b[1];
+				return $a[0] - $b[0];
+			});
+
+			// Given the edges get the list of labels (found clusters) for each face.
+			$newChineseClustersByIndex = [];
+			ChineseWhispers::predict($oedges, $newChineseClustersByIndex);
 		}
 
-		$newChineseClustersByIndex = dlib_chinese_whispers($edges);
 		$newClusters = array();
 		for ($i = 0, $c = count($newChineseClustersByIndex); $i < $c; $i++) {
 			if (!isset($newClusters[$newChineseClustersByIndex[$i]])) {
@@ -333,7 +352,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			}
 			$newClusters[$newChineseClustersByIndex[$i]][] = $faces[$i]->id;
 		}
-
 		return $newClusters;
 	}
 

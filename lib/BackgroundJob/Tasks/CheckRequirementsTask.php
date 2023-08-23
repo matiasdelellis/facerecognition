@@ -90,8 +90,10 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$phpMemory = MemoryLimits::getPhpMemory();
 		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
 
+		$this->logDebug("Clustering backend: " . (Requirements::pdlibLoaded() ? "pdlib" : "PHP (Not recommended."));
+
 		if ($this->imaginaryHelper->isEnabled()) {
-			$this->logDebug("Backend of images: Imaginary");
+			$this->logDebug("Image Backend: Imaginary");
 			$version = $this->imaginaryHelper->getVersion();
 			if ($version) {
 				$this->logDebug("Imaginary version: " . $version);
@@ -104,15 +106,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 				return false;
 			}
 		} else {
-			$this->logDebug("Backend of images: Imagick");
-		}
-
-		if (!Requirements::pdlibLoaded()) {
-			$error_message =
-				"The PDlib PHP extension is not loaded. Cannot continue without it." .
-				"Please read the documentation again about how to install the application: https://github.com/matiasdelellis/facerecognition/wiki/Installation";
-			$this->logInfo($error_message);
-			return false;
+			$this->logDebug("Image Backend: Imagick");
 		}
 
 		if (!Requirements::hasEnoughMemory()) {

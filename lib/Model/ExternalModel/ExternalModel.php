@@ -87,10 +87,6 @@ class ExternalModel implements IModel {
 	}
 
 	public function meetDependencies(string &$error_message): bool {
-		if (!extension_loaded('pdlib')) {
-			$error_message = "The PDlib PHP extension is not loaded.";
-			return false;
-		}
 		if (is_null($this->settingsService->getExternalModelUrl())) {
 			$error_message = "You still need to configure the URL of the service running the model.";
 			return false;

@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.30] - 2023-08-23
+- Implement the Chinese Whispers Clustering algorithm in native PHP.
+- Open the model before requesting information. Issue #679
+- If Imaginary is configured, check that it is accessible before using it.
+- If Memories is installed, show people's photos in this app.
+- Add face thumbnail when search persons.
+- Disable auto rotate for HEIF images in imaginary. Issue #662
+- Add the option to print the progress in json format.
+
 ## [0.9.20] - 2023-06-14
 - Add support for (Now old) Nextcloud 26.
 - Add support to NC27 for early testing.

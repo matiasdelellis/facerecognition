@@ -170,6 +170,7 @@ class SettingsController extends Controller {
 					$message = $this->l10n->t("The maximum recommended area is %s", $this->getFourByThreeRelation($value));
 					$status = self::STATE_ERROR;
 				}
+				$model->open();
 				$maxImageArea = $model->getMaximumArea();
 				if ($value > $maxImageArea) {
 					$value = $maxImageArea;

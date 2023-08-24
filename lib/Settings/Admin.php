@@ -77,7 +77,13 @@ class Admin implements ISettings {
 
 		$model = $this->modelManager->getCurrentModel();
 		if (!is_null($model)) {
-			$maxImageRange = strval($model->getMaximumArea());
+			try {
+				$model->open();
+				$maxImageRange = strval($model->getMaximumArea());
+			} catch (\Exception $e) {
+				$resume .= $e->getMessage();
+				$isConfigured = false;
+			}
 		} else {
 			$resume .= $this->l10n->t("It seems you don't have any model installed.");
 			$isConfigured = false;

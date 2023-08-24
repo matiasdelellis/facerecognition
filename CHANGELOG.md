@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.31] - 2023-08-24
+- Be sure to open the model before getting relevant info. Issue #423
+
 ## [0.9.30] - 2023-08-23
 - Implement the Chinese Whispers Clustering algorithm in native PHP.
 - Open the model before requesting information. Issue #679

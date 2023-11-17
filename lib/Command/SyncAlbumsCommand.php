@@ -176,6 +176,10 @@ class SyncAlbumsCommand extends Command {
 				}
 				else if ($mode === "Album-combined") {
 					$personList = explode(",", $person_name); 
+					if ( count($personList) < 2 ){
+						$output->writeln("Note parameter mode <$mode> requires at least two persons");
+						return 1;
+					}
 					$this->photoAlbums->syncUserPersonNamesCombinedAlbum($userId,$personList,$output);
 				}
 				else {

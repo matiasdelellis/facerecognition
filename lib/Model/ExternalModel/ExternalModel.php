@@ -27,6 +27,9 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Model\IModel;
 
+use OCA\FaceRecognition\Model\Exceptions\UnavailableException;
+
+
 class ExternalModel implements IModel {
 	/*
 	 * Model description
@@ -138,12 +141,12 @@ class ExternalModel implements IModel {
 
 		$response = curl_exec($ch);
 		if (is_bool($response)) {
-			throw new \Exception('Cannot connect to external model: ' . curl_error($ch));
+			throw new UnavailableException(curl_error($ch));
 		}
 
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		if ($httpCode !== 200) {
-			throw new \Exception('Can\'t connect with external model. HTTP status code: ' . $httpCode);
+			throw new \Exception('External model response /open with error. HTTP status code: ' . $httpCode);
 		}
 
 		$jsonResponse = json_decode($response, true);
@@ -171,12 +174,20 @@ class ExternalModel implements IModel {
 
 		$response = curl_exec($ch);
 		if (is_bool($response)) {
-			throw new \Exception('External model dont response: ' . curl_error($ch));
+			throw new UnavailableException(curl_error($ch));
+		}
+
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($httpCode !== 200) {
+			throw new \Exception('External model response /detect with error. HTTP status code: ' . $httpCode);
 		}
 
 		curl_close($ch);
 
 		$jsonResponse = json_decode($response, true);
+
+		if (!is_array($jsonResponse))
+			return [];
 
 		if ($jsonResponse['faces-count'] == 0)
 			return [];
@@ -204,7 +215,12 @@ class ExternalModel implements IModel {
 
 		$response = curl_exec($ch);
 		if (is_bool($response)) {
-			throw new \Exception('External model dont response: ' . curl_error($ch));
+			throw new UnavailableException(curl_error($ch));
+		}
+
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($httpCode !== 200) {
+			throw new \Exception('External model response /compute with error. HTTP status code: ' . $httpCode);
 		}
 
 		curl_close($ch);

@@ -36,6 +36,8 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
+use OCA\FaceRecognition\Model\Exceptions\UnavailableException;
+
 use OCA\FaceRecognition\Service\SettingsService;
 
 /**
@@ -152,7 +154,13 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			return false;
 		}
 
-		$model->open();
+		try {
+			$model->open();
+		} catch (UnavailableException $e) {
+			$this->logInfo("Error accessing the model to get required information: " . $e->getMessage());
+			return false;
+		}
+
 		$maxImageArea = $model->getMaximumArea();
 		if ($imageArea > $maxImageArea) {
 			$error_message =

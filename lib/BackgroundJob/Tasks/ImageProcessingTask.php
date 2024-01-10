@@ -161,6 +161,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				}
 				$this->logInfo('Faces found: 0. Image will be skipped because of the following error: ' . $e->getMessage());
 				$this->logDebug((string) $e);
+
+				// Save an empty entry so it can be analyzed again later
 				$this->imageMapper->imageProcessed($image, array(), 0, $e);
 			} finally {
 				// Clean temporary image.

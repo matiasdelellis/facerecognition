@@ -71,6 +71,7 @@ jobs:
 
       - name: Install pdlib
         run: |
+          sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev
           sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
 
       - name: Set up PHPUnit

@@ -35,14 +35,6 @@ jobs:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
 
-      - name: Install dlib
-        run: |
-          sudo sh -c 'echo "deb https://repo.delellis.com.ar bionic bionic" > /etc/apt/sources.list.d/20-pdlib.list'
-          wget -qO - https://repo.delellis.com.ar/repo.gpg.key | sudo apt-key add -
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-          sudo apt update
-          sudo apt-get install libdlib-dev
-
       - name: Checkout submodules
         shell: bash
         run: |
@@ -63,6 +55,10 @@ jobs:
           tools: phpunit
           extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, mysql, pdo_mysql
           coverage: xdebug
+
+      - name: Install pdlib
+        run: |
+          sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}

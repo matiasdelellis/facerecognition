@@ -17,9 +17,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.0', '8.1', '8.2']
+        php-versions: ['8.0', '8.1', '8.2', '8.3']
         databases: ['sqlite', 'mysql', 'pgsql']
-        server-versions: ['stable27']
+        server-versions: ['stable27', 'stable28']
 
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
@@ -48,14 +48,6 @@ jobs:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
 
-      - name: Install dlib
-        run: |
-          sudo sh -c 'echo "deb https://repo.delellis.com.ar bionic bionic" > /etc/apt/sources.list.d/20-pdlib.list'
-          wget -qO - https://repo.delellis.com.ar/repo.gpg.key | sudo apt-key add -
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-          sudo apt update
-          sudo apt-get install libdlib-dev
-
       - name: Checkout submodules
         shell: bash
         run: |
@@ -74,8 +66,12 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
-          extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql
+          extensions: zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql
           coverage: none
+
+      - name: Install pdlib
+        run: |
+          sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}

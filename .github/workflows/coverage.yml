@@ -53,13 +53,14 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
-          extensions: pdlib-https://github.com/goodspb/pdlib@master, zip, gd, mbstring, iconv, fileinfo, intl, mysql, pdo_mysql
+          extensions: zip, gd, mbstring, iconv, fileinfo, intl, mysql, pdo_mysql
           coverage: xdebug
 
       - name: Install pdlib
         run: |
           sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev
           sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
+          sudo sh -c 'echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`'
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}

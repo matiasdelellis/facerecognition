@@ -120,6 +120,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			yield;
 		}
 
+		// NOTE: Dont remove, it is used within the Integration tests
+		$this->context->propertyBag['StaleImagesRemovalTask_staleRemovedImages'] = $staleRemovedImages;
 		return true;
 	}
 

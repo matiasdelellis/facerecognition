@@ -75,7 +75,11 @@ class FaceRecognitionContext {
 	}
 
 	public function isRunningInSyncMode(): bool {
-		return ($this->propertyBag['run_mode'] === 'sync-mode');
+		if ((array_key_exists('run_mode', $this->propertyBag)) &&
+		    (!is_null($this->propertyBag['run_mode']))) {
+			return ($this->propertyBag['run_mode'] === 'sync-mode');
+		}
+		return false;
 	}
 
 	public function isRunningThroughCommand(): bool {

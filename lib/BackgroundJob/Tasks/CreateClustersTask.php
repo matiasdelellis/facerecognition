@@ -85,19 +85,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
-
-		// We cannot yield inside of Closure, so we need to extract all users and iterate outside of closure.
-		// However, since we don't want to do deep copy of IUser, we keep only UID in this array.
-		//
-		$eligable_users = array();
-		if (is_null($this->context->user)) {
-			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
-				$eligable_users[] = $user->getUID();
-			});
-		} else {
-			$eligable_users[] = $this->context->user->getUID();
-		}
-
+		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
 			$this->createClusterIfNeeded($user);
 			yield;

@@ -80,16 +80,28 @@ class BackgroundCommand extends Command {
 				'Use this if face detection crashes randomly.'
 			)
 			->addOption(
+				'sync-mode',
+				null,
+				InputOption::VALUE_NONE,
+				'Execute all actions related to synchronizing the files. New users, shared or deleted files, etc.'
+			)
+			->addOption(
+				'analyze-mode',
+				null,
+				InputOption::VALUE_NONE,
+				'Execute only the action of analyzing the images to obtain the faces and their descriptors.'
+			)
+			->addOption(
+				'cluster-mode',
+				null,
+				InputOption::VALUE_NONE,
+				'Execute only the action of face clustering to get the people.'
+			)
+			->addOption(
 				'defer-clustering',
 				null,
 				InputOption::VALUE_NONE,
 				'Defer the face clustering at the end of the analysis to get persons in a simple execution of the command.'
-			)
-			->addOption(
-				'crawl-missing',
-				null,
-				InputOption::VALUE_NONE,
-				'Crawl for missing images for each user and insert them in DB.'
 			)
 			->addOption(
 				'timeout',
@@ -146,13 +158,18 @@ class BackgroundCommand extends Command {
 			}
 		}
 
-		// Extract defer clustering option
+		// Extract mode from options
 		//
-		$deferClustering = $input->getOption('defer-clustering');
-
-		// Extract find images
-		//
-		$crawlMissing = $input->getOption('crawl-missing');
+		$mode = 'default-mode';
+		if ($input->getOption('sync-mode')) {
+			$mode = 'sync-mode';
+		} else if ($input->getOption('analyze-mode')) {
+			$mode = 'analyze-mode';
+		} else if ($input->getOption('cluster-mode')) {
+			$mode = 'cluster-mode';
+		} else if ($input->getOption('defer-clustering')) {
+			$mode = 'defer-mode';
+		}
 
 		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
 		//
@@ -168,7 +185,7 @@ class BackgroundCommand extends Command {
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $crawlMissing, $deferClustering);
+		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $mode);
 
 		// Release obtained lock
 		//

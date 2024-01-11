@@ -97,19 +97,12 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
-		// Check if we are called for one user only, or for all user in instance.
 		$staleRemovedImages = 0;
-		$eligable_users = array();
-		if (is_null($this->context->user)) {
-			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
-				$eligable_users[] = $user->getUID();
-			});
-		} else {
-			$eligable_users[] = $this->context->user->getUID();
-		}
 
+		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
-			if (!$this->settingsService->getNeedRemoveStaleImages($user)) {
+			if (!$this->context->isRunningInSyncMode() &&
+			    !$this->settingsService->getNeedRemoveStaleImages($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug(sprintf('Skipping stale images removal for user %s as there is no need for it', $user));
 				continue;
@@ -127,7 +120,6 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			yield;
 		}
 
-		$this->context->propertyBag['StaleImagesRemovalTask_staleRemovedImages'] = $staleRemovedImages;
 		return true;
 	}
 

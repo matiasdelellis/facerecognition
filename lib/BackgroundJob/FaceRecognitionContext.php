@@ -62,6 +62,22 @@ class FaceRecognitionContext {
 		$this->isRunningThroughCommand = false;
 	}
 
+	public function getEligibleUsers(): array {
+		$eligable_users = [];
+		if (!is_null($this->user)) {
+			$eligable_users[] = $this->user->getUID();
+		} else {
+			$this->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
+				$eligable_users[] = $user->getUID();
+			});
+		}
+		return $eligable_users;
+	}
+
+	public function isRunningInSyncMode(): bool {
+		return ($this->propertyBag['run_mode'] === 'sync-mode');
+	}
+
 	public function isRunningThroughCommand(): bool {
 		return $this->isRunningThroughCommand;
 	}

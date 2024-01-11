@@ -92,7 +92,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		$phpMemory = MemoryLimits::getPhpMemory();
 		$this->logDebug("PHP Memory Limit: " . ($phpMemory > 0 ? $phpMemory : "Unknown"));
 
-		$this->logDebug("Clustering backend: " . (Requirements::pdlibLoaded() ? "pdlib" : "PHP (Not recommended."));
+		$this->logDebug("Clustering backend: " . (Requirements::pdlibLoaded() ? "pdlib" : "PHP (Not recommended.)"));
 
 		if ($this->imaginaryHelper->isEnabled()) {
 			$this->logDebug("Image Backend: Imaginary");

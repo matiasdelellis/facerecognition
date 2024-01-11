@@ -79,45 +79,57 @@ class BackgroundService {
 	 * @param bool $verbose Whether to be more verbose
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
-	 * @param bool $crawlMissing crawl for missing images for each user and insert them in DB
-	 * @param bool $deferClustering defer the grouping at the end of the analysis.
+	 * @param string $runMode The command execution mode
 	 *
 	 * @return void
 	 */
-	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, bool $crawlMissing, bool $deferClustering) {
+	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, string $runMode) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
 		$this->context->verbose = $verbose;
 		$this->context->setRunningThroughCommand();
 		$this->context->propertyBag['max_image_area'] = $maxImageArea;
-		$this->context->propertyBag['crawl_missing'] = $crawlMissing;
+		$this->context->propertyBag['run_mode'] = $runMode;
 
 		// Here we are defining all the tasks that will get executed.
 		//
-		if ($deferClustering === true) {
-			$task_classes = [
-				CheckRequirementsTask::class,
-				CheckCronTask::class,
-				DisabledUserRemovalTask::class,
-				StaleImagesRemovalTask::class,
-				AddMissingImagesTask::class,
-				EnumerateImagesMissingFacesTask::class,
-				ImageProcessingTask::class,
-				CreateClustersTask::class,
-			];
-		} else {
-			$task_classes = [
-				CheckRequirementsTask::class,
-				CheckCronTask::class,
-				DisabledUserRemovalTask::class,
-				StaleImagesRemovalTask::class,
-				CreateClustersTask::class,
-				AddMissingImagesTask::class,
-				EnumerateImagesMissingFacesTask::class,
-				ImageProcessingTask::class,
-			];
-		};
+		$task_classes = [
+			CheckRequirementsTask::class,
+			CheckCronTask::class,
+		];
+
+		switch ($runMode)
+		{
+			case 'sync-mode':
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				break;
+			case 'analyze-mode':
+				$task_classes[] = ImageProcessingTask::class;
+				break;
+			case 'cluster-mode':
+				$task_classes[] = CreateClustersTask::class;
+				break;
+			case 'defer-mode':
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
+				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = CreateClustersTask::class;
+				break;
+			case 'default-mode':
+			default:
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = CreateClustersTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
+				$task_classes[] = ImageProcessingTask::class;
+				break;
+		}
 
 		// Main logic to iterate over all tasks and executes them.
 		//

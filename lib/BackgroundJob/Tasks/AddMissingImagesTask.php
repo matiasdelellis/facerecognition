@@ -84,15 +84,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 
 		// Check if we are called for one user only, or for all user in instance.
 		$insertedImages = 0;
-		$eligable_users = array();
-		if (is_null($this->context->user)) {
-			$this->context->userManager->callForSeenUsers(function (IUser $user) use (&$eligable_users) {
-				$eligable_users[] = $user->getUID();
-			});
-		} else {
-			$eligable_users[] = $this->context->user->getUID();
-		}
-
+		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
 			if (!$this->settingsService->getUserEnabled($user)) {
 				// Completely skip this task for this user, seems that disable analysis
@@ -100,7 +92,8 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 				continue;
 			}
 
-			if (!$this->forcedCrawlMissing() && $this->settingsService->getUserFullScanDone($user)) {
+			if (!$this->context->isRunningInSyncMode() &&
+			    $this->settingsService->getUserFullScanDone($user)) {
 				// Completely skip this task for this user, seems that we already did full scan for him
 				$this->logDebug('Skipping full image scan for user ' . $user);
 				continue;
@@ -156,14 +149,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 		}
 
 		return $insertedImages;
-	}
-
-	private function forcedCrawlMissing(): bool {
-		if ((array_key_exists('crawl_missing', $this->context->propertyBag)) &&
-		    (!is_null($this->context->propertyBag['crawl_missing']))) {
-			return ($this->context->propertyBag['crawl_missing'] === true);
-		}
-		return false;
 	}
 
 }

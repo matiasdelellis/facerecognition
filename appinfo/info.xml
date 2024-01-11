@@ -33,8 +33,8 @@
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-photos-integration.jpeg</screenshot>
 	<screenshot>https://matiasdelellis.github.io/img/facerecognition/facerecognition-assign-initial-name.jpeg</screenshot>
 	<dependencies>
-		<php min-version="8.0" max-version="8.2" />
-		<nextcloud min-version="27" max-version="27"/>
+		<php min-version="8.0" max-version="8.3" />
+		<nextcloud min-version="27" max-version="28"/>
 	</dependencies>
 	<repair-steps>
 		<uninstall>

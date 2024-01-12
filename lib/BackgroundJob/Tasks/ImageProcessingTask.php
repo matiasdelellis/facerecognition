@@ -27,6 +27,7 @@ use OCP\Image as OCP_Image;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\Lock\ILockingProvider;
 use OCP\IUser;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -63,22 +64,28 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	/** @var ModelManager $modelManager */
 	protected $modelManager;
 
+	/** @var ILockingProvider $lockingProvider */
+	protected ILockingProvider $lockingProvider;
+
 	/** @var IModel $model */
 	private $model;
 
 	/** @var int|null $maxImageAreaCached Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
 
+
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
 	 * @param ModelManager $modelManager Model manager
+	 * @param ILockingProvider $lockingProvider
 	 */
-	public function __construct(ImageMapper     $imageMapper,
-	                            FileService     $fileService,
-	                            SettingsService $settingsService,
-	                            ModelManager    $modelManager)
+	public function __construct(ImageMapper      $imageMapper,
+	                            FileService      $fileService,
+	                            SettingsService  $settingsService,
+	                            ModelManager     $modelManager,
+	                            ILockingProvider $lockingProvider)
 	{
 		parent::__construct();
 
@@ -86,6 +93,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
 		$this->modelManager       = $modelManager;
+		$this->lockingProvider    = $lockingProvider;
 
 		$this->model              = null;
 		$this->maxImageAreaCached = null;
@@ -119,6 +127,20 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$startMillis = round(microtime(true) * 1000);
 
 			try {
+				// Get a image lock
+				$lockKey = 'facerecognition/' . $image->getId();
+				$lockType = ILockingProvider::LOCK_EXCLUSIVE;
+				$this->lockingProvider->acquireLock($lockKey, $lockType);
+
+				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
+				if ($dbImage->getIsProcessed()) {
+					$this->logInfo('Faces found: 0. Image will be skipped since it was already processed.');
+					// Release lock of file.
+					$this->lockingProvider->releaseLock($lockKey, $lockType);
+					continue;
+				}
+
+
 				// Get an temp Image to process this image.
 				$tempImage = $this->getTempImage($image);
 
@@ -126,12 +148,16 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
 					$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
 					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
+					// Release lock of file.
+					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
 				}
 
 				if ($tempImage->getSkipped() === true) {
 					$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
 					$this->imageMapper->imageProcessed($image, array(), 0);
+					// Release lock of file.
+					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
 				}
 
@@ -155,6 +181,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
 				$this->imageMapper->imageProcessed($image, $faces, $duration);
+
+				// Release lock of file.
+				$this->lockingProvider->releaseLock($lockKey, $lockType);
+			} catch (\OCP\Lock\LockedException $e) {
+				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");

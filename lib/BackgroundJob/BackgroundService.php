@@ -107,6 +107,7 @@ class BackgroundService {
 				$task_classes[] = AddMissingImagesTask::class;
 				break;
 			case 'analyze-mode':
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
 				$task_classes[] = ImageProcessingTask::class;
 				break;
 			case 'cluster-mode':

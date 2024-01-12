@@ -175,12 +175,16 @@ class BackgroundCommand extends Command {
 		//
 		$verbose = $input->getOption('verbose');
 
-		// Acquire lock so that only one background task can run
+		// In image analysis mode it run in parallel.
+		// In any other case acquire lock so that only one background task can run
 		//
-		$lock = CommandLock::Lock('face:background_job');
-		if (!$lock) {
-			$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
-			return 1;
+		$globalLock = ($mode != 'analyze-mode');
+		if ($globalLock) {
+			$lock = CommandLock::Lock('face:background_job');
+			if (!$lock) {
+				$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+				return 1;
+			}
 		}
 
 		// Main thing
@@ -189,7 +193,9 @@ class BackgroundCommand extends Command {
 
 		// Release obtained lock
 		//
-		CommandLock::Unlock($lock);
+		if ($globalLock) {
+			CommandLock::Unlock($lock);
+		}
 
 		return 0;
 	}

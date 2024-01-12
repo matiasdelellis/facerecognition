@@ -34,6 +34,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\Helper\PhotoAlbums;
+use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -41,6 +42,9 @@ class SyncAlbumsCommand extends Command {
 
 	/** @var IUserManager */
 	protected $userManager;
+
+        /** @var PersonMapper Person mapper*/
+	private $personMapper;
 
 	/** @var IAppManager */
 	private $appManager;
@@ -53,11 +57,13 @@ class SyncAlbumsCommand extends Command {
 
 	/**
 	 * @param IUserManager $userManager
+	 * @param PersonMapper $personMapper
 	 * @param PhotoAlbums $photoAlbums
 	 * @param SettingsService $settingsService
 	 * @param IAppManager $appManager
 	 */
 	public function __construct(IUserManager    $userManager,
+	                            PersonMapper    $personMapper,
 	                            IAppManager     $appManager,
 	                            PhotoAlbums     $photoAlbums,
 	                            SettingsService $settingsService)
@@ -65,6 +71,7 @@ class SyncAlbumsCommand extends Command {
 		parent::__construct();
 
 		$this->appManager      = $appManager;
+		$this->personMapper    = $personMapper;
 		$this->userManager     = $userManager;
 		$this->photoAlbums     = $photoAlbums;
 		$this->settingsService = $settingsService;
@@ -83,6 +90,24 @@ class SyncAlbumsCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'Sync albums for a given user only. If not given, sync albums for all users.',
 				null
+			)->addOption(
+				'list_person',
+				'l',
+				InputOption::VALUE_NONE,
+				'List all persons defined for the given user_id.',
+				null
+			)->addOption(
+				'person_name',
+				'p',
+				InputOption::VALUE_REQUIRED,
+				'Sync albums for a given user and person name(s) (separate using comma). If not used, sync albums for all persons defined by the user.',
+				null
+			)->addOption(
+				'mode',
+				'm',
+				InputOption::VALUE_REQUIRED,
+				'Album creation mode. Use "Album-per-person" to create one album for each given person via person_name parameter. Use "Album-combined" to create one album for all person names given via person_name parameter.',
+				'Album-per-person'
 			);
 	}
 
@@ -99,6 +124,9 @@ class SyncAlbumsCommand extends Command {
 
 		$users = array();
 		$userId = $input->getOption('user_id');
+		$personNames = array();
+		$person_name = $input->getOption('person_name');
+		$mode = $input->getOption('mode');
 		if (!is_null($userId)) {
 			if ($this->userManager->get($userId) === null) {
 				$output->writeln("User with id <$userId> in unknown.");
@@ -113,11 +141,57 @@ class SyncAlbumsCommand extends Command {
 				$users[] = $iUser->getUID();
 			});
 		}
+		if ($input->getOption('list_person')){
+			if (is_null($userId)) {
+			$output->writeln("List option requires option user_id!");
+				return 1;
+			}else{
+				$output->writeln("List of defined persons for the user <$userId> :");
+				$modelId = $this->settingsService->getCurrentFaceModel();
+				$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+				foreach ($distintNames as $key=>$distintName) {
+					if ($key > 0 ){
+						$output->write(", ");
+					}
+					$output->write($distintName->getName());
+				}
+				$output->writeln("");
+				$output->writeln("Done.");
+			}
+			return 0;
+		}
 
 		foreach ($users as $user) {
-			$output->write("Synchronizing albums for the user <$userId>. ");
-			$this->photoAlbums->syncUser($userId);
-			$output->writeln("Done.");
+			if (!is_null($person_name)) {
+				if (is_null($userId)) {
+					$output->writeln("Person_name option requires option user_id!");
+					return 1;
+				}
+				$output->writeln("Synchronizing albums for the user <$userId> and person_name <$person_name> using mode <$mode>. ");
+				if ($mode === "Album-per-person") {
+					$personList = explode(",", $person_name);
+					foreach ($personList as $person) {
+						$this->photoAlbums->syncUserPersonNamesSelected($userId,$person,$output);
+					}
+				}
+				else if ($mode === "Album-combined") {
+					$personList = explode(",", $person_name); 
+					if ( count($personList) < 2 ){
+						$output->writeln("Note parameter mode <$mode> requires at least two persons");
+						return 1;
+					}
+					$this->photoAlbums->syncUserPersonNamesCombinedAlbum($userId,$personList,$output);
+				}
+				else {
+					$output->writeln("Error: invalid value for parameter mode <$mode>. ");
+					return 1;
+				}
+				$output->writeln("Done.");
+			}else{
+				$output->write("Synchronizing albums for the user <$userId>. ");
+				$this->photoAlbums->syncUser($userId);
+				$output->writeln("Done.");
+			}
 		}
 
 		return 0;

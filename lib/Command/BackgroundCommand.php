@@ -109,6 +109,15 @@ class BackgroundCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.',
 				0
+				)
+			->addOption(
+				'force_analyze_files',
+				'f',
+				InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+				'Forces the given file to be analyzed - even if has been scanned previously. 
+				Can be supplied multiple times to analyze more than one file. Requires that a USER_ID is specified. 
+				If the user does not explicitly specify a mode, the --defer-clustering option will be set automatically.',
+				[]
 			);
 	}
 
@@ -171,6 +180,22 @@ class BackgroundCommand extends Command {
 			$mode = 'defer-mode';
 		}
 
+		// Check if user wants to (re-) analyze specific images
+		//
+		$forceAnalyzeFiles = $input->getOption('force_analyze_files');
+		if(is_null($userId) and !empty($forceAnalyzeFiles)) {
+			$output->writeln("FATAL: you must specify a USER_ID when using the --force_analyze_files option.");
+			return 1;
+		}
+		if($mode === 'default-mode' and !empty($forceAnalyzeFiles)) {
+			// Switch to defer mode to have a more intuitive user experience. Otherwise the user would have to run the background_job again without the -f option to see the result of the analysis.
+			$output->writeln('INFO: Switching to "defer mode" because the --force_analyze_files option is set.');
+			$mode = 'defer-mode';
+		} else if(!($mode === 'analyze-mode' or $mode === 'defer-mode') and !empty($forceAnalyzeFiles)) {
+			$output->writeln("FATAL: $mode cannot be used together with the --force_analyze_files option.");
+			return 1;
+		}
+		
 		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
 		//
 		$verbose = $input->getOption('verbose');
@@ -189,7 +214,7 @@ class BackgroundCommand extends Command {
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $mode);
+		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $mode, $forceAnalyzeFiles);
 
 		// Release obtained lock
 		//

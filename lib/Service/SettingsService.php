@@ -141,6 +141,12 @@ class SettingsService {
 	/** System setting to configure external model */
 	const SYSTEM_EXTERNAL_MODEL_URL = 'facerecognition.external_model_url';
 	const SYSTEM_EXTERNAL_MODEL_API_KEY = 'facerecognition.external_model_api_key';
+	const SYSTEM_EXTERNAL_MODEL_NUMBER_OF_INSTANCES = 'facerecognition.external_model_number_of_instances';
+	const SYSTEM_EXTERNAL_MODEL_DEFAULT_NUMBER_OF_INSTANCES = '1';
+	const SYSTEM_EXTERNAL_MODEL_INSTANCES_HAVE_CONSECUTIVE_PORTS = 'facerecognition.external_model_instances_have_consecutive_ports';
+	const SYSTEM_EXTERNAL_MODEL_DEFAULT_INSTANCES_HAVE_CONSECUTIVE_PORTS = 'true';
+	const SYSTEM_EXTERNAL_MODEL_INSTANCE_DEFAULT_PORT = 'facerecognition.external_model_instance_default_port';
+	const SYSTEM_EXTERNAL_MODEL_DEFAULT_INSTANCE_DEFAULT_PORT = '8080';
 
 	/**
 	 * SettingsService
@@ -379,6 +385,28 @@ class SettingsService {
 	 */
 	public function getExternalModelApiKey(): ?string {
 		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_API_KEY, null);
+	}
+
+	/**
+	 * External model number of instances
+	 */
+	public function getExternalModelNumberOfInstances(): int {
+		return intval($this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_NUMBER_OF_INSTANCES, self::SYSTEM_EXTERNAL_MODEL_DEFAULT_NUMBER_OF_INSTANCES));;
+	}
+
+	/**
+	 * External model instances (if there are more than one...) have consecutive ports 
+	 */
+	public function getExternalModelInstancesHaveConsecutivePorts(): bool {
+		$consecutivePorts = $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_INSTANCES_HAVE_CONSECUTIVE_PORTS, self::SYSTEM_EXTERNAL_MODEL_DEFAULT_INSTANCES_HAVE_CONSECUTIVE_PORTS);
+		return ($consecutivePorts === 'true');
+	}
+
+	/**
+	 * External model number of instances
+	 */
+	public function getExternalModelInstanceDefaultPort(): int {
+		return intval($this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_INSTANCE_DEFAULT_PORT, self::SYSTEM_EXTERNAL_MODEL_DEFAULT_INSTANCE_DEFAULT_PORT));;
 	}
 
 }

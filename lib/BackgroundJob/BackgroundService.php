@@ -151,6 +151,7 @@ class BackgroundService {
 						$currentTime = time();
 						if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
 							$this->context->logger->logInfo("Time out. Quitting...");
+							$task->cleanUpOnTimeout();
 							return;
 						}
 

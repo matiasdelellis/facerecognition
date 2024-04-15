@@ -76,6 +76,15 @@ class TempImage extends Image {
 	}
 
 	/**
+	 * Get the path of the image
+	 *
+	 * @return string
+	 */
+	public function getImagePath(): string {
+		return $this->imagePath;
+	}
+
+	/**
 	 * Get the path of temporary image
 	 *
 	 * @return string

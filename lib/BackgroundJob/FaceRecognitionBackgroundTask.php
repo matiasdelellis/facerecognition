@@ -62,7 +62,8 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	 * This method will be called when the task is termindated prematurely due to timeout.
 	 */
 	public function cleanUpOnTimeout(): void {
-		$this->logDebug(sprintf("The %s has been terminated prematurely. Cleaning up.", end(explode('\\', get_class($this)))));
+		$classname = explode('\\', get_class($this));
+		$this->logDebug(sprintf("The %s has been terminated prematurely. Cleaning up.", end($classname)));
 	}
 
 	/**

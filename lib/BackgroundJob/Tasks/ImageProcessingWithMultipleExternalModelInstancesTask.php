@@ -259,14 +259,19 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 		$activeInstances = [];
 		$instanceActive =  array_fill(0, $nInstances, false); 
 		
-		$basePort = 8080;
+		$this->modelConsecutivePorts = $this->settingsService->getExternalModelInstancesHaveConsecutivePorts();
+
+		$basePort = 80;
 		$matches = [];
 		if(preg_match("/:(\d+)$/", $this->modelUrl, $matches)) {
 			$basePort = $matches[1];
 		} else {
-			$basePort = $this->settingsService->getExternalModelInstanceDefaultPort();
+			if($this->modelConsecutivePorts) {
+				$this->context->ncLogger->warning("The external model URL does not contain a port, so port $basePort is assumed by default.
+				For the other " . $nInstances-1 . " instances it is consequently assumed they listen on ports [" . implode(", ", range($basePort+1, $basePort+$nInstances-1)) . "].");
+			}
 		}
-		$this->modelConsecutivePorts = $this->settingsService->getExternalModelInstancesHaveConsecutivePorts();
+
 		if($this->modelConsecutivePorts) {
 			for($i = 0; $i < $nInstances; $i++) {
 				$this->logDebug("- Instance $i: " . preg_replace('/:\d+$/', ":" . ($basePort+$i), $this->modelUrl));
@@ -422,8 +427,8 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 					$task["curlHandle"] = $ch;
 
 					if(array_key_exists($instance, $preparedInstances)) {
-						$this->logInfo("ERROR: Instance #$instance already has a prepared task which will be overwritten. This should not have happened :-(");
-						var_dump($this->preparedTasks[$instance]);
+						$this->context->ncLogger->error("Instance #$instance already has a prepared task (for image #" . $this->preparedTasks[$instance]["image"]->getId() . 
+						") which will be overwritten by a new task for image " . $image->getId() . ". This should not have happened :-(", $this->preparedTasks[$instance]);
 					}
 					unset($freeInstances[$instance]);				// instance is no longer free
 					$preparedInstances[$instance] = $instance;		// add instance index to array to indicate that a task has been prepared for that instance
@@ -510,20 +515,20 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 				
 				// Oops
 				if(!isset($task)) {
-					$this->logInfo("ERROR: cURL handle " . var_export($ch) . " does not correspond to any scheduled task. This should not have happened :-(");
+					$this->context->ncLogger->error("cURL handle " . var_export($ch) . " does not correspond to any scheduled task. This should not have happened :-(", $this->scheduledTasks);
 					curl_close($ch);	// close handle, we don't know this handle...
 					curl_multi_remove_handle($mh, $ch);
 					continue;
 				}
 
 				if($curlMultiInfoRead['result'] === CURLE_GOT_NOTHING) {
-					$this->logInfo("WARNING: The external model instance #" . $task["instance"] . " returned no result for image " . $task["tempImage"]->getImagePath() . ". Reduce the number of model instances, or, if the model instances are hosted on the same machine, increase the overall RAM of the host.");
+					$this->context->ncLogger->warning("The external model instance #" . $task["instance"] . " returned no result for image " . $task["tempImage"]->getImagePath() . ". This could be a sign of (out of) memory issues of the host that runs your external model. Reduce the number of model instances (if hosted on the same machine) or increase the available RAM of your external model.", $task);
 					curl_multi_remove_handle($mh, $ch);
 					curl_multi_add_handle($mh, $ch);
 					continue;
 
-				} elseif($curlMultiInfoRead['result'] !== CURLE_OK) {
-					$this->logInfo("WARNING: Couldn't connect to model instance #" . $task["instance"] . ". Retrying...");
+				} elseif($curlMultiInfoRead['result'] === CURLE_COULDNT_CONNECT) {
+					$this->context->ncLogger->warning("Couldn't connect to model instance #" . $task["instance"] . ". Retrying... Note: This could be a sign of the extrenal model instance being killed due to memory issues (typical for docker deployment). Reduce the number of model instances (if hosted on the same machine) or increase the available RAM of your external model.", $task);
 					curl_multi_remove_handle($mh, $ch);
 					curl_multi_add_handle($mh, $ch);
 					continue;
@@ -549,7 +554,7 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 					continue;
 					
 				} elseif(empty($response)) {
-					$this->logInfo("Response is EMPTY for " . $tempImage->getImagePath() . " --> image is skipped and will be retried later.");
+					$this->logInfo("Response is EMPTY for " . $tempImage->getImagePath() . " --> image is skipped and will be retried in a later iteration of background_job.");
 					$this->logInfo("This could be a sign for insufficient memory on the machine running the external model. Provide at least 1G per instance.");
 					$tempImage->clean();
 					curl_multi_remove_handle($mh, $ch);
@@ -606,7 +611,7 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 		// If there are temporary files from external files, they must also be cleaned.
 		$this->fileService->clean();
 
-		$this->logInfo('NOTE: Face recognition task finished.');
+		$this->context->ncLogger->info('Face recognition task finished, all images analyzed.');
 
 		return true;
 	}

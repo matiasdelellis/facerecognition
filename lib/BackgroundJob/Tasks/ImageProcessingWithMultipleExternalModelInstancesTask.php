@@ -598,7 +598,7 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 
 			}
 
-		} while(count($activeInstances) > 0 or count($preparedInstances) > 0);
+		} while(current($images) or count($activeInstances) > 0 or count($preparedInstances) > 0);
 
 		// Close cURL handles
 		foreach($chs as $ch) {

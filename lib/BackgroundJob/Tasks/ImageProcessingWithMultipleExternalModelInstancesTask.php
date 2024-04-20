@@ -50,6 +50,10 @@ use OCA\FaceRecognition\Service\SettingsService;
  * Taks that get all images that are still not processed and processes them.
  * Processing image means that each image is prepared, faces extracted form it,
  * and for each found face - face descriptor is extracted.
+ * 
+ * The ImageProcessingWithMultipleExternalModelInstancesTask breaks up the
+ * functionality of the ExternalModel class into smaller parts so they can be 
+ * used to user multiple external model instances for parallel image analysis.
  */
 class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognitionBackgroundTask {
 
@@ -86,9 +90,13 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 	/** @var \CurlMultiHandle $curlMultiHandle The cURL multi handle */
 	private $curlMultiHandle;
 
-	/** @var  */
+	/** @var String|null model api endpoint */
 	private $modelUrl;
+
+	/** @var String|null model api key */
 	private $modelApiKey;
+
+	/** @var bool the external model instances listen on the same address on suibsequent ports */
 	private $modelConsecutivePorts;
 
 	/** @var String a simple regular expression pattern that should capture the port in most cases */
@@ -133,7 +141,7 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 	public function cleanUpOnTimeout(): void {
 		parent::cleanUpOnTimeout();
 
-		// TODO: Add an option and the required code to wait for all running analysis tasks to finish and save the results of those analyses.
+		// TODO (optional): Add an option and the required code to wait for all running analysis tasks to finish and save the results of those analyses.
 		// Note: The current behavior is OK because the task will quite without much delay after timeout. 
 		// 		 Waiting for the currently running analyses to finish woul dintroduce a significant extra delay during cleanup (depending on the speed of the external model).
 		//		 This delay in turn might result in the task still running when the next cron job is started, and thus, missing the next execution window.
@@ -304,7 +312,8 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 			}
 
 		} catch (\Exception $e) {
-			$this->logInfo('Faces found: 0. Image will be skipped because of the following error: ' . $e->getMessage());
+			$this->context->ncLogger->critical('Image processing aborted due to the following error: ' . $e->getMessage());
+			$this->logInfo('FATAL: Image processing aborted due to the following error: ' . $e->getMessage());
 			$this->logDebug((string) $e);
 
 			for($i=0; $i < sizeof($chs); $i++) {
@@ -622,6 +631,7 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 		// If there are temporary files from external files, they must also be cleaned.
 		$this->fileService->clean();
 
+		$this->logInfo('NOTE: Face recognition task finished, all images analyzed.');
 		$this->context->ncLogger->info('Face recognition task finished, all images analyzed.');
 
 		return true;

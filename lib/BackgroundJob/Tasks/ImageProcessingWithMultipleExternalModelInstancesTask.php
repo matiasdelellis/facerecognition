@@ -91,6 +91,9 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 	private $modelApiKey;
 	private $modelConsecutivePorts;
 
+	/** @var String a simple regular expression pattern that should capture the port in most cases */
+	const PORT_REGEX_PATTERN = "/(.*?):(\d+)(\/.*)?/";
+
 
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
@@ -184,16 +187,23 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 		
 		$cFile = curl_file_create($imagePath);
 		$post = array('file'=> $cFile);
-		
+		$modelUrl = $this->modelUrl;
+
 		if($port > 0) {
-			curl_setopt($ch, CURLOPT_URL, preg_replace('/:\d+$/', ":$port", $this->modelUrl) . '/detect');
-		} else {
-			curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/detect');
-		}
+			$matches = [];
+			if(preg_match(ImageProcessingWithMultipleExternalModelInstancesTask::PORT_REGEX_PATTERN, $modelUrl, $matches)) {
+				$modelUrl = $matches[1] . ":" . ($port) . (count($matches) > 3 ? $matches[3] : '');
+			} else {
+				throw new \RuntimeException("Model URL (" . $modelUrl . ") does not specify a port.");
+			}
+		} 
+		curl_setopt($ch, CURLOPT_URL, $modelUrl . '/detect');
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ' . $this->modelApiKey]);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);		
+
+		$this->logDebug("Request to external model prepared. URL: $modelUrl <-- $imagePath");
 	}
 
 	/**
@@ -263,18 +273,19 @@ class ImageProcessingWithMultipleExternalModelInstancesTask extends FaceRecognit
 
 		$basePort = 80;
 		$matches = [];
-		if(preg_match("/:(\d+)$/", $this->modelUrl, $matches)) {
-			$basePort = $matches[1];
+		if(preg_match(ImageProcessingWithMultipleExternalModelInstancesTask::PORT_REGEX_PATTERN, $this->modelUrl, $matches)) {
+			$basePort = $matches[2];
 		} else {
 			if($this->modelConsecutivePorts) {
-				$this->context->ncLogger->warning("The external model URL does not contain a port, so port $basePort is assumed by default.
-				For the other " . $nInstances-1 . " instances it is consequently assumed they listen on ports [" . implode(", ", range($basePort+1, $basePort+$nInstances-1)) . "].");
+				$this->context->ncLogger->critical("The external model URL does not specify a port.", );
+				$this->logInfo("FATAL: The external model URL does not specify a port.");
+				return false;
 			}
 		}
 
 		if($this->modelConsecutivePorts) {
 			for($i = 0; $i < $nInstances; $i++) {
-				$this->logDebug("- Instance $i: " . preg_replace('/:\d+$/', ":" . ($basePort+$i), $this->modelUrl));
+				$this->logDebug("- Instance $i: " . $matches[1] . ":" . ($basePort+$i) . (count($matches) > 3 ? $matches[3] : ''));
 			}
 		}
 

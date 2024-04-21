@@ -204,7 +204,7 @@ class SetupCommand extends Command {
 
 		if ($show) {
 			$this->dumpCurrentSetup();
-		}
+		}		
 
 		// Release obtained lock
 		//
@@ -279,16 +279,20 @@ class SetupCommand extends Command {
 	}
 
 	private function dumpCurrentSetup (): void {
-		$this->logger->writeln("Current setup:");
-		$this->logger->writeln('');
-		$this->logger->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
-		$availableMemory = MemoryLimits::getAvailableMemory();
-		$this->logger->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
-		$assignedMemory = $this->settingsService->getAssignedMemory();
-		$this->logger->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
 
-		$this->logger->writeln('');
-		$this->logger->writeln("Available models:");
+		$io = $this->io;
+
+		$io->title("Current setup:");
+
+		$io->section('Memory:');
+		$this->logger->writeln("  Minimum value to assign to image processing : " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
+		$availableMemory = MemoryLimits::getAvailableMemory();
+		$this->logger->writeln("  Maximum value to assign to image processing : " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
+		$assignedMemory = $this->settingsService->getAssignedMemory();
+		$this->logger->writeln("  Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
+		$io->newLine(2);
+
+		$io->section("Available models:");
 		$table = new Table($this->logger);
 		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
 
@@ -305,6 +309,38 @@ class SetupCommand extends Command {
 			]);
 		}
 		$table->render();
+		$io->newLine(2);
+
+		$io->section('External model options' . ($model->getId() == ExternalModel::FACE_MODEL_ID ? '' : ' (no effect as the external model is not enabled)') . ':');
+		$this->logger->writeln('  URL: <info>' . $this->settingsService->getExternalModelUrl() . '</info>');
+		if($this->settingsService->getExternalModelApiKey() === SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY) {
+			$this->logger->writeln('  API key: <comment>WARNING</comment>: the default API key "<info>' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '"</info> is configured. This default value should not be used. Please set a proper API key in your external model. See https://github.com/matiasdelellis/facerecognition-external-model for more information.');
+		} else {
+			$this->logger->writeln('  API key: <info>[redacted]' . '</info>');
+		}
+		$nInstances = $this->settingsService->getExternalModelNumberOfInstances();
+		$this->logger->writeln('  Number of available instances: <info>' . $this->settingsService->getExternalModelNumberOfInstances() . '</info>');
+		$this->logger->writeln('  Instances have consecutive ports: <info>' . ($this->settingsService->getExternalModelInstancesHaveConsecutivePorts() ? 'true' : 'false') . '</info>');
+		$modelUrl = $this->settingsService->getExternalModelUrl();
+		// $modelUrl = "http://services.example.com:80/facerecognition";	// test url
+		$basePort = -1;
+		$portRegexPattern = ImageProcessingWithMultipleExternalModelInstancesTask::PORT_REGEX_PATTERN;
+		$matches = [];
+		if(preg_match($portRegexPattern, $modelUrl, $matches)) {
+			$basePort = $matches[2];
+		} else {
+			if($this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {
+				$this->logger->writeln("    <error>" . ($model->getId() == ExternalModel::FACE_MODEL_ID ? 'CRITICAL' : 'ERROR') . ':</error> The external model URL must explicitly specify a port when "consecutive_ports" is "true".');
+			}
+		}		
+		if($basePort > 0 and $nInstances > 1 and $this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {
+			$this->logger->writeln('  External model URLs that will be called for analysis:');
+			for($i=0; $i < $nInstances; $i++) {
+				$this->logger->writeln('    ' . $matches[1] . ":<comment>" . ($basePort+$i) . '</comment>' . (count($matches) > 3 ? $matches[3] : ''));
+			}
+		}
+		
+		$this->logger->writeln('');
 	}
 
 	private function getHumanMemory ($memory): string {

@@ -308,10 +308,11 @@ class SetupCommand extends Command {
 				$model->getDescription()
 			]);
 		}
+		unset($model);
 		$table->render();
 		$io->newLine(2);
 
-		$io->section('External model options' . ($model->getId() == ExternalModel::FACE_MODEL_ID ? '' : ' (no effect as the external model is not enabled)') . ':');
+		$io->section('External model options' . ($currentModel->getId() == ExternalModel::FACE_MODEL_ID ? '' : ' (no effect as the external model is not enabled)') . ':');
 		$this->logger->writeln('  URL: <info>' . $this->settingsService->getExternalModelUrl() . '</info>');
 		if($this->settingsService->getExternalModelApiKey() === SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY) {
 			$this->logger->writeln('  API key: <comment>WARNING</comment>: the default API key "<info>' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '"</info> is configured. This default value should not be used. Please set a proper API key in your external model. See https://github.com/matiasdelellis/facerecognition-external-model for more information.');
@@ -330,7 +331,7 @@ class SetupCommand extends Command {
 			$basePort = $matches[2];
 		} else {
 			if($this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {
-				$this->logger->writeln("    <error>" . ($model->getId() == ExternalModel::FACE_MODEL_ID ? 'CRITICAL' : 'ERROR') . ':</error> The external model URL must explicitly specify a port when "consecutive_ports" is "true".');
+				$io->caution("    " . ($currentModel->getId() == ExternalModel::FACE_MODEL_ID ? 'CRITICAL' : 'ERROR') . ': The external model URL must explicitly specify a port when "consecutive_ports" is "true".');
 			}
 		}		
 		if($basePort > 0 and $nInstances > 1 and $this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {

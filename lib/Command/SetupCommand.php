@@ -27,6 +27,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 use OCA\FaceRecognition\Model\IModel;
 
@@ -36,6 +37,9 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Helper\CommandLock;
 use OCA\FaceRecognition\Helper\MemoryLimits;
+use OCA\FaceRecognition\Model\ExternalModel\ExternalModel;
+
+use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingWithMultipleExternalModelInstancesTask;
 
 use OCP\Util as OCP_Util;
 
@@ -49,6 +53,9 @@ class SetupCommand extends Command {
 
 	/** @var OutputInterface */
 	protected $logger;
+
+	/** @var SymfonyStyle */
+	protected $io;
 
 	/**
 	 * @param ModelManager $modelManager
@@ -71,6 +78,12 @@ class SetupCommand extends Command {
 			->setName('face:setup')
 			->setDescription('Basic application settings, such as maximum memory, and the model used.')
 			->addOption(
+				'show',
+				's',
+				InputOption::VALUE_NONE,
+				'Displays the currently configured setup. Note: this will display the setup status after all other options are processed.'
+			)
+			->addOption(
 				'memory',
 				'M',
 				InputOption::VALUE_REQUIRED,
@@ -83,6 +96,34 @@ class SetupCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'The identifier number of the model to install',
 				-1
+			)
+			->addOption(
+				'external_model_url',
+				'u',
+				InputOption::VALUE_REQUIRED,
+				'Path to the external model URL, e.g. "192.168.1.123:8080". If not port is given ,port 80 is assumed implicitly.',
+				null
+			)
+			->addOption(
+				'external_model_api_key',
+				'k',
+				InputOption::VALUE_REQUIRED,
+				'The API key to access the external model (needs to be specified when setting up the external model instance). Note: when you provide an empty option argument (-k "") then you have the option to reset the API key to its default value "' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '".',
+				null
+			)
+			->addOption(
+				'number_of_instances',
+				'i',
+				InputOption::VALUE_REQUIRED,
+				'The number of external model instances that can be used for parallel image analysis. Has no effect if the selected model is != 5.',
+				null
+			)
+			->addOption(
+				'consecutive_ports',
+				null,
+				InputOption::VALUE_REQUIRED,
+				'If true, then the external model instances [2, ..., N] will be accessed by extracting the port from the "external_model_url" and incrementing the port for each additional external model instance.',
+				null
 			);
 	}
 
@@ -92,15 +133,18 @@ class SetupCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		$this->io = new SymfonyStyle($input, $output);
+
 		$this->logger = $output;
 
+		$show = $input->getOption('show');
 		$assignMemory = $input->getOption('memory');
 		$modelId = $input->getOption('model');
+		$external_model_url = $input->getOption('external_model_url');
+		$external_model_api_key = $input->getOption('external_model_api_key');
+		$number_of_instances = $input->getOption('number_of_instances');
+		$consecutive_ports = $input->getOption('consecutive_ports');
 
-		if ($assignMemory < 0 && $modelId < 0) {
-			$this->dumpCurrentSetup();
-			return 0;
-		}
 
 		// Get lock to avoid potential errors.
 		//
@@ -124,6 +168,42 @@ class SetupCommand extends Command {
 				CommandLock::Unlock($lock);
 				return $ret;
 			}
+		}
+		
+		if (!is_null($external_model_url)) {
+			if(empty($external_model_url)) {
+				$this->logger->writeln('NOTICE: empty value for option "external_model_url" ignored.');
+			} {
+				$this->settingsService->setExternalModelUrl($external_model_url);
+			}
+		}
+		
+		if (!is_null($external_model_api_key)) {
+			if(empty($external_model_api_key)) {
+				if($this->io->confirm('No API key given. Do you want to set the default API key "' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '"?', false)) {
+					$this->settingsService->setExternalModelApiKey(SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY);
+				} else {
+					$this->logger->writeln('NOTICE: "external_model_api_key" ignored.');
+				}
+			} else {
+				$this->settingsService->setExternalModelApiKey($external_model_api_key);
+			}
+		}
+
+		if (!is_null($number_of_instances)) {
+
+			$number_of_instances = intval($number_of_instances);
+			if($number_of_instances > 0) {
+				$this->settingsService->setExternalModelNumberOfInstances($number_of_instances);
+			}
+		}
+
+		if (!is_null($consecutive_ports)) {
+			$this->settingsService->setExternalModelInstancesHaveConsecutivePorts(filter_var($consecutive_ports,FILTER_VALIDATE_BOOLEAN));
+		}
+
+		if ($show) {
+			$this->dumpCurrentSetup();
 		}
 
 		// Release obtained lock

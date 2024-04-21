@@ -183,7 +183,7 @@ class SetupCommand extends Command {
 				if($this->io->confirm('No API key given. Do you want to set the default API key "' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '"?', false)) {
 					$this->settingsService->setExternalModelApiKey(SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY);
 				} else {
-					$this->logger->writeln('NOTICE: "external_model_api_key" ignored.');
+					$this->io->note('Empty option "external_model_api_key" ignored.');
 				}
 			} else {
 				$this->settingsService->setExternalModelApiKey($external_model_api_key);
@@ -312,29 +312,41 @@ class SetupCommand extends Command {
 		$table->render();
 		$io->newLine(2);
 
+
+		/**
+		 * Settings related to the External model.
+		 */
+
 		$io->section('External model options' . ($currentModel->getId() == ExternalModel::FACE_MODEL_ID ? '' : ' (no effect as the external model is not enabled)') . ':');
-		$this->logger->writeln('  URL: <info>' . $this->settingsService->getExternalModelUrl() . '</info>');
-		if($this->settingsService->getExternalModelApiKey() === SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY) {
-			$this->logger->writeln('  API key: <comment>WARNING</comment>: the default API key "<info>' . SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY . '"</info> is configured. This default value should not be used. Please set a proper API key in your external model. See https://github.com/matiasdelellis/facerecognition-external-model for more information.');
-		} else {
-			$this->logger->writeln('  API key: <info>[redacted]' . '</info>');
-		}
-		$nInstances = $this->settingsService->getExternalModelNumberOfInstances();
-		$this->logger->writeln('  Number of available instances: <info>' . $this->settingsService->getExternalModelNumberOfInstances() . '</info>');
-		$this->logger->writeln('  Instances have consecutive ports: <info>' . ($this->settingsService->getExternalModelInstancesHaveConsecutivePorts() ? 'true' : 'false') . '</info>');
+		
+		// get frequently referenced settings
 		$modelUrl = $this->settingsService->getExternalModelUrl();
-		// $modelUrl = "http://services.example.com:80/facerecognition";	// test url
+		$nInstances = $this->settingsService->getExternalModelNumberOfInstances();
+		$consecutivePorts = $this->settingsService->getExternalModelInstancesHaveConsecutivePorts();
+		$apiKey = $this->settingsService->getExternalModelApiKey();
+
+		// get port and print error message if needed
 		$basePort = -1;
 		$portRegexPattern = ImageProcessingWithMultipleExternalModelInstancesTask::PORT_REGEX_PATTERN;
 		$matches = [];
 		if(preg_match($portRegexPattern, $modelUrl, $matches)) {
 			$basePort = $matches[2];
 		} else {
-			if($this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {
+			if($consecutivePorts) {
 				$io->caution("    " . ($currentModel->getId() == ExternalModel::FACE_MODEL_ID ? 'CRITICAL' : 'ERROR') . ': The external model URL must explicitly specify a port when "consecutive_ports" is "true".');
 			}
-		}		
-		if($basePort > 0 and $nInstances > 1 and $this->settingsService->getExternalModelInstancesHaveConsecutivePorts()) {
+		}
+
+
+		$this->logger->writeln("  URL: <info>$modelUrl</info>");
+		if($apiKey === SettingsService::SYSTEM_EXTERNAL_MODEL_DEFAULT_API_KEY) {
+			$io->note("  API key: WARNING: the default API key $apiKey is configured. This default value should not be used. Please set a proper API key in your external model. See https://github.com/matiasdelellis/facerecognition-external-model for more information.");
+		} else {
+			$this->logger->writeln('  API key: <info>[redacted]' . '</info>');
+		}
+		$this->logger->writeln("  Number of available instances: <info>$nInstances </info>");
+		$this->logger->writeln("  Instances have consecutive ports: <info>" . ($consecutivePorts ? 'true' : 'false') . '</info>');
+		if($basePort > 0 and $nInstances > 1 and $consecutivePorts) {
 			$this->logger->writeln('  External model URLs that will be called for analysis:');
 			for($i=0; $i < $nInstances; $i++) {
 				$this->logger->writeln('    ' . $matches[1] . ":<comment>" . ($basePort+$i) . '</comment>' . (count($matches) > 3 ? $matches[3] : ''));

@@ -153,6 +153,27 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * @param string $userId ID of the user
+	 *
+	 * @return Person[]
+	 */
+	public function findDistinctNamesSelected(string $userId, int $modelId, $faceNames): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('name')
+			->from($this->getTableName(), 'p')
+			->innerJoin('p', 'facerecog_faces' , 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->andwhere($qb->expr()->isNotNull('p.name'))
+			->andWhere($qb->expr()->eq('p.name', $qb->createParameter('faceNames')))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('faceNames', $faceNames);
+		return $this->findEntities($qb);
+	}
+
+	/**
 	 * Search Person by name
 	 *
 	 * @param int|null $offset

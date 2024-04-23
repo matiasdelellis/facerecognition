@@ -24,6 +24,8 @@ namespace OCA\FaceRecognition\Helper;
 
 use OCP\IUser;
 
+use Symfony\Component\Console\Output\OutputInterface;
+
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Album\AlbumMapper;
@@ -106,8 +108,116 @@ class PhotoAlbums {
 		}
 	}
 
+	/**
+	 * @return void
+	 */
+	public function syncUserPersonNamesSelected (string $userId, string $personNames, OutputInterface $output) {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		/* Get current albums and persons to sync */
+		$personsNames = $this->getPersonsNamesSelected($userId, $modelId, $personNames);
+		if ( count($personsNames) === 0 ){
+			$output->writeln("Person name $personNames invalid - skipping");
+			return;
+		}
+		$albumNames = $this->albumMapper->getAll($userId);
+
+		/* Create albums for new persons */
+		$albumsToCreate = array_diff ($personsNames, $albumNames);
+		foreach ($albumsToCreate as $albumToCreate) {
+			$this->albumMapper->create($userId, $albumToCreate);
+		}
+
+		/* Find person's images and sync */
+		foreach ($personsNames as $albumName) {
+			$albumId = $this->albumMapper->get($userId, $albumName);
+
+			/* Get images within albums and person's to compare and sync */
+			$albumImages = $this->albumMapper->getFiles($albumId);
+			$personImages = $this->getPersonsImages($userId, $modelId, $albumName);
+
+			/* Delete old photos. Maybe corrections. */
+			$imagesToDelete = array_diff ($albumImages, $personImages);
+			foreach ($imagesToDelete as $image) {
+				$this->albumMapper->removeFile($albumId, $image);
+			}
+
+			/* Add new photos to the person's album */
+			$imagesToAdd = array_diff ($personImages, $albumImages);
+			foreach ($imagesToAdd as $image) {
+				$this->albumMapper->addFile($albumId, $image, $userId);
+			}
+		}
+	}
+
+	/**
+	 * @return void
+	 */
+	public function syncUserPersonNamesCombinedAlbum (string $userId, array $personList, OutputInterface $output) {
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		/* Get current albums and persons to sync */
+		$albumToCreateCombined = "";
+		$albumTodo = array();
+		$personNames = array();
+		foreach ($personList as $person) {
+			$personName = $this->getPersonsNamesSelected($userId, $modelId, $person);
+			if ( $personName[0] === $person ){
+				array_push($personNames, $personName[0]);
+				$albumToCreateCombined .= $personName[0] . "+";
+			}else{
+				$output->writeln("Person name $person invalid - exit without creating combined album");
+				return;
+			}
+		}
+		$albumToCreateCombined = rtrim($albumToCreateCombined, "+");
+		array_push($albumTodo, $albumToCreateCombined);
+		$albumNames = $this->albumMapper->getAll($userId);
+
+		/* Create albums for new persons */
+		$albumsToCreate = array_diff ($albumTodo, $albumNames);
+		$countAlbumsToCreate = count($albumsToCreate);
+		if ($countAlbumsToCreate === 1) {
+			$albumToCreate = $albumsToCreate[0];
+			$this->albumMapper->create($userId, $albumToCreate);
+		}
+
+		if ($countAlbumsToCreate === 1) {
+			$albumToCreate = $albumsToCreate[0];
+			$albumId = $this->albumMapper->get($userId, $albumToCreate);
+		} else {
+			$albumToCreate = $albumTodo[0];
+			$albumId = $this->albumMapper->get($userId, $albumToCreate);
+		}
+
+		/* Get images within albums and person's to compare and sync */
+		$albumImages = $this->albumMapper->getFiles($albumId);
+		$personImages = $this->getMultiPersonsImages($userId, $modelId, $personNames);
+
+		/* Delete old photos. Maybe corrections. */
+		$imagesToDelete = array_diff ($albumImages, $personImages);
+		foreach ($imagesToDelete as $image) {
+			$this->albumMapper->removeFile($albumId, $image);
+		}
+
+		/* Add new photos to the person's album */
+		$imagesToAdd = array_diff ($personImages, $albumImages);
+		foreach ($imagesToAdd as $image) {
+			$this->albumMapper->addFile($albumId, $image, $userId);
+		}
+	}
+
 	private function getPersonsNames(string $userId, int $modelId): array {
 		$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+		$names = [];
+		foreach ($distintNames as $distintName) {
+			$names[] = $distintName->getName();
+		}
+		return $names;
+	}
+
+	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array {
+		$distintNames = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
 		$names = [];
 		foreach ($distintNames as $distintName) {
 			$names[] = $distintName->getName();
@@ -122,6 +232,27 @@ class PhotoAlbums {
 			$images[] = $image->getFile();
 		}
 		return array_unique($images);
+	}
+
+	private function getMultiPersonsImages(string $userId, int $modelId, array $personNames): array {
+		$multiPersonImages = array();
+		foreach ($personNames as $personName){
+			$personImages = $this->imageMapper->findFromPerson($userId, $modelId, $personName);
+			$images = [];
+			foreach ($personImages as $image) {
+				$images[] = $image->getFile();
+			}
+			array_push($multiPersonImages, $images);
+		}
+		$multiPersonMatchingImages = array();
+		for ( $i = 1 ;  $i < count($multiPersonImages) ; ++$i){
+			if ( $i === 1 ){
+				$multiPersonMatchingImages = array_intersect($multiPersonImages[$i-1],$multiPersonImages[$i]);
+			}else{
+				$multiPersonMatchingImages = array_intersect($multiPersonMatchingImages,$multiPersonImages[$i]);
+			}
+		}
+		return array_unique($multiPersonMatchingImages);
 	}
 
 }

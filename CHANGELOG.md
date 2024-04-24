@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.40] - 2024-04-24
+- Enable PHP 8.3 and NC28
+- Add special modes to background_job command that allows images to be analyzed
+  in multiple processes to improve speed.
+- Add special mode to sync-album command to generate combined albums with multiple
+  people. PR #709
+
 ## [0.9.31] - 2023-08-24
 - Be sure to open the model before getting relevant info. Issue #423
 

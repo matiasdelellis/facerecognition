@@ -55,6 +55,19 @@ class Imaginary {
 		return rtrim($imaginaryUrl, '/');
 	}
 
+	public function hasKey(): ?string {
+		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
+		return ($imaginaryKey !== 'invalid');
+	}
+
+	public function getKey(): ?string {
+		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
+		if ($imaginaryKey === 'invalid')
+			return null;
+               
+		return $imaginaryKey;
+	}
+
 	/**
 	 * @return string imaginary version
 	 */
@@ -67,7 +80,13 @@ class Imaginary {
 		$httpClient = $this->service->newClient();
 
 		try {
-			$response = $httpClient->get($imaginaryUrl . '/');
+			$options = [];
+			if ($this->hasKey()) {
+				$options['query'] = [
+					'key' => $this->getKey(),
+				];
+			}
+			$response = $httpClient->get($imaginaryUrl . '/', $options);
 		} catch (\Exception $e) {
 			return null;
 		}
@@ -98,6 +117,12 @@ class Imaginary {
 			'contents' => file_get_contents($filepath),
 			'filename' => basename($filepath),
 		]];
+
+		if ($this->hasKey()) {
+			$options['query'] = [
+				'key' => $this->getKey(),
+			];
+		}
 
 		$response = $httpClient->post($imaginaryUrl . '/info', $options);
 
@@ -160,9 +185,15 @@ class Imaginary {
 			]
 		];
 
+		$query = [];
+		$query['operations'] = json_encode($operations);
+		if ($this->hasKey()) {
+			$query['key'] = $this->getKey();
+		}
+
 		$response = $httpClient->post(
 			$imaginaryUrl . '/pipeline', [
-				'query' => ['operations' => json_encode($operations)],
+				'query' => $query,
 				'body' => file_get_contents($filepath),
 				'nextcloud' => ['allow_local_address' => true],
 			]);

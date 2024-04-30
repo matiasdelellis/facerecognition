@@ -210,6 +210,56 @@ class ClusterController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
+	 * @return DataResponse
+	 */
+	Public function findIgnored(): DataResponse {
+		sleep(1); // button "Review ignored people" should be created delayed (after "Review people found" button)
+		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+
+		$resp = array();
+		$resp['enabled'] = $userEnabled;
+		$resp['clusters'] = array();
+
+		if (!$userEnabled)
+			return new DataResponse($resp);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
+
+		$clusters = $this->personMapper->findIgnored($this->userId, $modelId);
+		foreach ($clusters as $cluster) {
+			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			if ($clusterSize < $minClusterSize)
+				continue;
+
+			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
+			$faces = [];
+			foreach ($personFaces as $personFace) {
+				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+
+				$file = $this->urlService->getFileNode($image->getFile());
+				if ($file === null) continue;
+
+				$face = [];
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
+
+				$faces[] = $face;
+			}
+
+			$entry = [];
+			$entry['count'] = $clusterSize;
+			$entry['id'] = $cluster->getId();
+			$entry['faces'] = $faces;
+			$resp['clusters'][] = $entry;
+		}
+
+		return new DataResponse($resp);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
 	 * @param int $id
 	 * @param bool $visible
 	 *

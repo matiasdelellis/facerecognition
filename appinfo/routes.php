@@ -55,6 +55,12 @@ return ['routes' =>
 		'url'  => '/clusters',
 		'verb' => 'GET'
 	],
+	// Get all clusters ignored clusters.
+	[
+		'name' => 'cluster#findIgnored',
+		'url'  => '/clustersIgnored',
+		'verb' => 'GET'
+	],
 	// Change visibility to cluster
 	[
 		'name' => 'cluster#setVisibility',

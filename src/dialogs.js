@@ -373,6 +373,99 @@ const FrDialogs = {
 		});
 	},
 
+	assignIgnored: function (faces, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-assign-dialog';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Add name'),
+				message: t('facerecognition', 'Please assign a name to this person.'),
+				type: 'none'
+			});
+
+			$dlg.append($('<br/>'));
+
+			var div = $('<div/>').attr('style', 'text-align: center');
+			$dlg.append(div);
+
+			for (var face of faces) {
+				if (face['fileUrl'] !== undefined) {
+					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
+				} else {
+					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
+				}
+			}
+
+			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
+			$dlg.append(input);
+
+			$('body').append($dlg);
+
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'Keep ignored'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, null);
+					}
+				},
+			}, {
+				text: t('facerecognition', 'Save'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, input.val().trim());
+					}
+				},
+				defaultButton: true
+			}];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false, '');
+					}
+				}
+			});
+
+			new AutoComplete({
+				input: document.getElementById(dialogName + "-input"),
+				lookup (query) {
+					return new Promise(resolve => {
+						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
+							resolve(names);
+						});
+					});
+				},
+				silent: true,
+				highlight: false
+			});
+
+			$(dialogId + "-input").keydown(function(event) {
+				// It only prevents the that change the image when you press arrow keys.
+				event.stopPropagation();
+				if (event.key === "Enter") {
+					// It only prevents the that change the image when you press enter.
+					event.preventDefault();
+				}
+			});
+
+			input.focus();
+		});
+	},
+
 	_getMessageTemplate: function () {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {

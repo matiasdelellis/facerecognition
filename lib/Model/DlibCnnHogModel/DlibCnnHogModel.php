@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020-2023, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020-2024, Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -42,9 +42,6 @@ class DlibCnnHogModel implements IModel {
 
 	/** @var DlibCnn5Model */
 	private $dlibCnn5Model;
-
-	/** @var DlibHogModel */
-	private $dlibHogModel;
 
 	/**
 	 * DlibCnnHogModel __construct.
@@ -88,10 +85,6 @@ class DlibCnnHogModel implements IModel {
 			$error_message = "This Model depend on Model 1 and must install it.";
 			return false;
 		}
-		if (!$this->dlibHogModel->isInstalled()) {
-			$error_message = "This Model depend on Model 3 and must install it.";
-			return false;
-		}
 		return true;
 	}
 
@@ -107,7 +100,7 @@ class DlibCnnHogModel implements IModel {
 	 * @return void
 	 */
 	public function install() {
-		// This model reuses models 1 and 3 and should not install anything.
+		// This model reuses models 1 and should not install anything.
 	}
 
 	/**
@@ -125,7 +118,7 @@ class DlibCnnHogModel implements IModel {
 			return $detectedFaces;
 		}
 
-		$hogFaces = $this->dlibHogModel->detectFaces($imagePath, false);
+		$hogFaces = dlib_face_detection($imagePath);
 
 		foreach ($cnnFaces as $proposedFace) {
 			$detectedFaces[] = $this->validateFace($proposedFace, $hogFaces);
@@ -163,7 +156,7 @@ class DlibCnnHogModel implements IModel {
 		 * These are bad to compare, so we lower the confidence, to avoid clustering.
 		 */
 		$confidence = $proposedFace['detection_confidence'];
-		$proposedFace['detection_confidence'] = $confidence * 0.8;
+		$proposedFace['detection_confidence'] = $confidence * 0.6;
 
 		return $proposedFace;
 	}

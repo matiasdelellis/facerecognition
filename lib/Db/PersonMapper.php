@@ -114,6 +114,35 @@ class PersonMapper extends QBMapper {
 	 * @param int $modelId ID of the model
 	 * @return Person[]
 	 */
+	public function findIgnored(string $userId, int $modelId): array {
+		$sub = $this->db->getQueryBuilder();
+		$sub->select(new Literal('1'))
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'f.person'))
+			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'is_valid')
+			->from($this->getTableName(), 'p')
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->andWhere($qb->expr()->eq('is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->eq('is_visible', $qb->createParameter('is_visible')))
+			->andWhere($qb->expr()->isNull('name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_visible', false, IQueryBuilder::PARAM_BOOL);
+
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @return Person[]
+	 */
 	public function findAll(string $userId, int $modelId): array {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))

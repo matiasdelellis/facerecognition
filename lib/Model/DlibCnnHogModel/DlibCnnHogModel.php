@@ -28,7 +28,6 @@ use OCA\FaceRecognition\Helper\FaceRect;
 use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
-use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
 class DlibCnnHogModel implements IModel {
 
@@ -47,13 +46,10 @@ class DlibCnnHogModel implements IModel {
 	 * DlibCnnHogModel __construct.
 	 *
 	 * @param DlibCnn5Model $dlibCnn5Model
-	 * @param DlibHogModel $dlibHogModel
 	 */
-	public function __construct(DlibCnn5Model   $dlibCnn5Model,
-	                            DlibHogModel    $dlibHogModel)
+	public function __construct(DlibCnn5Model   $dlibCnn5Model)
 	{
 		$this->dlibCnn5Model    = $dlibCnn5Model;
-		$this->dlibHogModel     = $dlibHogModel;
 	}
 
 	public function getId(): int {
@@ -74,8 +70,6 @@ class DlibCnnHogModel implements IModel {
 
 	public function isInstalled(): bool {
 		if (!$this->dlibCnn5Model->isInstalled())
-			return false;
-		if (!$this->dlibHogModel->isInstalled())
 			return false;
 		return true;
 	}

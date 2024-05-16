@@ -124,7 +124,6 @@ class SyncAlbumsCommand extends Command {
 
 		$users = array();
 		$userId = $input->getOption('user_id');
-		$personNames = array();
 		$person_name = $input->getOption('person_name');
 		$mode = $input->getOption('mode');
 

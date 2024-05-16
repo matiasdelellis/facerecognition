@@ -244,12 +244,14 @@ class PhotoAlbums {
 			}
 			array_push($multiPersonImages, $images);
 		}
+
+		$noPersons = count($multiPersonImages);
 		$multiPersonMatchingImages = array();
-		for ( $i = 1 ;  $i < count($multiPersonImages) ; ++$i){
-			if ( $i === 1 ){
-				$multiPersonMatchingImages = array_intersect($multiPersonImages[$i-1],$multiPersonImages[$i]);
-			}else{
-				$multiPersonMatchingImages = array_intersect($multiPersonMatchingImages,$multiPersonImages[$i]);
+		for ($i = 1 ;  $i < $noPersons ; ++$i) {
+			if ($i === 1) {
+				$multiPersonMatchingImages = array_intersect($multiPersonImages[$i-1], $multiPersonImages[$i]);
+			} else {
+				$multiPersonMatchingImages = array_intersect($multiPersonMatchingImages, $multiPersonImages[$i]);
 			}
 		}
 		return array_unique($multiPersonMatchingImages);

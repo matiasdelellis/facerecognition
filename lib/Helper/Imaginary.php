@@ -55,7 +55,7 @@ class Imaginary {
 		return rtrim($imaginaryUrl, '/');
 	}
 
-	public function hasKey(): ?string {
+	public function hasKey(): bool {
 		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
 		return ($imaginaryKey !== 'invalid');
 	}

@@ -45,12 +45,7 @@ class DlibCnnModel implements IModel {
 	const MEMORY_AREA_RELATIONSHIP = -1;
 	const MINIMUM_MEMORY_REQUIREMENTS = -1;
 
-	const FACE_MODEL_BZ2_URLS = array();
 	const FACE_MODEL_FILES = array();
-
-	const I_MODEL_DETECTOR = 0;
-	const I_MODEL_PREDICTOR = 1;
-	const I_MODEL_RESNET = 2;
 
 	const PREFERRED_MIMETYPE = 'image/png';
 
@@ -112,11 +107,11 @@ class DlibCnnModel implements IModel {
 	}
 
 	public function isInstalled(): bool {
-		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]))
+		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES['detector']['filename']))
 			return false;
-		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
+		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']))
 			return false;
-		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]))
+		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']))
 			return false;
 		return true;
 	}
@@ -159,14 +154,14 @@ class DlibCnnModel implements IModel {
 		$this->modelService->prepareModelFolder($this->getId());
 
 		/* Download and install models */
-		$detectorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_DETECTOR]);
-		$this->compressionService->bunzip2($detectorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
+		$detectorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['detector']['url']);
+		$this->compressionService->bunzip2($detectorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
 
-		$predictorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
-		$this->compressionService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$predictorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['predictor']['url']);
+		$this->compressionService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']));
 
-		$resnetModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
-		$this->compressionService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$resnetModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['resnet']['url']);
+		$this->compressionService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']));
 
 		/* Clean temporary files */
 		$this->downloadService->clean();
@@ -176,9 +171,9 @@ class DlibCnnModel implements IModel {
 	 * @return void
 	 */
 	public function open() {
-		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_DETECTOR]));
-		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
-		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
+		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']));
+		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']));
 	}
 
 	public function detectFaces(string $imagePath, bool $compute = true): array {

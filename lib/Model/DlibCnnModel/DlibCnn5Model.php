@@ -48,16 +48,18 @@ class DlibCnn5Model extends DlibCnnModel implements IModel {
 	/*
 	 * Model files.
 	 */
-	const FACE_MODEL_BZ2_URLS = [
-		'https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2',
-		'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
-		'https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2'
-	];
-
 	const FACE_MODEL_FILES = [
-		'mmod_human_face_detector.dat',
-		'shape_predictor_5_face_landmarks.dat',
-		'dlib_face_recognition_resnet_model_v1.dat'
+		'detector' => [
+			'url' => 'https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2',
+			'filename' => 'mmod_human_face_detector.dat'
+		],
+		'predictor' => [
+			'url' => 'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
+			'filename' => 'shape_predictor_5_face_landmarks.dat',
+		],
+		'resnet' => [
+			'url' => 'https://github.com/davisking/dlib-models/raw/2a61575dd45d818271c085ff8cd747613a48f20d/dlib_face_recognition_resnet_model_v1.dat.bz2',
+			'filename' => 'dlib_face_recognition_resnet_model_v1.dat'
+		]
 	];
-
 }

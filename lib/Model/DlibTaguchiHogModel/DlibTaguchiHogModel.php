@@ -21,93 +21,49 @@
  *
  */
 
-namespace OCA\FaceRecognition\Model\DlibCnnHogModel;
+namespace OCA\FaceRecognition\Model\DlibTaguchiHogModel;
 
 use OCA\FaceRecognition\Helper\FaceRect;
 
+use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel;
 use OCA\FaceRecognition\Model\IModel;
 
-use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
-
-class DlibCnnHogModel implements IModel {
+class DlibTaguchiHogModel extends DlibCnnModel implements IModel {
 
 	/*
 	 * Model files.
 	 */
-	const FACE_MODEL_ID = 4;
-	const FACE_MODEL_NAME = "DlibCnnHog5";
-	const FACE_MODEL_DESC = "Extends the main model, doing a face validation with the Hog detector";
-	const FACE_MODEL_DOC = "https://github.com/matiasdelellis/facerecognition/wiki/Models#model-4";
+	const FACE_MODEL_ID = 6;
+	const FACE_MODEL_NAME = "DlibTaguchiHog";
+	const FACE_MODEL_DESC = "Extends the Taguchi model, doing a face validation with the Hog detector";
+	const FACE_MODEL_DOC = "https://github.com/matiasdelellis/facerecognition/wiki/Models#model-6";
 
-	/** @var DlibCnn5Model */
-	private $dlibCnn5Model;
+	/** Relationship between image size and memory consumed */
+	const MEMORY_AREA_RELATIONSHIP = 1 * 1024;
+	const MINIMUM_MEMORY_REQUIREMENTS = 1 * 1024 * 1024 * 1024;
 
-	/**
-	 * DlibCnnHogModel __construct.
-	 *
-	 * @param DlibCnn5Model $dlibCnn5Model
+	/*
+	 * Model files.
 	 */
-	public function __construct(DlibCnn5Model   $dlibCnn5Model)
-	{
-		$this->dlibCnn5Model    = $dlibCnn5Model;
-	}
-
-	public function getId(): int {
-		return static::FACE_MODEL_ID;
-	}
-
-	public function getName(): string {
-		return static::FACE_MODEL_NAME;
-	}
-
-	public function getDescription(): string {
-		return static::FACE_MODEL_DESC;
-	}
-
-	public function getDocumentation(): string {
-		return static::FACE_MODEL_DOC;
-	}
-
-	public function isInstalled(): bool {
-		if (!$this->dlibCnn5Model->isInstalled())
-			return false;
-		return true;
-	}
-
-	public function meetDependencies(string &$error_message): bool {
-		if (!$this->dlibCnn5Model->isInstalled()) {
-			$error_message = "This Model depend on Model 1 and must install it.";
-			return false;
-		}
-		return true;
-	}
-
-	public function getMaximumArea(): int {
-		return $this->dlibCnn5Model->getMaximumArea();
-	}
-
-	public function getPreferredMimeType(): string {
-		return $this->dlibCnn5Model->getPreferredMimeType();
-	}
-
-	/**
-	 * @return void
-	 */
-	public function install() {
-		// This model reuses models 1 and should not install anything.
-	}
-
-	/**
-	 * @return void
-	 */
-	public function open() {
-		$this->dlibCnn5Model->open();
-	}
+	const FACE_MODEL_FILES = [
+		'detector' => [
+			'url' => 'https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2',
+			'filename' => 'mmod_human_face_detector.dat'
+		],
+		'predictor' => [
+			'url' => 'https://github.com/davisking/dlib-models/raw/4af9b776281dd7d6e2e30d4a2d40458b1e254e40/shape_predictor_5_face_landmarks.dat.bz2',
+			'filename' => 'shape_predictor_5_face_landmarks.dat',
+		],
+		'resnet' => [
+			'url' => 'https://github.com/TaguchiModels/dlibModels/raw/main/taguchi_face_recognition_resnet_model_v1.7z',
+			'filename' => 'taguchi_face_recognition_resnet_model_v1.dat'
+		]
+	];
 
 	public function detectFaces(string $imagePath, bool $compute = true): array {
 		$detectedFaces = [];
 
-		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath);
+		$cnnFaces = parent::detectFaces($imagePath);
 		if (count($cnnFaces) === 0) {
 			return $detectedFaces;
 		}
@@ -119,10 +75,6 @@ class DlibCnnHogModel implements IModel {
 		}
 
 		return $detectedFaces;
-	}
-
-	public function compute(string $imagePath, array $face): array {
-		return $this->dlibCnn5Model->compute($imagePath, $face);
 	}
 
 	private function validateFace($proposedFace, array $validateFaces) {

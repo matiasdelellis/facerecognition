@@ -36,6 +36,7 @@ use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
 use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 
 use OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel;
+use OCA\FaceRecognition\Model\DlibTaguchiHogModel\DlibTaguchiHogModel;
 
 use OCA\FaceRecognition\Model\ExternalModel\ExternalModel;
 
@@ -65,6 +66,9 @@ class ModelManager {
 	/** @var ExternalModel */
 	private $externalModel;
 
+	/** @var DlibTaguchiHogModel */
+	private $dlibTaguchiHogModel;
+
 	/**
 	 * @patam IUserManager $userManager
 	 * @param SettingsService $settingsService
@@ -73,6 +77,7 @@ class ModelManager {
 	 * @param DlibHogModel $dlibHogModel
 	 * @param DlibCnnHogModel $dlibCnnHogModel
 	 * @param ExternalModel $externalModel
+	 * @param DlibTaguchiHogModel $dlibTaguchiHogModel
 	 */
 	public function __construct(IUserManager    $userManager,
 	                            SettingsService $settingsService,
@@ -80,7 +85,8 @@ class ModelManager {
 	                            DlibCnn68Model  $dlibCnn68Model,
 	                            DlibHogModel    $dlibHogModel,
 	                            DlibCnnHogModel $dlibCnnHogModel,
-	                            ExternalModel   $externalModel)
+	                            ExternalModel   $externalModel,
+	                            DlibTaguchiHogModel $dlibTaguchiHogModel)
 	{
 		$this->userManager     = $userManager;
 		$this->settingsService = $settingsService;
@@ -90,6 +96,7 @@ class ModelManager {
 		$this->dlibHogModel    = $dlibHogModel;
 		$this->dlibCnnHogModel = $dlibCnnHogModel;
 		$this->externalModel   = $externalModel;
+		$this->dlibTaguchiHogModel = $dlibTaguchiHogModel;
 	}
 
 	/**
@@ -112,6 +119,9 @@ class ModelManager {
 				break;
 			case ExternalModel::FACE_MODEL_ID:
 				$model = $this->externalModel;
+				break;
+			case DlibTaguchiHogModel::FACE_MODEL_ID:
+				$model = $this->dlibTaguchiHogModel;
 				break;
 			default:
 				$model = null;
@@ -137,7 +147,8 @@ class ModelManager {
 			$this->dlibCnn68Model,
 			$this->dlibHogModel,
 			$this->dlibCnnHogModel,
-			$this->externalModel
+			$this->externalModel,
+			$this->dlibTaguchiHogModel
 		];
 	}
 

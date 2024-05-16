@@ -155,13 +155,13 @@ class DlibCnnModel implements IModel {
 
 		/* Download and install models */
 		$detectorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['detector']['url']);
-		$this->compressionService->bunzip2($detectorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
+		$this->compressionService->decompress($detectorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
 
 		$predictorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['predictor']['url']);
-		$this->compressionService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']));
+		$this->compressionService->decompress($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']));
 
 		$resnetModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_FILES['resnet']['url']);
-		$this->compressionService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']));
+		$this->compressionService->decompress($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']));
 
 		/* Clean temporary files */
 		$this->downloadService->clean();

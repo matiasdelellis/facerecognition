@@ -166,10 +166,10 @@ class DlibHogModel implements IModel {
 
 		/* Download and install models */
 		$predictorModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_PREDICTOR]);
-		$this->compressionService->bunzip2($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
+		$this->compressionService->decompress($predictorModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]));
 
 		$resnetModelBz2 = $this->downloadService->downloadFile(static::FACE_MODEL_BZ2_URLS[self::I_MODEL_RESNET]);
-		$this->compressionService->bunzip2($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
+		$this->compressionService->decompress($resnetModelBz2, $this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 
 		/* Clean temporary files */
 		$this->downloadService->clean();

@@ -28,7 +28,7 @@ namespace OCA\FaceRecognition\Service;
 class CompressionService {
 
 	/**
-	 * Uncompressing the file with the bzip2-extension
+	 * Decompress according to file extension
 	 *
 	 * @param string $inputFile
 	 * @param string $outputFile
@@ -37,7 +37,7 @@ class CompressionService {
 	 *
 	 * @return void
 	 */
-	public function bunzip2(string $inputFile, string $outputFile): void {
+	public function decompress(string $inputFile, string $outputFile): void {
 		if (!file_exists ($inputFile) || !is_readable ($inputFile))
 			throw new \Exception('The file ' . $inputFile . ' not exists or is not readable');
 
@@ -45,6 +45,21 @@ class CompressionService {
 		    (file_exists($outputFile) && !is_writable($outputFile)))
 			throw new \Exception('The file ' . $outputFile . ' exists or is not writable');
 
+		$extension = pathinfo($inputFile, PATHINFO_EXTENSION);
+		switch ($extension) {
+		case 'bz2':
+			$this->bunzip2($inputFile, $outputFile);
+			break;
+		case '7z':
+			$this->un7z($inputFile, $outputFile);
+			break;
+		default:
+			throw new \Exception('Unsupported file format: ' . $extension);
+			break;
+		}
+	}
+
+	private function bunzip2(string $inputFile, string $outputFile): void {
 		$in_file = bzopen ($inputFile, "r");
 		$out_file = fopen ($outputFile, "w");
 
@@ -62,6 +77,16 @@ class CompressionService {
 
 		bzclose ($in_file);
 		fclose ($out_file);
+	}
+
+	private function un7z(string $inputFile, string $outputFile): void {
+		$cmd = '7z x ' . $inputFile . ' -o/tmp/';
+		$output = null;
+		$retval = null;
+		exec($cmd, $output, $retval);
+		if ($retval != 0)
+			throw new \Exception('Fail to extract ' . $inputFile .  ': ' . $output);
+		rename('/tmp/' . basename($outputFile), $outputFile);
 	}
 
 }

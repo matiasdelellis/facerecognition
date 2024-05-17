@@ -25,7 +25,6 @@ var Persons = function (baseUrl) {
     this._unassignedClusters = [];
     this._ignoredClusters = [];
 
-    this._enabled = false;
     this._loaded = false;
     this._mustReload = false;
 };
@@ -34,9 +33,6 @@ Persons.prototype = {
     /*
      * View State
      */
-    isEnabled: function () {
-        return this._enabled;
-    },
     isLoaded: function () {
         return this._loaded;
     },
@@ -50,7 +46,6 @@ Persons.prototype = {
         var deferred = $.Deferred();
         var self = this;
         $.get(this._baseUrl+'/persons').done(function (response) {
-            self._enabled = response.enabled;
             self._persons = response.persons.sort(function(a, b) {
                 return b.count - a.count;
             });
@@ -216,12 +211,7 @@ Persons.prototype = {
         return deferred.promise();
     },
     unsetActive: function () {
-//        this._persons = [];
-
         this._activePerson = undefined;
-
-//        this._unassignedClusters = [];
-
         this._clustersByName = [];
     }
 };
@@ -230,6 +220,10 @@ Persons.prototype = {
  * View.
  */
 var View = function (persons) {
+    this._enabled = OCP.InitialState.loadState('facerecognition', 'user-enabled');
+    this._hasUnamed = OCP.InitialState.loadState('facerecognition', 'has-unamed');
+    this._hasHidden = OCP.InitialState.loadState('facerecognition', 'has-hidden');
+
     this._persons = persons;
     this._observer = lozad('.lozad');
 };
@@ -258,33 +252,9 @@ View.prototype = {
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
                 }
+                self._enabled = enabled;
                 self.reload();
             }
-        });
-    },
-    searchUnassignedClusters: function () {
-        var self = this;
-        self._persons.loadUnassignedClusters().done(function () {
-            if (self._persons.getUnassignedClusters().length > 0) {
-                var button = $("<button id='show-more-clusters' type='button' class='primary'>" + t('facerecognition', 'Review people found') + "</button>");
-                $('#optional-buttons-div').append(button);
-                button.click(function () {
-                    self.renameUnassignedClusterDialog();
-                });
-                OC.Notification.showTemporary(t('facerecognition', 'You got some people to recognize'));
-            }
-        });
-    },
-    searchIgnoredClusters: function () {
-        var self = this;
-        self._persons.loadIgnoredClusters().done(function () {
-	    if (self._persons.getIgnoredClusters().length > 0) {
-		var button = $("<button id='show-ignored-clusters' type='button' class='primary'>" + t('facerecognition', 'Review ignored people') + "</button>");
-		$('#optional-buttons-div').append(button);
-		button.click(function () {
-		    self.renameIgnoredClusterDialog();
-		});
-	    }
         });
     },
     renameUnassignedClusterDialog: function () {
@@ -292,6 +262,7 @@ View.prototype = {
         var unassignedClusters = this._persons.getUnassignedClusters();
         var cluster = unassignedClusters.shift();
         if (cluster === undefined) {
+            OC.Notification.showTemporary(t('facerecognition', 'You don\'t have more people to recognize.'));
             self.renderContent();
             if (self._persons.mustReload())
                 self.reload();
@@ -330,6 +301,7 @@ View.prototype = {
         var ignoredClusters = this._persons.getIgnoredClusters();
         var cluster = ignoredClusters.shift();
         if (cluster === undefined) {
+            OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
             self.renderContent();
             if (self._persons.mustReload())
                 self.reload();
@@ -349,11 +321,7 @@ View.prototype = {
                             self.renameIgnoredClusterDialog();
                         }
                     } else {
-                        self._persons.setClusterVisibility(cluster.id, false).done(function () {
-                            self.renameIgnoredClusterDialog();
-                        }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
-                        });
+                        self.renameIgnoredClusterDialog();
                     }
                 } else {
                     // Cancelled
@@ -379,10 +347,14 @@ View.prototype = {
             loadingIcon: OC.imagePath('core', 'loading.gif')
         };
 
-        if (this._persons.isEnabled() === true) {
+        if (this._enabled === true) {
             context.enabled = true;
+            context.hasUnamed = this._hasUnamed;
+            context.hasHidden = this._hasHidden;
             context.persons = this._persons.getPersons();
 
+            context.reviewPeopleMsg = t('facerecognition', 'Review people found');
+            context.reviewIgnoredMsg = t('facerecognition', 'Review ignored people');
             context.emptyMsg = t('facerecognition', 'Your friends have not been recognized yet');
             context.emptyHint = t('facerecognition', 'Please, be patient');
         }
@@ -436,6 +408,26 @@ View.prototype = {
             } else {
                 self.setEnabledUser (true);
             }
+        });
+
+        $('#show-more-clusters').click(function () {
+            self._persons.loadUnassignedClusters().done(function () {
+                if (self._persons.getUnassignedClusters().length > 0) {
+                    self.renameUnassignedClusterDialog();
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'You dont have more people to recognize.'));
+                };
+            });
+        });
+
+        $('#show-ignored-clusters').click(function () {
+            self._persons.loadIgnoredClusters().done(function () {
+                if (self._persons.getIgnoredClusters().length > 0) {
+                    self.renameIgnoredClusterDialog();
+                } else {
+                    OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
+                };
+            });
         });
 
         $('#facerecognition .file-preview-big').click(function () {
@@ -628,8 +620,6 @@ if (personName !== undefined) {
     view.renderContent();
     persons.load().done(function () {
         view.renderContent();
-        view.searchUnassignedClusters();
-        view.searchIgnoredClusters();
     }).fail(function () {
         OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
     });

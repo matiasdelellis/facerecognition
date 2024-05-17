@@ -213,7 +213,6 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	Public function findIgnored(): DataResponse {
-		sleep(1); // button "Review ignored people" should be created delayed (after "Review people found" button)
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();

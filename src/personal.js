@@ -531,7 +531,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #show-more-clusters').click(function () {
+        $('#facerecognition #review-person-clusters').click(function () {
             $(this).css("cursor", "wait");
             var person = self._persons.getActivePerson();
             self._persons.loadClustersByName(person.name).done(function () {

@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2021 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2024 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -122,7 +122,6 @@ class ClusterController extends Controller {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
-		$resp['enabled'] = $userEnabled;
 		$resp['clusters'] = array();
 
 		if (!$userEnabled)

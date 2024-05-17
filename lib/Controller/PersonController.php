@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2018-2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2024 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -93,7 +93,6 @@ class PersonController extends Controller {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
-		$resp['enabled'] = $userEnabled;
 		$resp['persons'] = array();
 
 		if (!$userEnabled)
@@ -126,7 +125,6 @@ class PersonController extends Controller {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
 		$resp = array();
-		$resp['enabled'] = $userEnabled;
 		$resp['name'] = $personName;
 		$resp['thumbUrl'] = null;
 		$resp['images'] = array();

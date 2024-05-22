@@ -55,7 +55,7 @@ class DlibTaguchiHogModel extends DlibCnnModel implements IModel {
 			'filename' => 'shape_predictor_5_face_landmarks.dat',
 		],
 		'resnet' => [
-			'url' => 'https://github.com/TaguchiModels/dlibModels/raw/main/taguchi_face_recognition_resnet_model_v1.7z',
+			'url' => 'https://github.com/davisking/dlib-models/raw/master/taguchi_face_recognition_resnet_model_v1.dat.bz2',
 			'filename' => 'taguchi_face_recognition_resnet_model_v1.dat'
 		]
 	];

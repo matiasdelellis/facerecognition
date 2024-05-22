@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * @copyright Copyright (c) 2019-2023 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2019-2024 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -50,9 +50,6 @@ class CompressionService {
 		case 'bz2':
 			$this->bunzip2($inputFile, $outputFile);
 			break;
-		case '7z':
-			$this->un7z($inputFile, $outputFile);
-			break;
 		default:
 			throw new \Exception('Unsupported file format: ' . $extension);
 			break;
@@ -77,16 +74,6 @@ class CompressionService {
 
 		bzclose ($in_file);
 		fclose ($out_file);
-	}
-
-	private function un7z(string $inputFile, string $outputFile): void {
-		$cmd = '7z x ' . $inputFile . ' -o/tmp/';
-		$output = null;
-		$retval = null;
-		exec($cmd, $output, $retval);
-		if ($retval != 0)
-			throw new \Exception('Fail to extract ' . $inputFile .  ': ' . $output);
-		rename('/tmp/' . basename($outputFile), $outputFile);
 	}
 
 }

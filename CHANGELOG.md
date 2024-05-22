@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.50] - 2024-05-22
+- Enable Nextcloud 29 and drop 27.
+- Add support to authorization imaginary with key. PR #746, Issue #700. Thanks
+  to fabalexsie.
+- Add button to "Review ignored people". PR #747, Issue #735. Thanks to wronny.
+- Add the sixth model to the application. Aka DlibTaguchiHog model. =)
+  This model was trained from scratch by Taguchi Tokuji to slightly improve the
+  bias of the original model on non-Caucasian/American people, training with a
+  greater number of Japanese and others Asians people. It obtained a similar
+  result in the LFW tests, slightly lower, but within the acceptable margins of
+  error.
+  This model should improve the behavior of the application with people with
+  these traits.
+- Update translations. Many thanks to everyone!.
+
 ## [0.9.40] - 2024-04-24
 - Enable PHP 8.3 and NC28
 - Add special modes to background_job command that allows images to be analyzed

@@ -45,6 +45,10 @@ class SettingsService {
 	const CURRENT_MODEL_KEY = 'model';
 	const FALLBACK_CURRENT_MODEL = -1;
 
+	/* Enabling facial recognition for users */
+	const DEFAULT_USER_ENABLED_KEY = 'default_enabled';
+	const DEFAULT_USER_ENABLED = 'false';
+
 	/* Assigned memory for image processing */
 	const ASSIGNED_MEMORY_KEY = 'assigned_memory';
 	const MINIMUM_ASSIGNED_MEMORY = (1 * 1024 * 1024 * 1024) * 2.0 / 3.0;
@@ -83,7 +87,7 @@ class SettingsService {
 
 	/** User setting what indicates if has the analysis enabled */
 	const USER_ENABLED_KEY = 'enabled';
-	const DEFAULT_USER_ENABLED = 'false';
+	// The default is defined by system 'default_enabled' key
 
 	/** User setting that remember last images checked */
 	const STALE_IMAGES_LAST_CHECKED_KEY = 'stale_images_last_checked';
@@ -170,7 +174,8 @@ class SettingsService {
 	 * @param null|string $userId
 	 */
 	public function getUserEnabled (?string $userId = null): bool {
-		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
+		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY,
+		                                       $this->getDefaultUserEnabled());
 		return ($enabled === 'true');
 	}
 
@@ -302,6 +307,11 @@ class SettingsService {
 	 * The next settings are advanced preferences that are not available in gui.
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
+	public function getDefaultUserEnabled (): bool {
+		$enabled = $this->config->getAppValue(Application::APP_NAME, self::USER_DEFAULT_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
+		return ($enabled === 'true');
+	}
+
 	public function getHandleSharedFiles(): bool {
 		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
 		return ($handle === 'true');

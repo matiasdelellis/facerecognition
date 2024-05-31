@@ -308,7 +308,7 @@ class SettingsService {
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
 	public function getDefaultUserEnabled (): bool {
-		$enabled = $this->config->getAppValue(Application::APP_NAME, self::USER_DEFAULT_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
+		$enabled = $this->config->getAppValue(Application::APP_NAME, self::DEFAULT_USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
 		return ($enabled === 'true');
 	}
 

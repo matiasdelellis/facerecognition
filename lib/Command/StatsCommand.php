@@ -141,6 +141,7 @@ class StatsCommand extends Command {
 			$stats[] = [
 				$user,
 				$this->imageMapper->countUserImages($user, $modelId),
+				$this->imageMapper->countUserImages($user, $modelId, true),
 				$this->faceMapper->countFaces($user, $modelId),
 				$this->personMapper->countClusters($user, $modelId),
 				$this->personMapper->countPersons($user, $modelId)
@@ -148,7 +149,7 @@ class StatsCommand extends Command {
 		}
 
 		$table = new Table($output);
-		$table->setHeaders(['User', 'Images', 'Faces', 'Clusters', 'Persons'])->setRows($stats);
+		$table->setHeaders(['User', 'Images', 'Processed', 'Faces', 'Clusters', 'Persons'])->setRows($stats);
 		$table->render();
 	}
 
@@ -161,6 +162,7 @@ class StatsCommand extends Command {
 			$stats[] = array(
 				'user'     => $user,
 				'images'   => $this->imageMapper->countUserImages($user, $modelId),
+				'processed'=> $this->imageMapper->countUserImages($user, $modelId, true),
 				'faces'    => $this->faceMapper->countFaces($user, $modelId),
 				'clusters' => $this->personMapper->countClusters($user, $modelId),
 				'persons'  => $this->personMapper->countPersons($user, $modelId)

@@ -153,16 +153,36 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence)
 		);
 
-		$this->logInfo(count($faces) . ' faces found for clustering');
+		$facesCount = count($faces);
+		$this->logInfo('There are ' . $facesCount . ' faces for clustering');
+
+		$noSlices = 1;
+		$sliceSize = $facesCount;
+
+		$defaultSlice = $this->settingsService->getClusterigBatchSize();
+		if ($defaultSlice > 0)  {
+			// The minimum batch size is 20000 faces
+			$defaultSlice = max($defaultSlice, 2000);
+			// The maximun batch size is the faces count.
+			$defaultSlice = min($defaultSlice, $facesCount);
+			$noSlices = intval($facesCount / $defaultSlice) + 1;
+			$sliceSize = ceil($facesCount / $noSlices);
+		}
+
+		$this->logDebug('We will cluster with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces');
+
+		$newClusters = [];
+		for ($i = 0; $i < $noSlices ; $i++) {
+			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
+			$newClusters = array_merge($newClusters, $this->getNewClusters($facesSliced));
+		}
 
 		// Cluster is associative array where key is person ID.
 		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
-
 		$currentClusters = $this->getCurrentClusters($faces);
 
-		$newClusters = $this->getNewClusters($faces);
 		$this->logInfo(count($newClusters) . ' clusters found after clustering');
 
 		// New merge

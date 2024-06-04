@@ -89,6 +89,9 @@ class SettingsService {
 	const USER_ENABLED_KEY = 'enabled';
 	// The default is defined by system 'default_enabled' key
 
+	const CLUSTERING_BATCH_SIZE_KEY = 'clustering_batch_size';
+	const DEFAULT_CLUSTERING_BATCH_SIZE = '-1';
+
 	/** User setting that remember last images checked */
 	const STALE_IMAGES_LAST_CHECKED_KEY = 'stale_images_last_checked';
 	const DEFAULT_STALE_IMAGES_LAST_CHECKED = '0';
@@ -310,6 +313,10 @@ class SettingsService {
 	public function getDefaultUserEnabled (): bool {
 		$enabled = $this->config->getAppValue(Application::APP_NAME, self::DEFAULT_USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
 		return ($enabled === 'true');
+	}
+
+	public function getClusterigBatchSize(): int {
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CLUSTERING_BATCH_SIZE_KEY, self::DEFAULT_CLUSTERING_BATCH_SIZE));
 	}
 
 	public function getHandleSharedFiles(): bool {

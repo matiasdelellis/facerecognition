@@ -78,6 +78,9 @@ class Admin implements ISettings {
 		$model = $this->modelManager->getCurrentModel();
 		if (!is_null($model)) {
 			try {
+				$error = "";
+				if (!$model->meetDependencies($error))
+					throw new \Exception($error);
 				$model->open();
 				$maxImageRange = strval($model->getMaximumArea());
 			} catch (\Exception $e) {

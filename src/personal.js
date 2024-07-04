@@ -336,12 +336,12 @@ View.prototype = {
             loaded: this._persons.isLoaded(),
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
-            enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
+            enableDescription: t('facerecognition', 'Analyse my images and group similar faces'),
             loadingMsg: t('facerecognition', 'Looking for your recognized friends'),
             showMoreButton: t('facerecognition', 'Review face groups'),
             showIgnoredButton: t('facerecognition', 'Review ignored people'),
             emptyMsg: t('facerecognition', 'The analysis is disabled'),
-            emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
+            emptyHint: t('facerecognition', 'Enable the analysis to find your loved ones'),
             renameHint: t('facerecognition', 'Rename'),
             hideHint: t('facerecognition', 'Hide it'),
             loadingIcon: OC.imagePath('core', 'loading.gif')
@@ -394,8 +394,8 @@ View.prototype = {
             var enabled = $(this).is(':checked');
             if (enabled === false) {
                 OC.dialogs.confirm(
-                    t('facerecognition', 'You will lose all the information analyzed, and if you re-enable it, you will start from scratch.'),
-                    t('facerecognition', 'Do you want to deactivate the grouping by faces?'),
+                    t('facerecognition', 'You will lose all the information analysed, and if you re-enable it, you will start from scratch.'),
+                    t('facerecognition', 'Do you want to deactivate face clustering?'),
                     function (result) {
                         if (result === true) {
                             self.setEnabledUser (false);

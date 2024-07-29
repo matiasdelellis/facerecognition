@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.51] - 2024-06-18
+- Fix admin page when for any reason disable pdlib.
+- Adds batch option for face clustering. Issue #712 (Among many others)
+- Shows how many processed images there are in the stats command.
+- Add setting to enable facial recognition for all users by default.
+
 ## [0.9.50] - 2024-05-22
 - Enable Nextcloud 29 and drop 27.
 - Add support to authorization imaginary with key. PR #746, Issue #700. Thanks

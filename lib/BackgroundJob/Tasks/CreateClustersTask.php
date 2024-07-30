@@ -167,14 +167,20 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$sliceSize = ceil($facesCount / $noSlices);
 		}
 
-		$this->logDebug('We will cluster with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces');
+		$this->logDebug('We will cluster these with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces.');
 
 		$newClusters = [];
-
 		// Obtain the clusters in batches and append them.
 		for ($i = 0; $i < $noSlices ; $i++) {
+			// Get the batches.
 			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
-			$newClusters = array_merge($newClusters, $this->getNewClusters($facesSliced));
+			// Get the indices, obtain the partial clusters and incorporate them.
+			$faceIds = array_map(function ($face) { return $face->getId(); }, $facesSliced);
+			$facesDescripted = $this->faceMapper->findDescriptorsBathed($faceIds);
+			$newClusters = array_merge($newClusters, $this->getNewClusters($facesDescripted));
+			// Discard variables aggressively to improve memory consumption.
+			unset($facesDescripted);
+			unset($facesSliced);
 		}
 
 		// Append non groupable faces on a single step.
@@ -184,7 +190,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
-		$currentClusters = $this->getCurrentClusters($faces);
+		$currentClusters = $this->getCurrentClusters(array_merge($faces, $nonGroupables));
 
 		$this->logInfo(count($newClusters) . ' clusters found after clustering');
 

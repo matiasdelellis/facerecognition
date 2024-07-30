@@ -41,12 +41,21 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
-			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		try {
 			return $this->findEntity($qb);
 		} catch (DoesNotExistException $e) {
 			return null;
 		}
+	}
+
+	public function findDescriptorsBathed (array $faceIds): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'descriptor')
+			->from($this->getTableName(), 'f')
+			->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
+		$qb->setParameter('face_ids', $faceIds, IQueryBuilder::PARAM_INT_ARRAY);
+		return $this->findEntities($qb);
 	}
 
 	/**
@@ -147,7 +156,7 @@ class FaceMapper extends QBMapper {
 
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.person', 'f.descriptor')
+		$qb->select('f.id', 'f.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))

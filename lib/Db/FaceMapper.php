@@ -170,7 +170,12 @@ class FaceMapper extends QBMapper {
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
-		return $this->findEntities($qb);
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
 	}
 
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
@@ -191,7 +196,12 @@ class FaceMapper extends QBMapper {
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
-		return $this->findEntities($qb);
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
 	}
 
 	/**

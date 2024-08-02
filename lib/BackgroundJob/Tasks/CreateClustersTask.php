@@ -148,13 +148,11 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$min_face_size = $this->settingsService->getMinimumFaceSize();
 		$min_confidence = $this->settingsService->getMinimumConfidence();
 
-		$faces = array_merge(
-			$this->faceMapper->getGroupableFaces($userId, $modelId, $min_face_size, $min_confidence),
-			$this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence)
-		);
+		$faces = $this->faceMapper->getGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
+		$nonGroupables = $this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
 
 		$facesCount = count($faces);
-		$this->logInfo('There are ' . $facesCount . ' faces for clustering');
+		$this->logInfo('There are ' . $facesCount . ' faces for clustering and '. count($nonGroupables) . ' that cannot be grouped.');
 
 		$noSlices = 1;
 		$sliceSize = $facesCount;
@@ -169,19 +167,30 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$sliceSize = ceil($facesCount / $noSlices);
 		}
 
-		$this->logDebug('We will cluster with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces');
+		$this->logDebug('We will cluster these with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces.');
 
 		$newClusters = [];
+		// Obtain the clusters in batches and append them.
 		for ($i = 0; $i < $noSlices ; $i++) {
+			// Get the batches.
 			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
-			$newClusters = array_merge($newClusters, $this->getNewClusters($facesSliced));
+			// Get the indices, obtain the partial clusters and incorporate them.
+			$faceIds = array_map(function ($face) { return $face['id']; }, $facesSliced);
+			$facesDescripted = $this->faceMapper->findDescriptorsBathed($faceIds);
+			$newClusters = array_merge($newClusters, $this->getNewClusters($facesDescripted));
+			// Discard variables aggressively to improve memory consumption.
+			unset($facesDescripted);
+			unset($facesSliced);
 		}
+
+		// Append non groupable faces on a single step.
+		$newClusters = array_merge($newClusters, $this->getFakeClusters($nonGroupables));
 
 		// Cluster is associative array where key is person ID.
 		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
-		$currentClusters = $this->getCurrentClusters($faces);
+		$currentClusters = $this->getCurrentClusters(array_merge($faces, $nonGroupables));
 
 		$this->logInfo(count($newClusters) . ' clusters found after clustering');
 
@@ -279,14 +288,24 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getCurrentClusters(array $faces): array {
 		$chineseClusters = array();
 		foreach($faces as $face) {
-			if ($face->person !== null) {
-				if (!isset($chineseClusters[$face->person])) {
-					$chineseClusters[$face->person] = array();
+			if ($face['person'] !== null) {
+				if (!isset($chineseClusters[$face['person']])) {
+					$chineseClusters[$face['person']] = array();
 				}
-				$chineseClusters[$face->person][] = $face->id;
+				$chineseClusters[$face['person']][] = $face['id'];
 			}
 		}
 		return $chineseClusters;
+	}
+
+	private function getFakeClusters(array $faces): array {
+		$newClusters = array();
+		for ($i = 0, $c = count($faces); $i < $c; $i++) {
+			$fakeCluster = [];
+			$fakeCluster[] = $faces[$i]['id'];
+			$newClusters[] = $fakeCluster;
+		}
+		return $newClusters;
 	}
 
 	private function getNewClusters(array $faces): array {
@@ -299,16 +318,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$faces_count = count($faces);
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if (!isset($face1->descriptor)) {
-					$edges[] = array($i, $i);
-					continue;
-				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if (!isset($face2->descriptor)) {
-						continue;
-					}
-					$distance = dlib_vector_length($face1->descriptor, $face2->descriptor);
+					$distance = dlib_vector_length($face1['descriptor'], $face2['descriptor']);
 					if ($distance < $sensitivity) {
 						$edges[] = array($i, $j);
 					}
@@ -324,16 +336,9 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 			for ($i = 0; $i < $faces_count; $i++) {
 				$face1 = $faces[$i];
-				if (!isset($face1->descriptor)) {
-					$edges[] = array($i, $i);
-					continue;
-				}
 				for ($j = $i; $j < $faces_count; $j++) {
 					$face2 = $faces[$j];
-					if (!isset($face2->descriptor)) {
-						continue;
-					}
-					$distance = Euclidean::distance($face1->descriptor, $face2->descriptor);
+					$distance = Euclidean::distance($face1['descriptor'], $face2['descriptor']);
 					if ($distance < $sensitivity) {
 						$edges[] = array($i, $j);
 					}
@@ -358,7 +363,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			if (!isset($newClusters[$newChineseClustersByIndex[$i]])) {
 				$newClusters[$newChineseClustersByIndex[$i]] = array();
 			}
-			$newClusters[$newChineseClustersByIndex[$i]][] = $faces[$i]->id;
+			$newClusters[$newChineseClustersByIndex[$i]][] = $faces[$i]['id'];
 		}
 		return $newClusters;
 	}

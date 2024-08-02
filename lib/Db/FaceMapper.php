@@ -41,12 +41,33 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'image', 'person', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
-			->andWhere($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		try {
 			return $this->findEntity($qb);
 		} catch (DoesNotExistException $e) {
 			return null;
 		}
+	}
+
+	public function findDescriptorsBathed (array $faceIds): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'descriptor')
+			->from($this->getTableName(), 'f')
+			->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
+
+		$qb->setParameter('face_ids', $faceIds, IQueryBuilder::PARAM_INT_ARRAY);
+
+		$descriptors = [];
+		$result = $qb->executeQuery();
+		while ($row = $result->fetch()) {
+			$descriptors[] = [
+				'id' => $row['id'],
+				'descriptor' => json_decode($row['descriptor'])
+			];
+		}
+		$result->closeCursor();
+
+		return $descriptors;
 	}
 
 	/**
@@ -147,7 +168,7 @@ class FaceMapper extends QBMapper {
 
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.person', 'f.descriptor')
+		$qb->select('f.id', 'f.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
@@ -161,7 +182,12 @@ class FaceMapper extends QBMapper {
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
-		return $this->findEntities($qb);
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
 	}
 
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
@@ -182,7 +208,12 @@ class FaceMapper extends QBMapper {
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
-		return $this->findEntities($qb);
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
 	}
 
 	/**

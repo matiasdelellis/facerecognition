@@ -149,16 +149,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$min_confidence = $this->settingsService->getMinimumConfidence();
 
 		$faces = $this->faceMapper->getGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
-		$nonGroupables = $this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
 
 		$facesCount = count($faces);
-		$this->logInfo('There are ' . $facesCount . ' faces for clustering and '. count($nonGroupables) . ' that cannot be grouped.');
+		$this->logInfo('There are ' . $facesCount . ' faces for clustering.');
 
-		$noSlices = 1;
+		$noSlices = 0;
 		$sliceSize = $facesCount;
 
 		$defaultSlice = $this->settingsService->getClusterigBatchSize();
-		if ($defaultSlice > 0)  {
+		if ($facesCount > 0 && $defaultSlice > 0)  {
 			// The minimum batch size is 20000 faces
 			$defaultSlice = max($defaultSlice, 2000);
 			// The maximun batch size is the faces count.
@@ -184,6 +183,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		}
 
 		// Append non groupable faces on a single step.
+		$nonGroupables = $this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
+		$this->logInfo('We will add '. count($nonGroupables) . ' faces that cannot be grouped.');
 		$newClusters = array_merge($newClusters, $this->getFakeClusters($nonGroupables));
 
 		// Cluster is associative array where key is person ID.
@@ -191,8 +192,11 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// and for new clusters is whatever chinese whispers decides to identify them.
 		//
 		$currentClusters = $this->getCurrentClusters(array_merge($faces, $nonGroupables));
-
 		$this->logInfo(count($newClusters) . ' clusters found after clustering');
+
+		// Discard variables aggressively to improve memory consumption.
+		unset($faces);
+		unset($nonGroupables);
 
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);

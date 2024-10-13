@@ -80,10 +80,11 @@ class BackgroundService {
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
 	 * @param string $runMode The command execution mode
+	 * @param array $forceAnalyzeFiles An array containing the names of files that shall be analyzed
 	 *
 	 * @return void
 	 */
-	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, string $runMode) {
+	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, string $runMode, $forceAnalyzeFiles = []) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
@@ -91,6 +92,7 @@ class BackgroundService {
 		$this->context->setRunningThroughCommand();
 		$this->context->propertyBag['max_image_area'] = $maxImageArea;
 		$this->context->propertyBag['run_mode'] = $runMode;
+		$this->context->propertyBag['force_analyze_files'] = $forceAnalyzeFiles;
 
 		// Here we are defining all the tasks that will get executed.
 		//

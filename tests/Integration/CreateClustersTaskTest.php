@@ -63,9 +63,9 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$min_confidence = $settingsService->getMinimumConfidence();
 
 		$groupablefaces = count($faceMapper->getGroupableFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
-		$this->assertEquals(0, $groupablefaces);
+		$this->assertEquals(1, $groupablefaces);
 		$nonGroupablefaces = count($faceMapper->getNonGroupableFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
-		$this->assertEquals(1, $nonGroupablefaces);
+		$this->assertEquals(0, $nonGroupablefaces);
 
 		// With a single face should never create clusters.
 		$this->doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $this->user);

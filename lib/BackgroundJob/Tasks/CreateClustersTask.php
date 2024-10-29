@@ -158,7 +158,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$sliceSize = $facesCount;
 
 		// Now calculate it if there is a batch size configured.
-		$batchSize = -1;//$this->settingsService->getClusterigBatchSize();
+		$batchSize = $this->settingsService->getClusterigBatchSize();
 		if ($facesCount > 0 && $batchSize > 0) {
 			// The minimum batch size is 2000 faces.
 			$batchSize = max($batchSize, 2000);

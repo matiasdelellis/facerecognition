@@ -411,7 +411,10 @@ View.prototype = {
         });
 
         $('#show-more-clusters').click(function () {
+            let button = $(this);
+            button.css("cursor", "wait");
             self._persons.loadUnassignedClusters().done(function () {
+                button.css("cursor", "");
                 if (self._persons.getUnassignedClusters().length > 0) {
                     self.renameUnassignedClusterDialog();
                 } else {
@@ -421,7 +424,10 @@ View.prototype = {
         });
 
         $('#show-ignored-clusters').click(function () {
+            let button = $(this);
+            button.css("cursor", "wait");
             self._persons.loadIgnoredClusters().done(function () {
+                button.css("cursor", "");
                 if (self._persons.getIgnoredClusters().length > 0) {
                     self.renameIgnoredClusterDialog();
                 } else {
@@ -532,16 +538,6 @@ View.prototype = {
         });
 
         $('#facerecognition #review-person-clusters').click(function () {
-            $(this).css("cursor", "wait");
-            var person = self._persons.getActivePerson();
-            self._persons.loadClustersByName(person.name).done(function () {
-                self.renderContent();
-            }).fail(function () {
-                OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
-            });
-        });
-
-        $('#facerecognition #show-ignored-clusters').click(function () {
             $(this).css("cursor", "wait");
             var person = self._persons.getActivePerson();
             self._persons.loadClustersByName(person.name).done(function () {

@@ -129,6 +129,8 @@ class Face extends Entity implements JsonSerializable {
 		$this->addType('image', 'integer');
 		$this->addType('person', 'integer');
 		$this->addType('isGroupable', 'bool');
+		$this->addType('descriptor', 'json');
+		$this->addType('creationTime', 'datetime');
 	}
 
 	/**

@@ -499,7 +499,7 @@ const FrDialogs = {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {
 			var self = this;
-			$.get(OC.filePath('core', 'templates', 'message.html'), function (tmpl) {
+			$.get(OC.filePath('facerecognition', 'templates', 'message.html'), function (tmpl) {
 				self.$messageTemplate = $(tmpl);
 				defer.resolve(self.$messageTemplate);
 			})

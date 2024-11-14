@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.1']
+        php-versions: ['8.2']
         databases: ['mysql']
-        server-versions: ['stable28']
+        server-versions: ['stable29']
 
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 

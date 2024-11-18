@@ -37,7 +37,11 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingWithMultipleExternalModelInstancesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
+
+use OCA\FaceRecognition\Model\ExternalModel\ExternalModel;
+use OCA\FaceRecognition\Service\SettingsService;
 
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -58,9 +62,16 @@ class BackgroundService {
 	/** @var FaceRecognitionContext $context */
 	private $context;
 
-	public function __construct(Application $application, FaceRecognitionContext $context) {
+	/** @var SettingsService */
+	protected $settingsService;	
+
+	public function __construct(Application $application, 
+								SettingsService  $settingsService,
+								FaceRecognitionContext $context) {
 		$this->application = $application;
 		$this->context = $context;
+
+		$this->settingsService    = $settingsService;
 	}
 
 	public function setLogger(OutputInterface $logger): void {
@@ -70,6 +81,13 @@ class BackgroundService {
 		}
 
 		$this->context->logger = new FaceRecognitionLogger($logger);
+	}
+
+	private function getImageProcessingTask(): string {
+		if($this->settingsService->getCurrentFaceModel() == ExternalModel::FACE_MODEL_ID and $this->settingsService->getExternalModelNumberOfInstances() > 1) {
+			return ImageProcessingWithMultipleExternalModelInstancesTask::class;
+		}
+		return ImageProcessingTask::class; 
 	}
 
 	/**
@@ -108,7 +126,7 @@ class BackgroundService {
 				break;
 			case 'analyze-mode':
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = $this->getImageProcessingTask();
 				break;
 			case 'cluster-mode':
 				$task_classes[] = CreateClustersTask::class;
@@ -118,7 +136,7 @@ class BackgroundService {
 				$task_classes[] = StaleImagesRemovalTask::class;
 				$task_classes[] = AddMissingImagesTask::class;
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = $this->getImageProcessingTask();
 				$task_classes[] = CreateClustersTask::class;
 				break;
 			case 'default-mode':
@@ -128,7 +146,7 @@ class BackgroundService {
 				$task_classes[] = CreateClustersTask::class;
 				$task_classes[] = AddMissingImagesTask::class;
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = $this->getImageProcessingTask();
 				break;
 		}
 
@@ -151,6 +169,7 @@ class BackgroundService {
 						$currentTime = time();
 						if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
 							$this->context->logger->logInfo("Time out. Quitting...");
+							$task->cleanUpOnTimeout();
 							return;
 						}
 

@@ -155,6 +155,10 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 		}
 
 		try {
+			$this->logDebug("Opening model...");
+			if($model->getId() == 5) {
+				$this->logDebug(" --> using the external model. Note: this operation may take a while if the external model is still busy with a previous analysis that was terminated prematurely due to a timeout.");
+			}
 			$model->open();
 		} catch (UnavailableException $e) {
 			$this->logInfo("Error accessing the model to get required information: " . $e->getMessage());

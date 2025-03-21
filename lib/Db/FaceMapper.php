@@ -49,6 +49,9 @@ class FaceMapper extends QBMapper {
 		}
 	}
 
+	/**
+	 * Cudos to @priyankub @bin101
+	 */
 	public function findDescriptorsBathed (array $faceIds): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'descriptor')

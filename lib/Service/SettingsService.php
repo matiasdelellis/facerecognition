@@ -316,6 +316,8 @@ class SettingsService {
 	}
 
 	public function getClusterigBatchSize(): int {
+		if ($this->config->getSystemValue('dbtype', 'sqlite') === 'oci')
+			return 1000;
 		return intval($this->config->getAppValue(Application::APP_NAME, self::CLUSTERING_BATCH_SIZE_KEY, self::DEFAULT_CLUSTERING_BATCH_SIZE));
 	}
 

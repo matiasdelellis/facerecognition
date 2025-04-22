@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.70] - 2025-04-22
+- Support Nextcloud 31 and deprectate NC29 and NC30. Issue #797
+- Support PHP 8.4 and deprecate PHP 8.0 in line with NC31. Issue #795
+- Fix clustering on Oracle database. Issue #786
+
 ## [0.9.60] - 2024-11-19
 - Enable NC30, and deprecte NC28. Issue #776
 - Fix review people found does not work on Nextcloud Hub 9 (30.0.0) #779

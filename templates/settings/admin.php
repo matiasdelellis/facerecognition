@@ -13,7 +13,8 @@
 			<?php p($l->t('Temporary files'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('During analysis, temporary files are used to ensure homogeneity between all images.'));?></p>
-		<p class="settings-hint"><?php p($l->t('Small images allow a quick analysis, but you can lose the smallest faces of your photos. Large images can improve the results, but the analysis will be slower.'));?>
+		<p class="settings-hint"><?php p($l->t('
+Small images allow a quick analysis, but you can miss small faces. Large images can improve the results, but the analysis will be slower.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Settings#temporary-files"></a>
 		</p>
 		<p class="settings-ranged">
@@ -29,7 +30,7 @@
 			<?php p($l->t('Clustering threshold'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('Persons are determined as groups of similar faces and to obtain them, all the faces found must be compared. When they are compared, a threshold is used to determine if they should be grouped.'));?></p>
-		<p class="settings-hint"><?php p($l->t('A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible to group the faces and obtaining fewer groups, but being able to confuse similar persons.'));?>
+		<p class="settings-hint"><?php p($l->t('A small threshold will only group very similar faces, but initially you will have many groups to name. A larger threshold is more flexible in grouping the faces and obtaining fewer groups, but it is more likely to confuse similar persons.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Sensitivity"></a>
 		</p>
 		<p class="settings-ranged">
@@ -42,9 +43,9 @@
 		</p>
 		<br>
 		<h3>
-			<?php p($l->t('Minimum confidence'));?>
+			<?php p($l->t('Face detection confidence score'));?>
 		</h3>
-		<p class="settings-hint"><?php p($l->t('The minimum confidence determines how reliable must be a face detection to try to group it. Blurred or misaligned faces would have a confidence closer to 0.0, and the best images close to 1.0.'));?>
+		<p class="settings-hint"><?php p($l->t('The minimum acceptable confidence score is a measure of how confident the model is that it has detected a face. Blurred or misaligned faces would have a confidence score closer to 0.0, while clearly visible faces would score closer to 1.0.'));?>
 			<a target="_blank" rel="noreferrer noopener" class="icon-info" title="<?php p($l->t('Open Documentation'));?>" href="https://github.com/matiasdelellis/facerecognition/wiki/Confidence"></a>
 		</p>
 		<p class="settings-ranged">
@@ -57,10 +58,10 @@
 		</p>
 		<br>
 		<h3>
-			<?php p($l->t('Minimum of faces in cluster'));?>
+			<?php p($l->t('Minimum cluster size'));?>
 		</h3>
-		<p class="settings-hint"><?php p($l->t('The minimum number of faces that a cluster must have to display it to the user.'));?></p>
-		<p class="settings-hint"><?php p($l->t('These faces clusters will not be shown as a suggestion, but can always be renamed eventually in the side panel.'));?></p>
+		<p class="settings-hint"><?php p($l->t('The minimum number of faces that a cluster must have before displaying it to the user.'));?></p>
+		<p class="settings-hint"><?php p($l->t('These face clusters will not be shown as a suggestion, but can always be renamed eventually in the side panel.'));?></p>
 		<p class="settings-ranged">
 			<label for="min-no-faces"><?php p($l->t('Less faces'));?></label>
 			<span><input type="range" id="min-no-faces-range" min="1" max="20" value="5" step="1" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>

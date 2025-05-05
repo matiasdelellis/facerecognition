@@ -113,7 +113,11 @@ class FileService {
 	 * @return Node | null
 	 */
 	public function getFileByPath($fullpath, $userId = null): ?Node {
-		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+		try {		
+			$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+		} catch(NotFoundException $e) {
+			$file = null;
+		}			
 		return $file;
 	}
 

@@ -395,11 +395,12 @@ class PersonMapper extends QBMapper
 			->innerJoin('c', 'facerecog_user_images', 'ui', $sub->expr()->eq('i.id', 'ui.image_id'))
 			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
 			->andWhere($sub->expr()->eq('c.user', $sub->createParameter('user_id')));
+		$sql = $sub->getSQL();
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_valid", $qb->createParameter('is_valid'))
-			->where('id IN (' . $sub->getSQL() . ')')
+			->where('id IN (' . $sql. ')')
 			->setParameter('user_id', $userId)
 			->setParameter('image_id', $imageId)
 			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL)

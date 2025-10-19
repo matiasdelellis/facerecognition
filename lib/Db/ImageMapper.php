@@ -35,19 +35,20 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use Psr\Log\LoggerInterface;
 
 class ImageMapper extends QBMapper
 {
 	/** @var FaceMapper Face mapper*/
 	private $faceMapper;
-	/** @var FaceRecognitionLogger*/
+	/** @var LoggerInterface*/
 	private $logger;
 
-	public function __construct(IDBConnection $db, FaceMapper $faceMapper, FaceRecognitionContext $context)
+	public function __construct(IDBConnection $db, FaceMapper $faceMapper, LoggerInterface $logger)
 	{
 		parent::__construct($db, 'facerecog_images', '\OCA\FaceRecognition\Db\Image');
 		$this->faceMapper = $faceMapper;
-		$this->logger = $context->logger;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -64,10 +65,10 @@ class ImageMapper extends QBMapper
 			->andWhere($qb->expr()->eq('ui.image_id', $qb->createNamedParameter($imageId)));
 		try {
 			$image = $this->findEntity($qb);
-			$this->logger->logDebug('ImageMapper -- find -- Found image ID ' . $imageId . ' for user ' . $userId);
+			$this->logger->debug('ImageMapper -- find -- Found image ID ' . $imageId . ' for user ' . $userId);
 			return $image;
 		} catch (DoesNotExistException $e) {
-			$this->logger->logDebug('ImageMapper -- find -- No image found for user ' . $userId . ', image ID ' . $imageId);
+			$this->logger->debug('ImageMapper -- find -- No image found for user ' . $userId . ', image ID ' . $imageId);
 			return null;
 		}
 	}
@@ -83,10 +84,10 @@ class ImageMapper extends QBMapper
 			->Where($qb->expr()->eq('i.id', $qb->createNamedParameter($imageId)));
 		try {
 			$image = $this->findEntity($qb);
-			$this->logger->logDebug('ImageMapper -- findFromImageId -- Found image ID ' . $imageId);
+			$this->logger->debug('ImageMapper -- findFromImageId -- Found image ID ' . $imageId);
 			return $image;
 		} catch (DoesNotExistException $e) {
-			$this->logger->logDebug('ImageMapper -- findFromImageId -- No image found for image ID ' . $imageId);
+			$this->logger->debug('ImageMapper -- findFromImageId -- No image found for image ID ' . $imageId);
 			return null;
 		}
 	}
@@ -103,7 +104,7 @@ class ImageMapper extends QBMapper
 
 		$data = $resultStatement->fetchAll(\PDO::FETCH_COLUMN);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- findUsersForImageId -- Found ' . count($data) . ' users for image ID ' . $imageId);
+		$this->logger->debug('ImageMapper -- findUsersForImageId -- Found ' . count($data) . ' users for image ID ' . $imageId);
 
 		return $data;
 	}
@@ -121,7 +122,7 @@ class ImageMapper extends QBMapper
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)));
 		$images =$this->findEntities($qb);
-		$this->logger->logDebug('ImageMapper -- findAll -- Found ' . count($images) . ' images for user ' . $userId . ', model ' . $modelId . 'RETURNED COUNT: ' . count($images));
+		$this->logger->debug('ImageMapper -- findAll -- Found ' . count($images) . ' images for user ' . $userId . ', model ' . $modelId . 'RETURNED COUNT: ' . count($images));
 		return $images;
 	}
 
@@ -141,10 +142,10 @@ class ImageMapper extends QBMapper
 			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createNamedParameter($fileId)));
 		try {
 			$entity = $this->findEntity($qb);
-			$this->logger->logDebug('ImageMapper -- findFromFile -- Found image ID ' . $entity->getId() . ' for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
+			$this->logger->debug('ImageMapper -- findFromFile -- Found image ID ' . $entity->getId() . ' for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
 			return $entity;
 		} catch (DoesNotExistException $e) {
-			$this->logger->logDebug('ImageMapper -- findFromFile -- No image found for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
+			$this->logger->debug('ImageMapper -- findFromFile -- No image found for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
 			return null;
 		}
 	}
@@ -162,7 +163,7 @@ class ImageMapper extends QBMapper
 
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- otherUserStilHasConnection -- Checking if other users still have connection to image ID ' . $imageId . ' RETURNED: ' . ((int)$data[0] > 1?'TRUE':'FALSE'));
+		$this->logger->debug('ImageMapper -- otherUserStilHasConnection -- Checking if other users still have connection to image ID ' . $imageId . ' RETURNED: ' . ((int)$data[0] > 1?'TRUE':'FALSE'));
 
 		return (int)$data[0] > 1;
 	}
@@ -201,7 +202,7 @@ class ImageMapper extends QBMapper
 			])->executeStatement();
 
 		$image->setId((int) $imageID);
-		$this->logger->logDebug('ImageMapper -- insert -- Inserted image ID ' . $image->getId() . ' for user ' . $image->getUser());
+		$this->logger->debug('ImageMapper -- insert -- Inserted image ID ' . $image->getId() . ' for user ' . $image->getUser());
 		return $image;
 	}
 
@@ -248,7 +249,7 @@ class ImageMapper extends QBMapper
 			$qb->expr()->eq('id', $qb->createNamedParameter($id, $idType))
 		);
 		$qb->executeStatement();
-		$this->logger->logDebug('ImageMapper -- update -- Updated image ID ' . $entity->getId() . ' for user ' . $entity->getUser());
+		$this->logger->debug('ImageMapper -- update -- Updated image ID ' . $entity->getId() . ' for user ' . $entity->getUser());
 
 		return $entity;
 	}
@@ -259,12 +260,12 @@ class ImageMapper extends QBMapper
 		if (!$this->otherUserStilHasConnection($entity->getId())) {
 			// Delete image
 			parent::delete($entity);
-			$this->logger->logDebug('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database as no other user has connection to it');
+			$this->logger->debug('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database as no other user has connection to it');
 		}
 		else {
 			// Delete only user-image connection
 			$this->removeUserImageConnection($entity);
-			$this->logger->logDebug('ImageMapper -- delete -- Not deleting image ID ' . $entity->getId() . ' from database as other users still have connection to it');
+			$this->logger->debug('ImageMapper -- delete -- Not deleting image ID ' . $entity->getId() . ' from database as other users still have connection to it');
 		}
 		return $entity;
 	}
@@ -284,7 +285,7 @@ class ImageMapper extends QBMapper
 				$qb->expr()->eq('user', $qb->createNamedParameter($entity->getUser()))
 			);
 		$qb->executeStatement();
-		$this->logger->logDebug('ImageMapper -- removeUserImageConnection -- Removed image-user connection for user ' . $entity->getUser() . ' and image ID ' . $entity->getId());
+		$this->logger->debug('ImageMapper -- removeUserImageConnection -- Removed image-user connection for user ' . $entity->getUser() . ' and image ID ' . $entity->getId());
 	}
 	/**
 	 * @param Image $image Image to check
@@ -306,7 +307,7 @@ class ImageMapper extends QBMapper
 		$resultStatement = $query->executeQuery();
 		$row = $resultStatement->fetch();
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- imageExists -- Checking if image exists for user ' . $image->getUser() . ', file ' . $image->getFile() . ', model ' . $image->getModel() . 'RETURNED ID: ' . ($row ? (int)$row['id'] : 'null'));
+		$this->logger->debug('ImageMapper -- imageExists -- Checking if image exists for user ' . $image->getUser() . ', file ' . $image->getFile() . ', model ' . $image->getModel() . 'RETURNED ID: ' . ($row ? (int)$row['id'] : 'null'));
 
 		return $row ? (int)$row['id'] : null;
 	}
@@ -325,7 +326,7 @@ class ImageMapper extends QBMapper
 		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- countImages -- Counting images for model ' . $model . ' RETURNED COUNT: ' . (int)$data[0]);
+		$this->logger->debug('ImageMapper -- countImages -- Counting images for model ' . $model . ' RETURNED COUNT: ' . (int)$data[0]);
 
 		return (int)$data[0];
 	}
@@ -346,7 +347,7 @@ class ImageMapper extends QBMapper
 		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- countProcessedImages -- Counting processed images for model ' . $model . ' RETURNED COUNT: ' . (int)$data[0]);
+		$this->logger->debug('ImageMapper -- countProcessedImages -- Counting processed images for model ' . $model . ' RETURNED COUNT: ' . (int)$data[0]);
 
 		return (int)$data[0];
 	}
@@ -364,7 +365,7 @@ class ImageMapper extends QBMapper
 		$resultStatement = $this->db->executeQuery($sql, $params);
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- avgProcessingDuration -- Getting average processing duration based on last 50 processed images for model ' . $model . ' RETURNED DURATION: ' . (int)$data[0]);
+		$this->logger->debug('ImageMapper -- avgProcessingDuration -- Getting average processing duration based on last 50 processed images for model ' . $model . ' RETURNED DURATION: ' . (int)$data[0]);
 
 		return (int)$data[0];
 	}
@@ -394,7 +395,7 @@ class ImageMapper extends QBMapper
 		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-		$this->logger->logDebug('ImageMapper -- countUserImages -- Counting images for user ' . $userId . ', model ' . $model . ', processed ' . ($processed ? 'true' : 'false') . ' RETURNED COUNT: ' . (int)$data[0]);
+		$this->logger->debug('ImageMapper -- countUserImages -- Counting images for user ' . $userId . ', model ' . $model . ', processed ' . ($processed ? 'true' : 'false') . ' RETURNED COUNT: ' . (int)$data[0]);
 
 		return (int)$data[0];
 	}
@@ -423,7 +424,7 @@ class ImageMapper extends QBMapper
 				->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		}
 		$images = $this->findEntities($qb);
-		$this->logger->logDebug('ImageMapper -- findImagesWithoutFaces -- Finding images without faces for user ' . ($user ?? 'ALL USERS') . ', model ' . $modelId . ' RETURNED COUNT: ' . count($images) . ' images');
+		$this->logger->debug('ImageMapper -- findImagesWithoutFaces -- Finding images without faces for user ' . ($user ?? 'ALL USERS') . ', model ' . $modelId . ' RETURNED COUNT: ' . count($images) . ' images');
 		return $images;
 	}
 
@@ -441,7 +442,7 @@ class ImageMapper extends QBMapper
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)));
 
 		$images = $this->findEntities($qb);
-		$this->logger->logDebug('ImageMapper -- findImages -- Finding images for user ' . $userId . ', model ' . $model . ' RETURNED COUNT: ' . count($images) . ' images');
+		$this->logger->debug('ImageMapper -- findImages -- Finding images for user ' . $userId . ', model ' . $model . ' RETURNED COUNT: ' . count($images) . ' images');
 		return $images;
 	}
 
@@ -472,7 +473,7 @@ class ImageMapper extends QBMapper
 		$qb->setMaxResults($limit);
 
 		$images =$this->findEntities($qb);
-		$this->logger->logDebug('ImageMapper -- findFromPerson -- user: ' . $userId . ', model: ' . $modelId . ', person: ' . $name . ', offset: ' . ($offset ?? 'NULL') . ', limit: ' . ($limit ?? 'NULL') . ' RETURNED COUNT: ' . count($images) . ' images');
+		$this->logger->debug('ImageMapper -- findFromPerson -- user: ' . $userId . ', model: ' . $modelId . ', person: ' . $name . ', offset: ' . ($offset ?? 'NULL') . ', limit: ' . ($limit ?? 'NULL') . ' RETURNED COUNT: ' . count($images) . ' images');
 		
 		return $images;
 	}
@@ -501,7 +502,7 @@ class ImageMapper extends QBMapper
 		$result = $qb->executeQuery();
 		$column = (int)$result->fetchOne();
 		$result->closeCursor();
-		$this->logger->logDebug('ImageMapper -- countFromPerson -- user: ' . $userId . ', model: ' . $modelId . ', person: ' . $name . ' RETURNED COUNT: ' . $column);
+		$this->logger->debug('ImageMapper -- countFromPerson -- user: ' . $userId . ', model: ' . $modelId . ', person: ' . $name . ' RETURNED COUNT: ' . $column);
 
 		return $column;
 	}
@@ -536,7 +537,7 @@ class ImageMapper extends QBMapper
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($imageId)))
 				->executeStatement();
 
-			$this->logger->logDebug('ImageMapper -- imageProcessed -- Image ' . $imageId . ' processed with ' . count($faces) . ' faces, duration ' . $duration . ' ms' . ($error ? ', error: ' . $error : ''));
+			$this->logger->debug('ImageMapper -- imageProcessed -- Image ' . $imageId . ' processed with ' . count($faces) . ' faces, duration ' . $duration . ' ms' . ($error ? ', error: ' . $error : ''));
 			// Delete all previous faces
 			//
 			$this->faceMapper->removeFromImage($imageId, $this->db);
@@ -550,7 +551,7 @@ class ImageMapper extends QBMapper
 			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
-			$this->logger->logError('ImageMapper -- imageProcessed -- ERROR processing image ' . $imageId . ': ' . $e->getMessage());
+			$this->logger->error('ImageMapper -- imageProcessed -- ERROR processing image ' . $imageId . ': ' . $e->getMessage());
 			throw $e;
 		}
 	}
@@ -572,7 +573,7 @@ class ImageMapper extends QBMapper
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($image->getModel())))
 			->executeStatement();
 		$this->faceMapper->removeFromImage($image->getId(), $this->db);
-		$this->logger->logDebug('ImageMapper -- resetImage -- Image ' . $image->getId() . ' reset for processing again');
+		$this->logger->debug('ImageMapper -- resetImage -- Image ' . $image->getId() . ' reset for processing again');
 	}
 
 	/**
@@ -602,7 +603,7 @@ class ImageMapper extends QBMapper
 			->setParameter('error', null)
 			->setParameter('last_processed_time', null)
 			->executeStatement();
-		$this->logger->logDebug('ImageMapper -- resetErrors -- Resetting images with errors for user ' . $userId);
+		$this->logger->debug('ImageMapper -- resetErrors -- Resetting images with errors for user ' . $userId);
 	}
 
 	/**
@@ -632,7 +633,7 @@ class ImageMapper extends QBMapper
 		$qb->delete($this->getTableName())
 			->Where('id in (' . $sub->getSQL() . ')')
 			->executeStatement();
-		$this->logger->logDebug('ImageMapper -- deleteUserImages -- Deleted images for user ' . $userId);
+		$this->logger->debug('ImageMapper -- deleteUserImages -- Deleted images for user ' . $userId);
 	}
 
 	/**
@@ -675,6 +676,6 @@ class ImageMapper extends QBMapper
 		$qb->delete($this->getTableName())
 			->Where('id in (' . $sql . ')')
 			->executeStatement();
-		$this->logger->logDebug('ImageMapper -- deleteUserModel -- Deleted images for user ' . $userId . ' and model ' . $modelId);
+		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted images for user ' . $userId . ' and model ' . $modelId);
 	}
 }

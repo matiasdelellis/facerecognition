@@ -68,7 +68,7 @@ class ImageMapper extends QBMapper
 			$this->logger->debug('ImageMapper -- find -- Found image ID ' . $imageId . ' for user ' . $userId);
 			return $image;
 		} catch (DoesNotExistException $e) {
-			$this->logger->debug('ImageMapper -- find -- No image found for user ' . $userId . ', image ID ' . $imageId);
+			$this->logger->info('ImageMapper -- find -- No image found for user ' . $userId . ', image ID ' . $imageId);
 			return null;
 		}
 	}
@@ -87,7 +87,7 @@ class ImageMapper extends QBMapper
 			$this->logger->debug('ImageMapper -- findFromImageId -- Found image ID ' . $imageId);
 			return $image;
 		} catch (DoesNotExistException $e) {
-			$this->logger->debug('ImageMapper -- findFromImageId -- No image found for image ID ' . $imageId);
+			$this->logger->info('ImageMapper -- findFromImageId -- No image found for image ID ' . $imageId);
 			return null;
 		}
 	}
@@ -145,7 +145,7 @@ class ImageMapper extends QBMapper
 			$this->logger->debug('ImageMapper -- findFromFile -- Found image ID ' . $entity->getId() . ' for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
 			return $entity;
 		} catch (DoesNotExistException $e) {
-			$this->logger->debug('ImageMapper -- findFromFile -- No image found for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
+			$this->logger->info('ImageMapper -- findFromFile -- No image found for user ' . $userId . ', model ' . $modelId . ', file ' . $fileId);
 			return null;
 		}
 	}
@@ -265,7 +265,7 @@ class ImageMapper extends QBMapper
 		else {
 			// Delete only user-image connection
 			$this->removeUserImageConnection($entity);
-			$this->logger->debug('ImageMapper -- delete -- Not deleting image ID ' . $entity->getId() . ' from database as other users still have connection to it');
+			$this->logger->info('ImageMapper -- delete -- Only connection removed from user: '. $entity->getuser() . ' Not deleting image ID ' . $entity->getId() . ' from database as other users still have connection to it');
 		}
 		return $entity;
 	}
@@ -307,8 +307,11 @@ class ImageMapper extends QBMapper
 		$resultStatement = $query->executeQuery();
 		$row = $resultStatement->fetch();
 		$resultStatement->closeCursor();
-		$this->logger->debug('ImageMapper -- imageExists -- Checking if image exists for user ' . $image->getUser() . ', file ' . $image->getFile() . ', model ' . $image->getModel() . 'RETURNED ID: ' . ($row ? (int)$row['id'] : 'null'));
-
+		if ($row) {
+			$this->logger->debug('ImageMapper -- imageExists -- Checking if image exists for user ' . $image->getUser() . ', file ' . $image->getFile() . ', model ' . $image->getModel() . 'RETURNED ID: ' . (int)$row['id']);
+		}
+		else
+			$this->logger->info('ImageMapper -- imageExists -- Checking if image exists for user ' . $image->getUser() . ', file ' . $image->getFile() . ', model ' . $image->getModel() . 'RETURNED ID: null');
 		return $row ? (int)$row['id'] : null;
 	}
 

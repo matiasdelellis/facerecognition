@@ -394,17 +394,21 @@ class PersonMapper extends QBMapper
 			->innerJoin('c', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('c', 'facerecog_user_images', 'ui', $sub->expr()->eq('i.id', 'ui.image_id'))
 			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
-			->andWhere($sub->expr()->eq('c.user', $sub->createParameter('user_id')));
-		$sql = $sub->getSQL();
+			->andWhere($sub->expr()->eq('c.user', $sub->createParameter('user_id')))
+			->setParameter('user_id', $userId)
+			->setParameter('image_id', $imageId);
+		$clustersToInvalidate = $this->findEntities($sub);
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_valid", $qb->createParameter('is_valid'))
-			->where('id IN (' . $sql. ')')
-			->setParameter('user_id', $userId)
-			->setParameter('image_id', $imageId)
-			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL)
+			->where($sub->expr()->eq('id', $qb->createParameter('cluster_id')))
+			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL);
+
+			foreach ($clustersToInvalidate as $person) {
+			$qb->setParameter('cluster_id', $person->getId(), IQueryBuilder::PARAM_INT)
 			->executeStatement();
+		}
 	}
 
 	/**
@@ -533,10 +537,11 @@ class PersonMapper extends QBMapper
 			->leftJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
 			->where($sub->expr()->eq('cf.cluster_id', $sub->createParameter('cluster_id')));
 
+		$sql = $sub->getSQL();
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('id', $qb->createParameter('cluster_id')))
-			->andWhere('id NOT IN (' . $sub->getSQL() . ')')
+			->andWhere('id NOT IN (' . $sql . ')')
 			->setParameter('cluster_id', $clusterId, IQueryBuilder::PARAM_INT)
 			->executeStatement();
 	}

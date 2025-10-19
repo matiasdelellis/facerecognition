@@ -58,7 +58,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
 		self::$faceMapper = new FaceMapper(self::$dbConnection);
-		self::$imageMapper = new ImageMapper(self::$dbConnection, self::$faceMapper);
+		self::$imageMapper = new ImageMapper(self::$dbConnection, self::$faceMapper, self::$context);
 
 		self::$imageCountQuery = self::$dbConnection->getQueryBuilder();
 		self::$imageCountQuery->select(self::$imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');

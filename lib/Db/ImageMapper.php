@@ -34,6 +34,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
+use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
 class ImageMapper extends QBMapper
 {
@@ -42,11 +43,11 @@ class ImageMapper extends QBMapper
 	/** @var FaceRecognitionLogger*/
 	private $logger;
 
-	public function __construct(IDBConnection $db, FaceMapper $faceMapper, FaceRecognitionLogger $logger)
+	public function __construct(IDBConnection $db, FaceMapper $faceMapper, FaceRecognitionContext $context)
 	{
 		parent::__construct($db, 'facerecog_images', '\OCA\FaceRecognition\Db\Image');
 		$this->faceMapper = $faceMapper;
-		$this->logger = $logger;
+		$this->logger = $context->logger;
 	}
 
 	/**

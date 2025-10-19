@@ -589,24 +589,31 @@ class ImageMapper extends QBMapper
 	public function resetErrors(string $userId): void{
 		//Collect all imageId whitch has error and belongs to that user
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('ui.image_id')
+		$subQuery = $sub->select('ui.image_id as id')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
-			->andWhere($sub->expr()->isNotNull('i.error'));
-		$sql = $sub->getSQL();
+			->andWhere($sub->expr()->isNotNull('i.error'))
+			->executeQuery();
+		$imagesToReset = $subQuery->fetchAll();
+		$subQuery->closeCursor();
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
 			->set("error", $qb->createParameter('error'))
 			->set("last_processed_time", $qb->createParameter("last_processed_time"))
-			->Where('id in (' . $sql . ')')
+			->Where($qb->expr()->eq('id', $qb->createParameter('image_id')))
 			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
 			->setParameter('error', null)
-			->setParameter('last_processed_time', null)
-			->executeStatement();
-		$this->logger->debug('ImageMapper -- resetErrors -- Resetting images with errors for user ' . $userId);
+			->setParameter('last_processed_time', null);
+		
+		foreach ($imagesToReset as $image) {
+			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
+				->executeStatement();
+		}
+
+		$this->logger->debug('ImageMapper -- resetErrors -- Resetting '. count($imagesToReset) .' images with errors for user ' . $userId);
 	}
 
 	/**
@@ -616,6 +623,7 @@ class ImageMapper extends QBMapper
 	 *
 	 * @return void
 	 */
+	//MTODO: use other implemented functions to support shared images between users
 	public function deleteUserImages(string $userId): void{
 		//Delete User-ImageConnection
 		$qb = $this->db->getQueryBuilder();
@@ -625,18 +633,26 @@ class ImageMapper extends QBMapper
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('i.id')
+		$subQuery = $sub->select('i.id')
 			->from($this->getTableName(), 'i')
 			->leftJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->isNull('ui.image_id'))
-			->groupBy('i.id');
+			->groupBy('i.id')
+			->executeQuery();
+			
+		$imagesToDelete = $subQuery->fetchAll();
+		$subQuery->closeCursor();
 
 		//Delete image where the connection table has no reference
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->Where('id in (' . $sub->getSQL() . ')')
-			->executeStatement();
-		$this->logger->debug('ImageMapper -- deleteUserImages -- Deleted images for user ' . $userId);
+			->Where($qb->expr()->eq('id', $qb->createParameter('image_id')));
+			
+		foreach ($imagesToDelete as $image) {
+			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
+				->executeStatement();
+		}
+		$this->logger->debug('ImageMapper -- deleteUserImages -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId);
 	}
 
 	/**
@@ -647,38 +663,58 @@ class ImageMapper extends QBMapper
 	 *
 	 * @return void
 	 */
+	//MTODO: use other implemented functions to support shared images between users
 	public function deleteUserModel(string $userId, int $modelId): void{
 		//Collect all imageId where user has connection and it's the required model
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('i.id')
+		$subQuery = $sub->select('i.id')
 			->from($this->getTableName(), 'i')
 			->leftJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('modelId')))
-			->groupBy('i.id');
-		$sql = $sub->getSQL();
+			->groupBy('i.id')
+			->executeQuery();
+			
+		$imageUserConnectionsToDelete = $subQuery->fetchAll();
+		$subQuery->closeCursor();
+
 		//Delete User-ImageConnection
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete('facerecog_user_images')
 			->where($qb->expr()->eq('user', $qb->createParameter('userId')))
-			->AndWhere('image_id in (' . $sql . ')')
+			->andWhere($qb->expr()->eq('image_id', $qb->createParameter('image_id')))
 			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
-			->setParameter('modelId', $modelId, IQueryBuilder::PARAM_INT)
-			->executeStatement();
+			->setParameter('modelId', $modelId, IQueryBuilder::PARAM_INT);
+	
+		foreach ($imageUserConnectionsToDelete as $image) {
+			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
+				->executeStatement();
+		}
+		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted ' . count($imageUserConnectionsToDelete) . ' image-user connections for user ' . $userId . ' and model ' . $modelId);
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('i.id')
+		$subQuery = $sub->select('i.id')
 			->from($this->getTableName(), 'i')
 			->leftJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->isNull('ui.image_id'))
-			->groupBy('i.id');
-		$sql = $sub->getSQL();
+			->groupBy('i.id')
+			->executeQuery();
+			
+		$imagesToDelete = $subQuery->fetchAll();
+		$subQuery->closeCursor();
+
 		//Delete image where the connection table has no reference
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->Where('id in (' . $sql . ')')
+			->Where($qb->expr()->eq('image_id', $qb->createParameter('image_id')))
 			->executeStatement();
-		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted images for user ' . $userId . ' and model ' . $modelId);
+
+			
+		foreach ($imagesToDelete as $image) {
+			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
+				->executeStatement();
+		}
+		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId . ' and model ' . $modelId);
 	}
 }

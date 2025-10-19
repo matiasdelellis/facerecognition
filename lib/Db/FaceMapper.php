@@ -40,32 +40,45 @@ class FaceMapper extends QBMapper
 
 	public function find(int $faceId, string $userId): ?Face{
 		$qb = $this->db->getQueryBuilder();
+		$subPerson = "
+			(SELECT cf_inner.cluster_id
+			FROM *PREFIX*facerecog_cluster_faces cf_inner
+			JOIN *PREFIX*facerecog_clusters c_inner ON c_inner.id = cf_inner.cluster_id
+			WHERE cf_inner.face_id = f.id
+			AND c_inner.user = " . $qb->createParameter('user') . "
+			ORDER BY cf_inner.cluster_id
+			LIMIT 1
+			)
+		";
+
+		$subIsGroupable = "
+			(SELECT cf_inner.is_groupable
+			FROM *PREFIX*facerecog_cluster_faces cf_inner
+			JOIN *PREFIX*facerecog_clusters c_inner ON c_inner.id = cf_inner.cluster_id
+			WHERE cf_inner.face_id = f.id
+			AND c_inner.user = " . $qb->createParameter('user') . "
+			ORDER BY cf_inner.cluster_id
+			LIMIT 1
+			)
+		";
+
 		$qb->select(
-				'f.id', 
-				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"), 
-				'f.image_id as image', 
-				'x', 
-				'y', 
-				'width', 
-				'height', 
-				'landmarks', 
-				'descriptor', 
-				'confidence', 
-				'creation_time', 
-				$qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
+				'f.id',
+				$qb->createFunction($subPerson . ' AS person'),
+				'f.image_id AS image',
+				'f.x',
+				'f.y',
+				'f.width',
+				'f.height',
+				'f.landmarks',
+				'f.descriptor',
+				'f.confidence',
+				'f.creation_time',
+				// fallback true if no matching cluster_face found
+				$qb->createFunction("COALESCE(" . $subIsGroupable . ", TRUE) AS is_groupable")
+			)
 			->from($this->getTableName(), 'f')
-			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
-			->leftJoin(
-					'f', 
-					'facerecog_clusters', 
-					'c', 
-					$qb->expr()->andX(
-						$qb->expr()->eq('c.id', 'cf.cluster_id'),
-						$qb->expr()->isNotNull('cf.cluster_id')
-					)
-				)
 			->where($qb->expr()->eq('f.id', $qb->createParameter('faceId')))
-			->andwhere($qb->expr()->eq('user', $qb->createParameter('user')))
 			->setParameter('user', $userId)
 			->setParameter('faceId', $faceId);
 		try {
@@ -110,7 +123,7 @@ class FaceMapper extends QBMapper
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
+		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable"))
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))

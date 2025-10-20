@@ -50,7 +50,7 @@ class PersonMapperTest extends UnitBaseTestCase
      */
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
-        self::$personMapper = new PersonMapper(self::$dbConnection);
+        self::$personMapper = new PersonMapper(self::$dbConnection, self::$logger);
 	}
 
     public function test_Update_notUpdated(): void

@@ -33,8 +33,6 @@ use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use Psr\Log\LoggerInterface;
 
 class ImageMapper extends QBMapper
@@ -202,7 +200,7 @@ class ImageMapper extends QBMapper
 			])->executeStatement();
 
 		$image->setId((int) $imageID);
-		$this->logger->debug('ImageMapper -- insert -- Inserted image ID ' . $image->getId() . ' for user ' . $image->getUser());
+		$this->logger->info('ImageMapper -- insert -- Inserted image ID ' . $image->getId() . ' for user ' . $image->getUser());
 		return $image;
 	}
 
@@ -249,7 +247,7 @@ class ImageMapper extends QBMapper
 			$qb->expr()->eq('id', $qb->createNamedParameter($id, $idType))
 		);
 		$qb->executeStatement();
-		$this->logger->debug('ImageMapper -- update -- Updated image ID ' . $entity->getId() . ' for user ' . $entity->getUser());
+		$this->logger->info('ImageMapper -- update -- Updated image ID ' . $entity->getId() . ' for user ' . $entity->getUser());
 
 		return $entity;
 	}
@@ -260,7 +258,7 @@ class ImageMapper extends QBMapper
 		if (!$this->otherUserStilHasConnection($entity->getId())) {
 			// Delete image
 			parent::delete($entity);
-			$this->logger->debug('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database as no other user has connection to it');
+			$this->logger->info('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database as no other user has connection to it');
 		}
 		else {
 			// Delete only user-image connection
@@ -540,7 +538,7 @@ class ImageMapper extends QBMapper
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($imageId)))
 				->executeStatement();
 
-			$this->logger->debug('ImageMapper -- imageProcessed -- Image ' . $imageId . ' processed with ' . count($faces) . ' faces, duration ' . $duration . ' ms' . ($error ? ', error: ' . $error : ''));
+			$this->logger->info('ImageMapper -- imageProcessed -- Image ' . $imageId . ' processed with ' . count($faces) . ' faces, duration ' . $duration . ' ms' . ($error ? ', error: ' . $error : ''));
 			// Delete all previous faces
 			//
 			$this->faceMapper->removeFromImage($imageId, $this->db);
@@ -576,7 +574,7 @@ class ImageMapper extends QBMapper
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($image->getModel())))
 			->executeStatement();
 		$this->faceMapper->removeFromImage($image->getId(), $this->db);
-		$this->logger->debug('ImageMapper -- resetImage -- Image ' . $image->getId() . ' reset for processing again');
+		$this->logger->info('ImageMapper -- resetImage -- Image ' . $image->getId() . ' reset for processing again');
 	}
 
 	/**
@@ -613,7 +611,7 @@ class ImageMapper extends QBMapper
 				->executeStatement();
 		}
 
-		$this->logger->debug('ImageMapper -- resetErrors -- Resetting '. count($imagesToReset) .' images with errors for user ' . $userId);
+		$this->logger->info('ImageMapper -- resetErrors -- Resetting '. count($imagesToReset) .' images with errors for user ' . $userId);
 	}
 
 	/**
@@ -652,7 +650,7 @@ class ImageMapper extends QBMapper
 			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
 				->executeStatement();
 		}
-		$this->logger->debug('ImageMapper -- deleteUserImages -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId);
+		$this->logger->info('ImageMapper -- deleteUserImages -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId);
 	}
 
 	/**
@@ -690,7 +688,7 @@ class ImageMapper extends QBMapper
 			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
 				->executeStatement();
 		}
-		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted ' . count($imageUserConnectionsToDelete) . ' image-user connections for user ' . $userId . ' and model ' . $modelId);
+		$this->logger->info('ImageMapper -- deleteUserModel -- Deleted ' . count($imageUserConnectionsToDelete) . ' image-user connections for user ' . $userId . ' and model ' . $modelId);
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
@@ -715,6 +713,6 @@ class ImageMapper extends QBMapper
 			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
 				->executeStatement();
 		}
-		$this->logger->debug('ImageMapper -- deleteUserModel -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId . ' and model ' . $modelId);
+		$this->logger->info('ImageMapper -- deleteUserModel -- Deleted ' . count($imagesToDelete) . ' images for user ' . $userId . ' and model ' . $modelId);
 	}
 }

@@ -48,7 +48,7 @@ class FaceMapperTest extends UnitBaseTestCase
      */
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
-  		self::$faceMapper = new FaceMapper(self::$dbConnection);
+  		self::$faceMapper = new FaceMapper(self::$dbConnection, self::$logger);
 		self::$clusterFaceCountQuery = self::$dbConnection->getQueryBuilder();
 		self::$clusterFaceCountQuery->select(self::$clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
 

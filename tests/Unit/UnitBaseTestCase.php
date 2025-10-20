@@ -28,15 +28,14 @@ use \OC;
 use \OCP\IDBConnection;
 use \OCP\AppFramework\App;
 use \PHPUnit\Framework\TestCase;
-use \OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use \OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use \Psr\Log\LoggerInterface;
 
 abstract class UnitBaseTestCase extends TestCase
 {
 	/** @var IDBConnection test instance*/
 	protected static $dbConnection;
-	/** @var FaceRecognitionContext test instance*/
-	protected static $context;
+	/** @var LoggerInterface test instance*/
+	protected static $logger;
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
@@ -45,12 +44,8 @@ abstract class UnitBaseTestCase extends TestCase
 	public static function setUpBeforeClass(): void {
 		$app = new App('facerecognition');
 		$container = $app->getContainer();
-		$config = $container->get('OCP\IConfig');
-		$userManager = $container->get('OCP\IUserManager');
 		
-		self::$context = new FaceRecognitionContext($userManager, $config);
-		$logger = $container->get('Psr\Log\LoggerInterface');
-		self::$context->logger = new FaceRecognitionLogger($logger);
+		self::$logger= $container->get('Psr\Log\LoggerInterface');
 		parent::setUpBeforeClass();
 		self::$dbConnection = OC::$server->getDatabaseConnection();
 	}

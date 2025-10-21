@@ -254,17 +254,9 @@ class ImageMapper extends QBMapper
 
 	#[\Override]
 	public function delete(Entity $entity): Entity{
-		// First check if other users still have connection to this image
-		if (!$this->otherUserStilHasConnection($entity->getId())) {
-			// Delete image
-			parent::delete($entity);
-			$this->logger->info('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database as no other user has connection to it');
-		}
-		else {
-			// Delete only user-image connection
-			$this->removeUserImageConnection($entity);
-			$this->logger->info('ImageMapper -- delete -- Only connection removed from user: '. $entity->getuser() . ' Not deleting image ID ' . $entity->getId() . ' from database as other users still have connection to it');
-		}
+		// Delete image
+		parent::delete($entity);
+		$this->logger->info('ImageMapper -- delete -- Deleted image ID ' . $entity->getId() . ' from database with all the connection to it');
 		return $entity;
 	}
 
@@ -592,6 +584,7 @@ class ImageMapper extends QBMapper
 			->innerJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
 			->andWhere($sub->expr()->isNotNull('i.error'))
+			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
 			->executeQuery();
 		$imagesToReset = $subQuery->fetchAll();
 		$subQuery->closeCursor();
@@ -602,7 +595,6 @@ class ImageMapper extends QBMapper
 			->set("error", $qb->createParameter('error'))
 			->set("last_processed_time", $qb->createParameter("last_processed_time"))
 			->Where($qb->expr()->eq('id', $qb->createParameter('image_id')))
-			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
 			->setParameter('error', null)
 			->setParameter('last_processed_time', null);
 		
@@ -671,6 +663,8 @@ class ImageMapper extends QBMapper
 			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('modelId')))
 			->groupBy('i.id')
+			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
+			->setParameter('modelId', $modelId, IQueryBuilder::PARAM_INT)
 			->executeQuery();
 			
 		$imageUserConnectionsToDelete = $subQuery->fetchAll();
@@ -681,8 +675,7 @@ class ImageMapper extends QBMapper
 		$qb->delete('facerecog_user_images')
 			->where($qb->expr()->eq('user', $qb->createParameter('userId')))
 			->andWhere($qb->expr()->eq('image_id', $qb->createParameter('image_id')))
-			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
-			->setParameter('modelId', $modelId, IQueryBuilder::PARAM_INT);
+			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR);
 	
 		foreach ($imageUserConnectionsToDelete as $image) {
 			$qb->setParameter('image_id', $image['id'], IQueryBuilder::PARAM_INT)
@@ -692,7 +685,7 @@ class ImageMapper extends QBMapper
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
-		$subQuery = $sub->select('i.id')
+		$subQuery = $sub->select('id')
 			->from($this->getTableName(), 'i')
 			->leftJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->isNull('ui.image_id'))
@@ -705,8 +698,7 @@ class ImageMapper extends QBMapper
 		//Delete image where the connection table has no reference
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->Where($qb->expr()->eq('image_id', $qb->createParameter('image_id')))
-			->executeStatement();
+			->Where($qb->expr()->eq('id', $qb->createParameter('image_id')));
 
 			
 		foreach ($imagesToDelete as $image) {

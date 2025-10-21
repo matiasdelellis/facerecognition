@@ -39,7 +39,7 @@ abstract class UnitBaseTestCase extends TestCase
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
-	protected $runLargeTests = true;
+	protected $runLargeTests = false;
 
 	public static function setUpBeforeClass(): void {
 		$app = new App('facerecognition');

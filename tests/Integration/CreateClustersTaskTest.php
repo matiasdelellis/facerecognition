@@ -38,7 +38,7 @@ use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\FaceManagementService;
@@ -56,7 +56,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(FaceRecognitionLogger::class)]
 #[UsesClass(FaceManagementService::class)]
 #[UsesClass(FaceMapper::class)]
-#[UsesClass(PersonMapper::class)]
+#[UsesClass(ClusterMapper::class)]
 #[UsesClass(ImageMapper::class)]
 #[UsesClass(ModelManager::class)]
 #[UsesClass(Face::class)]
@@ -98,11 +98,11 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 */
 	public function test_singleFaceShouldNeverCreateClusters() {
 		// With a single face should never create clusters.
-		$this->doCreateClustersTask(self::$personMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
+		$this->doCreateClustersTask(self::$clusterMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
 
-		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
-		$persons = self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons = self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, count($persons));
 
 		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
@@ -119,12 +119,12 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		// Force clustering the sigle face.
 		self::$settingsService->_setForceCreateClusters(true, self::$user->getUID());
 
-		$this->doCreateClustersTask(self::$personMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
+		$this->doCreateClustersTask(self::$clusterMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
 
-		$clusterCount = self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount = self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $clusterCount);
 
-		$persons = self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons = self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
 		$personId = $persons[0]->getId();
 
@@ -145,8 +145,8 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to create clusters for.
 	 * If not given, clusters for all users will be processed.
 	 */
-	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService,?IUser  $contextUser = null) {
-		$createClustersTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);
+	private function doCreateClustersTask($clusterMapper, $imageMapper, $faceMapper, $settingsService,?IUser  $contextUser = null) {
+		$createClustersTask = new CreateClustersTask($clusterMapper, $imageMapper, $faceMapper, $settingsService);
 		$this->assertNotEquals("", $createClustersTask->description());
 
 		// Set user for which to do processing, if any

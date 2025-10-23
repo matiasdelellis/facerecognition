@@ -43,7 +43,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
-#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 

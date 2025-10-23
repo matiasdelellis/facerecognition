@@ -42,7 +42,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
-#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
 #[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]

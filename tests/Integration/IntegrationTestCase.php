@@ -42,7 +42,7 @@ use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCP\IDBConnection;
 
 use \phpunit\Framework\TestCase;
@@ -88,8 +88,8 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var ImageMapper*/
 	protected static $imageMapper;
 
-	/** @var PersonMapper*/
-	protected static $personMapper;
+	/** @var ClusterMapper*/
+	protected static $clusterMapper;
 
 	/** @var FaceMapper*/
 	protected static $faceMapper;
@@ -171,7 +171,7 @@ abstract class IntegrationTestCase extends TestCase {
 		self::$fileService = self::$container->get('OCA\FaceRecognition\Service\FileService');
 		self::$faceMgmtService = self::$container->get('OCA\FaceRecognition\Service\FaceManagementService');
 		self::$imageMapper = self::$container->get('OCA\FaceRecognition\Db\ImageMapper');
-		self::$personMapper =  self::$container->get('OCA\FaceRecognition\Db\PersonMapper');
+		self::$clusterMapper =  self::$container->get('OCA\FaceRecognition\Db\ClusterMapper');
 		self::$faceMapper = self::$container->get('OCA\FaceRecognition\Db\FaceMapper');
 		self::$addMissingImagesTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask');
 		self::$staleImagesRemovalTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask');
@@ -185,7 +185,7 @@ abstract class IntegrationTestCase extends TestCase {
 		self::$fileService = null;
 		self::$faceMgmtService = null;
 		self::$imageMapper = null;
-		self::$personMapper =  null;
+		self::$clusterMapper =  null;
 		self::$faceMapper = null;
 		self::$addMissingImagesTask = null;
 		self::$staleImagesRemovalTask = null;

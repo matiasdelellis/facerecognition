@@ -28,13 +28,13 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\Person;
-use \OCA\FaceRecognition\Db\PersonMapper;
+use \OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
-#[CoversClass(PersonMapper::class)]
+#[CoversClass(ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Face::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
@@ -46,9 +46,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	public function testMergeEmptyClusterToDatabase() {
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(), array(), array());
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(), array(), array());
 
-		$personCount =self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount =self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
 	}
 
@@ -61,7 +61,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(), array(), array(100=>[$face->getId()]));
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(), array(), array(100=>[$face->getId()]));
 
 		$personId = $this->assertOnePerson();
 		$this->assertFaces([$personId => [$face->getId()]]);
@@ -76,9 +76,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array($person->getId() => [$face->getId()]),
 			array($person->getId() => [$face->getId()]));
 
@@ -95,9 +95,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array($person->getId() => [$face->getId()]),
 			array($person->getId()+1 => [$face->getId()])
 		);
@@ -117,13 +117,13 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array($person->getId() => [$face->getId()]),
 			array());
 
-		$personCount =self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount =self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, count($persons));
 		$this->assertPersonDoNotExist($person->getId());
 
@@ -147,9 +147,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		$ret = self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		$ret = self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person->getId() => [$face1->getId(), $face2->getId()]
 			),
@@ -159,9 +159,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $clusterCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -187,9 +187,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person->getId() => [$face1->getId(), $face2->getId()]
 			),
@@ -199,9 +199,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $clusterCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -228,9 +228,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
@@ -257,9 +257,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
@@ -286,9 +286,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
@@ -299,9 +299,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$personCount =self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount =self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $personCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -327,9 +327,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId()],
 				$person2->getId() => [$face2->getId()],
@@ -340,9 +340,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, $clusterCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(2, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -396,13 +396,13 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		// First person is not invalid (it will remain same, so change it back to valid)
 		$person1->setIsValid(true);
-		self::$personMapper->update($person1);
+		self::$clusterMapper->update($person1);
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
 				$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId()],
@@ -419,9 +419,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, $clusterCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -493,9 +493,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
-		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
+		self::$clusterMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		self::$clusterMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person1->getId() => [$face1->getId(), $face2->getId(), $face3->getId(), $face4->getId()],
 				$person2->getId() => [$face5->getId(), $face6->getId(), $face7->getId(), $face8->getId()],
@@ -512,9 +512,9 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 			)
 		);
 
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, $clusterCount);
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(6, count($persons));
 		usort($persons, function($p1, $p2) {
 			return $p1->getId() - $p2->getId();
@@ -555,7 +555,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person->setUser(self::$user->getUID());
 		$person->setName($name);
 		$person->setIsValid(true);
-		self::$personMapper->insert($person);
+		self::$clusterMapper->insert($person);
 
 		return $person;
 	}
@@ -580,26 +580,26 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 	}
 
 	private function assertOnePerson($name = null): int {
-		$clusterCount =self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount =self::$clusterMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $clusterCount);
 
-		$persons =self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons =self::$clusterMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
 
 		if ($name !== null) {
 			// check that retains the name
 			$this->assertTrue($persons[0]->getName() === $name);
 
-			$personCount =self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+			$personCount =self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 			$this->assertEquals(1, $personCount);
 
 			// Check that it can be found using this method too
-			$persons =self::$personMapper->findByName(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
+			$persons =self::$clusterMapper->findByName(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $name);
 			$this->assertEquals(1, count($persons));
 		}
 
 		// Check that it can be found using this method too
-		self::$personMapper->find(self::$user->getUID(), $persons[0]->getId());
+		self::$clusterMapper->find(self::$user->getUID(), $persons[0]->getId());
 
 		// After clustering, person must be valid
 		$this->assertTrue($persons[0]->getIsValid());
@@ -609,7 +609,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	private function assertPersonDoNotExist(int $personId) {
 		try {
-			self::$personMapper->find(self::$user->getUID(), $personId);
+			self::$clusterMapper->find(self::$user->getUID(), $personId);
 			$this->fail('Person still exist');
 		} catch (DoesNotExistException $e) {
 		}

@@ -29,7 +29,7 @@ use OCP\IUserManager;
 
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -53,8 +53,8 @@ class FaceManagementService {
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -62,13 +62,13 @@ class FaceManagementService {
 	public function __construct(IUserManager    $userManager,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personMapper,
+	                            ClusterMapper    $clusterMapper,
 	                            SettingsService $settingsService)
 	{
 		$this->userManager     = $userManager;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->settingsService = $settingsService;
 	}
 
@@ -128,7 +128,7 @@ class FaceManagementService {
 	 * @return void
 	 */
 	public function resetAllForUser(string $userId): void {
-		$this->personMapper->deleteUserPersons($userId);
+		$this->clusterMapper->deleteUserPersons($userId);
 		//faces will be deleted with image foreign key cascade on delete action
 		$this->imageMapper->deleteUserImages($userId);
 
@@ -162,7 +162,7 @@ class FaceManagementService {
 	 * @return void
 	 */
 	public function resetModelForUser(string $userId, $modelId): void {
-		$this->personMapper->deleteUserModel($userId, $modelId);
+		$this->clusterMapper->deleteUserModel($userId, $modelId);
 		$this->faceMapper->deleteUserModel($userId, $modelId);
 		$this->imageMapper->deleteUserModel($userId, $modelId);
 
@@ -211,7 +211,7 @@ class FaceManagementService {
 		$model = $this->settingsService->getCurrentFaceModel();
 
 		$this->faceMapper->unsetPersonsRelationForUser($userId, $model);
-		$this->personMapper->deleteUserPersons($userId);
+		$this->clusterMapper->deleteUserPersons($userId);
 	}
 
 	/**

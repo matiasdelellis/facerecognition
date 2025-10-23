@@ -39,7 +39,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use Psr\Log\LoggerInterface;
 
@@ -54,8 +54,8 @@ class PostDeleteListener implements IEventListener {
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -66,14 +66,14 @@ class PostDeleteListener implements IEventListener {
 	public function __construct(LoggerInterface       $logger,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
-	                            PersonMapper          $personMapper,
+	                            ClusterMapper          $clusterMapper,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService)
 	{
 		$this->logger                = $logger;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
-		$this->personMapper          = $personMapper;
+		$this->clusterMapper          = $clusterMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 	}
@@ -153,7 +153,7 @@ class PostDeleteListener implements IEventListener {
 		if ($imageId !== null) {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
-			$this->personMapper->invalidatePersons($imageId, $owner);
+			$this->clusterMapper->invalidatePersons($imageId, $owner);
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
@@ -165,7 +165,7 @@ class PostDeleteListener implements IEventListener {
 			// If any person is now without faces, remove those (empty) persons
 			foreach ($facesToRemove as $faceToRemove) {
 				if ($faceToRemove->getPerson() !== null) {
-					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
+					$this->clusterMapper->removeIfEmpty($faceToRemove->getPerson());
 				}
 			}
 		}

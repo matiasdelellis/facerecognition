@@ -41,7 +41,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Person::class)]
-#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class ResetAllTest extends IntegrationTestCase {
 
@@ -65,8 +65,8 @@ class ResetAllTest extends IntegrationTestCase {
 		$person->setUser(self::$user->getUID());
 		$person->setIsValid(true);
 		$person->setName('foo');
-		$person = self::$personMapper->insert($person);
-		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$person = self::$clusterMapper->insert($person);
+		$personCount = self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
 
 		// Add one face to DB
@@ -77,11 +77,11 @@ class ResetAllTest extends IntegrationTestCase {
 		$this->assertEquals(1, $faceCount);
 
 		// Check faces with all correct relationships
-		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 
 		// Execute reset all
-		$faceMgmtService = new FaceManagementService(self::$userManager, self::$faceMapper, self::$imageMapper, self::$personMapper, self::$settingsService);
+		$faceMgmtService = new FaceManagementService(self::$userManager, self::$faceMapper, self::$imageMapper, self::$clusterMapper, self::$settingsService);
 		$faceMgmtService->resetAllForUser(self::$user->getUID());
 
 		// Check that everything is gone
@@ -89,7 +89,7 @@ class ResetAllTest extends IntegrationTestCase {
 		$this->assertEquals(0, $imageCount);
 		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $faceCount);
-		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$clusterMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
 	}
 }

@@ -10,7 +10,7 @@ use OCP\AppFramework\Services\IInitialState;
 use OCP\Settings\ISettings;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -22,8 +22,8 @@ class Personal implements ISettings {
 	/** @var \OCP\AppFramework\Services\IInitialState **/
 	protected IInitialState $initialState;
 
-	/** @var PersonMapper */
-	protected $personMapper;
+	/** @var ClusterMapper */
+	protected $clusterMapper;
 
 	/** @var SettingsService */
 	protected $settingsService;
@@ -32,13 +32,13 @@ class Personal implements ISettings {
 
 	public function __construct(IEventDispatcher $eventDispatcher,
 	                            IInitialState    $initialState,
-	                            PersonMapper     $personmapper,
+	                            ClusterMapper     $personmapper,
 	                            SettingsService  $settingsService,
 	                            string           $userId)
 	{
 		$this->eventDispatcher = $eventDispatcher;
 		$this->initialState = $initialState;
-		$this->personMapper = $personmapper;
+		$this->clusterMapper = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->userId = $userId;
 	}
@@ -68,16 +68,16 @@ class Personal implements ISettings {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 			$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-			$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+			$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
 			foreach ($clusters as $cluster) {
-				$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+				$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 				if ($clusterSize >= $minClusterSize)
 					$unamedCount++;
 			}
 
-			$clusters = $this->personMapper->findIgnored($this->userId, $modelId);
+			$clusters = $this->clusterMapper->findIgnored($this->userId, $modelId);
 			foreach ($clusters as $cluster) {
-				$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+				$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 				if ($clusterSize >= $minClusterSize)
 					$hiddenCount++;
 			}

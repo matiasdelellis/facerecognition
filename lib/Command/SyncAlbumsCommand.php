@@ -34,7 +34,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 
 use OCA\FaceRecognition\Helper\PhotoAlbums;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -43,8 +43,8 @@ class SyncAlbumsCommand extends Command {
 	/** @var IUserManager */
 	protected $userManager;
 
-        /** @var PersonMapper Person mapper*/
-	private $personMapper;
+        /** @var ClusterMapper Person mapper*/
+	private $clusterMapper;
 
 	/** @var IAppManager */
 	private $appManager;
@@ -57,13 +57,13 @@ class SyncAlbumsCommand extends Command {
 
 	/**
 	 * @param IUserManager $userManager
-	 * @param PersonMapper $personMapper
+	 * @param ClusterMapper $clusterMapper
 	 * @param PhotoAlbums $photoAlbums
 	 * @param SettingsService $settingsService
 	 * @param IAppManager $appManager
 	 */
 	public function __construct(IUserManager    $userManager,
-	                            PersonMapper    $personMapper,
+	                            ClusterMapper    $clusterMapper,
 	                            IAppManager     $appManager,
 	                            PhotoAlbums     $photoAlbums,
 	                            SettingsService $settingsService)
@@ -71,7 +71,7 @@ class SyncAlbumsCommand extends Command {
 		parent::__construct();
 
 		$this->appManager      = $appManager;
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->userManager     = $userManager;
 		$this->photoAlbums     = $photoAlbums;
 		$this->settingsService = $settingsService;
@@ -149,7 +149,7 @@ class SyncAlbumsCommand extends Command {
 			} else{
 				$output->writeln("List of defined persons for the user <$userId> :");
 				$modelId = $this->settingsService->getCurrentFaceModel();
-				$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+				$distintNames = $this->clusterMapper->findDistinctNames($userId, $modelId);
 				foreach ($distintNames as $key=>$distintName) {
 					if ($key > 0 ){
 						$output->write(", ");

@@ -35,7 +35,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -53,8 +53,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	/** @var FaceMapper Face mapper */
 	private $faceMapper;
 
-	/** @var PersonMapper Person mapper */
-	private $personMapper;
+	/** @var ClusterMapper Person mapper */
+	private $clusterMapper;
 
 	/** @var FileService  File service*/
 	private $fileService;
@@ -65,13 +65,13 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FaceMapper $faceMapper Face mapper
-	 * @param PersonMapper $personMapper Person mapper
+	 * @param ClusterMapper $clusterMapper Person mapper
 	 * @param FileService $fileService File Service
 	 * @param SettingsService $settingsService Settings Service
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
-	                            PersonMapper    $personMapper,
+	                            ClusterMapper    $clusterMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService)
 	{
@@ -79,7 +79,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->fileService     = $fileService;
 		$this->settingsService = $settingsService;
 	}
@@ -216,7 +216,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		// note that invalidatePersons depends on existence of faces for a given image,
 		// and we must invalidate before we delete faces!
 		// TODO: this is same method as in Watcher, find where to unify them.
-		$this->personMapper->invalidatePersons($image->id, $userId);
+		$this->clusterMapper->invalidatePersons($image->id, $userId);
 		$this->imageMapper->delete($image);
 	}
 

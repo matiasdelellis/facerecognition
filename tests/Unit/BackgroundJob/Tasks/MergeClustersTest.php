@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -36,7 +36,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 
 #[CoversClass(CreateClustersTask::class)]
-#[CoversClass(PersonMapper::class)]
+#[CoversClass(ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 class MergeClustersTest extends TestCase {
 	/** @var CreateClustersTask Create cluster task */
@@ -46,7 +46,7 @@ class MergeClustersTest extends TestCase {
 	 * {@inheritDoc}
 	 */
 	public function setUp(): void {
-		$personMapper = $this->getMockBuilder(PersonMapper::class)
+		$clusterMapper = $this->getMockBuilder(ClusterMapper::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$imageMapper = $this->getMockBuilder(ImageMapper::class)
@@ -58,7 +58,7 @@ class MergeClustersTest extends TestCase {
 		$settingsService = $this->getMockBuilder(SettingsService::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$this->createClusterTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);
+		$this->createClusterTask = new CreateClustersTask($clusterMapper, $imageMapper, $faceMapper, $settingsService);
 	}
 
 	/**

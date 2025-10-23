@@ -107,7 +107,7 @@ trait ImageStatsTrait
 
 			$avgDuration = (int)$data[0];
 
-			$this->logDebug('Calculated average processing duration for model', [
+			$this->logInfo('Calculated average processing duration for model', [
 				'modelId'      => $model,
 				'avgDuration'  => $avgDuration,
 				'rowsConsidered' => 50,

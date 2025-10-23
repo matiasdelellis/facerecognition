@@ -85,20 +85,38 @@ trait ClusterFaceTrait
      * @return void
      */
     public function attachFaceToPerson(int $clusterId, int $faceId, bool $isGroupable = true): void {
-        $qb = $this->db->getQueryBuilder();
-        $qb->insert('facerecog_cluster_faces')
-            ->values([
-                'face_id' => $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT),
-                'cluster_id' => $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT),
-                'is_groupable' => $qb->createNamedParameter($isGroupable, IQueryBuilder::PARAM_BOOL),
-            ])
-            ->executeStatement();
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->insert('facerecog_cluster_faces')
+                ->values([
+                    'face_id' => $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT),
+                    'cluster_id' => $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT),
+                    'is_groupable' => $qb->createNamedParameter($isGroupable, IQueryBuilder::PARAM_BOOL),
+                ])
+                ->executeStatement();
 
-        $this->logInfo('Attached face to cluster', [
-            'faceId' => $faceId,
-            'clusterId' => $clusterId,
-            'isGroupable' => $isGroupable
-        ]);
+            $this->logInfo('Attached face to cluster', [
+                'faceId' => $faceId,
+                'clusterId' => $clusterId,
+                'isGroupable' => $isGroupable
+            ]);
+        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+            // Ignore duplicated keys exceptions
+            $this->logError('Duplicated keys four, exception ignored, but ERROR logded', [
+                'faceId' => $faceId,
+                'clusterId' => $clusterId,
+                'isGroupable' => $isGroupable,
+                'exception' => $e
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError('Failed to attach face to cluster', [
+                'faceId' => $faceId,
+                'clusterId' => $clusterId,
+                'isGroupable' => $isGroupable,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
     }
 
     /**

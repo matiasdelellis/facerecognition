@@ -33,6 +33,7 @@ trait ClusterFinderTrait
             $this->logDebug('Found cluster', [
                 'clusterId' => $clusterId,
                 'userId'    => $userId,
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entity;
@@ -41,12 +42,14 @@ trait ClusterFinderTrait
             $this->logInfo('No cluster found', [
                 'clusterId' => $clusterId,
                 'userId'    => $userId,
+                'sql' => $qb->getSQL(),
             ]);
             throw $e;
         } catch (\Throwable $e) {
             $this->logError('Unexpected error', [
                 'clusterId' => $clusterId,
                 'userId'    => $userId,
+                'sql' => $qb->getSQL(),
                 'exception' => $e,
             ]);
             throw $e;
@@ -98,6 +101,7 @@ trait ClusterFinderTrait
                 'modelId'    => $modelId,
                 'personName' => $personName,
                 'count'      => count($entities),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -107,6 +111,7 @@ trait ClusterFinderTrait
                 'userId'     => $userId,
                 'modelId'    => $modelId,
                 'personName' => $personName,
+                'sql' => $qb->getSQL(),
                 'exception'  => $e,
             ]);
             throw $e;
@@ -121,11 +126,6 @@ trait ClusterFinderTrait
      */
     public function findUnassigned(string $userId, int $modelId): array {
         try {
-            $this->logDebug('Fetching unassigned persons', [
-                'userId'  => $userId,
-                'modelId' => $modelId,
-            ]);
-
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, true);
 
             $this->logDebug('Found persons', [
@@ -154,11 +154,6 @@ trait ClusterFinderTrait
      */
     public function findIgnored(string $userId, int $modelId): array {
         try {
-            $this->logDebug('Fetching ignored persons', [
-                'userId'  => $userId,
-                'modelId' => $modelId,
-            ]);
-
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, false);
 
             $this->logDebug('Found persons', [
@@ -187,11 +182,6 @@ trait ClusterFinderTrait
      */
     public function findAll(string $userId, int $modelId): array {
         try {
-            $this->logDebug('Fetching all clusters', [
-                'userId'  => $userId,
-                'modelId' => $modelId,
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->select(
                     'c.id', 
@@ -220,6 +210,7 @@ trait ClusterFinderTrait
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -228,6 +219,7 @@ trait ClusterFinderTrait
             $this->logError('Failed to fetch clusters', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
+                'sql' => $qb->getSQL(),
                 'exception' => $e,
             ]);
             throw $e;
@@ -242,11 +234,6 @@ trait ClusterFinderTrait
      */
     public function findDistinctNames(string $userId, int $modelId): array {
         try {
-            $this->logDebug('Fetching distinct names', [
-                'userId'  => $userId,
-                'modelId' => $modelId,
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->selectDistinct('p.name')
                 ->from($this->getTableName(), 'c')
@@ -268,6 +255,7 @@ trait ClusterFinderTrait
                 'userId'   => $userId,
                 'modelId'  => $modelId,
                 'count'    => count($entities),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -276,6 +264,7 @@ trait ClusterFinderTrait
             $this->logError('Failed to fetch distinct names', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
+                'sql' => $qb->getSQL(),
                 'exception' => $e,
             ]);
             throw $e;
@@ -291,12 +280,6 @@ trait ClusterFinderTrait
      */
     public function findDistinctNamesSelected(string $userId, int $modelId, $faceNames): array {
         try {
-            $this->logDebug('Fetching selected distinct names', [
-                'userId'    => $userId,
-                'modelId'   => $modelId,
-                'faceNames' => $faceNames,
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->selectDistinct('p.name')
                 ->from($this->getTableName(), 'c')
@@ -320,6 +303,7 @@ trait ClusterFinderTrait
                 'userId'   => $userId,
                 'modelId'  => $modelId,
                 'count'    => count($entities),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -329,6 +313,7 @@ trait ClusterFinderTrait
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'faceNames' => $faceNames,
+                'sql' => $qb->getSQL(),
                 'exception' => $e,
             ]);
             throw $e;
@@ -348,14 +333,6 @@ trait ClusterFinderTrait
      */
     public function findPersonsLike(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array {
         try {
-            $this->logDebug('Searching persons like name', [
-                'userId' => $userId,
-                'modelId' => $modelId,
-                'name' => $name,
-                'offset' => $offset,
-                'limit' => $limit
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->selectDistinct('p.name')
                 ->from($this->getTableName(), 'c')
@@ -385,7 +362,8 @@ trait ClusterFinderTrait
                 'name' => $name,
                 'count' => count($entities),
                 'offset' => $offset,
-                'limit' => $limit
+                'limit' => $limit,
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -397,6 +375,7 @@ trait ClusterFinderTrait
                 'name' => $name,
                 'offset' => $offset,
                 'limit' => $limit,
+                'sql' => $qb->getSQL(),
                 'exception' => $e
             ]);
             throw $e;
@@ -413,13 +392,6 @@ trait ClusterFinderTrait
      */
     public function getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible): array {
         try {
-            $this->logDebug('Fetching clusters', [
-                'userId'    => $userId,
-                'modelId'   => $modelId,
-                'isValid'   => $isValid,
-                'isVisible' => $isVisible,
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->select(
                     'c.id', 
@@ -454,6 +426,7 @@ trait ClusterFinderTrait
                 'isValid'   => $isValid,
                 'isVisible' => $isVisible,
                 'count'     => count($entities),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entities;
@@ -464,6 +437,7 @@ trait ClusterFinderTrait
                 'modelId'   => $modelId,
                 'isValid'   => $isValid,
                 'isVisible' => $isVisible,
+                'sql' => $qb->getSQL(),
                 'exception' => $e,
             ]);
             throw $e;

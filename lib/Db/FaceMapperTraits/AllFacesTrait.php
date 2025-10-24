@@ -62,6 +62,7 @@ trait AllFacesTrait {
 				'userId' => $userId,
 				'modelId' => $model,
 				'count' => count($faces),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $faces;
@@ -70,7 +71,8 @@ trait AllFacesTrait {
 			$this->logError('Error retrieving faces (used in tests)', [
 				'userId' => $userId,
 				'modelId' => $model,
-				'error' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
 			]);
 			throw $e;
 		}

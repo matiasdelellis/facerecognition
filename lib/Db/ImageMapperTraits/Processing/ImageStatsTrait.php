@@ -27,6 +27,7 @@ trait ImageStatsTrait
 			$this->logDebug('Counted images for model', [
 				'modelId' => $model,
 				'count'   => $count,
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $count;
@@ -34,6 +35,7 @@ trait ImageStatsTrait
 		} catch (\Throwable $e) {
 			$this->logError('Failed to count images for model', [
 				'modelId'   => $model,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -109,8 +111,10 @@ trait ImageStatsTrait
 
 			$this->logInfo('Calculated average processing duration for model', [
 				'modelId'      => $model,
+				'is_processed' => true,
 				'avgDuration'  => $avgDuration,
 				'rowsConsidered' => 50,
+                'sql' => $sql,
 			]);
 
 			return $avgDuration;
@@ -118,6 +122,8 @@ trait ImageStatsTrait
 		} catch (\Throwable $e) {
 			$this->logError('Failed to calculate average processing duration for model', [
 				'modelId'   => $model,
+				'is_processed' => true,
+                'sql' =>  $sql,
 				'exception' => $e,
 			]);
 			throw $e;

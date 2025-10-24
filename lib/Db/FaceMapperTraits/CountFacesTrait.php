@@ -41,6 +41,7 @@ trait CountFacesTrait {
 				'modelId' => $model,
 				'onlyWithoutPersons' => $onlyWithoutPersons,
 				'count' => $count,
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $count;
@@ -50,7 +51,8 @@ trait CountFacesTrait {
 				'userId' => $userId,
 				'modelId' => $model,
 				'onlyWithoutPersons' => $onlyWithoutPersons,
-				'error' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
 			]);
 
 			throw $e;

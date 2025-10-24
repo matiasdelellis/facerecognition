@@ -142,7 +142,7 @@ trait UserImageQueriesTrait
 				'uid'     => $userId,
 				'modelId' => $modelId,
 				'count'   => $count,
-				'result'  => 'success',
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $images;
@@ -151,6 +151,7 @@ trait UserImageQueriesTrait
 			$this->logError('Failed to fetch image entities for user and model', [
 				'uid'       => $userId,
 				'modelId'   => $modelId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -191,7 +192,7 @@ trait UserImageQueriesTrait
 				'modelId' => $modelId,
 				'fileId'  => $fileId,
 				'imageId' => $entity->getId(),
-				'result'  => 'success',
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $entity;
@@ -201,7 +202,7 @@ trait UserImageQueriesTrait
 				'uid'     => $userId,
 				'modelId' => $modelId,
 				'fileId'  => $fileId,
-				'result'  => 'not_found',
+                'sql' => $qb->getSQL(),
 			]);
 			return null;
 
@@ -210,6 +211,7 @@ trait UserImageQueriesTrait
 				'uid'       => $userId,
 				'modelId'   => $modelId,
 				'fileId'    => $fileId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -273,7 +275,7 @@ trait UserImageQueriesTrait
 					'file'    => $image->getFile(),
 					'model'   => $image->getModel(),
 					'imageId' => (int)$row['id'],
-					'result'  => 'found',
+               		'sql' => $qb->getSQL(),
 				]);
 				return (int)$row['id'];
 			} else {
@@ -281,7 +283,7 @@ trait UserImageQueriesTrait
 					'uid'    => $image->getUser(),
 					'file'   => $image->getFile(),
 					'model'  => $image->getModel(),
-					'result' => 'not_found',
+                	'sql' => $qb->getSQL(),
 				]);
 				return null;
 			}
@@ -291,6 +293,7 @@ trait UserImageQueriesTrait
 				'uid'       => $image->getUser(),
 				'file'      => $image->getFile(),
 				'model'     => $image->getModel(),
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -333,6 +336,7 @@ trait UserImageQueriesTrait
 				'modelId'   => $model,
 				'processed' => $processed,
 				'count'     => $count,
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $count;
@@ -342,6 +346,7 @@ trait UserImageQueriesTrait
 				'uid'       => $userId,
 				'modelId'   => $model,
 				'processed' => $processed,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -387,6 +392,7 @@ trait UserImageQueriesTrait
 				'user'       => $user ?? 'ALL USERS',
 				'modelId'    => $modelId,
 				'count'      => count($images),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $images;
@@ -395,6 +401,7 @@ trait UserImageQueriesTrait
 			$this->logError('Failed to find images without faces', [
 				'user'      => $user ?? 'ALL USERS',
 				'modelId'   => $modelId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -420,6 +427,7 @@ trait UserImageQueriesTrait
 				'uid'     => $userId,
 				'modelId' => $model,
 				'count'   => count($images),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $images;
@@ -428,6 +436,7 @@ trait UserImageQueriesTrait
 			$this->logError('Failed to find images for user', [
 				'uid'       => $userId,
 				'modelId'   => $model,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -454,7 +463,7 @@ trait UserImageQueriesTrait
 			$this->logDebug('Fetched users for image ID', [
 				'imageId' => $imageId,
 				'userCount' => count($data),
-				'result' => !empty($data) ? 'found' : 'not_found',
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $data ?: [];
@@ -462,6 +471,7 @@ trait UserImageQueriesTrait
 		} catch (\Throwable $e) {
 			$this->logError('Failed to fetch users for image ID', [
 				'imageId' => $imageId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;

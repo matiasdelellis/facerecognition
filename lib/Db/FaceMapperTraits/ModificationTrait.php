@@ -25,10 +25,12 @@ trait ModificationTrait {
 
             $this->logInfo('Removed all faces from image', [
                 'imageId' => $imageId,
+                'sql' => $qb->getSQL(),
             ]);
         } catch (\Throwable $e) {
             $this->logError('Error removing faces from image', [
                 'imageId' => $imageId,
+                'sql' => $qb->getSQL(),
                 'exception' => $e->getMessage(),
             ]);
             throw $e;
@@ -61,11 +63,13 @@ trait ModificationTrait {
             $this->logInfo('Deleted faces for user and model', [
                 'userId' => $userId,
                 'modelId' => $modelId,
+                'sql' => $qb->getSQL(),
             ]);
         } catch (\Throwable $e) {
             $this->logError('Error deleting faces for user and model', [
                 'userId' => $userId,
                 'modelId' => $modelId,
+                'sql' => $sub->getSQL(),
                 'exception' => $e->getMessage(),
             ]);
             throw $e;
@@ -102,12 +106,14 @@ trait ModificationTrait {
             $this->logInfo('Unset person relations for user', [
                 'userId' => $userId,
                 'model' => $model,
+                'sql' => $qb->getSQL(),
             ]);
         } catch (\Throwable $e) {
             $this->logError('Error unsetting person relations for user', [
                 'userId' => $userId,
                 'model' => $model,
-                'exception' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }
@@ -123,6 +129,7 @@ trait ModificationTrait {
     public function insertFace(Face $face, ?IDBConnection $db = null): Face {
         $db = $db ?? $this->db;
         $qb = $db->getQueryBuilder();
+        $insertPersonFaceConnection = $db->getQueryBuilder();
 
         try {
             $qb->insert($this->getTableName())
@@ -142,7 +149,6 @@ trait ModificationTrait {
             $face->setId($qb->getLastInsertId());
 
             if ($face->person !== null) {
-                $insertPersonFaceConnection = $db->getQueryBuilder();
                 $insertPersonFaceConnection->insert('facerecog_cluster_faces')
                     ->values([
                         'face_id' => $insertPersonFaceConnection->createNamedParameter($face->id),
@@ -154,11 +160,14 @@ trait ModificationTrait {
                     'faceId' => $face->getId(),
                     'imageId' => $face->image,
                     'clusterId' => $face->person,
+                    'sql' => $qb->getSQL(),
+                    'personFaceSql' => $insertPersonFaceConnection->getSQL(),
                 ]);
             } else {
                 $this->logInfo('Inserted face without cluster association', [
                     'faceId' => $face->getId(),
                     'imageId' => $face->image,
+                    'sql' => $qb->getSQL(),
                 ]);
             }
 
@@ -168,7 +177,9 @@ trait ModificationTrait {
             $this->logError('Error inserting face', [
                 'imageId' => $face->image,
                 'faceData' => $face,
-                'exception' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'personFaceSql' => $insertPersonFaceConnection->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }

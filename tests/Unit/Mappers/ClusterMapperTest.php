@@ -790,7 +790,7 @@ class ClusterMapperTest extends UnitBaseTestCase
             ->executeStatement();
 
         $this->expectException(MultipleObjectsReturnedException::class);
-        $this->expectExceptionMessageMatches("/^Did not expect more than one result for cluster_id [0-9]+/");
+        $this->expectExceptionMessageMatches("/^Multiple connections found for cluster_id [0-9]+/");
 
         //Act
        self::$clusterMapper->updateClusterPersonConnection($clusterId, $personName);
@@ -844,7 +844,7 @@ class ClusterMapperTest extends UnitBaseTestCase
             ->executeStatement();
 
         $this->expectException(MultipleObjectsReturnedException::class);
-        $this->expectExceptionMessageMatches("/^Did not expect more than one result for cluster_id [0-9]+/");
+        $this->expectExceptionMessageMatches("/^Multiple connections found for cluster_id [0-9]+/");
 
         //Act
        self::$clusterMapper->updateClusterPersonConnection($clusterId, $personName, self::$dbConnection);

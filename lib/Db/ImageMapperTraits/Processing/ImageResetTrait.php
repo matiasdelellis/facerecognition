@@ -29,6 +29,7 @@ trait ImageResetTrait
 				'imageId' => $image->getId(),
 				'file'    => $image->getFile(),
 				'modelId' => $image->getModel(),
+                'sql' => $qb->getSQL(),
 			]);
 
 		} catch (\Throwable $e) {
@@ -36,6 +37,7 @@ trait ImageResetTrait
 				'imageId'   => $image->getId(),
 				'file'      => $image->getFile(),
 				'modelId'   => $image->getModel(),
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -79,11 +81,13 @@ trait ImageResetTrait
 			$this->logInfo('Reset images with errors for user', [
 				'uid'        => $userId,
 				'resetCount' => count($imagesToReset),
+                'sql' => $qb->getSQL(),
 			]);
 
 		} catch (\Throwable $e) {
 			$this->logError('Failed to reset images with errors for user', [
 				'uid'       => $userId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;

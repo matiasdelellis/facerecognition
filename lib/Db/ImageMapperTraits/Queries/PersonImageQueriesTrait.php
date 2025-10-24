@@ -42,6 +42,7 @@ trait PersonImageQueriesTrait
 				'offset'  => $offset,
 				'limit'   => $limit,
 				'count'   => count($images),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $images;
@@ -53,6 +54,7 @@ trait PersonImageQueriesTrait
 				'person'    => $name,
 				'offset'    => $offset,
 				'limit'     => $limit,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -92,6 +94,7 @@ trait PersonImageQueriesTrait
 				'modelId' => $modelId,
 				'person'  => $name,
 				'count'   => $count,
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $count;
@@ -101,6 +104,7 @@ trait PersonImageQueriesTrait
 				'uid'       => $userId,
 				'modelId'   => $modelId,
 				'person'    => $name,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;

@@ -56,6 +56,7 @@ trait FindFacesTrait {
 			$this->logDebug("Found face entity", [
 				'faceId' => $faceId,
 				'userId' => $userId,
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $entity;
@@ -64,6 +65,7 @@ trait FindFacesTrait {
 			$this->logInfo("No face found", [
 				'userId' => $userId,
 				'faceId' => $faceId,
+                'sql' => $qb->getSQL(),
 			]);
 			return null;
 
@@ -71,7 +73,8 @@ trait FindFacesTrait {
 			$this->logError("Error finding face entity", [
 				'faceId' => $faceId,
 				'userId' => $userId,
-				'error'  => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
 			]);
 			throw $e;
 		}
@@ -126,6 +129,7 @@ trait FindFacesTrait {
 				'modelId' => $modelId,
 				'fileId' => $fileId,
 				'count' => count($faces),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $faces;
@@ -135,7 +139,8 @@ trait FindFacesTrait {
 				'userId' => $userId,
 				'modelId' => $modelId,
 				'fileId' => $fileId,
-				'error' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
 			]);
 
 			throw $e;
@@ -197,7 +202,8 @@ trait FindFacesTrait {
                 'model' => $model,
                 'limit' => $limit,
                 'offset' => $offset,
-                'count' => count($faces)
+                'count' => count($faces),
+                'sql' => $qb->getSQL(),
             ]);
             return $faces;
         } catch (\Throwable $e) {
@@ -207,7 +213,8 @@ trait FindFacesTrait {
                 'model' => $model,
                 'limit' => $limit,
                 'offset' => $offset,
-                'exception' => $e->getMessage()
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }
@@ -272,6 +279,7 @@ trait FindFacesTrait {
                 'limit' => $limit,
                 'offset' => $offset,
                 'count' => count($faces),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $faces;
@@ -283,7 +291,8 @@ trait FindFacesTrait {
                 'model' => $model,
                 'limit' => $limit,
                 'offset' => $offset,
-                'exception' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }
@@ -320,12 +329,14 @@ trait FindFacesTrait {
             $this->logDebug('Found faces by image', [
                 'imageId' => $imageId,
                 'count' => count($faces),
+                'sql' => $qb->getSQL(),
             ]);
             return $faces;
         } catch (\Throwable $e) {
             $this->logError('Error finding faces by image', [
                 'imageId' => $imageId,
-                'exception' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }
@@ -374,6 +385,7 @@ trait FindFacesTrait {
 				'userId' => $userId,
 				'modelId' => $model,
 				'faceId' => $face->getId(),
+                'sql' => $qb->getSQL(),
 			]);
 
 			return $face;
@@ -382,6 +394,7 @@ trait FindFacesTrait {
 			$this->logInfo('No face without person found', [
 				'userId' => $userId,
 				'modelId' => $model,
+                'sql' => $qb->getSQL(),
 			]);
 			return null;
 
@@ -389,7 +402,8 @@ trait FindFacesTrait {
 			$this->logError('Error retrieving oldest face without person', [
 				'userId' => $userId,
 				'modelId' => $model,
-				'error' => $e->getMessage(),
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
 			]);
 			throw $e;
 		}

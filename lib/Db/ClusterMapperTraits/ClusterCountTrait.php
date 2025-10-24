@@ -17,11 +17,6 @@ trait ClusterCountTrait
      */
     public function countPersons(string $userId, int $modelId): int {
         try {
-            $this->logDebug('Counting distinct persons', [
-                'userId' => $userId,
-                'modelId' => $modelId
-            ]);
-
             $count = count($this->findDistinctNames($userId, $modelId));
 
             $this->logDebug('Count completed', [
@@ -53,12 +48,6 @@ trait ClusterCountTrait
      */
     public function countClusters(string $userId, int $modelId, bool $onlyInvalid = false): int {
         try {
-            $this->logDebug('Counting clusters', [
-                'userId' => $userId,
-                'modelId' => $modelId,
-                'onlyInvalid' => $onlyInvalid
-            ]);
-
             $qb = $this->db->getQueryBuilder();
             $qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('c.id') . ') OVER ()'))
                 ->from($this->getTableName(), 'c')
@@ -89,7 +78,8 @@ trait ClusterCountTrait
                 'userId' => $userId,
                 'modelId' => $modelId,
                 'onlyInvalid' => $onlyInvalid,
-                'count' => $count
+                'count' => $count,
+                'sql' => $qb->getSQL(),
             ]);
 
             return $count;
@@ -99,6 +89,7 @@ trait ClusterCountTrait
                 'userId' => $userId,
                 'modelId' => $modelId,
                 'onlyInvalid' => $onlyInvalid,
+                'sql' => $qb->getSQL(),
                 'exception' => $e
             ]);
             throw $e;
@@ -112,23 +103,33 @@ trait ClusterCountTrait
      * @return int
      */
     public function countClusterFaces(int $clusterId): int {
-        $qb = $this->db->getQueryBuilder();
-        $resultStatement = $qb
-            ->select($qb->func()->count('*'))
-            ->from('facerecog_cluster_faces')
-            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
-            ->executeQuery();
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $resultStatement = $qb
+                ->select($qb->func()->count('*'))
+                ->from('facerecog_cluster_faces')
+                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
+                ->executeQuery();
 
-        $data = $resultStatement->fetch(\PDO::FETCH_NUM);
-        $resultStatement->closeCursor();
+            $data = $resultStatement->fetch(\PDO::FETCH_NUM);
+            $resultStatement->closeCursor();
 
-        $count = (int)$data[0];
+            $count = (int)$data[0];
 
-        $this->logDebug('Count cluster\'s faces', [
-            'clusterId' => $clusterId,
-            'count' => $count
-        ]);
+            $this->logDebug('Count cluster\'s faces', [
+                'clusterId' => $clusterId,
+                'count' => $count,
+                'sql' => $qb->getSQL(),
+            ]);
 
-        return $count;
+            return $count;
+        } catch (\Throwable $e) {
+            $this->logError('Failed to count clusters faces', [
+                'clusterId' => $clusterId,
+                'sql' => $qb->getSQL(),
+                'exception' => $e
+            ]);
+            throw $e;
+        }
     }
 }

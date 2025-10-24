@@ -157,7 +157,6 @@ trait ClusterPersonTrait
         }
     }
 
-
     /**
      * Deletes a person (cluster) if it has no associated faces.
      *
@@ -166,28 +165,57 @@ trait ClusterPersonTrait
      * @return void
      */
     public function removeIfEmpty(int $clusterId): void {
-        $sub = $this->db->getQueryBuilder();
-        $sub->select('c.id')
-            ->from($this->getTableName(), 'c')
-            ->leftJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
-            ->where($sub->expr()->eq('cf.cluster_id', $sub->createParameter('cluster_id')));
+        try {
+            // Subquery: check if cluster has any faces
+            $sub = $this->db->getQueryBuilder();
+            $sub->select('c.id')
+                ->from($this->getTableName(), 'c')
+                ->leftJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
+                ->where($sub->expr()->eq('cf.cluster_id', $sub->createParameter('cluster_id')));
 
-        $sql = $sub->getSQL();
+            $subSql = $sub->getSQL();
 
-        $qb = $this->db->getQueryBuilder();
-        $qb->delete($this->getTableName())
-            ->where($qb->expr()->eq('id', $qb->createParameter('cluster_id')))
-            ->andWhere('id NOT IN (' . $sql . ')')
-            ->setParameter('cluster_id', $clusterId, IQueryBuilder::PARAM_INT)
-            ->executeStatement();
+            // Main delete query
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete($this->getTableName())
+                ->where($qb->expr()->eq('id', $qb->createParameter('cluster_id')))
+                ->andWhere('id NOT IN (' . $subSql . ')')
+                ->setParameter('cluster_id', $clusterId, IQueryBuilder::PARAM_INT);
 
-        $this->logInfo('Checked and removed cluster if empty', [
-            'clusterId' => $clusterId
-        ]);
+            $deleted = $qb->executeStatement();
+
+            if ($deleted > 0) {
+                $this->logInfo('Deleted empty cluster', [
+                    'clusterId' => $clusterId,
+                    'sql' => $qb->getSQL(),
+                    'deleted' => $deleted
+                ]);
+            } else {
+                $this->logDebug('Cluster not deleted (not empty or not found)', [
+                    'clusterId' => $clusterId,
+                    'sql' => $qb->getSQL()
+                ]);
+            }
+
+        } catch (\Doctrine\DBAL\Exception $e) {
+            $this->logError('Database exception while checking/removing cluster', [
+                'clusterId' => $clusterId,
+                'sql' => $qb->getSQL(),
+                'exception' => $e
+            ]);
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->logError('Unexpected error while removing empty cluster', [
+                'clusterId' => $clusterId,
+                'sql' => $qb->getSQL(),
+                'exception' => $e
+            ]);
+            throw $e;
+        }
     }
 
     /**
-     * Mark the cluster as hidden or visible to user.
+     * Mark the cluster as hidden or visible to the user.
      *
      * @param int $clusterId ID of the person/cluster
      * @param bool $visible Visibility of the person
@@ -195,32 +223,65 @@ trait ClusterPersonTrait
      * @return void
      */
     public function setVisibility(int $clusterId, bool $visible): void {
-        $qb = $this->db->getQueryBuilder();
-        $qb->update($this->getTableName())
-            ->set('is_visible', $qb->createNamedParameter($visible, IQueryBuilder::PARAM_BOOL))
-            ->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
-            ->executeStatement();
-
-        if (!$visible) {
+        try {
+            // Update cluster visibility
             $qb = $this->db->getQueryBuilder();
-            $qb->delete('facerecog_person_clusters')
-                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
-                ->executeStatement();
+            $qb->update($this->getTableName())
+                ->set('is_visible', $qb->createNamedParameter($visible, IQueryBuilder::PARAM_BOOL))
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)));
 
-            $this->logInfo('Cluster hidden and removed person connections', [
-                'clusterId' => $clusterId
+            $updated = $qb->executeStatement();
+
+            if ($updated === 0) {
+                $this->logDebug('No cluster found for visibility update', [
+                    'clusterId' => $clusterId,
+                    'visible' => $visible,
+                    'sql' => $qb->getSQL(),
+                ]);
+                return;
+            }
+
+            if (!$visible) {
+                // Remove person connections if cluster is hidden
+                $qb = $this->db->getQueryBuilder();
+                $deletedConnections = $qb->delete('facerecog_person_clusters')
+                    ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
+                    ->executeStatement();
+
+                $this->logInfo('Cluster hidden and person connections removed', [
+                    'clusterId' => $clusterId,
+                    'deletedConnections' => $deletedConnections,
+                    'sql' => $qb->getSQL(),
+                ]);
+            } else {
+                $this->logInfo('Cluster made visible', [
+                    'clusterId' => $clusterId,
+                    'sql' => $qb->getSQL(),
+                ]);
+            }
+        } catch (\Doctrine\DBAL\Exception $e) {
+            $this->logError('Database exception while setting cluster visibility', [
+                'clusterId' => $clusterId,
+                'visible' => $visible,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
-        } else {
-            $this->logInfo('Cluster made visible', [
-                'clusterId' => $clusterId
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->logError('Unexpected error while updating cluster visibility', [
+                'clusterId' => $clusterId,
+                'visible' => $visible,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
+            throw $e;
         }
     }
 
     /**
      * Handles cluster-Person connection based on name.
      *
-     * @param int $clusterId ID of cluster
+     * @param int $clusterId ID of the cluster
      * @param string|null $personName Name of the person
      * @param IDBConnection|null $db Optional dbConnection
      *
@@ -230,83 +291,114 @@ trait ClusterPersonTrait
     public function updateClusterPersonConnection(int $clusterId, ?string $personName, ?IDBConnection $db = null): void {
         $db ??= $this->db;
 
-        $this->logDebug('Update cluster person connection', [
+        $this->logDebug('Updating cluster-person connection', [
             'clusterId' => $clusterId,
-            'personName' => $personName ?? 'NULL'
+            'personName' => $personName ?? 'NULL',
         ]);
 
-        $qb = $db->getQueryBuilder();
-        $qb->select('*')
-            ->from('facerecog_person_clusters')
-            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-
-        $result = $qb->executeQuery();
-        $data = $result->fetchAll();
-        $result->closeCursor();
-
-        if ($data !== false && count($data) > 0) {
-            if (count($data) > 1) {
-                throw new MultipleObjectsReturnedException(
-                    'Did not expect more than one result for cluster_id ' . $clusterId
-                );
-            }
-
-            // Remove existing cluster-person connection
+        try {
+            // Check existing connections
             $qb = $db->getQueryBuilder();
-            $qb->delete('facerecog_person_clusters')
-                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
-                ->andWhere($qb->expr()->eq('person_id', $qb->createNamedParameter($data[0]['person_id'])))
-                ->executeStatement();
+            $qb->select('*')
+                ->from('facerecog_person_clusters')
+                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
 
-            $this->logInfo('Removed existing person connection', [
-                'clusterId' => $clusterId,
-                'personId' => $data[0]['person_id']
-            ]);
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
 
-            // Delete orphaned persons
-            $qb = $db->getQueryBuilder();
-            $orphanedResult = $qb->select('p.id')
-                ->from('facerecog_persons', 'p')
-                ->leftJoin('p', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('p.id', 'pc.person_id'))
-                ->where($qb->expr()->isNull('pc.person_id'))
-                ->executeQuery();
+            if ($data !== false && count($data) > 0) {
+                if (count($data) > 1) {
+                    throw new MultipleObjectsReturnedException(
+                        'Multiple connections found for cluster_id ' . $clusterId
+                    );
+                }
 
-            $orphanedPersons = $orphanedResult->fetchAll();
-            $orphanedResult->closeCursor();
-
-            foreach ($orphanedPersons as $person) {
+                // Remove existing connection
                 $qb = $db->getQueryBuilder();
-                $qb->delete('facerecog_persons')
-                    ->where($qb->expr()->eq('id', $qb->createNamedParameter($person['id'], IQueryBuilder::PARAM_INT)))
+                $deleted = $qb->delete('facerecog_person_clusters')
+                    ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
+                    ->andWhere($qb->expr()->eq('person_id', $qb->createNamedParameter($data[0]['person_id'])))
                     ->executeStatement();
 
-                $this->logInfo('Deleted orphaned person', [
-                    'personId' => $person['id']
+                $this->logInfo('Removed existing person connection', [
+                    'clusterId' => $clusterId,
+                    'personId' => $data[0]['person_id'],
+                    'deletedRows' => $deleted,
+                    'sql' => $qb->getSQL(),
+                ]);
+
+                // Remove orphaned persons
+                $qb = $db->getQueryBuilder();
+                $orphanedResult = $qb->select('p.id')
+                    ->from('facerecog_persons', 'p')
+                    ->leftJoin('p', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('p.id', 'pc.person_id'))
+                    ->where($qb->expr()->isNull('pc.person_id'))
+                    ->executeQuery();
+
+                $orphanedPersons = $orphanedResult->fetchAll();
+                $orphanedResult->closeCursor();
+
+                foreach ($orphanedPersons as $person) {
+                    $qb = $db->getQueryBuilder();
+                    $qb->delete('facerecog_persons')
+                        ->where($qb->expr()->eq('id', $qb->createNamedParameter($person['id'], IQueryBuilder::PARAM_INT)))
+                        ->executeStatement();
+
+                    $this->logInfo('Deleted orphaned person', [
+                        'personId' => $person['id'],
+                        'sql' => $qb->getSQL(),
+                    ]);
+                }
+            }
+
+            if ($personName !== null) {
+                $personId = $this->insertPersonIfNotExists($personName, $db);
+
+                $qb = $db->getQueryBuilder();
+                $qb->insert('facerecog_person_clusters')
+                    ->values([
+                        'cluster_id' => $qb->createNamedParameter($clusterId),
+                        'person_id' => $qb->createNamedParameter($personId)
+                    ])
+                    ->executeStatement();
+
+                $this->logInfo('Attached person to cluster', [
+                    'clusterId' => $clusterId,
+                    'personId' => $personId,
+                    'personName' => $personName,
+                    'sql' => $qb->getSQL(),
+                ]);
+            } else {
+                $this->logDebug('No personName provided; existing connection removed if any', [
+                    'clusterId' => $clusterId,
+                    'sql' => $qb->getSQL(),
                 ]);
             }
-        }
-
-        if ($personName !== null) {
-            $personId = $this->insertPersonIfNotExists($personName, $db);
-
-            $qb = $db->getQueryBuilder();
-            $qb->insert('facerecog_person_clusters')
-                ->values([
-                    'cluster_id' => $qb->createNamedParameter($clusterId),
-                    'person_id' => $qb->createNamedParameter($personId)
-                ])
-                ->executeStatement();
-
-            $this->logInfo('Attached person to cluster', [
+        } catch (MultipleObjectsReturnedException $e) {
+            $this->logError('Multiple objects returned when updating cluster-person connection', [
                 'clusterId' => $clusterId,
-                'personId' => $personId,
-                'personName' => $personName
+                'personName' => $personName ?? 'NULL',
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
-        } else {
-            $this->logDebug('No personName provided, connection removed if existed', [
-                'clusterId' => $clusterId
+            throw $e;
+        } catch (\Doctrine\DBAL\Exception $e) {
+            $this->logError('Database exception during cluster-person connection update', [
+                'clusterId' => $clusterId,
+                'personName' => $personName ?? 'NULL',
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->logError('Unexpected error during cluster-person connection update', [
+                'clusterId' => $clusterId,
+                'personName' => $personName ?? 'NULL',
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
+            ]);
+            throw $e;
         }
     }
-
 }

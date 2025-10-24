@@ -7,13 +7,13 @@ trait DescriptorsTrait {
 	public function findDescriptorsBathed(array $faceIds): array {
 		$descriptors = [];
 
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'descriptor')
+			->from($this->getTableName(), 'f')
+			->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
 		for ($i = 0; $i < count($faceIds); $i += 1000) {
 			$sliced = array_slice($faceIds, $i, 1000, true);
 
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('id', 'descriptor')
-				->from($this->getTableName(), 'f')
-				->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
 			$qb->setParameter('face_ids', $sliced, IQueryBuilder::PARAM_INT_ARRAY);
 
 			try {
@@ -31,11 +31,13 @@ trait DescriptorsTrait {
 					'batchNumber' => ($i / 1000) + 1,
 					'facesInBatch' => count($faces),
 					'totalProcessed' => count($descriptors),
+                	'sql' => $qb->getSQL(),
 				]);
 			} catch (\Throwable $e) {
 				$this->logError('Error processing descriptor batch', [
 					'batchIndex' => $i,
-					'error' => $e->getMessage(),
+					'sql' => $qb?->getSQL(),
+					'exception' => $e,
 				]);
 				// Depending on policy: continue or rethrow
 				continue;
@@ -45,6 +47,7 @@ trait DescriptorsTrait {
 		$this->logDebug('Completed descriptor retrieval', [
 			'totalDescriptors' => count($descriptors),
 			'totalRequested' => count($faceIds),
+			'sql' => $qb->getSQL(),
 		]);
 
 		return $descriptors;

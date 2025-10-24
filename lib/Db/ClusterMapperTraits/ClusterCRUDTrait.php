@@ -5,7 +5,6 @@ use OCP\IDBConnection;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\AppFramework\Db\Entity;
 
-//MTODO: Implement try-catches
 trait ClusterCRUDTrait
 {
     #[\Override]
@@ -44,14 +43,16 @@ trait ClusterCRUDTrait
                 'clusterId' => $entity->getId(),
                 'name'      => $entity->getName(),
                 'user'      => $entity->getUser(),
+                'sql' => $qb->getSQL(),
             ]);
 
             return $entity;
 
         } catch (\Throwable $e) {
             $this->logError('Failed to insert entity', [
-                'exception' => $e,
                 'entity'    => $entity,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
             ]);
             throw $e;
         }
@@ -68,38 +69,51 @@ trait ClusterCRUDTrait
     public function insertPersonIfNotExists(string $personName, ?IDBConnection $db = null): int {
         $db ??= $this->db;
 
-        $qb = $db->getQueryBuilder();
-        $qb->select('id')
-            ->from('facerecog_persons')
-            ->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)));
+        try {
+            $qb = $db->getQueryBuilder();
+            $qb->select('id')
+                ->from('facerecog_persons')
+                ->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)));
 
-        $result = $qb->executeQuery();
-        $data = $result->fetch();
-        $result->closeCursor();
+            $result = $qb->executeQuery();
+            $data = $result->fetch();
+            $result->closeCursor();
 
-        if ($data !== false) {
-            $this->logDebug('Person already exists', [
+            if ($data !== false) {
+                $this->logDebug('Person already exists', [
+                    'personName' => $personName,
+                    'personId' => $data['id'],
+                    'sql' => $qb->getSQL(),
+                ]);
+                return (int)$data['id'];
+            }
+
+            // Insert new person record
+            $qb = $db->getQueryBuilder();
+            $qb->insert('facerecog_persons')
+                ->values([
+                    'name' => $qb->createNamedParameter($personName)
+                ])
+                ->executeStatement();
+
+            $newId = (int)$qb->getLastInsertId();
+
+            $this->logInfo('Inserted new person', [
                 'personName' => $personName,
-                'personId' => $data['id']
+                'personId' => $newId,
+                'sql' => $qb->getSQL(),
             ]);
-            return (int)$data['id'];
+
+            return $newId;
+
+        } catch (\Throwable $e) {
+            $this->logError('Failed to insert or fetch person', [
+                'personName' => $personName,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
+            ]);
+            throw $e;
         }
-
-        $qb = $db->getQueryBuilder();
-        $qb->insert('facerecog_persons')
-            ->values([
-                'name' => $qb->createNamedParameter($personName)
-            ])
-            ->executeStatement();
-
-        $newId = (int)$qb->getLastInsertId();
-
-        $this->logInfo('Inserted new person', [
-            'personName' => $personName,
-            'personId' => $newId
-        ]);
-
-        return $newId;
     }
     
     #[\Override]
@@ -108,7 +122,7 @@ trait ClusterCRUDTrait
             $properties = $entity->getUpdatedFields();
             if (count($properties) === 0) {
                 $this->logDebug('No fields updated', [
-                    'clusterId' => $entity->getId()
+                    'clusterId' => $entity->getId(),
                 ]);
                 return $entity;
             }
@@ -146,11 +160,13 @@ trait ClusterCRUDTrait
                 $qb->executeStatement();
                 $this->logInfo('Updated cluster', [
                     'clusterId'     => $id,
-                    'updatedFields' => array_keys($properties)
+                    'updatedFields' => array_keys($properties),
+                    'sql' => $qb->getSQL(),
                 ]);
             } else {
                 $this->logDebug('Nothing to update (only name change handled separately)', [
-                    'clusterId' => $id
+                    'clusterId' => $id,
+                    'sql' => $qb->getSQL(),
                 ]);
             }
 
@@ -158,58 +174,88 @@ trait ClusterCRUDTrait
 
         } catch (\Throwable $e) {
             $this->logError('Failed to update entity', [
-                'exception' => $e,
-                'entity'    => $entity
+                'entity'    => $entity,
+                'sql' => $qb?->getSQL(),
+                'exception' => $e
             ]);
             throw $e;
         }
     }
-
+    
     /**
      * Deletes all persons (clusters) that have no faces associated with them.
      *
-     * @param string $userId ID of user for which we are deleting orphaned persons
+     * @param string $userId ID of the user for which orphaned persons should be deleted
      * @param IDBConnection|null $db Optional database connection
      *
      * @return int[] List of deleted person/cluster IDs
      */
     public function deleteOrphaned(string $userId, ?IDBConnection $db = null): array {
         $db ??= $this->db;
-
-        // Find orphaned clusters
-        $qb = $db->getQueryBuilder();
-        $qb->select('c.id')
-            ->from($this->getTableName(), 'c')
-            ->leftJoin('c', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('c.id', 'cf.cluster_id'))
-            ->where($qb->expr()->eq('c.user', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR)))
-            ->andWhere($qb->expr()->isNull('cf.face_id'));
-
-        $orphanedPersons = $this->findEntities($qb);
-        $this->logDebug('Found ' . count($orphanedPersons) . ' orphaned clusters', [
-            'userId' => $userId
-        ]);
-
-        // Delete them one by one
         $deletedIds = [];
-        foreach ($orphanedPersons as $person) {
+
+        try {
+            $db->beginTransaction();
+
+            // Find orphaned clusters
             $qb = $db->getQueryBuilder();
-            $deletedIds[] = $person->getId();
-            $qb->delete($this->getTableName())
-                ->where($qb->expr()->eq('id', $qb->createNamedParameter($person->getId(), IQueryBuilder::PARAM_INT)))
-                ->executeStatement();
+            $qb->select('c.id')
+                ->from($this->getTableName(), 'c')
+                ->leftJoin('c', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('c.id', 'cf.cluster_id'))
+                ->where($qb->expr()->eq('c.user', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR)))
+                ->andWhere($qb->expr()->isNull('cf.face_id'));
 
-            $this->logDebug('Deleted orphaned cluster', [
-                'clusterId' => $person->getId(),
-                'userId' => $userId
+            $orphanedPersons = $this->findEntities($qb);
+
+            $this->logDebug('Found orphaned clusters', [
+                'userId' => $userId,
+                'count' => count($orphanedPersons),
+                'sql' => $qb->getSQL(),
             ]);
+
+            // Delete them one by one
+            foreach ($orphanedPersons as $person) {
+                $clusterId = $person->getId();
+                $qb = $db->getQueryBuilder();
+
+                $qb->delete($this->getTableName())
+                    ->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
+                    ->executeStatement();
+
+                $deletedIds[] = $clusterId;
+
+                $this->logDebug('Deleted orphaned cluster', [
+                    'clusterId' => $clusterId,
+                    'userId' => $userId,
+                    'sql' => $qb->getSQL(),
+                ]);
+            }
+
+            $db->commit();
+
+            $this->logInfo('Orphaned cluster cleanup completed', [
+                'userId' => $userId,
+                'deletedCount' => count($deletedIds),
+                'deletedIds' => $deletedIds,
+                'sql' => $qb->getSQL(),
+            ]);
+
+            return $deletedIds;
+
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            $this->logError('Failed to delete orphaned clusters', [
+                'userId' => $userId,
+                'deletedSoFar' => $deletedIds,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
+            ]);
+
+            throw $e;
         }
-
-        $this->logInfo('Deleted total orphaned clusters', [
-            'count' => count($deletedIds),
-            'userId' => $userId
-        ]);
-
-        return $deletedIds;
     }
 
     /**
@@ -220,16 +266,30 @@ trait ClusterCRUDTrait
      * @return void
      */
     public function deleteUserPersons(string $userId): void {
-        $qb = $this->db->getQueryBuilder();
-        $qb->delete($this->getTableName())
-            ->where($qb->expr()->eq('user', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR)))
-            ->executeStatement();
+        try {
+            $qb = $this->db->getQueryBuilder();
 
-        $this->logInfo('Deleted persons for user', [
-            'userId' => $userId
-        ]);
+            $qb->delete($this->getTableName())
+                ->where(
+                    $qb->expr()->eq('user', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR))
+                )
+                ->executeStatement();
 
-        // All person-face connections should be automatically deleted via foreign key
+            $this->logInfo('Deleted persons for user', [
+                'userId' => $userId,
+                'sql' => $qb->getSQL(),
+            ]);
+
+            // All Person-Face connections are deleted automatically via foreign key constraints.
+        } catch (\Throwable $e) {
+            $this->logError('Failed to delete persons for user', [
+                'userId' => $userId,
+                'sql' => $qb->getSQL(),
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
     }
 
     /**
@@ -241,23 +301,33 @@ trait ClusterCRUDTrait
      * @return void
      */
     public function deleteUserModel(string $userId, int $modelId): void {
-        // TODO: Make it atomic (wrap in transaction)
-        $persons = $this->findAll($userId, $modelId);
+        try {
+            // TODO: Make it atomic (wrap in transaction)
+            $clusters = $this->findAll($userId, $modelId);
 
-        $qb = $this->db->getQueryBuilder();
-        $qb->delete($this->getTableName())
-            ->where($qb->expr()->eq('id', $qb->createParameter('person_id')));
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete($this->getTableName())
+                ->where($qb->expr()->eq('id', $qb->createParameter('person_id')));
 
-        foreach ($persons as $person) {
-            $qb->setParameter('person_id', $person->getId(), IQueryBuilder::PARAM_INT)
-                ->executeStatement();
+            foreach ($clusters as $person) {
+                $qb->setParameter('person_id', $person->getId(), IQueryBuilder::PARAM_INT)
+                    ->executeStatement();
+            }
+
+            $this->logInfo('Deleted persons for user', [
+                'userId' => $userId,
+                'modelId' => $modelId,
+                'deletedCount' => count($clusters),
+                'sql' => $qb->getSQL(),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError('Failed to delete users cluster by model', [
+                'userId' => $userId,
+                'modelId' => $modelId,
+                'sql' => $qb->getSQL(),
+                'exception' => $e
+            ]);
+            throw $e;
         }
-
-        $this->logInfo('Deleted persons for user', [
-            'userId' => $userId,
-            'modelId' => $modelId,
-            'deletedCount' => count($persons)
-        ]);
     }
-
 }

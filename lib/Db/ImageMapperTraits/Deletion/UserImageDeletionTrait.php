@@ -22,12 +22,14 @@ trait UserImageDeletionTrait
 			$this->logDebug('Removed image-user connection', [
 				'imageId' => $entity->getId(),
 				'uid'     => $entity->getUser(),
+                'sql' => $qb->getSQL(),
 			]);
 
 		} catch (\Throwable $e) {
 			$this->logError('Failed to remove image-user connection', [
 				'imageId'   => $entity->getId(),
 				'uid'       => $entity->getUser(),
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -72,11 +74,13 @@ trait UserImageDeletionTrait
 			$this->logInfo('Deleted user images', [
 				'uid'         => $userId,
 				'deletedCount'=> count($imagesToDelete),
+                'sql' => $qb->getSQL(),
 			]);
 
 		} catch (\Throwable $e) {
 			$this->logError('Failed to delete user images', [
 				'uid'       => $userId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;
@@ -122,6 +126,7 @@ trait UserImageDeletionTrait
 				'uid'          => $userId,
 				'modelId'      => $modelId,
 				'deletedCount' => count($imageUserConnectionsToDelete),
+                'sql' => $qb->getSQL(),
 			]);
 
 			// Collect images with no more references from other users
@@ -150,12 +155,14 @@ trait UserImageDeletionTrait
 				'uid'          => $userId,
 				'modelId'      => $modelId,
 				'deletedCount' => count($imagesToDelete),
+                'sql' => $qb->getSQL(),
 			]);
 
 		} catch (\Throwable $e) {
 			$this->logError('Failed to delete user model images', [
 				'uid'       => $userId,
 				'modelId'   => $modelId,
+                'sql' => $qb->getSQL(),
 				'exception' => $e,
 			]);
 			throw $e;

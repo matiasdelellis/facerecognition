@@ -35,6 +35,7 @@ trait ImageProcessTrait
 				'facesCount'    => count($faces),
 				'durationMs'    => $duration,
 				'error'         => $error,
+                'sql' => $qb->getSQL(),
 			]);
 
 			// Delete previous faces
@@ -53,6 +54,7 @@ trait ImageProcessTrait
 				'imageId'   => $imageId,
 				'facesCount'=> count($faces),
 				'durationMs'=> $duration,
+                'sql' => $qb->getSQL(),
 				'exception' => $ex,
 			]);
 			throw $ex;

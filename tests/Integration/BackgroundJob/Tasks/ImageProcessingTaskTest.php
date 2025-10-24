@@ -21,11 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Integration;
-
-use OC\Files\View;
+namespace OCA\FaceRecognition\Tests\Integration\BackgroundJob\Tasks;
 
 use OCP\IUser;
+use OCA\FaceRecognition\Tests\Integration\IntegrationTestCase;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\Db\Image;
@@ -35,6 +34,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(ImageProcessingTask::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask::class)]

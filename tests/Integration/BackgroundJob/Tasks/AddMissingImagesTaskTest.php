@@ -21,7 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Integration;
+namespace OCA\FaceRecognition\Tests\Integration\BackgroundJob\Tasks;
 
 use OCP\IUser;
 

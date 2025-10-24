@@ -82,30 +82,49 @@ class ImageMapper extends QBMapper
 			$imageID = $row ? (int)$row['id'] : null;
 
 			if ($imageID === null) {
-				$insertImage = $this->db->getQueryBuilder();
-				$insertImage
+				$qb = $this->db->getQueryBuilder();
+				$qb
 					->insert($this->getTableName())
 					->values([
-						'nc_file_id' => $insertImage->createNamedParameter($image->getFile()),
-						'model'      => $insertImage->createNamedParameter($image->getModel()),
+						'nc_file_id' => $qb->createNamedParameter($image->getFile()),
+						'model'      => $qb->createNamedParameter($image->getModel()),
 					])
 					->executeStatement();
 
-				$imageID = $insertImage->getLastInsertId();
+				$imageID = $qb->getLastInsertId();
+				$this->logInfo('New image inserted', [
+					'imageId' => $imageID,
+					'file'    => $image->getFile(),
+					'model'   => $image->getModel(),
+					'sql'     => $qb->getSQL(),
+				]);
+			}
+			else {
+				$this->logDebug('Image already exists, reusing existing image', [
+					'imageId' => $imageID,
+					'file'    => $image->getFile(),
+					'model'   => $image->getModel(),
+					'sql'     => $qb->getSQL(),
+				]);
 			}
 
-			$insertUserImages = $this->db->getQueryBuilder();
-			$insertUserImages
+			$qb = $this->db->getQueryBuilder();
+			$qb
 				->insert('facerecog_user_images')
 				->values([
-					'user'     => $insertUserImages->createNamedParameter($image->getUser()),
-					'image_id' => $insertUserImages->createNamedParameter($imageID),
+					'user'     => $qb->createNamedParameter($image->getUser()),
+					'image_id' => $qb->createNamedParameter($imageID),
 				])
 				->executeStatement();
 
+			$this->logInfo('New image-user connection inserted', [
+				'imageId' => $imageID,
+				'uid'     => $image->getUser(),
+				'sql'     => $qb->getSQL(),
+			]);
 			$image->setId((int)$imageID);
 
-			$this->logInfo('Inserted image entity', [
+			$this->logInfo('Inserted image entity finished', [
 				'imageId' => $image->getId(),
 				'uid'     => $image->getUser(),
 				'file'    => $image->getFile(),

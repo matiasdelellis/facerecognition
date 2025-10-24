@@ -21,15 +21,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Integration;
+namespace OCA\FaceRecognition\Tests\Integration\BackgroundJob\Tasks;
 
-use Exception;
-use OC;
-
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
 
+use OCA\FaceRecognition\Tests\Integration\IntegrationTestCase;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
@@ -43,7 +39,6 @@ use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\FaceManagementService;
 
-use Test\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 

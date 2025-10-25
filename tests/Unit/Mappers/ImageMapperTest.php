@@ -192,14 +192,14 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
-	public function test_imageExists(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
+	public function test_imageExistsForUser(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
 		$image = new Image();
 		$image->user = $user;
 		$image->file = $nc_file_id;
 		$image->setModel($model);
 
 		//Act
-		$resultId = self::$imageMapper->imageExists($image);
+		$resultId = self::$imageMapper->imageExistsForUser($image);
 
 		//Assert
 		if ($expectedId === null) {

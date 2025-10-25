@@ -167,7 +167,7 @@ class PostWriteListener implements IEventListener {
 		$image->setFile($node->getId());
 		$image->setModel($modelId);
 
-		$imageId = $this->imageMapper->imageExists($image);
+		$imageId = $this->imageMapper->imageExistsForUser($image);
 		if ($imageId === null) {
 			// todo: can we have larger transaction with bulk insert?
 			$this->imageMapper->insert($image);

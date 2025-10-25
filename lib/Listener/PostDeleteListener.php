@@ -149,7 +149,7 @@ class PostDeleteListener implements IEventListener {
 		$image->setFile($node->getId());
 		$image->setModel($modelId);
 
-		$imageId = $this->imageMapper->imageExists($image);
+		$imageId = $this->imageMapper->imageExistsForUser($image);
 		if ($imageId !== null) {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!

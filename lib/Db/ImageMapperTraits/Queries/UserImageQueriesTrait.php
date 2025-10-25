@@ -251,7 +251,7 @@ trait UserImageQueriesTrait
 	 * @param Image $image Image to check
 	 * @return int|null Id of existing image, or null if not found
 	 */
-	public function imageExists(Image $image): ?int {
+	public function imageExistsForUser(Image $image): ?int {
 		try {
 			$qb = $this->db->getQueryBuilder();
 			$query = $qb

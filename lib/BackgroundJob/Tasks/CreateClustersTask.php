@@ -283,10 +283,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// These clusters will be small and not "stable" enough and we should better wait for more images to come.
 		// todo: get rid of magic numbers (move to config)
 		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
+		$this->logDebug(sprintf('User %s has %d images, %d processed images and %d faces for model %d',
+		                $userId, $imageCount, $imageProcessed, $facesCount, $modelId));
 		if ($facesCount > 1000)
 			return true;
 
 		$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+		$this->logDebug(sprintf('User %s has %f%% of images processed for model %d',
+		                $userId, $percentImagesProcessed * 100.0, $modelId));
 		if ($percentImagesProcessed > 0.95)
 			return true;
 

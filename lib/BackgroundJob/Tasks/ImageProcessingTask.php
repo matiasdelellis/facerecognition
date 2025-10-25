@@ -192,7 +192,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$duration = (int) max($endMillis - $startMillis, 0);
 				$this->logDebug('Whole proccess took ' . $duration . ' ms. Extra work (saving to DB, normalization, etc) took ' . ($duration - $detectDuration) . ' ms.');
 			} catch (\OCP\Lock\LockedException $e) {
-				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
+				$this->logInfo('Faces found: 0. Image ' . $image->getId() . ' will be skipped because it is locked');
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");

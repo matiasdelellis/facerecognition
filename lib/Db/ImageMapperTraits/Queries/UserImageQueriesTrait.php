@@ -362,29 +362,14 @@ trait UserImageQueriesTrait
 	 */
 	public function findImagesWithoutFaces(?string $user, int $modelId): array {
 		try {
-			$qb = $this->db->getQueryBuilder();
-
+			$qb = $this->getAllFileds();
+			$qb->Where($qb->expr()->eq('i.is_processed', $qb->createParameter('is_processed')))
+				->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+				->groupBy('i.id')
+				->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 			if ($user !== null) {
-				$qb = $this->getAllFileds();
-				$qb->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)))
-					->andWhere($qb->expr()->eq('i.is_processed', $qb->createParameter('is_processed')))
-					->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-					->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
-			} else {
-				$qb->select(
-						'i.id',
-						'i.model',
-						'i.nc_file_id AS file',
-						'i.is_processed',
-						'i.error',
-						'i.last_processed_time',
-						'i.processing_duration'
-					)
-					->from($this->getTableName(), 'i')
-					->where($qb->expr()->eq('i.is_processed', $qb->createParameter('is_processed')))
-					->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-					->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
-			}
+				$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));
+			} 
 
 			$images = $this->findEntities($qb);
 

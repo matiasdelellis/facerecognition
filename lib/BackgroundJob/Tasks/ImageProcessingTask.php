@@ -163,9 +163,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Get faces in the temporary image
 				$tempImagePath = $tempImage->getTempPath();
+				$detectionStartMillis = round(microtime(true) * 1000);
 				$rawFaces = $this->model->detectFaces($tempImagePath);
 
-				$this->logInfo('Faces found: ' . count($rawFaces));
+				$endMillis = round(microtime(true) * 1000);
+				$detectDuration = (int) max($endMillis - $detectionStartMillis, 0);
+				$this->logInfo('Faces found: ' . count($rawFaces). '. Detection took ' . $detectDuration . ' ms.');
 
 				$faces = array();
 				foreach ($rawFaces as $rawFace) {
@@ -184,6 +187,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Release lock of file.
 				$this->lockingProvider->releaseLock($lockKey, $lockType);
+				
+				$endMillis = round(microtime(true) * 1000);
+				$duration = (int) max($endMillis - $startMillis, 0);
+				$this->logInfo('Whole proccess took ' . $duration . ' ms. Extra work (saving to DB, normalization, etc) took ' . ($duration - $detectDuration) . ' ms.');
 			} catch (\OCP\Lock\LockedException $e) {
 				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
 			} catch (\Exception $e) {
@@ -214,14 +221,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * return TempImage|null
 	 */
 	private function getTempImage(Image $image): ?TempImage {
-		$users = $this->imageMapper->findUsersForImageId($image->getId());
-		foreach($users as $user) {
-			// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
-			$file = $this->fileService->getFileById($image->getFile(),$user);
-			if (!empty($file)) {
-				break;
-			}
-		}
+		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
+		$file = $this->fileService->getFileById($image->getFile(),$image->getUser());
 		if (empty($file)) {
 			return null;
 		}

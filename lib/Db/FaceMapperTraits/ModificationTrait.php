@@ -84,8 +84,9 @@ trait ModificationTrait {
      * @return void
      */
     public function unsetPersonsRelationForUser(string $userId, int $model): void {
-        $sub = $this->db->getQueryBuilder();
-        $sub->select('cf.cluster_id')
+    $sub = $this->db->getQueryBuilder();
+        // First create a derived table with the cluster IDs
+        $sub->select('DISTINCT cf.cluster_id')
             ->from('facerecog_cluster_faces', 'cf')
             ->innerJoin('cf', $this->getTableName(), 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
             ->innerJoin('cf', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
@@ -95,12 +96,18 @@ trait ModificationTrait {
             ->andWhere($sub->expr()->eq('c.user', $sub->createParameter('user')))
             ->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model')));
 
+        // Create temporary table
+        $tempTable = 'temp_clusters_' . uniqid();
+        $this->db->executeStatement(
+            'CREATE TEMPORARY TABLE ' . $tempTable . ' AS ' . $sub->getSQL(),
+            ['user' => $userId, 'model' => $model]
+        );
+
         $qb = $this->db->getQueryBuilder();
         try {
+            // Delete using the temporary table
             $qb->delete('facerecog_cluster_faces')
-                ->where('cluster_id IN (' . $sub->getSQL() . ')')
-                ->setParameter('model', $model)
-                ->setParameter('user', $userId)
+                ->where('cluster_id IN (SELECT cluster_id FROM ' . $tempTable . ')')
                 ->executeStatement();
 
             $this->logInfo('Unset person relations for user', [
@@ -116,6 +123,9 @@ trait ModificationTrait {
                 'exception' => $e,
             ]);
             throw $e;
+        } finally {
+            // Clean up temporary table
+            $this->db->executeStatement('DROP TEMPORARY TABLE IF EXISTS ' . $tempTable);
         }
     }
 

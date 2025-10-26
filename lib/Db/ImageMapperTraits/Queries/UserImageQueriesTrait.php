@@ -365,7 +365,16 @@ trait UserImageQueriesTrait
 			$qb = $this->getAllFileds();
 			$qb->Where($qb->expr()->eq('i.is_processed', $qb->createParameter('is_processed')))
 				->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-				->groupBy('i.id')
+				->groupBy(
+					'i.id',
+					'ui.user',
+					'i.model',
+					'i.nc_file_id',
+					'i.is_processed',
+					'i.error',
+					'i.last_processed_time',
+					'i.processing_duration'
+				)
 				->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 			if ($user !== null) {
 				$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));

@@ -7,6 +7,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use \OC\DB\Exceptions\DbalException;
 
+//MTODO: CLEANUP is needed
 trait ClusterPersonTrait
 {
     /**

@@ -136,20 +136,30 @@ class StatsCommand extends Command {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
+
 		$stats = array();
 		foreach ($users as $user) {
+			$clusters = $this->clusterMapper->countClusters($user, $modelId);
+			$notHadledYet = count($this->clusterMapper->findUnassigned($user, $modelId));
+			$ignored = count($this->clusterMapper->findIgnored($user, $modelId));
+			$assignedClusters = $clusters - ($notHadledYet + $ignored);
+
+
 			$stats[] = [
 				$user,
 				$this->imageMapper->countUserImages($user, $modelId),
 				$this->imageMapper->countUserImages($user, $modelId, true),
 				$this->faceMapper->countFaces($user, $modelId),
-				$this->clusterMapper->countClusters($user, $modelId),
+				$clusters,
+				$assignedClusters,
+				$ignored,
+				$notHadledYet,
 				$this->clusterMapper->countPersons($user, $modelId)
 			];
 		}
 
 		$table = new Table($output);
-		$table->setHeaders(['User', 'Images', 'Processed', 'Faces', 'Clusters', 'Persons'])->setRows($stats);
+		$table->setHeaders(['User', 'Images', 'Processed', 'Faces', 'Clusters', 'AssignedClusters', 'IgnoredClusters', 'NotHandeledYet', 'Persons'])->setRows($stats);
 		$table->render();
 	}
 
@@ -159,12 +169,19 @@ class StatsCommand extends Command {
 
 		$stats = array();
 		foreach ($users as $user) {
+			$clusters = $this->clusterMapper->countClusters($user, $modelId);
+			$notHadledYet = count($this->clusterMapper->findUnassigned($user, $modelId));
+			$ignored = count($this->clusterMapper->findIgnored($user, $modelId));
+			$assignedClusters = $clusters - ($notHadledYet + $ignored);
 			$stats[] = array(
 				'user'     => $user,
 				'images'   => $this->imageMapper->countUserImages($user, $modelId),
 				'processed'=> $this->imageMapper->countUserImages($user, $modelId, true),
 				'faces'    => $this->faceMapper->countFaces($user, $modelId),
-				'clusters' => $this->clusterMapper->countClusters($user, $modelId),
+				'clusters' => $clusters,
+				'AssignedClusters'=> $assignedClusters,
+				'IgnoredClusters'=> $ignored,
+				'NotHandeledYet' => $notHadledYet,
 				'persons'  => $this->clusterMapper->countPersons($user, $modelId)
 			);
 		}

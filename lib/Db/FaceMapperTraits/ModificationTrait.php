@@ -84,9 +84,9 @@ trait ModificationTrait {
      * @return void
      */
     public function unsetPersonsRelationForUser(string $userId, int $model): void {
-    $sub = $this->db->getQueryBuilder();
+        $sub = $this->db->getQueryBuilder();
         // First create a derived table with the cluster IDs
-        $sub->select('DISTINCT cf.cluster_id')
+        $sub->selectDistinct('cf.cluster_id')
             ->from('facerecog_cluster_faces', 'cf')
             ->innerJoin('cf', $this->getTableName(), 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
             ->innerJoin('cf', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))

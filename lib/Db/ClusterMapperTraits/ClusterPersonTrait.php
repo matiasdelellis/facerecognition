@@ -90,17 +90,30 @@ trait ClusterPersonTrait
             $this->logDebug('Start merge clusters to database', [
                 'userId' => $userId,
                 'currentCount' => count($currentClusters),
-                'newCount' => count($newClusters)
+                'newCount' => count($newClusters),
+                'timestamp' => $currentDateTime->format('Y-m-d H:i:s'),
+                'currentClusterIds' => array_keys($currentClusters),
+                'newClusterIds' => array_keys($newClusters)
             ]);
 
             // Step 1: Remove all old faces from current clusters
             foreach ($currentClusters as $oldPerson => $oldFaces) {
+                $this->logDebug('Removing faces from person', [
+                    'currentPersonId' => $oldPerson,
+                    'faceCount' => count($oldFaces),
+                    'faces' => $oldFaces
+                ]);
                 $this->removeAllFacesFromPerson($oldPerson);
             }
 
             // Step 2: Add new clusters or update existing ones
             foreach ($newClusters as $newPerson => $newFaces) {
                 if (array_key_exists($newPerson, $currentClusters)) {
+                    $this->logDebug('Updating existing cluster', [
+                        'personId' => $newPerson,
+                        'faceCount' => count($newFaces)
+                    ]);
+                    
                     // Update existing cluster as valid
                     $qb = $this->db->getQueryBuilder();
                     $qb->update($this->getTableName())
@@ -112,6 +125,11 @@ trait ClusterPersonTrait
                     $insertedClusterId = $newPerson;
                     $countOfClusters['modified'][] = $insertedClusterId;
                 } else {
+                    $this->logDebug('Creating new cluster', [
+                        'userId' => $userId,
+                        'faceCount' => count($newFaces)
+                    ]);
+                    
                     // Insert new cluster
                     $qb = $this->db->getQueryBuilder();
                     $qb->insert($this->getTableName())
@@ -125,33 +143,65 @@ trait ClusterPersonTrait
 
                     $insertedClusterId = $qb->getLastInsertId();
                     $countOfClusters['added'][] = $insertedClusterId;
+                    
+                    $this->logDebug('New cluster created', [
+                        'newClusterId' => $insertedClusterId
+                    ]);
                 }
 
                 // Attach all faces to the cluster
+                $this->logDebug('Attaching faces to cluster', [
+                    'clusterId' => $insertedClusterId,
+                    'faceCount' => count($newFaces),
+                    'faces' => $newFaces
+                ]);
+                
                 foreach ($newFaces as $newFace) {
                     $this->attachFaceToPerson($insertedClusterId, $newFace);
                 }
             }
 
             // Step 3: Delete orphaned clusters
+            $this->logDebug('Deleting orphaned clusters', [
+                'userId' => $userId
+            ]);
+            
             $countOfClusters['deleted'] = $this->deleteOrphaned($userId, $this->db);
 
             $this->db->commit();
 
             $this->logInfo('Finished merge', [
                 'userId' => $userId,
-                'added' => count($countOfClusters['added']),
-                'modified' => count($countOfClusters['modified']),
-                'deleted' => count($countOfClusters['deleted'])
+                'added' => [
+                    'count' => count($countOfClusters['added']),
+                    'clusterIds' => $countOfClusters['added']
+                ],
+                'modified' => [
+                    'count' => count($countOfClusters['modified']),
+                    'clusterIds' => $countOfClusters['modified']
+                ],
+                'deleted' => [
+                    'count' => count($countOfClusters['deleted']),
+                    'clusterIds' => $countOfClusters['deleted']
+                ],
+                'duration' => microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]
             ]);
 
             return $countOfClusters;
 
         } catch (\Throwable $e) {
             $this->db->rollBack();
-            $this->logError('Failed', [
+            $this->logError('Failed to merge clusters', [
                 'userId' => $userId,
-                'exception' => $e
+                'exception' => [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ],
+                'currentClusters' => count($currentClusters),
+                'newClusters' => count($newClusters)
             ]);
             throw $e;
         }

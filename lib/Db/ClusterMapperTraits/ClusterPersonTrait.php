@@ -157,7 +157,16 @@ trait ClusterPersonTrait
                 ]);
                 
                 foreach ($newFaces as $newFace) {
+                    try {
                     $this->attachFaceToPerson($insertedClusterId, $newFace);
+                    } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                        $this->logDebug(sprintf('Face %d already attached to cluster %d', 
+                            $newFace, 
+                            $insertedClusterId
+                        ));
+                    } catch (\Doctrine\DBAL\Exception $e) {
+                        throw $e;
+                    }
                 }
             }
 

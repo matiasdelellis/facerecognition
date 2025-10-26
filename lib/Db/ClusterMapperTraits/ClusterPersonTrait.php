@@ -5,8 +5,8 @@ use OCP\IDBConnection;
 
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use \OC\DB\Exceptions\DbalException;
 
-//MTODO: Implement try-catches
 trait ClusterPersonTrait
 {
     /**
@@ -160,12 +160,35 @@ trait ClusterPersonTrait
                     try {
                     $this->attachFaceToPerson($insertedClusterId, $newFace);
                     } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-                        $this->logDebug(sprintf('Face %d already attached to cluster %d', 
+                        // Known case: duplicate face-cluster entry
+                        $this->logDebug(sprintf(
+                            'Face %d already attached to cluster %d (unique constraint)',
                             $newFace, 
                             $insertedClusterId
                         ));
                     } catch (\Doctrine\DBAL\Exception $e) {
+                        // Doctrine may throw a generic DBAL\Exception instead
+                        if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Integrity constraint violation')) {
+                            $this->logDebug(sprintf(
+                                'Face %d already attached to cluster %d (integrity violation caught generically)',
+                                $newFace,
+                                $insertedClusterId
+                            ));
+                        } else {
+                            // Re-throw anything that isn’t a duplicate key
+                            throw $e;
+                        }
+                    } catch (\OC\DB\Exceptions\DbalException $e) {
+                        // Nextcloud’s wrapper around DBAL
+                        if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate entry')) {
+                            $this->logDebug(sprintf(
+                                'Face %d already attached to cluster %d (Nextcloud DB layer)',
+                                $newFace,
+                                $insertedClusterId
+                            ));
+                        } else {
                         throw $e;
+                        }
                     }
                 }
             }

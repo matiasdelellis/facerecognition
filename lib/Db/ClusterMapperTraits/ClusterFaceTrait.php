@@ -141,45 +141,8 @@ trait ClusterFaceTrait
                 'isGroupable' => $isGroupable,
                 'sql' => $qb->getSQL(),
             ]);
-        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-            // Get additional information about the face and cluster
-            try {
-                $faceSql = $this->db->getQueryBuilder()
-                    ->select('*')
-                    ->from('facerecog_faces')
-                    ->where('id = :id')
-                    ->setParameter('id', $faceId);
-                
-                $clusterSql = $this->db->getQueryBuilder()
-                    ->select('*')
-                    ->from('facerecog_clusters')
-                    ->where('id = :id')
-                    ->setParameter('id', $clusterId);
-
-                $faceInfo = $faceSql->executeQuery()->fetch();
-                $clusterInfo = $clusterSql->executeQuery()->fetch();
-
-                $this->logError('Duplicated face-cluster association detected', [
-                    'faceId' => $faceId,
-                    'clusterId' => $clusterId,
-                    'isGroupable' => $isGroupable,
-                    'faceDetails' => $faceInfo ?: 'Face not found',
-                    'clusterDetails' => $clusterInfo ?: 'Cluster not found',
-                    'sql' => $qb->getSQL(),
-                    'exception' => $e
-                ]);
-            } catch (\Throwable $queryError) {
-                $this->logError('Failed to fetch additional details for duplicate entry', [
-                    'faceId' => $faceId,
-                    'clusterId' => $clusterId,
-                    'isGroupable' => $isGroupable,
-                    'sql' => $qb->getSQL(),
-                    'exception' => $e,
-                    'queryError' => $queryError->getMessage()
-                ]);
-            }
         } catch (\Throwable $e) {
-// Get additional information about the face and cluster
+            // Get additional information about the face and cluster
             try {
                 $faceSql = $this->db->getQueryBuilder()
                     ->select('*')

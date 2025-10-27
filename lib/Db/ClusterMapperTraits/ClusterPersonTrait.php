@@ -72,8 +72,8 @@ trait ClusterPersonTrait
      * Reconciles current clusters with new clusters in the database.
      *
      * @param string $userId ID of the user
-     * @param array $currentClusters Current clusters (personId => [faceIds])
-     * @param array $newClusters New clusters (personId => [faceIds])
+     * @param array $currentClusters Current clusters (clusterId => [faceIds])
+     * @param array $newClusters New clusters (clusterId => [faceIds])
      *
      * @return array Summary of changes: ['added' => [], 'modified' => [], 'deleted' => []]
      */
@@ -88,19 +88,21 @@ trait ClusterPersonTrait
         ];
 
         try {
-            $this->logDebug('Start merge clusters to database', [
+            $this->logInfo('Start merge clusters to database', [
                 'userId' => $userId,
-                'currentCount' => count($currentClusters),
+                'Count' => count($currentClusters),
                 'newCount' => count($newClusters),
                 'timestamp' => $currentDateTime->format('Y-m-d H:i:s'),
-                'currentClusterIds' => array_keys($currentClusters),
+                'ClusterIds' => array_keys($currentClusters),
                 'newClusterIds' => array_keys($newClusters)
             ]);
 
+            $model = 2;
+            $this->findAll($userId, $model);
             // Step 1: Remove all old faces from current clusters
             foreach ($currentClusters as $oldPerson => $oldFaces) {
                 $this->logDebug('Removing faces from person', [
-                    'currentPersonId' => $oldPerson,
+                    'currentclusterId' => $oldPerson,
                     'faceCount' => count($oldFaces),
                     'faces' => $oldFaces
                 ]);
@@ -111,7 +113,7 @@ trait ClusterPersonTrait
             foreach ($newClusters as $newPerson => $newFaces) {
                 if (array_key_exists($newPerson, $currentClusters)) {
                     $this->logDebug('Updating existing cluster', [
-                        'personId' => $newPerson,
+                        'clusterId' => $newPerson,
                         'faceCount' => count($newFaces)
                     ]);
                     
@@ -159,36 +161,17 @@ trait ClusterPersonTrait
                 
                 foreach ($newFaces as $newFace) {
                     try {
-                    $this->attachFaceToPerson($insertedClusterId, $newFace);
-                    } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-                        // Known case: duplicate face-cluster entry
-                        $this->logDebug(sprintf(
-                            'Face %d already attached to cluster %d (unique constraint)',
-                            $newFace, 
-                            $insertedClusterId
-                        ));
-                    } catch (\Doctrine\DBAL\Exception $e) {
-                        // Doctrine may throw a generic DBAL\Exception instead
-                        if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                            $this->logDebug(sprintf(
-                                'Face %d already attached to cluster %d (integrity violation caught generically)',
-                                $newFace,
-                                $insertedClusterId
-                            ));
-                        } else {
-                            // Re-throw anything that isn’t a duplicate key
-                            throw $e;
-                        }
+                        $this->attachFaceToPerson($insertedClusterId, $newFace);
                     } catch (\OC\DB\Exceptions\DbalException $e) {
                         // Nextcloud’s wrapper around DBAL
                         if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate entry')) {
-                            $this->logDebug(sprintf(
+                            $this->logWarning(sprintf(
                                 'Face %d already attached to cluster %d (Nextcloud DB layer)',
                                 $newFace,
                                 $insertedClusterId
                             ));
                         } else {
-                        throw $e;
+                            throw $e;
                         }
                     }
                 }
@@ -221,7 +204,26 @@ trait ClusterPersonTrait
             ]);
 
             return $countOfClusters;
-
+        } catch (\OC\DB\Exceptions\DbalException $e) {
+            // Nextcloud’s wrapper around DBAL
+            if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate entry')) {
+                return $countOfClusters;
+            } else {
+                $this->db->rollBack();
+                $this->logError('Database exception during merge clusters', [
+                    'userId' => $userId,
+                    'exception' => [
+                        'message' => $e->getMessage(),
+                        'code' => $e->getCode(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString()
+                    ],
+                    'currentClusters' => count($currentClusters),
+                    'newClusters' => count($newClusters)
+                ]);
+                throw $e;
+            }
         } catch (\Throwable $e) {
             $this->db->rollBack();
             $this->logError('Failed to merge clusters', [

@@ -471,7 +471,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$result = array();
 		foreach ($newCluster as $newPerson => $newFaces) {
 			if (!array_key_exists($newPerson, $newOldPersonMapping)) {
-				$this->logInfo(sprintf('Missing mapping for person %d with %d faces',
+				$this->logDebug(sprintf('Missing mapping for person %d with %d faces',
 					$newPerson, count($newFaces)));
 				$oldPerson = 0;
 			} else {

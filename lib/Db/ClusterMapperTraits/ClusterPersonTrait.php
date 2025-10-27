@@ -158,7 +158,7 @@ trait ClusterPersonTrait
                 ]);
                 
                 foreach ($newFaces as $newFace) {
-                    $this->attachFaceToCluster($insertedClusterId, $newFace, $this->db);
+                    $this->attachFaceToCluster($insertedClusterId, $newFace, true, $this->db);
                 }
             }
 

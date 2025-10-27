@@ -3,8 +3,8 @@ namespace OCA\FaceRecognition\Db\ClusterMapperTraits;
 
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCA\FaceRecognition\Db\Person;
+use OCP\IDBConnection;
 
-//MTODO: Implement try-catches
 trait ClusterFaceTrait
 {
     /**
@@ -26,7 +26,7 @@ trait ClusterFaceTrait
 
             // CASE 1: Attach face to a new cluster
             if ($oldCluster === null) {
-                $this->attachFaceToPerson($clusterId, $faceId, $isGroupable);
+                $this->attachFaceToCluster($clusterId, $faceId, $isGroupable);
                 $this->logDebug('Attached face to new cluster', [
                     'faceId' => $faceId,
                     'clusterId' => $clusterId,
@@ -93,9 +93,10 @@ trait ClusterFaceTrait
      *
      * @return void
      */
-    public function removeAllFacesFromPerson(int $clusterId): void {
+    public function removeAllFacesFromCluster(int $clusterId, ?IDBConnection $connection = null): void {
+        $connection = $connection ?? $this->db;
         try {
-            $qb = $this->db->getQueryBuilder();
+            $qb = $connection->getQueryBuilder();
             $qb->delete('facerecog_cluster_faces')
                 ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
                 ->executeStatement();
@@ -124,9 +125,10 @@ trait ClusterFaceTrait
      *
      * @return void
      */
-    public function attachFaceToPerson(int $clusterId, int $faceId, bool $isGroupable = true): void {
+    public function attachFaceToCluster(int $clusterId, int $faceId, bool $isGroupable = true, ?IDBConnection $connection = null): void {
+        $connection = $connection ?? $this->db;
         try {
-            $qb = $this->db->getQueryBuilder();
+            $qb = $connection->getQueryBuilder();
             $qb->insert('facerecog_cluster_faces')
                 ->values([
                     'face_id' => $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT),
@@ -144,13 +146,13 @@ trait ClusterFaceTrait
         } catch (\Throwable $e) {
             // Get additional information about the face and cluster
             try {
-                $faceSql = $this->db->getQueryBuilder()
+                $faceSql = $connection->getQueryBuilder()
                     ->select('*')
                     ->from('facerecog_faces')
                     ->where('id = :id')
                     ->setParameter('id', $faceId);
                 
-                $clusterSql = $this->db->getQueryBuilder()
+                $clusterSql = $connection->getQueryBuilder()
                     ->select('*')
                     ->from('facerecog_clusters')
                     ->where('id = :id')

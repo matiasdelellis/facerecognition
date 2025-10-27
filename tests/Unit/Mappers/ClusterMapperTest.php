@@ -930,11 +930,11 @@ class ClusterMapperTest extends UnitBaseTestCase
         }
     }
 
-    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'removeAllFacesFromPerson_Provider')]
-    public function test_removeAllFacesFromPersonint(int $clusterId): void
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'removeAllFacesFromCluster_Provider')]
+    public function test_removeAllFacesFromClusterint(int $clusterId): void
     {
         //Act
-       self::$clusterMapper->removeAllFacesFromPerson($clusterId);
+       self::$clusterMapper->removeAllFacesFromCluster($clusterId);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -947,15 +947,15 @@ class ClusterMapperTest extends UnitBaseTestCase
         $this->assertEmpty($data);
     }
 
-    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'attachFaceToPerson_Provider')]
-    public function test_attachFaceToPerson(int $clusterId, int $faceId, bool $expectError, ?string $message): void
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'attachFaceToCluster_Provider')]
+    public function test_attachFaceToCluster(int $clusterId, int $faceId, bool $expectError, ?string $message): void
     {
         if ($expectError) {
             $this->expectException(\OC\DB\Exceptions\DbalException::class);
             $this->expectExceptionMessage($message);
         }
         //Act
-       self::$clusterMapper->attachFaceToPerson($clusterId, $faceId);
+       self::$clusterMapper->attachFaceToCluster($clusterId, $faceId);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -1403,7 +1403,7 @@ class PersonDataProvider
         ];
     }
 
-    public static function removeAllFacesFromPerson_Provider(): array
+    public static function removeAllFacesFromCluster_Provider(): array
     {
         return [
             //multiple faces
@@ -1415,7 +1415,7 @@ class PersonDataProvider
         ];
     }
 
-    public static function attachFaceToPerson_Provider(): array
+    public static function attachFaceToCluster_Provider(): array
     {
         return [
             //invalid connection

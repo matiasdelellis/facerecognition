@@ -97,8 +97,6 @@ trait ClusterPersonTrait
                 'newClusterIds' => array_keys($newClusters)
             ]);
 
-            $model = 2;
-            $this->findAll($userId, $model);
             // Step 1: Remove all old faces from current clusters
             foreach ($currentClusters as $oldPerson => $oldFaces) {
                 $this->logDebug('Removing faces from person', [
@@ -106,7 +104,7 @@ trait ClusterPersonTrait
                     'faceCount' => count($oldFaces),
                     'faces' => $oldFaces
                 ]);
-                $this->removeAllFacesFromPerson($oldPerson);
+                $this->removeAllFacesFromCluster($oldPerson, $this->db);
             }
 
             // Step 2: Add new clusters or update existing ones
@@ -160,20 +158,7 @@ trait ClusterPersonTrait
                 ]);
                 
                 foreach ($newFaces as $newFace) {
-                    try {
-                        $this->attachFaceToPerson($insertedClusterId, $newFace);
-                    } catch (\OC\DB\Exceptions\DbalException $e) {
-                        // Nextcloud’s wrapper around DBAL
-                        if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate entry')) {
-                            $this->logWarning(sprintf(
-                                'Face %d already attached to cluster %d (Nextcloud DB layer)',
-                                $newFace,
-                                $insertedClusterId
-                            ));
-                        } else {
-                            throw $e;
-                        }
-                    }
+                    $this->attachFaceToCluster($insertedClusterId, $newFace, $this->db);
                 }
             }
 

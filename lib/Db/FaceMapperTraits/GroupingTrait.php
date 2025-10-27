@@ -53,7 +53,10 @@ trait GroupingTrait {
 			->andWhere($qb->expr()->gte('f.confidence', $qb->createParameter('min_confidence')))
 			->andWhere(
 				$qb->expr()->orX(
-					$qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable')),
+					$qb->expr()->andX(
+						$qb->expr()->eq('c.user', $qb->createParameter('user')),
+						$qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable'))
+					),
 					$qb->expr()->isNull('cf.is_groupable')
 				)
 			)
@@ -67,7 +70,7 @@ trait GroupingTrait {
 		try {
 			$faces = $this->findEntities($qb);
 
-			$this->logDebug('Retrieved groupable faces', [
+			$this->logInfo('Retrieved groupable faces', [
 				'userId' => $userId,
 				'modelId' => $model,
 				'minSize' => $minSize,

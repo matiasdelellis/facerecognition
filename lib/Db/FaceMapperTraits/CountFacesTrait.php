@@ -18,12 +18,12 @@ trait CountFacesTrait {
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')));
 
 		if ($onlyWithoutPersons) {
-			$qb->andWhere($qb->expr()->isNull('cf.cluster_id'));
+			$qb->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
+				->andWhere($qb->expr()->isNull('cf.cluster_id'));
 		}
 
 		$qb->setParameter('user', $userId)

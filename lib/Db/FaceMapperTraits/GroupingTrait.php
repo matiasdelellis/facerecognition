@@ -137,8 +137,8 @@ trait GroupingTrait {
 			->join('c', 'facerecog_clusters', 'cl', $subClusterId->expr()->eq('c.cluster_id', 'cl.id'))
 			->where(
 				$subClusterId->expr()->andX(
-					$subIsGroupable->expr()->eq('c.face_id', 'f.id'),
-					$subIsGroupable->expr()->eq('cl.user', 'iu.user')
+					$subClusterId->expr()->eq('c.face_id', 'f.id'),
+					$subClusterId->expr()->eq('cl.user', 'iu.user')
 				)
 			)
 			->setMaxResults(1);

@@ -206,7 +206,7 @@ class FaceMapperTest extends UnitBaseTestCase
 
 		//Assert
 		$this->assertNotNull($facesCount);
-		$this->assertEquals(16, $facesCount);
+		$this->assertEquals(10, $facesCount);
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider')]
@@ -497,20 +497,20 @@ class FaceDataProvider
 			[20, 0.97, 1],
 			[500, 0.97, 0],
 			[5000, 0, 0],
-			[0, 0, 15],
+			[0, 0, 10],
 			[0, 1, 0],
-			[20, 0.85, 14],
+			[20, 0.85, 9],
 		];
 	}
 
 	public static function getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array{
 		return [
-			[20, 0.97, 15],
-			[500, 0.97, 16],
-			[5000, 0, 16],
-			[0, 0, 1],
-			[0, 1, 16],
-			[20, 0.85, 2],
+			[20, 0.97, 9],
+			[500, 0.97, 10],
+			[5000, 0, 10],
+			[0, 0, 0],
+			[0, 1, 10],
+			[20, 0.85, 1],
 		];
 	}
 

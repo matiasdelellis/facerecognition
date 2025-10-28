@@ -19,9 +19,37 @@ trait GroupingTrait {
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
 
+		// Subquery: cluster_id
+		$subClusterId = $this->db->getQueryBuilder();
+		$subClusterId
+			->select('c.cluster_id')
+			->from('facerecog_cluster_faces', 'c')
+			->join('c', 'facerecog_clusters', 'cl', $subClusterId->expr()->eq('c.cluster_id', 'cl.id'))
+			->where(
+				$subClusterId->expr()->andX(
+					$subClusterId->expr()->eq('c.face_id', $qb->createParameter('face_id')),
+					$subClusterId->expr()->eq('cl.user', $qb->createParameter('user'))
+				)
+			)
+			->setMaxResults(1);
+
+		// Subquery: is_groupable (with COALESCE default TRUE)
+		$subIsGroupable = $this->db->getQueryBuilder();
+		$subIsGroupable
+			->select('c.is_groupable')
+			->from('facerecog_cluster_faces', 'c')
+			->join('c', 'facerecog_clusters', 'cl', $subIsGroupable->expr()->eq('c.cluster_id', 'cl.id'))
+			->where(
+				$subIsGroupable->expr()->andX(
+					$subIsGroupable->expr()->eq('c.face_id', $qb->createParameter('face_id')),
+					$subIsGroupable->expr()->eq('cl.user', $qb->createParameter('user'))
+				)
+			)
+			->setMaxResults(1);
+
+		// Main query
 		$qb->select(
 				'f.id',
-				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"),
 				'f.image_id AS image',
 				'f.x',
 				'f.y',
@@ -31,41 +59,35 @@ trait GroupingTrait {
 				'f.descriptor',
 				'f.confidence',
 				'f.creation_time',
-				$qb->createFunction("COALESCE(cf.is_groupable, TRUE) AS is_groupable")
+				$qb->createFunction('(' . $subClusterId->getSQL() . ') AS person'),
+				$qb->createFunction('COALESCE((' . $subIsGroupable->getSQL() . '), TRUE) AS is_groupable')
 			)
-			->from($this->getTableName(), 'f')
-			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
-			->leftJoin(
-				'f',
-				'facerecog_clusters',
-				'c',
+			->from('facerecog_faces', 'f')
+			->join('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->join('i', 'facerecog_user_images', 'iu', $qb->expr()->eq('i.id', 'iu.image_id'))
+			->where(
 				$qb->expr()->andX(
-					$qb->expr()->eq('c.id', 'cf.cluster_id'),
-					$qb->expr()->eq('c.user', $qb->createParameter('user'))
+					$qb->expr()->eq('iu.user', $qb->createParameter('user')),
+					$qb->expr()->eq('i.model', $qb->createParameter('model')),
+					$qb->expr()->gte('f.width', $qb->createParameter('min_size')),
+					$qb->expr()->gte('f.height', $qb->createParameter('min_size')),
+					$qb->expr()->gte('f.confidence', $qb->createParameter('min_confidence')),
+					$qb->expr()->eq(
+						$qb->createFunction('COALESCE((' . $subIsGroupable->getSQL() . '), TRUE)'),
+						$qb->createParameter('is_groupable')
+					)
 				)
 			)
-			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
-			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
-			->andWhere($qb->expr()->gte('f.confidence', $qb->createParameter('min_confidence')))
-			->andWhere(
-				$qb->expr()->orX(
-					$qb->expr()->andX(
-						$qb->expr()->eq('c.user', $qb->createParameter('user')),
-						$qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable'))
-					),
-					$qb->expr()->isNull('cf.is_groupable')
-				)
-			)
+
+		// Bind parameters
 			->orderBy('f.id', 'ASC')
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
+
+		$qb->setParameter('face_id', 'f.id'); // used inside subqueries
 
 		try {
 			$faces = $this->findEntities($qb);
@@ -110,10 +132,37 @@ trait GroupingTrait {
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array
 	{
 		$qb = $this->db->getQueryBuilder();
+		// Subquery: cluster_id
+		$subClusterId = $this->db->getQueryBuilder();
+		$subClusterId
+			->select('c.cluster_id')
+			->from('facerecog_cluster_faces', 'c')
+			->join('c', 'facerecog_clusters', 'cl', $subClusterId->expr()->eq('c.cluster_id', 'cl.id'))
+			->where(
+				$subClusterId->expr()->andX(
+					$subClusterId->expr()->eq('c.face_id', $qb->createParameter('face_id')),
+					$subClusterId->expr()->eq('cl.user', $qb->createParameter('user'))
+				)
+			)
+			->setMaxResults(1);
 
+		// Subquery: is_groupable (with COALESCE default TRUE)
+		$subIsGroupable = $this->db->getQueryBuilder();
+		$subIsGroupable
+			->select('c.is_groupable')
+			->from('facerecog_cluster_faces', 'c')
+			->join('c', 'facerecog_clusters', 'cl', $subIsGroupable->expr()->eq('c.cluster_id', 'cl.id'))
+			->where(
+				$subIsGroupable->expr()->andX(
+					$subIsGroupable->expr()->eq('c.face_id', $qb->createParameter('face_id')),
+					$subIsGroupable->expr()->eq('cl.user', $qb->createParameter('user'))
+				)
+			)
+			->setMaxResults(1);
+
+		// Main query
 		$qb->select(
 				'f.id',
-				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"),
 				'f.image_id AS image',
 				'f.x',
 				'f.y',
@@ -123,29 +172,23 @@ trait GroupingTrait {
 				'f.descriptor',
 				'f.confidence',
 				'f.creation_time',
-				$qb->createFunction("COALESCE(cf.is_groupable, TRUE) AS is_groupable")
+				$qb->createFunction('(' . $subClusterId->getSQL() . ') AS person'),
+				$qb->createFunction('COALESCE((' . $subIsGroupable->getSQL() . '), TRUE) AS is_groupable')
 			)
-			->from($this->getTableName(), 'f')
-			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
-			->leftJoin(
-				'f',
-				'facerecog_clusters',
-				'c',
-				$qb->expr()->andX(
-					$qb->expr()->eq('c.id', 'cf.cluster_id'),
-					$qb->expr()->eq('c.user', $qb->createParameter('user'))
-				)
-			)
-			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
+			->from('facerecog_faces', 'f')
+			->join('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->join('i', 'facerecog_user_images', 'iu', $qb->expr()->eq('i.id', 'iu.image_id'))
+			->where($qb->expr()->eq('iu.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere(
 				$qb->expr()->orX(
 					$qb->expr()->lt('f.width', $qb->createParameter('min_size')),
 					$qb->expr()->lt('f.height', $qb->createParameter('min_size')),
 					$qb->expr()->lt('f.confidence', $qb->createParameter('min_confidence')),
-					$qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable'))
+					$qb->expr()->eq(
+						$qb->createFunction('COALESCE((' . $subIsGroupable->getSQL() . '), TRUE)'),
+						$qb->createParameter('is_groupable')
+					)
 				)
 			)
 			->orderBy('f.id', 'ASC')
@@ -153,7 +196,8 @@ trait GroupingTrait {
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->setParameter('face_id', 'f.id'); // used inside subqueries;
 
 		try {
 			$faces = $this->findEntities($qb);

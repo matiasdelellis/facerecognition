@@ -209,7 +209,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->clusterMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
 		// Remove all orphaned persons (those without any faces)
-		// NOTE: we will do this for all models, not just for current one, but this is not problem.
 		$orphansDeleted = $this->clusterMapper->deleteOrphaned($userId);
 		if ($orphansDeleted > 0) {
 			$this->logInfo('Deleted ' . count($orphansDeleted) . ' persons without faces');

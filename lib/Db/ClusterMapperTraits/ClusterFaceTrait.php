@@ -97,12 +97,13 @@ trait ClusterFaceTrait
         $connection = $connection ?? $this->db;
         try {
             $qb = $connection->getQueryBuilder();
-            $qb->delete('facerecog_cluster_faces')
+            $deletedRows = $qb->delete('facerecog_cluster_faces')
                 ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
                 ->executeStatement();
 
             $this->logInfo('Removed all face connections from cluster', [
                 'clusterId' => $clusterId,
+                'deletedRows' => $deletedRows,
                 'sql' => $qb->getSQL(),
             ]);
 

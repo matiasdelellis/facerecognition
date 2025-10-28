@@ -27,8 +27,8 @@ trait GroupingTrait {
 			->join('c', 'facerecog_clusters', 'cl', $subClusterId->expr()->eq('c.cluster_id', 'cl.id'))
 			->where(
 				$subClusterId->expr()->andX(
-					$subClusterId->expr()->eq('c.face_id', $qb->createParameter('face_id')),
-					$subClusterId->expr()->eq('cl.user', $qb->createParameter('user'))
+					$subClusterId->expr()->eq('c.face_id', 'f.id'),
+					$subClusterId->expr()->eq('cl.user', 'iu.user')
 				)
 			)
 			->setMaxResults(1);
@@ -41,8 +41,8 @@ trait GroupingTrait {
 			->join('c', 'facerecog_clusters', 'cl', $subIsGroupable->expr()->eq('c.cluster_id', 'cl.id'))
 			->where(
 				$subIsGroupable->expr()->andX(
-					$subIsGroupable->expr()->eq('c.face_id', $qb->createParameter('face_id')),
-					$subIsGroupable->expr()->eq('cl.user', $qb->createParameter('user'))
+					$subIsGroupable->expr()->eq('c.face_id', 'f.id'),
+					$subIsGroupable->expr()->eq('cl.user', 'iu.user')
 				)
 			)
 			->setMaxResults(1);
@@ -86,9 +86,6 @@ trait GroupingTrait {
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
-
-		$qb->setParameter('face_id', 'f.id'); // used inside subqueries
-
 		try {
 			$faces = $this->findEntities($qb);
 
@@ -140,8 +137,8 @@ trait GroupingTrait {
 			->join('c', 'facerecog_clusters', 'cl', $subClusterId->expr()->eq('c.cluster_id', 'cl.id'))
 			->where(
 				$subClusterId->expr()->andX(
-					$subClusterId->expr()->eq('c.face_id', $qb->createParameter('face_id')),
-					$subClusterId->expr()->eq('cl.user', $qb->createParameter('user'))
+					$subIsGroupable->expr()->eq('c.face_id', 'f.id'),
+					$subIsGroupable->expr()->eq('cl.user', 'iu.user')
 				)
 			)
 			->setMaxResults(1);
@@ -154,8 +151,8 @@ trait GroupingTrait {
 			->join('c', 'facerecog_clusters', 'cl', $subIsGroupable->expr()->eq('c.cluster_id', 'cl.id'))
 			->where(
 				$subIsGroupable->expr()->andX(
-					$subIsGroupable->expr()->eq('c.face_id', $qb->createParameter('face_id')),
-					$subIsGroupable->expr()->eq('cl.user', $qb->createParameter('user'))
+					$subIsGroupable->expr()->eq('c.face_id', 'f.id'),
+					$subIsGroupable->expr()->eq('cl.user', 'iu.user')
 				)
 			)
 			->setMaxResults(1);
@@ -196,9 +193,7 @@ trait GroupingTrait {
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
-			->setParameter('face_id', 'f.id'); // used inside subqueries;
-
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
 		try {
 			$faces = $this->findEntities($qb);
 

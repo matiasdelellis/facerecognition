@@ -383,13 +383,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * todo: only reason this is public is because of tests. Go figure it out better.
 	 */
 	public function mergeClusters(array $oldCluster, array $newCluster): array {
-		$this->logDebug(sprintf('Starting cluster merge - Old clusters: %d, New clusters: %d, Old persons: [%s], New persons: [%s]',
-			count($oldCluster),
-			count($newCluster),
-			implode(', ', array_keys($oldCluster)),
-			implode(', ', array_keys($newCluster))
-		));
-
 		// Create map of face transitions
 		$transitions = array();
 		foreach ($newCluster as $newPerson=>$newFaces) {
@@ -404,9 +397,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$transitions[$newFace] = array($oldPersonFound, $newPerson);
 			}
 		}
-
-		$this->logDebug(sprintf('Face transitions created: %d transitions', count($transitions)));
-
 		// Count transitions
 		$transitionCount = array();
 		foreach ($transitions as $transition) {
@@ -417,86 +407,39 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 				$transitionCount[$key] = 1;
 			}
 		}
-
-		$formattedTransitions = array_map(function($key, $count) {
-			return "($key: $count)";
-		}, array_keys($transitionCount), array_values($transitionCount));
-
-		$this->logDebug(sprintf('Transition counts calculated - Unique: %d, Counts: %s',
-			count($transitionCount),
-			implode(', ', $formattedTransitions)
-		));
-
 		// Create map of new person -> old person transitions
 		$newOldPersonMapping = array();
-		$oldPersonProcessed = array();
+		$oldPersonProcessed = array(); // store this, so we don't waste cycles for in_array()
 		arsort($transitionCount);
 		foreach ($transitionCount as $transitionKey => $count) {
 			$transition = explode(":", $transitionKey);
 			$oldPerson = intval($transition[0]);
 			$newPerson = intval($transition[1]);
-			
-			$this->logDebug(sprintf('Processing transition - Old: %d, New: %d, Count: %d',
-				$oldPerson, $newPerson, $count));
-
 			if (!array_key_exists($newPerson, $newOldPersonMapping)) {
 				if (($oldPerson === 0) || (!array_key_exists($oldPerson, $oldPersonProcessed))) {
 					$newOldPersonMapping[$newPerson] = $oldPerson;
 					$oldPersonProcessed[$oldPerson] = 0;
-					
-					$this->logDebug(sprintf('Mapped new person %d to old person %d',
-						$newPerson, $oldPerson));
 				} else {
 					$newOldPersonMapping[$newPerson] = 0;
-					
-					$this->logDebug(sprintf('New person %d marked as new cluster', $newPerson));
 				}
 			}
 		}
-
 		// Starting with new cluster, convert all new person IDs with old person IDs
 		$maxOldPersonId = 1;
 		if (count($oldCluster) > 0) {
 			$maxOldPersonId = (int) max(array_keys($oldCluster)) + 1;
 		}
 
-		$mappingsStr = implode(', ', array_map(function($new, $old) {
-			return "$new->$old";
-		}, array_keys($newOldPersonMapping), array_values($newOldPersonMapping)));
-
-		$this->logDebug(sprintf('Starting person ID conversion - Max old ID: %d, Mappings: %s',
-			$maxOldPersonId, $mappingsStr));
-
 		$result = array();
 		foreach ($newCluster as $newPerson => $newFaces) {
-			if (!array_key_exists($newPerson, $newOldPersonMapping)) {
-				$this->logDebug(sprintf('Missing mapping for person %d with %d faces',
-					$newPerson, count($newFaces)));
-				$oldPerson = 0;
-			} else {
-				$oldPerson = $newOldPersonMapping[$newPerson];
-			}
-
+			$oldPerson = $newOldPersonMapping[$newPerson];
 			if ($oldPerson === 0) {
 				$result[$maxOldPersonId] = $newFaces;
-				
-				$this->logDebug(sprintf('Created new person cluster - Old ID: %d, New ID: %d, Faces: %d',
-					$maxOldPersonId, $newPerson, count($newFaces)));
-				
 				$maxOldPersonId++;
 			} else {
 				$result[$oldPerson] = $newFaces;
-				
-				$this->logDebug(sprintf('Updated existing person cluster - Person ID: %d, Faces: %d',
-					$oldPerson, count($newFaces)));
 			}
 		}
-
-		$this->logInfo(sprintf('Cluster merge completed - Input: %d, Output: %d, New persons: %d',
-			count($newCluster),
-			count($result),
-			$maxOldPersonId - 1));
-
 		return $result;
 	}
 }

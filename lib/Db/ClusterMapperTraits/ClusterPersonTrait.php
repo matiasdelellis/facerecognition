@@ -5,9 +5,6 @@ use OCP\IDBConnection;
 
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use \OC\DB\Exceptions\DbalException;
-
-//MTODO: CLEANUP is needed
 trait ClusterPersonTrait
 {
     /**
@@ -189,37 +186,11 @@ trait ClusterPersonTrait
             ]);
 
             return $countOfClusters;
-        } catch (\OC\DB\Exceptions\DbalException $e) {
-            // Nextcloud’s wrapper around DBAL
-            if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate entry')) {
-                return $countOfClusters;
-            } else {
-                $this->db->rollBack();
-                $this->logError('Database exception during merge clusters', [
-                    'userId' => $userId,
-                    'exception' => [
-                        'message' => $e->getMessage(),
-                        'code' => $e->getCode(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                        'trace' => $e->getTraceAsString()
-                    ],
-                    'currentClusters' => count($currentClusters),
-                    'newClusters' => count($newClusters)
-                ]);
-                throw $e;
-            }
         } catch (\Throwable $e) {
             $this->db->rollBack();
             $this->logError('Failed to merge clusters', [
                 'userId' => $userId,
-                'exception' => [
-                    'message' => $e->getMessage(),
-                    'code' => $e->getCode(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ],
+                'exception' => $e,
                 'currentClusters' => count($currentClusters),
                 'newClusters' => count($newClusters)
             ]);

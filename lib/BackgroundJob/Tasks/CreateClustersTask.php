@@ -206,15 +206,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 
-		$this->clusterMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
+		$result = $this->clusterMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
-		// Remove all orphaned persons (those without any faces)
-		$orphansDeleted = $this->clusterMapper->deleteOrphaned($userId);
-		if ($orphansDeleted > 0) {
-			$this->logInfo('Deleted ' . count($orphansDeleted) . ' persons without faces');
-		}
+		$this->logInfo('Cluster merge result: ' . 
+						"\n\t\tCreated persons: " . count($result['added']) .
+		               	"\n\t\tUpdated persons: " . count($result['modified']) .
+		               	"\n\t\tDeleted persons: " . count($result['deleted']));
+
 		// Prevents not create/recreate the clusters unnecessarily.
-
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
 		$this->settingsService->_setForceCreateClusters(false, $userId);
 	}

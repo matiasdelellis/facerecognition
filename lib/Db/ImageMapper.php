@@ -109,19 +109,38 @@ class ImageMapper extends QBMapper
 			}
 
 			$qb = $this->db->getQueryBuilder();
-			$qb
-				->insert('facerecog_user_images')
-				->values([
-					'user'     => $qb->createNamedParameter($image->getUser()),
-					'image_id' => $qb->createNamedParameter($imageID),
-				])
-				->executeStatement();
+			$queryExec = $qb
+				->select(['1'])
+				->from('facerecog_user_images', 'ui')
+				->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
+				->andWhere($qb->expr()->eq('ui.image_id', $qb->createParameter('image_id')))
+				->setParameter('user', $image->getUser())
+				->setParameter('image_id', $imageID)
+				->executeQuery();
+			$exists = $queryExec->fetch();
+			$queryExec->closeCursor();	
+			if ($exists) {
+				$this->logDebug('Image-user connection already exists, skipping insert', [
+					'imageId' => $imageID,
+					'uid'     => $image->getUser(),
+				]);
+			}
+			else {
+				$qb = $this->db->getQueryBuilder();
+				$qb
+					->insert('facerecog_user_images')
+					->values([
+						'user'     => $qb->createNamedParameter($image->getUser()),
+						'image_id' => $qb->createNamedParameter($imageID),
+					])
+					->executeStatement();
 
-			$this->logInfo('New image-user connection inserted', [
-				'imageId' => $imageID,
-				'uid'     => $image->getUser(),
-				'sql'     => $qb->getSQL(),
-			]);
+				$this->logInfo('New image-user connection inserted', [
+					'imageId' => $imageID,
+					'uid'     => $image->getUser(),
+					'sql'     => $qb->getSQL(),
+				]);
+			}
 			$image->setId((int)$imageID);
 
 			$this->logInfo('Inserted image entity finished', [

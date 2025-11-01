@@ -28,6 +28,7 @@ namespace OCA\FaceRecognition\Db;
 use OCP\IDBConnection;
 
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\ILiteral;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\Entity;
 use OCA\FaceRecognition\Db\ImageMapperTraits\Processing\ImageStatsTrait;
@@ -110,7 +111,7 @@ class ImageMapper extends QBMapper
 
 			$qb = $this->db->getQueryBuilder();
 			$queryExec = $qb
-				->select(['1'])
+				->select($qb->expr()->literal('1'))
 				->from('facerecog_user_images', 'ui')
 				->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 				->andWhere($qb->expr()->eq('ui.image_id', $qb->createParameter('image_id')))

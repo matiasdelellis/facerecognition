@@ -154,6 +154,7 @@ class ImageMapper extends QBMapper
 
 		} catch (\Throwable $e) {
 			$this->logError('Failed to insert image entity', [
+				'imageId'   => $image->getId(),
 				'uid'       => $image->getUser(),
 				'file'      => $image->getFile(),
 				'model'     => $image->getModel(),

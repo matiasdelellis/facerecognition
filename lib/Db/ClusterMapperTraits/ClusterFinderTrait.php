@@ -128,7 +128,7 @@ trait ClusterFinderTrait
         try {
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, true);
 
-            $this->logDebug('Found persons', [
+            $this->logDebug('Found unassigned clusters', [
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
@@ -137,7 +137,7 @@ trait ClusterFinderTrait
             return $entities;
 
         } catch (\Throwable $e) {
-            $this->logError('Failed to fetch unassigned persons', [
+            $this->logError('Failed to fetch unassigned clusters', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'exception' => $e,
@@ -156,7 +156,7 @@ trait ClusterFinderTrait
         try {
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, false);
 
-            $this->logDebug('Found persons', [
+            $this->logDebug('Found ignored clusters', [
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
@@ -165,7 +165,7 @@ trait ClusterFinderTrait
             return $entities;
 
         } catch (\Throwable $e) {
-            $this->logError('Failed to fetch ignored persons', [
+            $this->logError('Failed to fetch ignored clusters', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'exception' => $e,
@@ -359,7 +359,7 @@ trait ClusterFinderTrait
             $this->logDebug('Search completed', [
                 'userId' => $userId,
                 'modelId' => $modelId,
-                'name' => $name,
+                'name' => $query,
                 'count' => count($entities),
                 'offset' => $offset,
                 'limit' => $limit,
@@ -372,7 +372,7 @@ trait ClusterFinderTrait
             $this->logError('Failed to search persons', [
                 'userId' => $userId,
                 'modelId' => $modelId,
-                'name' => $name,
+                'name' => $query,
                 'offset' => $offset,
                 'limit' => $limit,
                 'sql' => $qb->getSQL(),
@@ -420,7 +420,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logDebug('Found clusters', [
+            $this->logDebug('Found clusters without names', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'isValid'   => $isValid,
@@ -432,7 +432,7 @@ trait ClusterFinderTrait
             return $entities;
 
         } catch (\Throwable $e) {
-            $this->logError('Failed to fetch clusters', [
+            $this->logError('Failed to fetch clusters without names', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'isValid'   => $isValid,

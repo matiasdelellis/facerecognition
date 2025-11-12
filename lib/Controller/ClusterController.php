@@ -43,10 +43,11 @@ use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
-
+use OCA\FaceRecognition\Traits\LoggerTrait;
 
 class ClusterController extends Controller {
 
+	use LoggerTrait;
 	/** @var FaceMapper */
 	private $faceMapper;
 
@@ -164,6 +165,7 @@ class ClusterController extends Controller {
 	 */
 	public function findUnassigned(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
+		$this->logInfo("Finding unassigned clusters for user " . $this->userId . ", enabled: " . ($userEnabled ? "yes" : "no"));
 
 		$resp = array();
 		$resp['enabled'] = $userEnabled;
@@ -176,6 +178,7 @@ class ClusterController extends Controller {
 		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
 		$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
+		$this->logInfo("Found " . count($clusters) . " unassigned clusters for user " . $this->userId);
 		foreach ($clusters as $cluster) {
 			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minClusterSize)
@@ -201,8 +204,9 @@ class ClusterController extends Controller {
 			$entry['id'] = $cluster->getId();
 			$entry['faces'] = $faces;
 			$resp['clusters'][] = $entry;
+			$this->logInfo("Added cluster " . $cluster->getId() . " with " . $clusterSize . " faces to response for user " . $this->userId);
 		}
-
+		$this->logInfo("Returning " . count($resp['clusters']) . " unassigned clusters for user " . $this->userId);
 		return new DataResponse($resp);
 	}
 

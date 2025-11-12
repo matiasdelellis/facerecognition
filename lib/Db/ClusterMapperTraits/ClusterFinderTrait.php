@@ -30,7 +30,7 @@ trait ClusterFinderTrait
 
             $entity = $this->findEntity($qb);
 
-            $this->logInfo('Found cluster', [
+            $this->logDebug('Found cluster', [
                 'clusterId' => $clusterId,
                 'userId'    => $userId,
                 'sql' => $qb->getSQL(),
@@ -96,7 +96,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Found clusters', [
+            $this->logDebug('Found clusters', [
                 'userId'     => $userId,
                 'modelId'    => $modelId,
                 'personName' => $personName,
@@ -128,7 +128,7 @@ trait ClusterFinderTrait
         try {
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, true);
 
-            $this->logInfo('Found unassigned clusters', [
+            $this->logDebug('Found unassigned clusters', [
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
@@ -156,7 +156,7 @@ trait ClusterFinderTrait
         try {
             $entities = $this->getPersonsByFlagsWithoutName($userId, $modelId, true, false);
 
-            $this->logInfo('Found ignored clusters', [
+            $this->logDebug('Found ignored clusters', [
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
@@ -206,7 +206,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Found clusters', [
+            $this->logDebug('Found clusters', [
                 'userId'  => $userId,
                 'modelId' => $modelId,
                 'count'   => count($entities),
@@ -251,7 +251,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Found distinct names', [
+            $this->logDebug('Found distinct names', [
                 'userId'   => $userId,
                 'modelId'  => $modelId,
                 'count'    => count($entities),
@@ -299,7 +299,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Found selected distinct names', [
+            $this->logDebug('Found selected distinct names', [
                 'userId'   => $userId,
                 'modelId'  => $modelId,
                 'count'    => count($entities),
@@ -356,7 +356,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Search completed', [
+            $this->logDebug('Search completed', [
                 'userId' => $userId,
                 'modelId' => $modelId,
                 'name' => $query,
@@ -420,7 +420,7 @@ trait ClusterFinderTrait
 
             $entities = $this->findEntities($qb);
 
-            $this->logInfo('Found clusters without names', [
+            $this->logDebug('Found clusters without names', [
                 'userId'    => $userId,
                 'modelId'   => $modelId,
                 'isValid'   => $isValid,

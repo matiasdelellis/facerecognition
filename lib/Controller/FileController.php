@@ -12,7 +12,7 @@ use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\FileService;
 
@@ -25,8 +25,8 @@ class FileController extends Controller {
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var FaceMapper */
 	private $faceMapper;
@@ -46,7 +46,7 @@ class FileController extends Controller {
 	public function __construct($AppName,
 	                            IRequest        $request,
 	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personMapper,
+	                            ClusterMapper    $clusterMapper,
 	                            FaceMapper      $faceMapper,
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
@@ -56,7 +56,7 @@ class FileController extends Controller {
 		parent::__construct($AppName, $request);
 
 		$this->imageMapper     = $imageMapper;
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->faceMapper      = $faceMapper;
 		$this->fileService     = $fileService;
 		$this->settingsService = $settingsService;
@@ -104,7 +104,7 @@ class FileController extends Controller {
 				break;
 			}
 
-			$person = $this->personMapper->find($this->userId, $face->getPerson());
+			$person = $this->clusterMapper->find($this->userId, $face->getPerson());
 			$personName = $person->getName();
 
 			$facePerson = array();

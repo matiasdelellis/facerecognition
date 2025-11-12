@@ -1,0 +1,70 @@
+@startuml
+
+entity facerecog_clusters {
+  *id : int <<PK>>
+  user : string
+  is_visible : bool
+  is_valid : bool
+  last_generation_time : datetime
+  linked_user : string
+}
+
+entity facerecog_persons {
+  *id : int <<PK>>
+  name : string <<UQ>>
+  is_shared : bool
+}
+
+entity facerecog_person_clusters {
+  *cluster_id : int <<PK,FK>>
+  *person_id : int <<PK,FK>>
+}
+
+entity facerecog_images {
+  *id : int <<PK>>
+  nc_file_id : int
+  model : string
+  is_processed : bool
+  error : string
+  last_processed_time : datetime
+  processing_duration : int
+}
+
+entity facerecog_user_images {
+  *image_id : int <<PK,FK>>
+  *user : string <<PK>>
+}
+
+entity facerecog_faces {
+  *id : int <<PK>>
+  image_id : int <<FK>>
+  x : int
+  y : int
+  width : int
+  height : int
+  confidence : float
+  landmarks : blob
+  descriptor : blob
+  creation_time : datetime
+}
+
+entity facerecog_cluster_faces {
+  *cluster_id : int <<PK,FK>>
+  *face_id : int <<PK,FK>>
+  is_groupable : bool
+}
+
+entity facerecog_models {
+  *id : int <<PK>>
+  name : string
+  description : string
+}
+
+facerecog_person_clusters::cluster_id -- facerecog_clusters::id
+facerecog_person_clusters::person_id -- facerecog_persons::id
+facerecog_user_images::image_id -- facerecog_images::id
+facerecog_faces::image_id -- facerecog_images::id
+facerecog_cluster_faces::cluster_id -- facerecog_clusters::id
+facerecog_cluster_faces::face_id -- facerecog_faces::id
+
+@enduml

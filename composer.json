@@ -12,19 +12,32 @@
     ],
     "config": {
         "platform": {
-            "php": "8.0"
+            "php": "8.3"
         }
     },
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.1",
+        "doctrine/dbal": "*"
     },
     "require-dev": {
-        "nextcloud/ocp": "dev-stable28",
-        "phpunit/phpunit": "^9",
-        "psalm/phar": "^4.10",
+        "nextcloud/ocp": "dev-stable32",
+        "phpunit/phpunit": "^10",
+        "psalm/phar": "^4",
         "scrutinizer/ocular": "^1.8",
-        "psr/log": "^1.1"
+        "psr/log": "^3"
     },
+    "autoload": {
+        "psr-4": {
+            "OCA\\FaceRecognition\\": "lib/"
+        }
+     },
+
+     "autoload-dev": {
+         "psr-4": {
+                "OCA\\FaceRecognition\\Tests\\Integration\\": "tests/Integration",
+                "OCA\\FaceRecognition\\Tests\\Unit\\": "tests/Unit"
+          }
+     },
     "scripts": {
         "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
         "psalm": "psalm.phar"

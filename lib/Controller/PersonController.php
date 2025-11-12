@@ -39,7 +39,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
@@ -53,8 +53,8 @@ class PersonController extends Controller {
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -69,7 +69,7 @@ class PersonController extends Controller {
 	                            IRequest        $request,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personmapper,
+	                            ClusterMapper    $personmapper,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
 	                            $UserId)
@@ -78,7 +78,7 @@ class PersonController extends Controller {
 
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
-		$this->personMapper    = $personmapper;
+		$this->clusterMapper    = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
@@ -100,7 +100,7 @@ class PersonController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
+		$personsNames = $this->clusterMapper->findDistinctNames($this->userId, $modelId);
 		foreach ($personsNames as $personNamed) {
 			$name = $personNamed->getName();
 			$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
@@ -135,7 +135,9 @@ class PersonController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$personFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
-		$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+		if ($personFace !== false){
+			$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+		}
 
 		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
 		foreach ($images as $image) {
@@ -165,10 +167,10 @@ class PersonController extends Controller {
 	 */
 	public function updateName($personName, $name): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		$clusters = $this->clusterMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($clusters as $person) {
 			$person->setName($name);
-			$this->personMapper->update($person);
+			$this->clusterMapper->update($person);
 		}
 		return $this->find($name);
 	}
@@ -183,9 +185,9 @@ class PersonController extends Controller {
 	*/
 	public function setVisibility ($personName, bool $visible): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		$clusters = $this->clusterMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($clusters as $cluster) {
-			$this->personMapper->setVisibility($cluster->getId(), $visible);
+			$this->clusterMapper->setVisibility($cluster->getId(), $visible);
 		}
 		return $this->find($personName);
 	}
@@ -203,7 +205,7 @@ class PersonController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findPersonsLike($this->userId, $modelId, $query);
+		$persons = $this->clusterMapper->findPersonsLike($this->userId, $modelId, $query);
 		foreach ($persons as $person) {
 			$name = [];
 			$name['name'] = $person->getName();

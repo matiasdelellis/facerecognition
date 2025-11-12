@@ -33,7 +33,7 @@ use OCP\IUserManager;
 
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -48,8 +48,8 @@ class StatsCommand extends Command {
 	/** @var FaceMapper */
 	protected $faceMapper;
 
-	/** @var PersonMapper */
-	protected $personMapper;
+	/** @var ClusterMapper */
+	protected $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -58,13 +58,13 @@ class StatsCommand extends Command {
 	 * @param IUserManager $userManager
 	 * @param ImageMapper $imageMapper
 	 * @param FaceMapper $faceMapper
-	 * @param PersonMapper $personMapper
+	 * @param ClusterMapper $clusterMapper
 	 * @param SettingsService $settingsService
 	 */
 	public function __construct(IUserManager    $userManager,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
-	                            PersonMapper    $personMapper,
+	                            ClusterMapper    $clusterMapper,
 	                            SettingsService $settingsService)
 	{
 		parent::__construct();
@@ -72,7 +72,7 @@ class StatsCommand extends Command {
 		$this->userManager     = $userManager;
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->settingsService = $settingsService;
 	}
 
@@ -136,20 +136,30 @@ class StatsCommand extends Command {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
+
 		$stats = array();
 		foreach ($users as $user) {
+			$clusters = $this->clusterMapper->countClusters($user, $modelId);
+			$notHadledYet = count($this->clusterMapper->findUnassigned($user, $modelId));
+			$ignored = count($this->clusterMapper->findIgnored($user, $modelId));
+			$assignedClusters = $clusters - ($notHadledYet + $ignored);
+
+
 			$stats[] = [
 				$user,
 				$this->imageMapper->countUserImages($user, $modelId),
 				$this->imageMapper->countUserImages($user, $modelId, true),
 				$this->faceMapper->countFaces($user, $modelId),
-				$this->personMapper->countClusters($user, $modelId),
-				$this->personMapper->countPersons($user, $modelId)
+				$clusters,
+				$assignedClusters,
+				$ignored,
+				$notHadledYet,
+				$this->clusterMapper->countPersons($user, $modelId)
 			];
 		}
 
 		$table = new Table($output);
-		$table->setHeaders(['User', 'Images', 'Processed', 'Faces', 'Clusters', 'Persons'])->setRows($stats);
+		$table->setHeaders(['User', 'Images', 'Processed', 'Faces', 'Clusters', 'AssignedClusters', 'IgnoredClusters', 'NotHandeledYet', 'Persons'])->setRows($stats);
 		$table->render();
 	}
 
@@ -159,13 +169,20 @@ class StatsCommand extends Command {
 
 		$stats = array();
 		foreach ($users as $user) {
+			$clusters = $this->clusterMapper->countClusters($user, $modelId);
+			$notHadledYet = count($this->clusterMapper->findUnassigned($user, $modelId));
+			$ignored = count($this->clusterMapper->findIgnored($user, $modelId));
+			$assignedClusters = $clusters - ($notHadledYet + $ignored);
 			$stats[] = array(
 				'user'     => $user,
 				'images'   => $this->imageMapper->countUserImages($user, $modelId),
 				'processed'=> $this->imageMapper->countUserImages($user, $modelId, true),
 				'faces'    => $this->faceMapper->countFaces($user, $modelId),
-				'clusters' => $this->personMapper->countClusters($user, $modelId),
-				'persons'  => $this->personMapper->countPersons($user, $modelId)
+				'clusters' => $clusters,
+				'AssignedClusters'=> $assignedClusters,
+				'IgnoredClusters'=> $ignored,
+				'NotHandeledYet' => $notHadledYet,
+				'persons'  => $this->clusterMapper->countPersons($user, $modelId)
 			);
 		}
 

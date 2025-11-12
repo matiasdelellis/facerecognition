@@ -141,7 +141,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			$image->setFile($file->getId());
 			$image->setModel($model);
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
-			if ($this->imageMapper->imageExists($image) === null) {
+			if ($this->imageMapper->imageExistsForUser($image) === null) {
 				// todo: can we have larger transaction with bulk insert?
 				$this->imageMapper->insert($image);
 				$insertedImages++;

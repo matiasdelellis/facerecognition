@@ -30,7 +30,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Helper\Euclidean;
 use OCA\FaceRecognition\Helper\Requirements;
@@ -42,8 +42,8 @@ use OCA\FaceRecognition\Service\SettingsService;
  * Taks that, for each user, creates person clusters for each.
  */
 class CreateClustersTask extends FaceRecognitionBackgroundTask {
-	/** @var PersonMapper Person mapper*/
-	private $personMapper;
+	/** @var ClusterMapper Person mapper*/
+	private $clusterMapper;
 
 	/** @var ImageMapper Image mapper*/
 	private $imageMapper;
@@ -55,19 +55,19 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private $settingsService;
 
 	/**
-	 * @param PersonMapper $personMapper
+	 * @param ClusterMapper $clusterMapper
 	 * @param ImageMapper $imageMapper
 	 * @param FaceMapper $faceMapper
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(PersonMapper    $personMapper,
+	public function __construct(ClusterMapper    $clusterMapper,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
 	                            SettingsService $settingsService)
 	{
 		parent::__construct();
 
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
 		$this->settingsService = $settingsService;
@@ -87,6 +87,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
+			$this->logInfo('-- Processing user -->' . $user);
 			$this->createClusterIfNeeded($user);
 			yield;
 		}
@@ -102,7 +103,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 		// Depending on whether we already have clusters, decide if we should create/recreate them.
 		//
-		$hasPersons = $this->personMapper->countPersons($userId, $modelId) > 0;
+		$hasPersons = $this->clusterMapper->countPersons($userId, $modelId) > 0;
 		if ($hasPersons) {
 			$forceRecreate = $this->needRecreateBySettings($userId);
 			$haveEnoughFaces = $this->hasNewFacesToRecreate($userId, $modelId);
@@ -178,7 +179,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			// Get the batches.
 			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
 			// Get the indices, obtain the partial clusters and incorporate them.
-			$faceIds = array_map(function ($face) { return $face['id']; }, $facesSliced);
+			$faceIds = array_map(function ($face) { return $face->getId(); }, $facesSliced);
 			$facesDescripted = $this->faceMapper->findDescriptorsBathed($faceIds);
 			$newClusters = array_merge($newClusters, $this->getNewClusters($facesDescripted));
 			// Discard variables aggressively to improve memory consumption.
@@ -205,17 +206,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// New merge
 		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
 
-		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
+		$result = $this->clusterMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
-		// Remove all orphaned persons (those without any faces)
-		// NOTE: we will do this for all models, not just for current one, but this is not problem.
-		$orphansDeleted = $this->personMapper->deleteOrphaned($userId);
-		if ($orphansDeleted > 0) {
-			$this->logInfo('Deleted ' . $orphansDeleted . ' persons without faces');
-		}
+		$this->logInfo('Cluster merge result: ' . 
+						"\n\t\tCreated persons: " . count($result['added']) .
+		               	"\n\t\tUpdated persons: " . count($result['modified']) .
+		               	"\n\t\tDeleted persons: " . count($result['deleted']));
 
 		// Prevents not create/recreate the clusters unnecessarily.
-
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
 		$this->settingsService->_setForceCreateClusters(false, $userId);
 	}
@@ -259,7 +257,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	}
 
 	private function hasStalePersonsToRecreate(string $userId, int $modelId): bool {
-		return $this->personMapper->countClusters($userId, $modelId, true) > 0;
+		return $this->clusterMapper->countClusters($userId, $modelId, true) > 0;
 	}
 
 	private function needRecreateBySettings(string $userId): bool {
@@ -283,10 +281,14 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// These clusters will be small and not "stable" enough and we should better wait for more images to come.
 		// todo: get rid of magic numbers (move to config)
 		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
+		$this->logDebug(sprintf('User %s has %d images, %d processed images and %d faces for model %d',
+		                $userId, $imageCount, $imageProcessed, $facesCount, $modelId));
 		if ($facesCount > 1000)
 			return true;
 
 		$percentImagesProcessed = $imageProcessed / floatval($imageCount);
+		$this->logDebug(sprintf('User %s has %f%% of images processed for model %d',
+		                $userId, $percentImagesProcessed * 100.0, $modelId));
 		if ($percentImagesProcessed > 0.95)
 			return true;
 
@@ -296,11 +298,11 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getCurrentClusters(array $faces): array {
 		$chineseClusters = array();
 		foreach($faces as $face) {
-			if ($face['person'] !== null) {
-				if (!isset($chineseClusters[$face['person']])) {
-					$chineseClusters[$face['person']] = array();
+			if ($face->getPerson() !== null) {
+				if (!isset($chineseClusters[$face->getPerson()])) {
+					$chineseClusters[$face->getPerson()] = array();
 				}
-				$chineseClusters[$face['person']][] = $face['id'];
+				$chineseClusters[$face->getPerson()][] = $face->getId();
 			}
 		}
 		return $chineseClusters;
@@ -310,7 +312,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$newClusters = array();
 		for ($i = 0, $c = count($faces); $i < $c; $i++) {
 			$fakeCluster = [];
-			$fakeCluster[] = $faces[$i]['id'];
+			$fakeCluster[] = $faces[$i]->getId();
 			$newClusters[] = $fakeCluster;
 		}
 		return $newClusters;

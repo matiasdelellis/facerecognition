@@ -21,12 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Unit;
+namespace OCA\FaceRecognition\Tests\Unit\Helpers;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-use Test\TestCase;
-
+#[CoversClass(MemoryLimits::class)]
 class MemoryLimitsTest extends TestCase {
 
 	public function testReturnBytes() {

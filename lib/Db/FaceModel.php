@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Db;
 
 use JsonSerializable;
@@ -31,13 +33,14 @@ use OCP\AppFramework\Db\Entity;
  * Represent one possible DNN model that faces can be detected, extracted and face descriptors taken.
  * Logically encapsulates files from one DNN model used to do stuff from above.
  */
-class FaceModel extends Entity implements JsonSerializable {
+class FaceModel extends Entity implements JsonSerializable
+{
 
 	protected $uid;
 	protected $name;
 	protected $description;
 
-	public function jsonSerialize() {
+	public function jsonSerialize() : mixed{
 		return [
 			'id' => $this->id,
 			'name' => $this->name,

@@ -10,11 +10,15 @@ use OCP\AppFramework\Services\IInitialState;
 use OCP\Settings\ISettings;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class Personal implements ISettings {
+
+	use LoggerTrait;
 
 	/** @var IEventDispatcher */
 	private $eventDispatcher;
@@ -22,8 +26,8 @@ class Personal implements ISettings {
 	/** @var \OCP\AppFramework\Services\IInitialState **/
 	protected IInitialState $initialState;
 
-	/** @var PersonMapper */
-	protected $personMapper;
+	/** @var ClusterMapper */
+	protected $clusterMapper;
 
 	/** @var SettingsService */
 	protected $settingsService;
@@ -32,15 +36,17 @@ class Personal implements ISettings {
 
 	public function __construct(IEventDispatcher $eventDispatcher,
 	                            IInitialState    $initialState,
-	                            PersonMapper     $personmapper,
+	                            ClusterMapper     $personmapper,
 	                            SettingsService  $settingsService,
+								LoggerInterface $logger,
 	                            string           $userId)
 	{
 		$this->eventDispatcher = $eventDispatcher;
 		$this->initialState = $initialState;
-		$this->personMapper = $personmapper;
+		$this->clusterMapper = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->userId = $userId;
+		$this->setLogger($logger);
 	}
 
 	public function getPriority()
@@ -61,32 +67,45 @@ class Personal implements ISettings {
 	public function getForm()
 	{
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
-		$unamedCount = 0;
-		$hiddenCount = 0;
+		$unamedCount = false;
+		$hiddenCount = false;
+		$this->logInfo("Preparing Personal settings form, user " . $this->userId . " enabled: " . ($userEnabled ? "yes" : "no"));
 
 		if ($userEnabled) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 			$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
-
-			$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+			$this->logInfo("Using model ID " . $modelId . " and minimum cluster size " . $minClusterSize . " for user " . $this->userId);
+			$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
 			foreach ($clusters as $cluster) {
-				$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
-				if ($clusterSize >= $minClusterSize)
-					$unamedCount++;
+				if (!$unamedCount) {
+					$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
+					if ($clusterSize >= $minClusterSize) {
+						$unamedCount = true;
+						$this->logInfo("Found unamed clusters for user " . $this->userId);
+						break;
+					}
+				}
 			}
 
-			$clusters = $this->personMapper->findIgnored($this->userId, $modelId);
+			unset($clusters);
+			$clusters = $this->clusterMapper->findIgnored($this->userId, $modelId);
 			foreach ($clusters as $cluster) {
-				$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
-				if ($clusterSize >= $minClusterSize)
-					$hiddenCount++;
+				if (!$hiddenCount) {
+					$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
+					if ($clusterSize >= $minClusterSize){
+							$hiddenCount = true;
+							$this->logInfo("Found hidden clusters for user " . $this->userId);
+							break;
+					}
+				}
 			}
 		}
 
 		$this->initialState->provideInitialState('user-enabled', $userEnabled);
-		$this->initialState->provideInitialState('has-unamed', $unamedCount > 0);
-		$this->initialState->provideInitialState('has-hidden', $hiddenCount > 0);
+		$this->initialState->provideInitialState('has-unamed', $unamedCount);
+		$this->initialState->provideInitialState('has-hidden', $hiddenCount);
 
+		$this->logDebug("Dispatching LoadViewer event from Personal settings");
 		$this->eventDispatcher->dispatch(LoadViewer::class, new LoadViewer());
 		return new TemplateResponse('facerecognition', 'settings/personal');
 	}

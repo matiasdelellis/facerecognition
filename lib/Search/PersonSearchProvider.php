@@ -34,7 +34,7 @@ use OCP\Search\SearchResultEntry;
 use OCP\Files\IRootFolder;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Model\IModel;
@@ -45,8 +45,8 @@ use OCA\FaceRecognition\Service\UrlService;
  */
 class PersonSearchProvider implements IProvider {
 
-	/** @var PersonMapper personMapper */
-	private $personMapper;
+	/** @var ClusterMapper clusterMapper */
+	private $clusterMapper;
 
 	/** @var ImageMapper imageMapper */
 	private $imageMapper;
@@ -69,14 +69,14 @@ class PersonSearchProvider implements IProvider {
 	/** @var int*/
 	private $modelId;
 
-	public function __construct(PersonMapper      $personMapper,
+	public function __construct(ClusterMapper      $clusterMapper,
 	                            ImageMapper       $imageMapper,
 	                            SettingsService   $settingsService,
 	                            IL10N             $l10n,
 	                            UrlService        $urlService,
 	                            IURLGenerator     $urlGenerator,
 	                            IRootFolder       $rootFolder) {
-		$this->personMapper     = $personMapper;
+		$this->clusterMapper     = $clusterMapper;
 		$this->imageMapper      = $imageMapper;
 		$this->settingsService  = $settingsService;
 		$this->l10n             = $l10n;
@@ -134,7 +134,7 @@ class PersonSearchProvider implements IProvider {
 					true
 				);
 			},
-			$this->personMapper->findPersonsLike($user->getUID(),
+			$this->clusterMapper->findPersonsLike($user->getUID(),
 				$this->modelId,
 				$query->getTerm(),
 				$page * $limit,

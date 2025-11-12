@@ -27,15 +27,15 @@ use OCP\IUser;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Album\AlbumMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
 class PhotoAlbums {
 
-	/** @var PersonMapper Person mapper*/
-	private $personMapper;
+	/** @var ClusterMapper Person mapper*/
+	private $clusterMapper;
 
 	/** @var ImageMapper Image mapper*/
 	private $imageMapper;
@@ -47,17 +47,17 @@ class PhotoAlbums {
 	private $settingsService;
 
 	/**
-	 * @param PersonMapper $personMapper
+	 * @param ClusterMapper $clusterMapper
 	 * @param ImageMapper $imageMapper
 	 * @param AlbumMapper $albumMapper
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(PersonMapper    $personMapper,
+	public function __construct(ClusterMapper    $clusterMapper,
 	                            ImageMapper     $imageMapper,
 	                            AlbumMapper     $albumMapper,
 	                            SettingsService $settingsService)
 	{
-		$this->personMapper    = $personMapper;
+		$this->clusterMapper    = $clusterMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->albumMapper     = $albumMapper;
 		$this->settingsService = $settingsService;
@@ -208,7 +208,7 @@ class PhotoAlbums {
 	}
 
 	private function getPersonsNames(string $userId, int $modelId): array {
-		$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+		$distintNames = $this->clusterMapper->findDistinctNames($userId, $modelId);
 		$names = [];
 		foreach ($distintNames as $distintName) {
 			$names[] = $distintName->getName();
@@ -217,7 +217,7 @@ class PhotoAlbums {
 	}
 
 	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array {
-		$distintNames = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
+		$distintNames = $this->clusterMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
 		$names = [];
 		foreach ($distintNames as $distintName) {
 			$names[] = $distintName->getName();

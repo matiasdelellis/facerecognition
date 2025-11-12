@@ -132,7 +132,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$lockType = ILockingProvider::LOCK_EXCLUSIVE;
 				$this->lockingProvider->acquireLock($lockKey, $lockType);
 
-				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
+				$dbImage = $this->imageMapper->findFromImageId($image->getId());
 				if ($dbImage->getIsProcessed()) {
 					$this->logInfo('Faces found: 0. Image will be skipped since it was already processed.');
 					// Release lock of file.
@@ -146,8 +146,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				if (is_null($tempImage)) {
 					// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-					$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
-					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
+					$this->imageMapper->delete($image);
+					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, delete from database it');
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
@@ -155,7 +155,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				if ($tempImage->getSkipped() === true) {
 					$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-					$this->imageMapper->imageProcessed($image, array(), 0);
+					$this->imageMapper->imageProcessed($image->getId(), array(), 0);
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
@@ -163,9 +163,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Get faces in the temporary image
 				$tempImagePath = $tempImage->getTempPath();
+				$detectionStartMillis = round(microtime(true) * 1000);
 				$rawFaces = $this->model->detectFaces($tempImagePath);
 
-				$this->logInfo('Faces found: ' . count($rawFaces));
+				$endMillis = round(microtime(true) * 1000);
+				$detectDuration = (int) max($endMillis - $detectionStartMillis, 0);
+				$this->logInfo('Faces found: ' . count($rawFaces). '. Detection took ' . $detectDuration . ' ms.');
 
 				$faces = array();
 				foreach ($rawFaces as $rawFace) {
@@ -180,12 +183,16 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
-				$this->imageMapper->imageProcessed($image, $faces, $duration);
+				$this->imageMapper->imageProcessed($image->getId(), $faces, $duration);
 
 				// Release lock of file.
 				$this->lockingProvider->releaseLock($lockKey, $lockType);
+				
+				$endMillis = round(microtime(true) * 1000);
+				$duration = (int) max($endMillis - $startMillis, 0);
+				$this->logDebug('Whole proccess took ' . $duration . ' ms. Extra work (saving to DB, normalization, etc) took ' . ($duration - $detectDuration) . ' ms.');
 			} catch (\OCP\Lock\LockedException $e) {
-				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
+				$this->logInfo('Faces found: 0. Image ' . $image->getId() . ' will be skipped because it is locked');
 			} catch (\Exception $e) {
 				if ($e->getMessage() === "std::bad_alloc") {
 					throw new \RuntimeException("Not enough memory to run face recognition! Please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ");
@@ -194,7 +201,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->logDebug((string) $e);
 
 				// Save an empty entry so it can be analyzed again later
-				$this->imageMapper->imageProcessed($image, array(), 0, $e);
+				$this->imageMapper->imageProcessed($image->getId(), array(), 0, $e);
 			} finally {
 				// Clean temporary image.
 				if (isset($tempImage)) {
@@ -215,7 +222,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 */
 	private function getTempImage(Image $image): ?TempImage {
 		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
-		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
+		$file = $this->fileService->getFileById($image->getFile(),$image->getUser());
 		if (empty($file)) {
 			return null;
 		}

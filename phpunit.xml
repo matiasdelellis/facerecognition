@@ -1,15 +1,44 @@
-<phpunit bootstrap="tests/bootstrap.php" colors="true">
-    <testsuites>
-        <testsuite name="Unit">
-            <directory>./tests/Unit</directory>
-        </testsuite>
-        <testsuite name="Integration">
-            <directory>./tests/Integration</directory>
-        </testsuite>
-    </testsuites>
-    <filter>
-        <whitelist>
-            <directory suffix=".php">lib</directory>
-        </whitelist>
-    </filter>
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.3/phpunit.xsd"
+         bootstrap="tests/bootstrap.php" 
+         cacheDirectory=".phpunit.cache" 
+         executionOrder="depends,defects"
+         requireCoverageMetadata="true" 
+         beStrictAboutCoverageMetadata="true" 
+         beStrictAboutOutputDuringTests="true" 
+         displayDetailsOnPhpunitDeprecations="true" 
+         failOnPhpunitDeprecation="true" 
+         failOnRisky="true" 
+         failOnWarning="true">
+  <testsuites>
+    <testsuite name="Unit">
+      <directory>tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Integration">
+      <directory>tests/Integration</directory>
+    </testsuite>
+  </testsuites>
+  <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
+    <include>
+      <directory suffix=".php">lib</directory>
+    </include>
+  </source>
+  <coverage pathCoverage="true">
+    <report>
+      <clover outputFile="clover.xml"/>
+      <cobertura outputFile="tests/results/cobertura.xml"/>
+      <crap4j outputFile="tests/results/crap4j.xml" threshold="50"/>
+      <html outputDirectory="tests/results/html-coverage" lowUpperBound="50" highLowerBound="90"/>
+      <php outputFile="tests/results/coverage.php"/>
+      <text outputFile="tests/results/coverage.txt" showUncoveredFiles="false" showOnlySummary="true"/>
+      <xml outputDirectory="tests/results/xml-coverage"/>
+    </report>
+  </coverage>
+  <logging>
+    <junit outputFile="tests/results/logs/junit.xml"/>
+    <teamcity outputFile="tests/results/logs/teamcity.txt"/>
+    <testdoxHtml outputFile="tests/results/logs/testdox.html"/>
+    <testdoxText outputFile="tests/results/logs/testdox.txt"/>
+  </logging>
 </phpunit>

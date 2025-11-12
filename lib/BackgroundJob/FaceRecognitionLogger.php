@@ -58,6 +58,16 @@ class FaceRecognitionLogger {
 		return $this->logger;
 	}
 
+	public function logError(string $message): void {
+		if (!is_null($this->logger)) {
+			$this->logger->error($message);
+		} else if (!is_null($this->output)) {
+			$this->output->writeln($message);
+		} else {
+			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
+		}
+	}
+
 	public function logInfo(string $message): void {
 		if (!is_null($this->logger)) {
 			$this->logger->info($message);

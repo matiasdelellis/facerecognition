@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Db;
 
 use JsonSerializable;
@@ -45,7 +47,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setHeight(int $height)
  * @method void setConfidence(float $confidence)
  */
-class Face extends Entity implements JsonSerializable {
+class Face extends Entity implements JsonSerializable
+{
 
 	/**
 	 * Image from this face originated from.
@@ -155,7 +158,7 @@ class Face extends Entity implements JsonSerializable {
 		return $face;
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'image' => $this->image,

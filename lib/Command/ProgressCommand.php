@@ -32,7 +32,7 @@ use OCP\IDateTimeFormatter;
 
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
@@ -47,8 +47,8 @@ class ProgressCommand extends Command {
 	/** @var FaceMapper */
 	protected $faceMapper;
 
-	/** @var PersonMapper */
-	protected $personMapper;
+	/** @var ClusterMapper */
+	protected $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -57,13 +57,13 @@ class ProgressCommand extends Command {
 	 * @param IDateTimeFormatter $dateTimeFormatter
 	 * @param ImageMapper $imageMapper
 	 * @param FaceMapper $faceMapper
-	 * @param PersonMapper $personMapper
+	 * @param ClusterMapper $clusterMapper
 	 * @param SettingsService $settingsService
 	 */
 	public function __construct(IDateTimeFormatter $dateTimeFormatter,
 	                            ImageMapper        $imageMapper,
 	                            FaceMapper         $faceMapper,
-	                            PersonMapper       $personMapper,
+	                            ClusterMapper       $clusterMapper,
 	                            SettingsService    $settingsService)
 	{
 		parent::__construct();
@@ -71,7 +71,7 @@ class ProgressCommand extends Command {
 		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->imageMapper       = $imageMapper;
 		$this->faceMapper        = $faceMapper;
-		$this->personMapper      = $personMapper;
+		$this->clusterMapper      = $clusterMapper;
 		$this->settingsService   = $settingsService;
 	}
 

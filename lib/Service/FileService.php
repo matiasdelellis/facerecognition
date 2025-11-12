@@ -87,7 +87,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Folder
 	 */
-	public function getUserFolder($userId = null): Folder {
+	public function getUserFolder(?string $userId = null): Folder {
 		return $this->rootFolder->getUserFolder($this->userId ?? $userId);
 	}
 
@@ -97,7 +97,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Node | null
 	 */
-	public function getFileById(int $fileId, $userId = null): ?Node {
+	public function getFileById(int $fileId, ?string $userId = null): ?Node {
 		$files = $this->rootFolder->getUserFolder($this->userId ?? $userId)->getById($fileId);
 		if (count($files) === 0) {
 			return null;
@@ -112,7 +112,7 @@ class FileService {
 	 * @param string $userId
 	 * @return Node | null
 	 */
-	public function getFileByPath($fullpath, $userId = null): ?Node {
+	public function getFileByPath($fullpath, ?string $userId = null): ?Node {
 		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
 		return $file;
 	}

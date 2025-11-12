@@ -85,7 +85,7 @@ class FaceController extends Controller {
 	 * @return DataDisplayResponse|JSONResponse
 	 */
 	public function getThumb ($id, $size) {
-		$face = $this->faceMapper->find($id);
+		$face = $this->faceMapper->find($id, $this->userId);
 		if ($face === null) {
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}

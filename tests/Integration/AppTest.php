@@ -24,18 +24,16 @@
 namespace OCA\FaceRecognition\Tests\Integration;
 
 use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(\OCA\FaceRecognition\AppInfo\Application::class)]
+#[CoversClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[CoversClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[CoversClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class AppTest extends IntegrationTestCase {
 
-	public function setUp(): void {
-		parent::setUp();
-		$app = new App('facerecognition');
-		$this->container = $app->getContainer();
-	}
-
 	public function testAppInstalled() {
-		$appManager = $this->container->query('OCP\App\IAppManager');
+		$appManager = self::$container->get('OCP\App\IAppManager');
 		$this->assertTrue($appManager->isInstalled('facerecognition'));
 	}
 }

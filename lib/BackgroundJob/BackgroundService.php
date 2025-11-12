@@ -83,7 +83,7 @@ class BackgroundService {
 	 *
 	 * @return void
 	 */
-	public function execute(int $timeout, bool $verbose, IUser $user = null, int $maxImageArea = null, string $runMode) {
+	public function execute(int $timeout, bool $verbose, ?IUser $user = null, ?int $maxImageArea = null, string $runMode) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;

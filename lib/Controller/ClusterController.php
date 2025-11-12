@@ -44,6 +44,7 @@ use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class ClusterController extends Controller {
 
@@ -73,6 +74,7 @@ class ClusterController extends Controller {
 	                            ClusterMapper    $personmapper,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
+								LoggerInterface $logger,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
@@ -83,6 +85,7 @@ class ClusterController extends Controller {
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
+		$this->setLogger($logger);
 	}
 
 	/**

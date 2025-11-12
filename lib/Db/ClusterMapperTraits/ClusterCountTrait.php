@@ -19,7 +19,7 @@ trait ClusterCountTrait
         try {
             $count = count($this->findDistinctNames($userId, $modelId));
 
-            $this->logDebug('Count completed', [
+            $this->logInfo('Count completed', [
                 'userId' => $userId,
                 'modelId' => $modelId,
                 'count' => $count
@@ -74,7 +74,7 @@ trait ClusterCountTrait
 
             $count = $data !== false ? (int)$data[0] : 0;
 
-            $this->logDebug('Count completed', [
+            $this->logInfo('Count completed', [
                 'userId' => $userId,
                 'modelId' => $modelId,
                 'onlyInvalid' => $onlyInvalid,

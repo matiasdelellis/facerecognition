@@ -103,7 +103,7 @@ class ImageMapper extends QBMapper {
 			->setParameter('user', $image->getUser())
 			->setParameter('file', $image->getFile())
 			->setParameter('model', $image->getModel());
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$row = $resultStatement->fetch();
 		$resultStatement->closeCursor();
 		return $row ? (int)$row['id'] : null;
@@ -116,7 +116,7 @@ class ImageMapper extends QBMapper {
 			->from($this->getTableName())
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('model', $model);
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -132,7 +132,7 @@ class ImageMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
 			->setParameter('is_processed', True);
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -148,7 +148,7 @@ class ImageMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
 			->setParameter('is_processed', True);
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -170,7 +170,7 @@ class ImageMapper extends QBMapper {
 			      ->setParameter('is_processed', true);
 		}
 
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -290,14 +290,14 @@ class ImageMapper extends QBMapper {
 				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
-				->execute();
+				->executeStatement();
 
 			// Delete all previous faces
 			//
 			$qb = $this->db->getQueryBuilder();
 			$qb->delete('facerecog_faces')
 				->where($qb->expr()->eq('image', $qb->createNamedParameter($image->id)))
-				->execute();
+				->executeStatement();
 
 			// Insert all faces
 			//
@@ -328,7 +328,7 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($image->getUser())))
 			->andWhere($qb->expr()->eq('file', $qb->createNamedParameter($image->getFile())))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($image->getModel())))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -346,7 +346,7 @@ class ImageMapper extends QBMapper {
 			->set("last_processed_time", $qb->createNamedParameter(null))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->isNotNull('error'))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -360,7 +360,7 @@ class ImageMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -376,7 +376,7 @@ class ImageMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->execute();
+			->executeStatement();
 	}
 
 }

@@ -25,6 +25,7 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCP\Image as OCP_Image;
 
+use OCP\App\IAppManager;
 use OCP\IRequest;
 use OCP\IPreview;
 use OCP\IConfig;
@@ -47,6 +48,9 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class FaceController extends Controller {
+
+	/** @var IAppManager */
+	private $appManager;
 
 	/** @var IRootFolder */
 	private $rootFolder;
@@ -71,6 +75,7 @@ class FaceController extends Controller {
 
 	public function __construct($AppName,
 	                            IRequest        $request,
+	                            IAppManager     $appManager,
 	                            IRootFolder     $rootFolder,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
@@ -81,6 +86,7 @@ class FaceController extends Controller {
 	{
 		parent::__construct($AppName, $request);
 
+		$this->appManager      = $appManager;
 		$this->rootFolder      = $rootFolder;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
@@ -305,7 +311,7 @@ class FaceController extends Controller {
 		$eyesL = sqrt(pow($eyesW, 2) + pow($eyesH, 2));
 		$angle = rad2deg(atan(-$eyesH/$eyesW));
 
-		$glassesGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/glasses.png');
+		$glassesGd = imagecreatefrompng($this->appManager->getAppPath('facerecognition') . '/img/glasses.png');
 		if ($glassesGd === false) return;
 
 		$fillColor = imagecolorallocatealpha($glassesGd, 0, 0, 0, 127);
@@ -324,7 +330,7 @@ class FaceController extends Controller {
 
 		imagecopyresized($imgResource, $glassesGd, $glassesDestX, $glassesDestY, 0, 0, $glassesDestW, $glassesDestH, $glassesW, $glassesH);
 
-		$mustacheGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/mustache.png');
+		$mustacheGd = imagecreatefrompng($this->appManager->getAppPath('facerecognition') . '/img/mustache.png');
 		if ($mustacheGd === false) return;
 
 		$fillColor = imagecolorallocatealpha($mustacheGd, 0, 0, 0, 127);

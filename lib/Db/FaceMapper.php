@@ -121,7 +121,7 @@ class FaceMapper extends QBMapper {
 		$query = $qb
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -147,7 +147,7 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->isNull('person'))
 			->orderBy('f.creation_time', 'ASC');
-		$cursor = $qb->execute();
+		$cursor = $qb->executeQuery();
 		$row = $cursor->fetch();
 		if($row === false) {
 			$cursor->closeCursor();
@@ -289,7 +289,7 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -310,7 +310,7 @@ class FaceMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -334,7 +334,7 @@ class FaceMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)
 			->setParameter('model', $modelId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -358,7 +358,7 @@ class FaceMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('model', $model)
 			->setParameter('user', $userId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -391,7 +391,7 @@ class FaceMapper extends QBMapper {
 				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])
-			->execute();
+			->executeStatement();
 
 		$face->setId($qb->getLastInsertId());
 

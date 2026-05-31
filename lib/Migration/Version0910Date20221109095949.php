@@ -85,7 +85,7 @@ class Version0910Date20221109095949 extends SimpleMigrationStep {
 		$query = $this->connection->getQueryBuilder();
 		$query->select('*')->from('facerecog_faces');
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		while ($row = $result->fetch()) {
 			$update->setParameter('new_x', $row['left']);
 			$update->setParameter('new_y', $row['top']);

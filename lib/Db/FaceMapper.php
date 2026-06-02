@@ -420,6 +420,11 @@ class FaceMapper extends QBMapper {
 	/**
 	 * Insert a manually added face. No descriptor/landmarks (user-drawn, no model data).
 	 * is_manual is set to true so the face is excluded from clustering.
+	 *
+	 * BUG (not yet fixed): is_groupable is hardcoded to false here, so $face->isGroupable
+	 * (= the "use for clustering" intent from the caller) is silently discarded. Additionally,
+	 * getGroupableFaces() filters is_manual=false, excluding manual faces at a second point.
+	 * Fix both together once descriptor extraction for manually-added faces is implemented.
 	 */
 	public function insertManualFace(Face $face): Face {
 		$qb = $this->db->getQueryBuilder();

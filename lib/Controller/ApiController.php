@@ -501,6 +501,21 @@ class ApiController extends NcApiController {
 		    ($x + $width) > 1.0001 || ($y + $height) > 1.0001)
 			return new JSONResponse(['error' => 'invalid rectangle'], Http::STATUS_BAD_REQUEST);
 
+		// Convert the fractional rectangle to original-image pixels and reject
+		// degenerate boxes that would round down to a zero-area face.
+		$pxX      = (int) round($x * $imageWidth);
+		$pxY      = (int) round($y * $imageHeight);
+		$pxWidth  = (int) round($width * $imageWidth);
+		$pxHeight = (int) round($height * $imageHeight);
+		if ($pxWidth < 1 || $pxHeight < 1)
+			return new JSONResponse(['error' => 'rectangle too small'], Http::STATUS_BAD_REQUEST);
+
+		// Verify the file exists and is accessible by the current user. getFileNode()
+		// resolves the id inside the user's own storage, so ids that belong to other
+		// users or that do not exist are rejected before we create any rows.
+		if ($this->urlService->getFileNode($fileId) === null)
+			return new JSONResponse(['error' => 'file not found or not accessible'], Http::STATUS_NOT_FOUND);
+
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		// Ensure a facerecog_images row exists for (user, file, model).
@@ -520,10 +535,10 @@ class ApiController extends NcApiController {
 		$face = new Face();
 		$face->setImage($image->getId());
 		$face->setPerson($person->getId());
-		$face->setX((int) round($x * $imageWidth));
-		$face->setY((int) round($y * $imageHeight));
-		$face->setWidth((int) round($width * $imageWidth));
-		$face->setHeight((int) round($height * $imageHeight));
+		$face->setX($pxX);
+		$face->setY($pxY);
+		$face->setWidth($pxWidth);
+		$face->setHeight($pxHeight);
 		$face->setConfidence(1.0);
 		$face->landmarks = [];
 		$face->descriptor = [];

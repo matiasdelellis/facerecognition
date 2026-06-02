@@ -534,9 +534,10 @@ class ApiController extends NcApiController {
 		$face = $this->faceMapper->insertManualFace($face);
 
 		return new JSONResponse([
-			'faceId'   => $face->getId(),
-			'personId' => $person->getId(),
-			'name'     => $person->getName(),
+			'faceId'           => $face->getId(),
+			'personId'         => $person->getId(),
+			'name'             => $person->getName(),
+			'clusteringQueued' => false,
 		], Http::STATUS_OK);
 	}
 

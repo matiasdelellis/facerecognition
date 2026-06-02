@@ -177,6 +177,7 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
 			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
+			->andWhere($qb->expr()->neq('descriptor', $qb->createNamedParameter('[]')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)

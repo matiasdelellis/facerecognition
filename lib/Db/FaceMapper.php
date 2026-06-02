@@ -177,16 +177,11 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
 			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->isNull('is_manual'),
-				$qb->expr()->eq('is_manual', $qb->createParameter('is_manual'))
-			))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL)
-			->setParameter('is_manual', false, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
 
 		$result = $qb->executeQuery();
 		$rows = $result->fetchAll();
@@ -419,12 +414,9 @@ class FaceMapper extends QBMapper {
 
 	/**
 	 * Insert a manually added face. No descriptor/landmarks (user-drawn, no model data).
-	 * is_manual is set to true so the face is excluded from clustering.
-	 *
-	 * BUG (not yet fixed): is_groupable is hardcoded to false here, so $face->isGroupable
-	 * (= the "use for clustering" intent from the caller) is silently discarded. Additionally,
-	 * getGroupableFaces() filters is_manual=false, excluding manual faces at a second point.
-	 * Fix both together once descriptor extraction for manually-added faces is implemented.
+	 * is_manual=true pins the face to its assigned person so the clustering job does not
+	 * reassign it. If $face->isGroupable is true the face participates in clustering
+	 * (descriptor extraction must happen before it is useful there).
 	 */
 	public function insertManualFace(Face $face): Face {
 		$qb = $this->db->getQueryBuilder();
@@ -440,7 +432,7 @@ class FaceMapper extends QBMapper {
 				'confidence' => $qb->createNamedParameter($face->confidence),
 				'landmarks' => $qb->createNamedParameter(json_encode([])),
 				'descriptor' => $qb->createNamedParameter(json_encode([])),
-				'is_groupable' => $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL),
+				'is_groupable' => $qb->createNamedParameter((bool) $face->isGroupable, IQueryBuilder::PARAM_BOOL),
 				'is_manual' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL),
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])

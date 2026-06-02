@@ -527,11 +527,6 @@ class ApiController extends NcApiController {
 		$face->setConfidence(1.0);
 		$face->landmarks = [];
 		$face->descriptor = [];
-		// TODO: useForClustering has no effect yet — two issues prevent it:
-		// (1) insertManualFace (FaceMapper) hardcodes is_groupable=false, ignoring this value.
-		// (2) getGroupableFaces() requires is_manual=false, excluding all manual faces from
-		//     clustering regardless of is_groupable. Both must be fixed together with
-		//     descriptor extraction (DLib re-processing of the image region).
 		$face->isGroupable = $useForClustering;
 		$face->isManual = true;
 		$face->setCreationTime(new \DateTime());

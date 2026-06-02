@@ -424,4 +424,181 @@ class ApiController extends NcApiController {
 		return new JSONResponse($person, Http::STATUS_OK);
 	}
 
+	/**
+	 * List faces for a single file so a client can render existing bounding boxes
+	 * (e.g. when drawing a new manual face on top of the photo).
+	 *
+	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
+	 */
+	public function getFacesForFile(int $fileId): JSONResponse {
+		if (!$this->settingsService->getUserEnabled($this->userId))
+			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+		$faces = $this->faceMapper->findFromFile($this->userId, $modelId, $fileId);
+
+		$resp = [];
+		foreach ($faces as $face) {
+			$personName = null;
+			if ($face->getPerson() !== null) {
+				try {
+					$person = $this->personMapper->find($this->userId, $face->getPerson());
+					$personName = $person->getName();
+				} catch (\Exception $e) {
+					// Person vanished — ignore name
+				}
+			}
+			$resp[] = [
+				'id'        => $face->getId(),
+				'x'         => $face->getX(),
+				'y'         => $face->getY(),
+				'width'     => $face->getWidth(),
+				'height'    => $face->getHeight(),
+				'person'    => $face->getPerson(),
+				'personName'=> $personName,
+				'isManual'  => (bool) $face->getIsManual(),
+			];
+		}
+
+		return new JSONResponse($resp, Http::STATUS_OK);
+	}
+
+	/**
+	 * Add a manually drawn face to a photo and attach it to a named person cluster.
+	 * Coordinates are fractions (0..1) of the original image. imageWidth/imageHeight
+	 * are the natural pixel dimensions of the photo (sent by the client) so the
+	 * backend can store pixel coordinates consistent with detected faces.
+	 *
+	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
+	 */
+	public function addManualFace(
+		int    $fileId,
+		string $personName,
+		float  $x,
+		float  $y,
+		float  $width,
+		float  $height,
+		int    $imageWidth,
+		int    $imageHeight,
+		bool   $useForClustering = false
+	): JSONResponse {
+		if (!$this->settingsService->getUserEnabled($this->userId))
+			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
+
+		if (trim($personName) === '')
+			return new JSONResponse(['error' => 'personName must not be empty'], Http::STATUS_BAD_REQUEST);
+		if ($imageWidth <= 0 || $imageHeight <= 0)
+			return new JSONResponse(['error' => 'invalid image dimensions'], Http::STATUS_BAD_REQUEST);
+		if ($x < 0 || $y < 0 || $width <= 0 || $height <= 0 ||
+		    ($x + $width) > 1.0001 || ($y + $height) > 1.0001)
+			return new JSONResponse(['error' => 'invalid rectangle'], Http::STATUS_BAD_REQUEST);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		// Ensure a facerecog_images row exists for (user, file, model).
+		$image = $this->imageMapper->findFromFile($this->userId, $modelId, $fileId);
+		if ($image === null) {
+			$image = new Image();
+			$image->setUser($this->userId);
+			$image->setFile($fileId);
+			$image->setModel($modelId);
+			$image->setIsProcessed(false);
+			$image = $this->imageMapper->insert($image);
+		}
+
+		$person = $this->findOrCreatePerson($modelId, $personName);
+
+		// Build the manual face with pixel coordinates relative to the original image.
+		$face = new Face();
+		$face->setImage($image->getId());
+		$face->setPerson($person->getId());
+		$face->setX((int) round($x * $imageWidth));
+		$face->setY((int) round($y * $imageHeight));
+		$face->setWidth((int) round($width * $imageWidth));
+		$face->setHeight((int) round($height * $imageHeight));
+		$face->setConfidence(1.0);
+		$face->landmarks = [];
+		$face->descriptor = [];
+		// is_groupable stores the user's intent (may be used for future descriptor extraction);
+		// the clustering algorithm filters on is_manual=true anyway, so this has no effect today.
+		$face->isGroupable = $useForClustering;
+		$face->isManual = true;
+		$face->setCreationTime(new \DateTime());
+
+		$face = $this->faceMapper->insertManualFace($face);
+
+		return new JSONResponse([
+			'faceId'   => $face->getId(),
+			'personId' => $person->getId(),
+			'name'     => $person->getName(),
+		], Http::STATUS_OK);
+	}
+
+	/**
+	 * Reassign a single already-detected face to a different person cluster.
+	 * Scoped to THIS face only — does not touch other faces that may belong to
+	 * the original cluster on other photos. Sets is_manual=true so the
+	 * background clustering job will not revert the assignment.
+	 *
+	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
+	 */
+	public function reassignFace(int $faceId, string $personName): JSONResponse {
+		if (!$this->settingsService->getUserEnabled($this->userId))
+			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
+
+		if (trim($personName) === '')
+			return new JSONResponse(['error' => 'personName must not be empty'], Http::STATUS_BAD_REQUEST);
+
+		$face = $this->faceMapper->find($faceId);
+		if ($face === null)
+			return new JSONResponse(['error' => 'face not found'], Http::STATUS_NOT_FOUND);
+
+		// Ownership check: verify the face's image belongs to the current user.
+		$image = $this->imageMapper->find($this->userId, $face->getImage());
+		if ($image === null)
+			return new JSONResponse([], Http::STATUS_FORBIDDEN);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$person = $this->findOrCreatePerson($modelId, $personName);
+
+		$this->faceMapper->reassignFace($faceId, $person->getId());
+
+		return new JSONResponse([
+			'faceId'   => $faceId,
+			'personId' => $person->getId(),
+			'name'     => $person->getName(),
+		], Http::STATUS_OK);
+	}
+
+	/**
+	 * Find a Person cluster by name for the current user/model, or create a new one.
+	 */
+	private function findOrCreatePerson(int $modelId, string $personName): Person {
+		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		if (!empty($clusters)) {
+			return $clusters[0];
+		}
+
+		$person = new Person();
+		$person->setUser($this->userId);
+		$person->setName($personName);
+		$person->setIsValid(true);
+		$person->setIsVisible(true);
+		$person->setLastGenerationTime(new \DateTime());
+		return $this->personMapper->insert($person);
+	}
+
 }

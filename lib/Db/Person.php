@@ -84,6 +84,7 @@ class Person extends Entity implements JsonSerializable {
 		$this->addType('user', 'string');
 		$this->addType('isVisible', 'bool');
 		$this->addType('isValid', 'bool');
+		$this->addType('lastGenerationTime', 'datetime');
 	}
 
 	public function jsonSerialize() {

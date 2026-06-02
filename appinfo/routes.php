@@ -195,6 +195,24 @@ return ['routes' =>
 		'url'  => '/api/2.0/face/{faceId}/detach',
 		'verb' => 'PUT'
 	],
+	// List all faces for a given file (used by the manual-face dialog overlay)
+	[
+		'name' => 'Api#getFacesForFile',
+		'url'  => '/api/2.0/file/{fileId}/faces',
+		'verb' => 'GET'
+	],
+	// Add a manually drawn face and attach it to a named person cluster
+	[
+		'name' => 'Api#addManualFace',
+		'url'  => '/api/2.0/face/manual',
+		'verb' => 'POST'
+	],
+	// Reassign a single detected face to a different person cluster (per-photo fix)
+	[
+		'name' => 'Api#reassignFace',
+		'url'  => '/api/2.0/face/{faceId}/reassign',
+		'verb' => 'POST'
+	],
 
 ], 'ocs' => [
 

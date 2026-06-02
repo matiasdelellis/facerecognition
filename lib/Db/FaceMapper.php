@@ -82,7 +82,7 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'creation_time')
+		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'is_manual', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
@@ -117,7 +117,7 @@ class FaceMapper extends QBMapper {
 		$query = $qb
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
-		$resultStatement = $query->execute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -143,7 +143,7 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->isNull('person'))
 			->orderBy('f.creation_time', 'ASC');
-		$cursor = $qb->execute();
+		$cursor = $qb->executeQuery();
 		$row = $cursor->fetch();
 		if($row === false) {
 			$cursor->closeCursor();
@@ -177,11 +177,16 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
 			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->isNull('is_manual'),
+				$qb->expr()->eq('is_manual', $qb->createParameter('is_manual'))
+			))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_groupable', true, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_manual', false, IQueryBuilder::PARAM_BOOL);
 
 		$result = $qb->executeQuery();
 		$rows = $result->fetchAll();
@@ -203,11 +208,16 @@ class FaceMapper extends QBMapper {
 				$qb->expr()->lt('confidence', $qb->createParameter('min_confidence')),
 				$qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable'))
 			))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->isNull('is_manual'),
+				$qb->expr()->eq('is_manual', $qb->createParameter('is_manual'))
+			))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_manual', false, IQueryBuilder::PARAM_BOOL);
 
 		$result = $qb->executeQuery();
 		$rows = $result->fetchAll();
@@ -285,7 +295,7 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -306,7 +316,7 @@ class FaceMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -330,7 +340,7 @@ class FaceMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('user', $userId)
 			->setParameter('model', $modelId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -354,7 +364,7 @@ class FaceMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('model', $model)
 			->setParameter('user', $userId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -387,7 +397,49 @@ class FaceMapper extends QBMapper {
 				'descriptor' => $qb->createNamedParameter(json_encode($face->descriptor)),
 				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
 			])
-			->execute();
+			->executeStatement();
+
+		$face->setId($qb->getLastInsertId());
+
+		return $face;
+	}
+
+	/**
+	 * Reassign a single face to a different person cluster and mark it manual
+	 * so the background clustering job leaves it in place on the next run.
+	 */
+	public function reassignFace(int $faceId, int $personId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('person', $qb->createNamedParameter($personId))
+			->set('is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
+	}
+
+	/**
+	 * Insert a manually added face. No descriptor/landmarks (user-drawn, no model data).
+	 * is_manual is set to true so the face is excluded from clustering.
+	 */
+	public function insertManualFace(Face $face): Face {
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->insert($this->getTableName())
+			->values([
+				'image' => $qb->createNamedParameter($face->image),
+				'person' => $qb->createNamedParameter($face->person),
+				'x' => $qb->createNamedParameter($face->x),
+				'y' => $qb->createNamedParameter($face->y),
+				'width' => $qb->createNamedParameter($face->width),
+				'height' => $qb->createNamedParameter($face->height),
+				'confidence' => $qb->createNamedParameter($face->confidence),
+				'landmarks' => $qb->createNamedParameter(json_encode([])),
+				'descriptor' => $qb->createNamedParameter(json_encode([])),
+				'is_groupable' => $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL),
+				'is_manual' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL),
+				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
+			])
+			->executeStatement();
 
 		$face->setId($qb->getLastInsertId());
 

@@ -548,11 +548,16 @@ class ApiController extends NcApiController {
 
 		$face = $this->faceMapper->insertManualFace($face);
 
+		// When the user asked to use this face for automatic recognition, the
+		// face is stored groupable but without a descriptor. The background
+		// ManualFaceDescriptorTask will crop the marked region, try to detect a
+		// face there and, if found, compute the descriptor so clustering can use
+		// it. Until then it is queued, not yet clustered.
 		return new JSONResponse([
 			'faceId'           => $face->getId(),
 			'personId'         => $person->getId(),
 			'name'             => $person->getName(),
-			'clusteringQueued' => false,
+			'clusteringQueued' => $useForClustering,
 		], Http::STATUS_OK);
 	}
 

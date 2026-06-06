@@ -138,7 +138,7 @@ class ManualFaceApiTest extends TestCase {
 		$this->assertEquals(Http::STATUS_NOT_FOUND, $resp->getStatus());
 	}
 
-	public function testAddManualFaceHappyPathReportsClusteringNotQueued() {
+	public function testAddManualFaceHappyPathQueuesClusteringWhenRequested() {
 		$this->enableUser();
 
 		$file = $this->createMock(File::class);
@@ -163,8 +163,33 @@ class ManualFaceApiTest extends TestCase {
 		$this->assertEquals(100, $data['faceId']);
 		$this->assertEquals(5, $data['personId']);
 		$this->assertEquals('Alice', $data['name']);
-		// No descriptor is extracted yet, so clustering can never pick the face up.
-		$this->assertFalse($data['clusteringQueued']);
+		// useForClustering=true: the face is queued for the background descriptor
+		// task, which will decide whether a face is actually there.
+		$this->assertTrue($data['clusteringQueued']);
+	}
+
+	public function testAddManualFaceDoesNotQueueClusteringByDefault() {
+		$this->enableUser();
+
+		$file = $this->createMock(File::class);
+		$this->urlService->method('getFileNode')->with(42)->willReturn($file);
+
+		$image = new Image();
+		$image->setId(10);
+		$this->imageMapper->method('findFromFile')->willReturn($image);
+
+		$this->personMapper->method('findByName')->willReturn([$this->makePerson(5, 'Alice')]);
+
+		$this->faceMapper->method('insertManualFace')
+			->willReturnCallback(function (Face $face) {
+				$face->setId(100);
+				return $face;
+			});
+
+		$resp = $this->controller->addManualFace(42, 'Alice', 0.1, 0.1, 0.2, 0.2, 1000, 1000, false);
+
+		$this->assertEquals(Http::STATUS_OK, $resp->getStatus());
+		$this->assertFalse($resp->getData()['clusteringQueued']);
 	}
 
 	// --- reassignFace -----------------------------------------------------

@@ -443,4 +443,54 @@ class FaceMapper extends QBMapper {
 
 		return $face;
 	}
+
+	/**
+	 * Manual faces the user flagged for clustering (is_groupable = true) that
+	 * still have no descriptor (the model has not confirmed a face there yet).
+	 * These are picked up by the background descriptor-extraction task.
+	 *
+	 * @return array<int, array<string, mixed>> rows with id, file, x, y, width, height
+	 */
+	public function findManualFacesPendingDescriptor(string $userId, int $modelId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'i.file', 'f.x', 'f.y', 'f.width', 'f.height')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('f.is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->eq('f.is_groupable', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->eq('f.descriptor', $qb->createNamedParameter('[]')));
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
+	}
+
+	/**
+	 * Store the descriptor computed for a manual face. The face stays groupable
+	 * so the clustering job will treat it like any other detected face.
+	 */
+	public function setManualFaceDescriptor(int $faceId, array $descriptor): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('descriptor', $qb->createNamedParameter(json_encode($descriptor)))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
+	}
+
+	/**
+	 * Give up on using a manual face for clustering (no face could be detected
+	 * in the marked region). The face stays pinned to its person but is excluded
+	 * from clustering, and it is no longer picked up as pending.
+	 */
+	public function markManualFaceNotGroupable(int $faceId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('is_groupable', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
+	}
 }

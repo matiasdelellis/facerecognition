@@ -163,4 +163,109 @@ class MergeClustersTest extends TestCase {
 		$this->assertEquals($result[14], [115, 116]);
 		$this->assertEquals($result[15], [117, 118, 119]);
 	}
+
+	/**
+	 * Passing an empty manual-face map must not change the legacy behavior:
+	 * the majority vote still decides the mapping.
+	 */
+	public function testMergeClustersWithoutManualMapIsUnchanged() {
+		$old = array(10=>[101, 102, 103]);
+		$new = array(1=>[101, 102, 103, 104]);
+		// Same result with no third argument and with an explicit empty map.
+		$this->assertEquals(
+			$this->createClusterTask->mergeClusters($old, $new),
+			$this->createClusterTask->mergeClusters($old, $new, [])
+		);
+		$result = $this->createClusterTask->mergeClusters($old, $new, []);
+		$this->assertEquals(count($result), 1);
+		$this->assertEquals($result[10], [101, 102, 103, 104]);
+	}
+
+	/**
+	 * A manual face must keep its own person even when the cluster it lands in is
+	 * dominated by another (named) person. Without anchoring the majority vote
+	 * would move the manual face to person 10 and drop person 20 (the user-set
+	 * name). Face 201 is the manual face pinned to person 20.
+	 */
+	public function testMergeClustersAnchorsManualFaceOverMajority() {
+		$old = array(10=>[101, 102, 103], 20=>[201]);
+		// Chinese whispers grouped the manual face 201 together with person 10's faces.
+		$new = array(1=>[101, 102, 103, 201]);
+
+		// Legacy behavior: majority wins, manual face stolen by person 10.
+		$legacy = $this->createClusterTask->mergeClusters($old, $new);
+		$this->assertEquals($legacy[10], [101, 102, 103, 201]);
+		$this->assertArrayNotHasKey(20, $legacy);
+
+		// Anchored: the whole cluster is forced onto the manual person 20, so the
+		// user-set name survives and the matching faces inherit it.
+		$result = $this->createClusterTask->mergeClusters($old, $new, [201 => 20]);
+		$this->assertEquals(count($result), 1);
+		$this->assertEquals($result[20], [101, 102, 103, 201]);
+		$this->assertArrayNotHasKey(10, $result);
+	}
+
+	/**
+	 * A manual face that would otherwise be split off into a brand-new, unnamed
+	 * cluster must instead stay with its user-set person. Here face 201 (manual,
+	 * person 20) clusters with a previously unassigned face 301; the legacy merge
+	 * creates a new null-name person for them.
+	 */
+	public function testMergeClustersAnchorsManualFaceInNewCluster() {
+		// Faces 301 and 302 were previously unassigned (no person), so they
+		// outnumber the manual face and the legacy merge spawns a fresh,
+		// unnamed person (id 21) for the whole group, detached from person 20.
+		$old = array(20=>[201]);
+		$new = array(1=>[201, 301, 302]);
+
+		$legacy = $this->createClusterTask->mergeClusters($old, $new);
+		$this->assertArrayNotHasKey(20, $legacy);
+		$this->assertEquals($legacy[21], [201, 301, 302]);
+
+		// Anchored: face 201 keeps person 20 and the matching faces inherit it.
+		$result = $this->createClusterTask->mergeClusters($old, $new, [201 => 20]);
+		$this->assertEquals(count($result), 1);
+		$this->assertEquals($result[20], [201, 301, 302]);
+	}
+
+	/**
+	 * When two manual faces pinned to different persons land in the same cluster,
+	 * each must keep its own person (neither name may be lost). Non-manual faces
+	 * follow the dominant manual person (ties broken by lowest person ID).
+	 */
+	public function testMergeClustersAnchorsConflictingManualFaces() {
+		$old = array(20=>[201], 30=>[202], 40=>[301, 302]);
+		// All grouped together by clustering.
+		$new = array(1=>[201, 202, 301, 302]);
+
+		$result = $this->createClusterTask->mergeClusters($old, $new, [201 => 20, 202 => 30]);
+
+		// Each manual face keeps its own person.
+		$this->assertContains(201, $result[20]);
+		$this->assertContains(202, $result[30]);
+		// Manual faces are not mixed into the other person.
+		$this->assertNotContains(202, $result[20]);
+		$this->assertNotContains(201, $result[30]);
+		// Auto faces follow the dominant manual person (tie -> lowest id 20).
+		$this->assertContains(301, $result[20]);
+		$this->assertContains(302, $result[20]);
+		// Every face is accounted for exactly once.
+		$allFaces = array_merge(...array_values($result));
+		sort($allFaces);
+		$this->assertEquals([201, 202, 301, 302], $allFaces);
+	}
+
+	/**
+	 * Manual face ids that are not part of the current clustering run (they never
+	 * appear in any new cluster) must have no effect on the result.
+	 */
+	public function testMergeClustersIgnoresManualFacesNotInClustering() {
+		$old = array(10=>[101, 102]);
+		$new = array(1=>[101, 102]);
+		// 999 is a manual face that is not part of this run.
+		$result = $this->createClusterTask->mergeClusters($old, $new, [999 => 20]);
+		$this->assertEquals(count($result), 1);
+		$this->assertEquals($result[10], [101, 102]);
+		$this->assertArrayNotHasKey(20, $result);
+	}
 }

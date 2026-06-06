@@ -470,6 +470,32 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Manual faces the user pinned to a person (is_manual = true and a person
+	 * assigned). The clustering job uses these to anchor the faces so the merge
+	 * never reassigns them to a different person or drops their user-set name.
+	 * Faces that take no part in clustering are harmless here: their ids simply
+	 * never appear in any cluster, so anchoring them has no effect.
+	 *
+	 * @return array<int, array<string, mixed>> rows with id, person
+	 */
+	public function findManualFacesWithPerson(string $userId, int $modelId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.person')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('f.is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->isNotNull('f.person'));
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
+	}
+
+	/**
 	 * Store the descriptor computed for a manual face. The face stays groupable
 	 * so the clustering job will treat it like any other detected face.
 	 */

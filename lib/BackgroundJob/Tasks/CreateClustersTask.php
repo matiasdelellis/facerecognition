@@ -202,8 +202,17 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		unset($faces);
 		unset($nonGroupables);
 
+		// Map of faceId => personId for every manually marked face. The merge
+		// uses it to anchor these faces to the person (and name) the user set,
+		// so clustering never reassigns a manual face to another person nor
+		// drops it into a fresh, unnamed cluster.
+		$manualFacePersons = [];
+		foreach ($this->faceMapper->findManualFacesWithPerson($userId, $modelId) as $manualRow) {
+			$manualFacePersons[(int) $manualRow['id']] = (int) $manualRow['person'];
+		}
+
 		// New merge
-		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
+		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters, $manualFacePersons);
 
 		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
 
@@ -378,8 +387,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 	/**
 	 * todo: only reason this is public is because of tests. Go figure it out better.
+	 *
+	 * @param array $oldCluster Current clusters, keyed by existing person ID.
+	 * @param array $newCluster Freshly computed clusters (chinese-whispers labels as keys).
+	 * @param array $manualFacePersons Optional faceId => personId map of manually
+	 *        marked faces. Any new cluster that contains such a face is forced onto
+	 *        that face's person (overriding the majority vote below), so the user-set
+	 *        name is preserved and auto-detected faces in the cluster inherit it.
 	 */
-	public function mergeClusters(array $oldCluster, array $newCluster): array {
+	public function mergeClusters(array $oldCluster, array $newCluster, array $manualFacePersons = []): array {
 		// Create map of face transitions
 		$transitions = array();
 		foreach ($newCluster as $newPerson=>$newFaces) {
@@ -429,14 +445,91 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 
 		$result = array();
 		foreach ($newCluster as $newPerson => $newFaces) {
+			// If the cluster holds manually marked faces, anchor it: each manual
+			// face keeps its own person, and the remaining faces follow the
+			// dominant manual person. This overrides the majority mapping above.
+			$anchored = $this->resolveAnchoredFaces($newFaces, $manualFacePersons);
+			if ($anchored !== null) {
+				foreach ($anchored as $personId => $personFaces) {
+					$this->appendFacesToResult($result, $personId, $personFaces);
+				}
+				continue;
+			}
+
 			$oldPerson = $newOldPersonMapping[$newPerson];
 			if ($oldPerson === 0) {
-				$result[$maxOldPersonId] = $newFaces;
+				$this->appendFacesToResult($result, $maxOldPersonId, $newFaces);
 				$maxOldPersonId++;
 			} else {
-				$result[$oldPerson] = $newFaces;
+				$this->appendFacesToResult($result, $oldPerson, $newFaces);
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * Distribute the faces of a single new cluster across the persons of the
+	 * manual faces it contains. Each manual face stays with its own person; every
+	 * other (auto-detected) face follows the dominant manual person (the one with
+	 * the most manual faces in the cluster, ties broken by lowest person ID).
+	 *
+	 * @param array $faces Face IDs of one new cluster.
+	 * @param array $manualFacePersons faceId => personId map of manual faces.
+	 *
+	 * @return array<int, array>|null personId => faceIds, or null when the cluster
+	 *         contains no manual face (caller falls back to the majority mapping).
+	 */
+	private function resolveAnchoredFaces(array $faces, array $manualFacePersons): ?array {
+		if (count($manualFacePersons) === 0) {
+			return null;
+		}
+
+		// Count manual faces per pinned person within this cluster.
+		$manualPersonCounts = array();
+		foreach ($faces as $face) {
+			$faceId = (int) $face;
+			if (array_key_exists($faceId, $manualFacePersons)) {
+				$person = $manualFacePersons[$faceId];
+				$manualPersonCounts[$person] = ($manualPersonCounts[$person] ?? 0) + 1;
+			}
+		}
+
+		if (count($manualPersonCounts) === 0) {
+			return null;
+		}
+
+		// Dominant manual person: most manual faces, ties broken by lowest ID.
+		$dominantPerson = null;
+		$dominantCount = -1;
+		foreach ($manualPersonCounts as $person => $count) {
+			if ($count > $dominantCount || ($count === $dominantCount && $person < $dominantPerson)) {
+				$dominantPerson = $person;
+				$dominantCount = $count;
+			}
+		}
+
+		$distribution = array();
+		foreach ($faces as $face) {
+			$faceId = (int) $face;
+			$person = array_key_exists($faceId, $manualFacePersons) ? $manualFacePersons[$faceId] : $dominantPerson;
+			$distribution[$person][] = $face;
+		}
+		return $distribution;
+	}
+
+	/**
+	 * Append faces to a person's bucket in the result, merging when several new
+	 * clusters resolve to the same person (which anchoring can produce).
+	 *
+	 * @param array $result Result map (personId => faceIds), modified in place.
+	 * @param int $personId Target person ID.
+	 * @param array $faces Face IDs to add.
+	 */
+	private function appendFacesToResult(array &$result, int $personId, array $faces): void {
+		if (array_key_exists($personId, $result)) {
+			$result[$personId] = array_merge($result[$personId], $faces);
+		} else {
+			$result[$personId] = $faces;
+		}
 	}
 }

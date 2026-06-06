@@ -292,11 +292,17 @@ class ImageMapper extends QBMapper {
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
 				->executeStatement();
 
-			// Delete all previous faces
+			// Delete all previously detected faces, but keep manually added ones.
+			// Manual faces (is_manual = true) are user-curated and have no model
+			// descriptor, so re-processing would otherwise silently destroy them.
 			//
 			$qb = $this->db->getQueryBuilder();
 			$qb->delete('facerecog_faces')
 				->where($qb->expr()->eq('image', $qb->createNamedParameter($image->id)))
+				->andWhere($qb->expr()->orX(
+					$qb->expr()->isNull('is_manual'),
+					$qb->expr()->eq('is_manual', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+				))
 				->executeStatement();
 
 			// Insert all faces

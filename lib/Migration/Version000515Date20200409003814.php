@@ -74,7 +74,7 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 			->set('configkey', $qb->createNamedParameter($toKey))
 			->where($qb->expr()->eq('configkey', $qb->createNamedParameter($key)))
 			->andWhere($qb->expr()->eq('appid', $qb->createNamedParameter($appName)));
-		$qb->execute();
+		$qb->executeStatement();
 	}
 
 	/**
@@ -87,7 +87,7 @@ class Version000515Date20200409003814 extends SimpleMigrationStep {
 		$qb->delete($table)
 			->where($qb->expr()->eq('appid', $qb->createNamedParameter($appName)))
 			->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($key)));
-		$qb->execute();
+		$qb->executeStatement();
 	}
 
 }

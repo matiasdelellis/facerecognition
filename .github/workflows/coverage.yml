@@ -15,7 +15,7 @@ jobs:
       matrix:
         php-versions: ['8.3']
         databases: ['mysql']
-        server-versions: ['stable31']
+        server-versions: ['stable33']
 
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 

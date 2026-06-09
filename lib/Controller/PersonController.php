@@ -135,7 +135,9 @@ class PersonController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$personFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
-		$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+		if ($personFace !== false) {
+			$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+		}
 
 		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
 		foreach ($images as $image) {

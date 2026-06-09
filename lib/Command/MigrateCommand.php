@@ -309,7 +309,7 @@ class MigrateCommand extends Command {
 	 * Get an array with the eligibles users taking into account the user argument,
 	 * or all users.
 	 */
-	private function getEligiblesUserId(string $userId = null): array {
+	private function getEligiblesUserId(?string $userId = null): array {
 		$eligible_users = array();
 		if (is_null($userId)) {
 			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligible_users) {

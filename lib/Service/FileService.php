@@ -259,7 +259,7 @@ class FileService {
 	 * @param int $maxSize maximum size for temporary files
 	 * @return string|null
 	 */
-	public function getLocalFile(File $file, int $maxSize = null): ?string {
+	public function getLocalFile(File $file, ?int $maxSize = null): ?string {
 		$useTempFile = $file->isEncrypted() || !$file->getStorage()->isLocal();
 		if ($useTempFile) {
 			$absPath = $this->tempManager->getTemporaryFile();

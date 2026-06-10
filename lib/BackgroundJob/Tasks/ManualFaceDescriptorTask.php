@@ -146,7 +146,6 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 	 */
 	private function computeDescriptorForFace(IModel $model, string $userId, array $row): void {
 		$faceId = (int) $row['id'];
-		$cropPath = null;
 		try {
 			$node = $this->fileService->getFileById((int) $row['file'], $userId);
 			if (!($node instanceof File)) {
@@ -161,12 +160,12 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 				return;
 			}
 
-			$cropPath = $this->cropRegion(
+			$crop = $this->cropRegion(
 				$localPath,
 				$model->getPreferredMimeType(),
 				(int) $row['x'], (int) $row['y'], (int) $row['width'], (int) $row['height']
 			);
-			if ($cropPath === null) {
+			if ($crop === null) {
 				$this->faceMapper->markManualFaceNotGroupable($faceId);
 				return;
 			}
@@ -175,13 +174,14 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 			// mime conversion. minImageSide is 1 on purpose: a face crop is meant
 			// to be small, so it must not be skipped for being "too small".
 			$tempImage = new TempImage(
-				$cropPath,
+				$crop['path'],
 				$model->getPreferredMimeType(),
 				$model->getMaximumArea(),
 				1
 			);
 
 			$rawFaces = $model->detectFaces($tempImage->getTempPath());
+			$ratio = $tempImage->getRatio();
 			$tempImage->clean();
 
 			if (count($rawFaces) === 0) {
@@ -196,7 +196,19 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 				return;
 			}
 
-			$this->faceMapper->setManualFaceDescriptor($faceId, $best['descriptor']);
+			// Replace the user rectangle with the box the descriptor was actually
+			// computed from. The detected box is in downscaled-crop space, so it is
+			// scaled back up (ratio) and shifted by the crop offset into original
+			// image pixels. Without this the frontend would keep showing the user's
+			// rectangle while the descriptor belongs to a different face found inside
+			// the margin (e.g. the user marked a back and a bystander's face sits in
+			// the margin); box and descriptor would then describe different faces.
+			$box = $this->toOriginalBox($best, $ratio, $crop['offsetX'], $crop['offsetY']);
+
+			$this->faceMapper->setManualFaceDescriptor(
+				$faceId, $best['descriptor'],
+				$box['x'], $box['y'], $box['width'], $box['height']
+			);
 			$this->logInfo('Manual face ' . $faceId . ': descriptor computed, it will be used for clustering');
 		} catch (\Exception $e) {
 			// Robustness: a single unreadable/odd region must never crash the job.
@@ -215,9 +227,13 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 	 * to a temporary file. Coordinates are original-image pixels in the oriented
 	 * frame, so the image is orientation-fixed before cropping.
 	 *
-	 * @return string|null path to the cropped temp file, or null on failure
+	 * The crop offset is returned alongside the path so detections made on the
+	 * crop can be mapped back to original-image pixels.
+	 *
+	 * @return array{path: string, offsetX: int, offsetY: int}|null the cropped
+	 *         temp file and its top-left offset, or null on failure
 	 */
-	private function cropRegion(string $localPath, string $mimeType, int $x, int $y, int $w, int $h): ?string {
+	private function cropRegion(string $localPath, string $mimeType, int $x, int $y, int $w, int $h): ?array {
 		$image = new OCP_Image();
 		if ($image->loadFromFile($localPath) === false) {
 			return null;
@@ -256,7 +272,34 @@ class ManualFaceDescriptorTask extends FaceRecognitionBackgroundTask {
 			return null;
 		}
 
-		return $cropPath;
+		return [
+			'path'    => $cropPath,
+			'offsetX' => $cropX,
+			'offsetY' => $cropY,
+		];
+	}
+
+	/**
+	 * Map a face detected on the crop back to original-image pixels. The detector
+	 * runs on the (possibly downscaled) crop, so coordinates are scaled by the
+	 * TempImage ratio and shifted by the crop offset, mirroring the normalization
+	 * done for full-image detections.
+	 *
+	 * @param array<string, mixed> $rawFace detection with left/top/right/bottom
+	 * @return array{x: int, y: int, width: int, height: int}
+	 */
+	private function toOriginalBox(array $rawFace, float $ratio, int $offsetX, int $offsetY): array {
+		$left   = (int) round(((int) $rawFace['left'])   * $ratio) + $offsetX;
+		$top    = (int) round(((int) $rawFace['top'])    * $ratio) + $offsetY;
+		$right  = (int) round(((int) $rawFace['right'])  * $ratio) + $offsetX;
+		$bottom = (int) round(((int) $rawFace['bottom']) * $ratio) + $offsetY;
+
+		return [
+			'x'      => $left,
+			'y'      => $top,
+			'width'  => max(1, $right - $left),
+			'height' => max(1, $bottom - $top),
+		];
 	}
 
 	/**

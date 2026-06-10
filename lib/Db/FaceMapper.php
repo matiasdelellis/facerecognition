@@ -496,13 +496,20 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
-	 * Store the descriptor computed for a manual face. The face stays groupable
-	 * so the clustering job will treat it like any other detected face.
+	 * Store the descriptor computed for a manual face, together with the bounding
+	 * box the descriptor was actually computed from. The box replaces the user's
+	 * rectangle so the frontend shows the face the descriptor belongs to instead
+	 * of the (possibly off) marked region. The face stays groupable so the
+	 * clustering job will treat it like any other detected face.
 	 */
-	public function setManualFaceDescriptor(int $faceId, array $descriptor): void {
+	public function setManualFaceDescriptor(int $faceId, array $descriptor, int $x, int $y, int $width, int $height): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set('descriptor', $qb->createNamedParameter(json_encode($descriptor)))
+			->set('x', $qb->createNamedParameter($x))
+			->set('y', $qb->createNamedParameter($y))
+			->set('width', $qb->createNamedParameter($width))
+			->set('height', $qb->createNamedParameter($height))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
 			->executeStatement();
 	}

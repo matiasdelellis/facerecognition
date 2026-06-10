@@ -71,6 +71,18 @@ class ManualFaceDescriptorTaskTest extends IntegrationTestCase {
 		$face = $faceMapper->find($faceId);
 		$this->assertNotEmpty($face->descriptor, 'A descriptor must be computed for the marked face');
 
+		// The stored box must snap to the detected face, not stay as the generous
+		// user rectangle, so box and descriptor describe the same face.
+		$this->assertLessThan(472, $face->getWidth(), 'Box width should shrink to the detected face');
+		$this->assertLessThan(472, $face->getHeight(), 'Box height should shrink to the detected face');
+		$this->assertGreaterThan(0, $face->getWidth());
+		$this->assertGreaterThan(0, $face->getHeight());
+		// The detected box must stay within the original image bounds (512x512).
+		$this->assertGreaterThanOrEqual(0, $face->getX());
+		$this->assertGreaterThanOrEqual(0, $face->getY());
+		$this->assertLessThanOrEqual(512, $face->getX() + $face->getWidth());
+		$this->assertLessThanOrEqual(512, $face->getY() + $face->getHeight());
+
 		// No longer pending: it now has a descriptor and will be clustered.
 		$pending = $faceMapper->findManualFacesPendingDescriptor($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertCount(0, $pending);

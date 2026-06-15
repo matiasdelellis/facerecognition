@@ -25,7 +25,10 @@ namespace OCA\FaceRecognition\Controller;
 
 use OCP\Image as OCP_Image;
 
+use OCP\App\IAppManager;
 use OCP\IRequest;
+use OCP\IPreview;
+use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -41,9 +44,13 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class FaceController extends Controller {
+
+	/** @var IAppManager */
+	private $appManager;
 
 	/** @var IRootFolder */
 	private $rootFolder;
@@ -57,23 +64,35 @@ class FaceController extends Controller {
 	/** @var SettingsService */
 	private $settingsService;
 
+	/** @var IPreview */
+	private $preview;
+
+	/** @var IConfig */
+	private $config;
+
 	/** @var string */
 	private $userId;
 
 	public function __construct($AppName,
 	                            IRequest        $request,
+	                            IAppManager     $appManager,
 	                            IRootFolder     $rootFolder,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            SettingsService $settingsService,
+	                            IPreview        $preview,
+	                            IConfig         $config,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 
+		$this->appManager      = $appManager;
 		$this->rootFolder      = $rootFolder;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->settingsService = $settingsService;
+		$this->preview         = $preview;
+		$this->config          = $config;
 		$this->userId          = $UserId;
 	}
 
@@ -101,6 +120,16 @@ class FaceController extends Controller {
 		$nodes = $userFolder->getById($fileId);
 		$file = $nodes[0];
 
+		// Try preview-based approach for HEIC support (requires Memories)
+		// Skip if obfuscation enabled (hipsterize needs original image)
+		if (!$this->settingsService->getObfuscateFaces()) {
+			$previewResp = $this->getThumbFromPreview($face, $file, $fileId, $size);
+			if ($previewResp !== null) {
+				return $previewResp;
+			}
+		}
+
+		// Fallback: Original GD-based approach (works for JPEG/PNG)
 		$ownerView = new \OC\Files\View('/'. $this->userId . '/files');
 		$path = $userFolder->getRelativePath($file->getPath());
 
@@ -133,6 +162,98 @@ class FaceController extends Controller {
 		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
 
 		return $resp;
+	}
+
+	/**
+	 * Generate face thumbnail using preview system (HEIC-compatible)
+	 *
+	 * @param Face $face Face entity with coordinates
+	 * @param \OCP\Files\File $file File node
+	 * @param int $fileId File ID for Memories lookup
+	 * @param int $size Target thumbnail size
+	 * @return DataDisplayResponse|null Response if successful, null to fallback
+	 */
+	private function getThumbFromPreview(Face $face, $file, int $fileId, int $size): ?DataDisplayResponse {
+		try {
+			// Check if Memories is installed
+			if (!Requirements::memoriesIsInstalled()) {
+				return null;
+			}
+
+			// Get image info from Memories using their public API service
+			// This is safer than direct DB queries (schema-stable interface)
+			$timelineQuery = \OC::$server->get(\OCA\Memories\Db\TimelineQuery::class);
+			$imageInfo = $timelineQuery->getInfoById($fileId, true); // true = basic mode (faster)
+
+			if (!$imageInfo || !isset($imageInfo['w']) || $imageInfo['w'] <= 0) {
+				return null;  // No valid dimensions, fallback
+			}
+
+			$originalWidth = (int)$imageInfo['w'];
+			$originalHeight = (int)$imageInfo['h'];
+
+			// Use configured max preview dimensions (these are pre-generated for cache hits)
+			// Request square preview using the smaller dimension to ensure it fits
+			$maxPreviewX = $this->config->getSystemValueInt('preview_max_x', 2048);
+			$maxPreviewY = $this->config->getSystemValueInt('preview_max_y', $maxPreviewX);
+			$maxPreviewDim = min($maxPreviewX, $maxPreviewY);
+			$previewFile = $this->preview->getPreview($file, $maxPreviewDim, $maxPreviewDim, false);
+
+			// Load preview to get actual dimensions
+			$previewImg = new OCP_Image();
+			$previewImg->loadFromData($previewFile->getContent());
+
+			if (!$previewImg->valid()) {
+				return null;
+			}
+
+			$previewWidth = $previewImg->width();
+			$previewHeight = $previewImg->height();
+
+			// Calculate scale ratios
+			$scaleX = $previewWidth / $originalWidth;
+			$scaleY = $previewHeight / $originalHeight;
+
+			// Get face coordinates in original space
+			$x = $face->getX();
+			$y = $face->getY();
+			$w = $face->getWidth();
+			$h = $face->getHeight();
+
+			// Apply padding (35% of height, same as original code)
+			$padding = $h * 0.35;
+			$x -= $padding;
+			$y -= $padding;
+			$w += $padding * 2;
+			$h += $padding * 2;
+
+			// Scale to preview space
+			$previewX = (int)($x * $scaleX);
+			$previewY = (int)($y * $scaleY);
+			$previewW = (int)($w * $scaleX);
+			$previewH = (int)($h * $scaleY);
+
+			// Crop face region
+			$previewImg->crop($previewX, $previewY, $previewW, $previewH);
+
+			// Scale to requested thumbnail size
+			$previewImg->scaleDownToFit($size, $size);
+
+			// Create response (same as original code)
+			$resp = new DataDisplayResponse($previewImg->data(), Http::STATUS_OK, ['Content-Type' => $previewImg->mimeType()]);
+			$resp->setETag((string)crc32($previewImg->data()));
+			$resp->cacheFor(7 * 24 * 60 * 60);
+			$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
+
+			return $resp;
+
+		} catch (\OCP\Files\NotFoundException $e) {
+			// Preview generation failed
+			return null;
+		} catch (\Exception $e) {
+			// Any other error - fallback gracefully
+			return null;
+		}
 	}
 
 	/**
@@ -190,7 +311,7 @@ class FaceController extends Controller {
 		$eyesL = sqrt(pow($eyesW, 2) + pow($eyesH, 2));
 		$angle = rad2deg(atan(-$eyesH/$eyesW));
 
-		$glassesGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/glasses.png');
+		$glassesGd = imagecreatefrompng($this->appManager->getAppPath('facerecognition') . '/img/glasses.png');
 		if ($glassesGd === false) return;
 
 		$fillColor = imagecolorallocatealpha($glassesGd, 0, 0, 0, 127);
@@ -209,7 +330,7 @@ class FaceController extends Controller {
 
 		imagecopyresized($imgResource, $glassesGd, $glassesDestX, $glassesDestY, 0, 0, $glassesDestW, $glassesDestH, $glassesW, $glassesH);
 
-		$mustacheGd = imagecreatefrompng(\OC_App::getAppPath('facerecognition') . '/img/mustache.png');
+		$mustacheGd = imagecreatefrompng($this->appManager->getAppPath('facerecognition') . '/img/mustache.png');
 		if ($mustacheGd === false) return;
 
 		$fillColor = imagecolorallocatealpha($mustacheGd, 0, 0, 0, 127);

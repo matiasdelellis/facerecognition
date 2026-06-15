@@ -6,7 +6,7 @@ tools:
         timeout: 7200 # Timeout in seconds: 2 hours
 
 build:
-  image: default-bionic
+  image: default-jammy
   nodes:
     analysis:
       tests:

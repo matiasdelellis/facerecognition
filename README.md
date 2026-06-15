@@ -63,6 +63,33 @@ Ideally once you meet the requirements, you can install and enable it from the
 nextcloud app store. For details and advanced information read the documentation
 about [installation](https://github.com/matiasdelellis/facerecognition/wiki/Installation).
 
+**Building from source:**
+
+If you need to install from source (for development or testing):
+
+```bash
+cd /path/to/nextcloud/apps/
+git clone https://github.com/matiasdelellis/facerecognition.git
+cd facerecognition/
+make
+```
+
+The `make` command will:
+- Install PHP dependencies (composer)
+- Install JavaScript dependencies (npm)
+- Build Vue.js frontend components (webpack)
+- Copy vendor JavaScript libraries (lozad, handlebars, autocomplete, egg.js)
+- Compile Handlebars templates
+
+**Important:** Running only `npm run build` is **not sufficient**. You must run the full `make` command (or `make build`) to ensure all dependencies are properly built and copied to the `js/` directory.
+
+For development with auto-rebuild:
+```bash
+npm run watch  # Watches and rebuilds webpack bundles
+```
+
+Note: After making frontend changes, you may need to run `make vendor-deps` and `make js-templates` if you modified vendor dependencies or Handlebars templates.
+
 #### Configuration
 
 Before proceeding to analyze the images, you must indicate how much memory you

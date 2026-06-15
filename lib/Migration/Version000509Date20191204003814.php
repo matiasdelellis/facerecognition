@@ -55,7 +55,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				'linked_user' => '?'
 			]);
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		while ($row = $result->fetch()) {
 			$insert->setParameters([
 				$row['id'],
@@ -64,7 +64,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				$row['is_valid'],
 				$row['last_generation_time'],
 				$row['linked_user']
-			])->execute();
+			])->executeStatement();
 		}
 		$result->closeCursor();
 
@@ -88,7 +88,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				'processing_duration' => '?'
 			]);
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		while ($row = $result->fetch()) {
 			$insert->setParameters([
 				$row['id'],
@@ -99,7 +99,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				$row['error'],
 				$row['last_processed_time'],
 				$row['processing_duration']
-			])->execute();
+			])->executeStatement();
 		}
 		$result->closeCursor();
 
@@ -126,7 +126,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				'landmarks' => '?'
 			]);
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		while ($row = $result->fetch()) {
 			$insert->setParameters([
 				$row['id'],
@@ -140,7 +140,7 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				$row['creation_time'],
 				$row['confidence'],
 				$row['landmarks']
-			])->execute();
+			])->executeStatement();
 		}
 		$result->closeCursor();
 
@@ -159,13 +159,13 @@ class Version000509Date20191204003814 extends SimpleMigrationStep {
 				'description' => '?'
 			]);
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		while ($row = $result->fetch()) {
 			$insert->setParameters([
 				$row['id'],
 				$row['name'],
 				$row['description']
-			])->execute();
+			])->executeStatement();
 		}
 		$result->closeCursor();
 

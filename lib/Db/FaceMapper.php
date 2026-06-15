@@ -55,17 +55,21 @@ class FaceMapper extends QBMapper {
 			->from($this->getTableName(), 'f')
 			->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
 
-		$qb->setParameter('face_ids', $faceIds, IQueryBuilder::PARAM_INT_ARRAY);
+		$descriptors = array_fill(0, sizeof($faceIds), 0);
+		$arrayindex = 0;
+		foreach (array_chunk($faceIds, 1000) as $chunk) {
+			$qb->setParameter('face_ids', $chunk, IQueryBuilder::PARAM_INT_ARRAY);
 
-		$descriptors = [];
-		$result = $qb->executeQuery();
-		while ($row = $result->fetch()) {
-			$descriptors[] = [
-				'id' => $row['id'],
-				'descriptor' => json_decode($row['descriptor'])
-			];
+			$result = $qb->executeQuery();
+			while ($row = $result->fetch()) {
+				$descriptors[$arrayindex] = [
+					'id' => $row['id'],
+					'descriptor' => json_decode($row['descriptor'])
+				];
+				$arrayindex++;
+			}
+			$result->closeCursor();
 		}
-		$result->closeCursor();
 
 		return $descriptors;
 	}

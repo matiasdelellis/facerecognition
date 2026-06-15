@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.90] - 2026-05-31
+- Support Nextcloud 33.
+- Support PHP 8.5 in line with NC33.
+
+## [0.9.80] - 2025-11-03
+- Support Nextcloud 32.
+
 ## [0.9.70] - 2025-04-22
 - Support Nextcloud 31 and deprectate NC29 and NC30. Issue #797
 - Support PHP 8.4 and deprecate PHP 8.0 in line with NC31. Issue #795

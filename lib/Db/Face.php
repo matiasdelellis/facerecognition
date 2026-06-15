@@ -37,6 +37,7 @@ use OCP\AppFramework\Db\Entity;
  * @method int getWidth()
  * @method int getHeight()
  * @method float getConfidence()
+ * @method bool getIsManual()
  * @method void setImage(int $image)
  * @method void setPerson(int $person)
  * @method void setX(int $x)
@@ -104,6 +105,13 @@ class Face extends Entity implements JsonSerializable {
 	public $isGroupable;
 
 	/**
+	 * Whether this face was added manually by the user (vs. detected by the model).
+	 *
+	 * @var bool
+	 **/
+	public $isManual;
+
+	/**
 	 * landmarks for this face.
 	 *
 	 * @var array
@@ -129,6 +137,7 @@ class Face extends Entity implements JsonSerializable {
 		$this->addType('image', 'integer');
 		$this->addType('person', 'integer');
 		$this->addType('isGroupable', 'bool');
+		$this->addType('isManual', 'bool');
 		$this->addType('descriptor', 'json');
 		$this->addType('creationTime', 'datetime');
 	}
@@ -166,6 +175,7 @@ class Face extends Entity implements JsonSerializable {
 			'height' => $this->height,
 			'confidence' => $this->confidence,
 			'is_groupable' => $this->isGroupable,
+			'is_manual' => $this->isManual,
 			'landmarks' => $this->landmarks,
 			'descriptor' => $this->descriptor,
 			'creation_time' => $this->creationTime

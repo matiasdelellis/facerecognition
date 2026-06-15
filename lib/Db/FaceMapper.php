@@ -86,7 +86,7 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'creation_time')
+		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'is_manual', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
@@ -181,6 +181,7 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
 			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
+			->andWhere($qb->expr()->neq('descriptor', $qb->createNamedParameter('[]')))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
@@ -207,11 +208,16 @@ class FaceMapper extends QBMapper {
 				$qb->expr()->lt('confidence', $qb->createParameter('min_confidence')),
 				$qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable'))
 			))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->isNull('is_manual'),
+				$qb->expr()->eq('is_manual', $qb->createParameter('is_manual'))
+			))
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
 			->setParameter('min_confidence', $minConfidence)
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_manual', false, IQueryBuilder::PARAM_BOOL);
 
 		$result = $qb->executeQuery();
 		$rows = $result->fetchAll();
@@ -396,5 +402,132 @@ class FaceMapper extends QBMapper {
 		$face->setId($qb->getLastInsertId());
 
 		return $face;
+	}
+
+	/**
+	 * Reassign a single face to a different person cluster and mark it manual
+	 * so the background clustering job leaves it in place on the next run.
+	 */
+	public function reassignFace(int $faceId, int $personId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('person', $qb->createNamedParameter($personId))
+			->set('is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
+	}
+
+	/**
+	 * Insert a manually added face. No descriptor/landmarks (user-drawn, no model data).
+	 * is_manual=true pins the face to its assigned person so the clustering job does not
+	 * reassign it. If $face->isGroupable is true the face participates in clustering
+	 * (descriptor extraction must happen before it is useful there).
+	 */
+	public function insertManualFace(Face $face): Face {
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->insert($this->getTableName())
+			->values([
+				'image' => $qb->createNamedParameter($face->image),
+				'person' => $qb->createNamedParameter($face->person),
+				'x' => $qb->createNamedParameter($face->x),
+				'y' => $qb->createNamedParameter($face->y),
+				'width' => $qb->createNamedParameter($face->width),
+				'height' => $qb->createNamedParameter($face->height),
+				'confidence' => $qb->createNamedParameter($face->confidence),
+				'landmarks' => $qb->createNamedParameter(json_encode([])),
+				'descriptor' => $qb->createNamedParameter(json_encode([])),
+				'is_groupable' => $qb->createNamedParameter((bool) $face->isGroupable, IQueryBuilder::PARAM_BOOL),
+				'is_manual' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL),
+				'creation_time' => $qb->createNamedParameter($face->creationTime, IQueryBuilder::PARAM_DATE),
+			])
+			->executeStatement();
+
+		$face->setId($qb->getLastInsertId());
+
+		return $face;
+	}
+
+	/**
+	 * Manual faces the user flagged for clustering (is_groupable = true) that
+	 * still have no descriptor (the model has not confirmed a face there yet).
+	 * These are picked up by the background descriptor-extraction task.
+	 *
+	 * @return array<int, array<string, mixed>> rows with id, file, x, y, width, height
+	 */
+	public function findManualFacesPendingDescriptor(string $userId, int $modelId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'i.file', 'f.x', 'f.y', 'f.width', 'f.height')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('f.is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->eq('f.is_groupable', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->eq('f.descriptor', $qb->createNamedParameter('[]')));
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
+	}
+
+	/**
+	 * Manual faces the user pinned to a person (is_manual = true and a person
+	 * assigned). The clustering job uses these to anchor the faces so the merge
+	 * never reassigns them to a different person or drops their user-set name.
+	 * Faces that take no part in clustering are harmless here: their ids simply
+	 * never appear in any cluster, so anchoring them has no effect.
+	 *
+	 * @return array<int, array<string, mixed>> rows with id, person
+	 */
+	public function findManualFacesWithPerson(string $userId, int $modelId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.person')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('f.is_manual', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->isNotNull('f.person'));
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		return $rows;
+	}
+
+	/**
+	 * Store the descriptor computed for a manual face, together with the bounding
+	 * box the descriptor was actually computed from. The box replaces the user's
+	 * rectangle so the frontend shows the face the descriptor belongs to instead
+	 * of the (possibly off) marked region. The face stays groupable so the
+	 * clustering job will treat it like any other detected face.
+	 */
+	public function setManualFaceDescriptor(int $faceId, array $descriptor, int $x, int $y, int $width, int $height): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('descriptor', $qb->createNamedParameter(json_encode($descriptor)))
+			->set('x', $qb->createNamedParameter($x))
+			->set('y', $qb->createNamedParameter($y))
+			->set('width', $qb->createNamedParameter($width))
+			->set('height', $qb->createNamedParameter($height))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
+	}
+
+	/**
+	 * Give up on using a manual face for clustering (no face could be detected
+	 * in the marked region). The face stays pinned to its person but is excluded
+	 * from clustering, and it is no longer picked up as pending.
+	 */
+	public function markManualFaceNotGroupable(int $faceId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('is_groupable', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->executeStatement();
 	}
 }

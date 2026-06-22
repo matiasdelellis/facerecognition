@@ -22,6 +22,7 @@
 /**
  * this class to ease the usage of jquery dialogs
  */
+
 const FrDialogs = {
 
 	hide: function (faces, callback) {
@@ -157,15 +158,22 @@ const FrDialogs = {
 				}
 			});
 
+			var autocomplete_cnt = 0;
+			var autocomplete_lst = 0;
 			new AutoComplete({
 				input: document.getElementById(dialogName + "-input"),
 				lookup (query) {
+					let autocomplete_cnt_itr = ++autocomplete_cnt;
 					return new Promise(resolve => {
 						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
+							if (autocomplete_cnt_itr > autocomplete_lst) {
+								autocomplete_lst = autocomplete_cnt_itr;
+								resolve(names);
+							}
 						});
 					});
 				},
+				cache: true,
 				silent: true,
 				highlight: false
 			});
@@ -245,15 +253,22 @@ const FrDialogs = {
 				}
 			});
 
+			var autocomplete_cnt = 0;
+			var autocomplete_lst = 0;
 			new AutoComplete({
 				input: document.getElementById(dialogName + "-input"),
 				lookup (query) {
+					let autocomplete_cnt_itr = ++autocomplete_cnt;
 					return new Promise(resolve => {
 						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
+							if (autocomplete_cnt_itr > autocomplete_lst) {
+								autocomplete_lst = autocomplete_cnt_itr;
+								resolve(names);
+							}
 						});
 					});
 				},
+				cache: true,
 				silent: true,
 				highlight: false
 			});
@@ -347,15 +362,22 @@ const FrDialogs = {
 				}
 			});
 
+			var autocomplete_cnt = 0;
+			var autocomplete_lst = 0;
 			new AutoComplete({
 				input: document.getElementById(dialogName + "-input"),
 				lookup (query) {
+					let autocomplete_cnt_itr = ++autocomplete_cnt;
 					return new Promise(resolve => {
 						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
+							if (autocomplete_cnt_itr > autocomplete_lst) {
+								autocomplete_lst = autocomplete_cnt_itr;
+								resolve(names);
+							}
 						});
 					});
 				},
+				cache: true,
 				silent: true,
 				highlight: false
 			});
@@ -440,15 +462,22 @@ const FrDialogs = {
 				}
 			});
 
+			var autocomplete_cnt = 0;
+			var autocomplete_lst = 0;
 			new AutoComplete({
 				input: document.getElementById(dialogName + "-input"),
-				lookup (query) {
+				lookup (query) {	
+					let autocomplete_cnt_itr = ++autocomplete_cnt;
 					return new Promise(resolve => {
 						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
+							if (autocomplete_cnt_itr > autocomplete_lst) {
+								autocomplete_lst = autocomplete_cnt_itr;
+								resolve(names);
+							}
 						});
 					});
 				},
+				cache: true,
 				silent: true,
 				highlight: false
 			});

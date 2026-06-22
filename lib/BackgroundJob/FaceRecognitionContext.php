@@ -26,6 +26,7 @@ namespace OCA\FaceRecognition\BackgroundJob;
 use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserManager;
+use \Psr\Log\LoggerInterface;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 
@@ -43,6 +44,12 @@ class FaceRecognitionContext {
 	/** @var FaceRecognitionLogger */
 	public $logger;
 
+	/** @var LoggerInterface Reference to Nextcloud logger instance. This logger can be used to create messages that are shown in the Nextcloud log. See https://docs.nextcloud.com/server/28/developer_manual/basics/logging.html. */
+	public $ncLogger;
+
+	/** @var string Name of this application */
+    public $appName;	
+
 	/** @var IUser|null */
 	public $user;
 
@@ -55,8 +62,12 @@ class FaceRecognitionContext {
 	/** @var bool True if we are running from command, false if we are running as background job */
 	private $isRunningThroughCommand;
 
-	public function __construct(IUserManager $userManager,
-	                            IConfig      $config) {
+	public function __construct(IUserManager 	$userManager,
+								LoggerInterface $ncLogger, 
+								string 	     	$appName,	
+	                            IConfig      	$config) {
+		$this->ncLogger = $ncLogger;
+		$this->appName = $appName;
 		$this->userManager = $userManager;
 		$this->config = $config;
 		$this->isRunningThroughCommand = false;

@@ -139,7 +139,7 @@ class TempImage extends Image {
 
 			$this->ratio = 1 / $scaleFactor;
 		}
-		else {
+		elseif (($imagetype = exif_imagetype($this->imagePath)) !== false and $this->isImageTypeSupportedByGD($imagetype)) {
 			$this->loadFromFile($this->imagePath);
 			$this->fixOrientation();
 
@@ -155,6 +155,46 @@ class TempImage extends Image {
 
 			$this->ratio = $this->resizeOCImage();
 		}
+		elseif (extension_loaded('imagick')) {
+			try {
+				$imagick = new \Imagick($this->imagePath . '[0]');
+				$imagick->autoOrient();
+
+				$geometry = $imagick->getImageGeometry();
+				$widthOrig = $geometry['width'];
+				$heightOrig = $geometry['height'];
+				if (($widthOrig < $this->minImageSide) ||
+				    ($heightOrig < $this->minImageSide)) {
+					$this->skipped = true;
+					return;
+				}
+
+				$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
+
+				$newWidth = intval(round($widthOrig * $scaleFactor));
+				$newHeight = intval(round($heightOrig * $scaleFactor));
+
+				# According to https://usage.imagemagick.org/filter the 'Catrom'
+				# filter, is almost an exact duplicate of the 'Lanczos2' filter
+				# though it is much faster to generate mathematically.
+				$imagick->resizeImage($newWidth, $newHeight, \Imagick::FILTER_CATROM, 1, true);
+
+				$imagick->setImageFormat(str_replace('image/', '', $this->preferredMimeType));
+				$this->loadFromData($imagick->getImageBlob());
+			} catch (\ImagickException $e) {
+				throw new \RuntimeException("Imagick processing error: " . $e->getMessage());
+			}
+
+			if (!$this->valid()) {
+				throw new \RuntimeException("Imagick image is not valid.");
+			}
+
+			$this->ratio = 1 / $scaleFactor;
+		}
+		else {
+			throw new \RuntimeException("Local image could not be processed, probably unsupported format");
+		}
+
 
 		$this->tempPath = $this->tempManager->getTemporaryFile();
 		$this->save($this->tempPath, $this->preferredMimeType);
@@ -198,4 +238,50 @@ class TempImage extends Image {
 		return sqrt($areaRatio);
 	}
 
+	/**
+	 * Check if image type is supported by this PHP build
+	 *
+	 * @return bool Returns true if the image type is supported by the
+	 *  version of GD linked into PHP.
+	 */
+	private function isImageTypeSupportedByGD(int $imagetype): bool {
+		if ($imagetype === IMAGETYPE_GIF) {
+			return (imagetypes() & IMG_GIF) === IMG_GIF;
+		} elseif ($imagetype === IMAGETYPE_JPEG) {
+			return (imagetypes() & IMG_JPG) === IMG_JPG;
+		} elseif ($imagetype === IMAGETYPE_PNG) {
+			return (imagetypes() & IMG_PNG) === IMG_PNG;
+		} elseif ($imagetype === IMAGETYPE_WBMP) {
+			return (imagetypes() & IMG_WBMP) === IMG_WBMP;
+		} elseif ($imagetype === IMAGETYPE_XBM) {
+			return (imagetypes() & IMG_XPM) === IMG_XPM;
+		} elseif ($imagetype === IMAGETYPE_WEBP) {
+			return (imagetypes() & IMG_WEBP) === IMG_WEBP;
+		} elseif ($imagetype === IMAGETYPE_BMP) {
+			return (imagetypes() & IMG_BMP) === IMG_BMP;
+		} elseif(PHP_VERSION_ID >= 80100 and $imagetype === IMAGETYPE_AVIF) {
+			return (imagetypes() & IMG_AVIF) === IMG_AVIF;
+		} else {
+			return false;
+		}
+	}
+}
+
+
+if (!function_exists('exif_imagetype')) {
+	/**
+	 * Workaround if exif_imagetype does not exist
+	 *
+	 * Copied from https://github.com/nextcloud/server/blob/master/lib/private/Image.php
+	 *
+	 * @link https://www.php.net/manual/en/function.exif-imagetype.php#80383
+	 * @param string $fileName
+	 * @return int|false
+	 */
+	function exif_imagetype(string $fileName) {
+		if (($info = getimagesize($fileName)) !== false) {
+			return $info[2];
+		}
+		return false;
+	}
 }

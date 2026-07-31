@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "75e223b78e8186970efb9e29c5ff216f",
+    "content-hash": "222f39aa98df143f48d44b5a9ea1d0ba",
     "packages": [],
     "packages-dev": [
         {
@@ -707,29 +707,30 @@
         },
         {
             "name": "nextcloud/ocp",
-            "version": "dev-stable32",
+            "version": "dev-stable34",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nextcloud-deps/ocp.git",
-                "reference": "48411c7277aaf2533565cb5e2c766ca164ad9709"
+                "reference": "218c4b5f399d21d603a34e1e9c16f828b3c13b85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nextcloud-deps/ocp/zipball/48411c7277aaf2533565cb5e2c766ca164ad9709",
-                "reference": "48411c7277aaf2533565cb5e2c766ca164ad9709",
+                "url": "https://api.github.com/repos/nextcloud-deps/ocp/zipball/218c4b5f399d21d603a34e1e9c16f828b3c13b85",
+                "reference": "218c4b5f399d21d603a34e1e9c16f828b3c13b85",
                 "shasum": ""
             },
             "require": {
-                "php": "~8.1 || ~8.2 || ~8.3 || ~8.4",
+                "php": "~8.2 || ~8.3 || ~8.4 || ~8.5",
                 "psr/clock": "^1.0",
                 "psr/container": "^2.0.2",
                 "psr/event-dispatcher": "^1.0",
+                "psr/http-client": "^1.0.3",
                 "psr/log": "^3.0.2"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-stable32": "32.0.0-dev"
+                    "dev-stable34": "34.0.0-dev"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -749,9 +750,9 @@
             "description": "Composer package containing Nextcloud's public OCP API and the unstable NCU API",
             "support": {
                 "issues": "https://github.com/nextcloud-deps/ocp/issues",
-                "source": "https://github.com/nextcloud-deps/ocp/tree/stable32"
+                "source": "https://github.com/nextcloud-deps/ocp/tree/stable34"
             },
-            "time": "2025-10-29T00:53:19+00:00"
+            "time": "2026-07-28T01:27:03+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -3773,11 +3774,11 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.1"
+        "php": ">=8.2"
     },
     "platform-dev": {},
     "platform-overrides": {
-        "php": "8.1"
+        "php": "8.2"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

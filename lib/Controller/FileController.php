@@ -12,6 +12,8 @@ use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
 use OCA\FaceRecognition\Db\Person;
+use OCA\FaceRecognition\Db\Cluster;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\FileService;
@@ -24,6 +26,9 @@ class FileController extends Controller {
 
 	/** @var ImageMapper */
 	private $imageMapper;
+
+/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var PersonMapper */
 	private $personMapper;
@@ -46,6 +51,7 @@ class FileController extends Controller {
 	public function __construct($AppName,
 	                            IRequest        $request,
 	                            ImageMapper     $imageMapper,
+	                            ClusterMapper   $clusterMapper,
 	                            PersonMapper    $personMapper,
 	                            FaceMapper      $faceMapper,
 	                            FileService     $fileService,
@@ -56,6 +62,7 @@ class FileController extends Controller {
 		parent::__construct($AppName, $request);
 
 		$this->imageMapper     = $imageMapper;
+		$this->clusterMapper  = $clusterMapper;
 		$this->personMapper    = $personMapper;
 		$this->faceMapper      = $faceMapper;
 		$this->fileService     = $fileService;
@@ -99,18 +106,23 @@ class FileController extends Controller {
 		foreach ($faces as $face) {
 			// When there are faces but still dont have person, the process is not completed yet.
 			// See issue https://github.com/matiasdelellis/facerecognition/issues/255
-			if (!$face->getPerson()) {
+			if (!$face->getCluster()) {
 				$resp['is_processed'] = false;
 				break;
 			}
 
-			$person = $this->personMapper->find($this->userId, $face->getPerson());
-			$personName = $person->getName();
+			// The person of a face is the person of its cluster, if the user
+			// already said who that cluster is.
+			$cluster = $this->clusterMapper->find($this->userId, $face->getCluster());
+			$personName = null;
+			if (!is_null($cluster->getPerson())) {
+				$personName = $this->personMapper->find($this->userId, $cluster->getPerson())->getName();
+			}
 
 			$facePerson = array();
 			$facePerson['name'] = $personName;
-			$facePerson['person_id'] = $person->getId();
-			$facePerson['person_visible'] = $person->getIsVisible();
+			$facePerson['cluster_id'] = $cluster->getId();
+			$facePerson['cluster_visible'] = $cluster->getIsVisible();
 			$facePerson['face_id'] = $face->getId();
 			$facePerson['thumb_url'] = $this->urlService->getThumbUrl($face->getId(), 50);
 			$facePerson['photos_url'] = $personName ? $this->urlService->getRedirectToPersonUrl($personName) : null;

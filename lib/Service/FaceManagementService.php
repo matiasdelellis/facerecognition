@@ -29,6 +29,7 @@ use OCP\IUserManager;
 
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -53,6 +54,9 @@ class FaceManagementService {
 	/** @var ImageMapper */
 	private $imageMapper;
 
+	/** @var ClusterMapper */
+	private $clusterMapper;
+
 	/** @var PersonMapper */
 	private $personMapper;
 
@@ -62,12 +66,14 @@ class FaceManagementService {
 	public function __construct(IUserManager    $userManager,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
+	                            ClusterMapper   $clusterMapper,
 	                            PersonMapper    $personMapper,
 	                            SettingsService $settingsService)
 	{
 		$this->userManager     = $userManager;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
+		$this->clusterMapper   = $clusterMapper;
 		$this->personMapper    = $personMapper;
 		$this->settingsService = $settingsService;
 	}
@@ -80,7 +86,7 @@ class FaceManagementService {
 	 *
 	 * @return bool
 	 */
-	public function hasData(IUser $user = null, int $modelId = -1): bool {
+	public function hasData(?IUser $user = null, int $modelId = -1): bool {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -113,7 +119,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetAll(IUser $user = null): void {
+	public function resetAll(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetAllForUser($user);
@@ -129,6 +135,7 @@ class FaceManagementService {
 	 */
 	public function resetAllForUser(string $userId): void {
 		$this->faceMapper->deleteUserFaces($userId);
+		$this->clusterMapper->deleteUserClusters($userId);
 		$this->personMapper->deleteUserPersons($userId);
 		$this->imageMapper->deleteUserImages($userId);
 
@@ -143,7 +150,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetModel(IUser $user = null, int $modelId = -1): void {
+	public function resetModel(?IUser $user = null, int $modelId = -1): void {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -162,9 +169,11 @@ class FaceManagementService {
 	 * @return void
 	 */
 	public function resetModelForUser(string $userId, $modelId): void {
-		$this->personMapper->deleteUserModel($userId, $modelId);
+		$this->clusterMapper->deleteUserModel($userId, $modelId);
 		$this->faceMapper->deleteUserModel($userId, $modelId);
 		$this->imageMapper->deleteUserModel($userId, $modelId);
+		// The people whose clusters were all of that model are gone with them.
+		$this->personMapper->deleteOrphaned($userId);
 
 		$this->settingsService->setUserFullScanDone(false, $userId);
 	}
@@ -177,7 +186,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetImageErrors(IUser $user = null): void {
+	public function resetImageErrors(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $userId) {
 			$this->imageMapper->resetErrors($userId);
@@ -193,7 +202,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetClusters(IUser $user = null): void {
+	public function resetClusters(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetClustersForUser($user);
@@ -210,7 +219,8 @@ class FaceManagementService {
 	public function resetClustersForUser(string $userId): void {
 		$model = $this->settingsService->getCurrentFaceModel();
 
-		$this->faceMapper->unsetPersonsRelationForUser($userId, $model);
+		$this->faceMapper->unsetClustersRelationForUser($userId, $model);
+		$this->clusterMapper->deleteUserClusters($userId);
 		$this->personMapper->deleteUserPersons($userId);
 	}
 
@@ -220,7 +230,7 @@ class FaceManagementService {
 	 *
 	 * @param IUser|null $user Optional user to get specific user.
 	 */
-	private function getEligiblesUserId(IUser $user = null): array {
+	private function getEligiblesUserId(?IUser $user = null): array {
 		$eligible_users = array();
 		if (is_null($user)) {
 			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligible_users) {

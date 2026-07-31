@@ -52,7 +52,7 @@ If you'd like to support the creation and maintenance of this software, consider
 
 #### Requirements
 
- * Nextcloud 22+
+ * Nextcloud 34
  * [Dlib PHP bindings](https://github.com/goodspb/pdlib)
  * [PHP Bzip2](https://www.php.net/manual/en/book.bzip2.php)
  * 1GB of RAM
@@ -111,11 +111,33 @@ instance and upload some photos from the internet. Then you must run the
 the result. For details and advanced information read the documentation of this
 command below.
 
+If you just want to try the application, or to test your changes without
+touching your own instance, there is a docker compose setup in the [`docker/`](docker/)
+directory that brings up a Nextcloud instance with the application and all its
+requirements already installed:
+
+```bash
+docker compose -f docker/compose.yaml up -d --build
+```
+
+See [docker/README.md](docker/README.md) for details.
+
 #### Schedule background job
 
 The application is designed to run as a scheduled task. This allows analyze the
 photos and showing the results to the user progressively. You can read about
 some ways to configure it within our documentation about [Schedule Background Task](https://github.com/matiasdelellis/facerecognition/wiki/Schedule-Background-Task).
+
+## How it works inside
+
+The [`doc/`](doc/) directory documents the parts that are not obvious from the
+code, for whoever wants to change them:
+
+ * [doc/clustering.md](doc/clustering.md): how the faces are grouped, why the
+   clusters are grown instead of rebuilt, what a run costs and how it is bounded,
+   and how the clusters of one person are proposed to be linked.
+ * [doc/data-model.md](doc/data-model.md): what each table and each row means,
+   and in particular the difference between a cluster and a person.
 
 ## occ commands
 

@@ -42,6 +42,9 @@ use OCA\FaceRecognition\Model\ModelManager;
 
 use Test\TestCase;
 
+/**
+ * @group DB
+ */
 class ResetAllTest extends IntegrationTestCase {
 
 	/**
@@ -62,18 +65,22 @@ class ResetAllTest extends IntegrationTestCase {
 
 		// Add one person to DB
 		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
-		$person = new Person();
-		$person->setUser($this->user->getUID());
-		$person->setIsValid(true);
-		$person->setName('foo');
-		$person = $personMapper->insert($person);
+		$clusterMapper = $this->container->query('OCA\FaceRecognition\Db\ClusterMapper');
+		$person = $personMapper->findOrCreateByName($this->user->getUID(), 'foo');
+		// A person without clusters is not counted: they are counted through
+		// the clusters that point at them.
 		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
-		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
+		$this->assertEquals(0, $personCount);
+
+		$clusterId = $clusterMapper->create($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterMapper->setPerson($clusterId, $person->getId());
+		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->assertEquals(1, $personCount);
 
 		// Add one face to DB
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
-		$face->setPerson($person->getId());
+		$face->setCluster($clusterId);
 		$face = $faceMapper->insertFace($face);
 		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
@@ -85,7 +92,7 @@ class ResetAllTest extends IntegrationTestCase {
 		// Execute reset all
 		$userManager = $this->container->query('OCP\IUserManager');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $personMapper, $settingsService);
+		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $clusterMapper, $personMapper, $settingsService);
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		// Check that everything is gone

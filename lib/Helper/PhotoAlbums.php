@@ -208,7 +208,7 @@ class PhotoAlbums {
 	}
 
 	private function getPersonsNames(string $userId, int $modelId): array {
-		$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+		$distintNames = $this->personMapper->findAll($userId, $modelId);
 		$names = [];
 		foreach ($distintNames as $distintName) {
 			$names[] = $distintName->getName();
@@ -217,10 +217,11 @@ class PhotoAlbums {
 	}
 
 	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array {
-		$distintNames = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
 		$names = [];
-		foreach ($distintNames as $distintName) {
-			$names[] = $distintName->getName();
+		foreach ($this->personMapper->findAll($userId, $modelId) as $person) {
+			if ($person->getName() === $faceNames) {
+				$names[] = $person->getName();
+			}
 		}
 		return $names;
 	}

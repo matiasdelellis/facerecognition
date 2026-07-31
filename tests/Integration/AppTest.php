@@ -26,6 +26,9 @@ namespace OCA\FaceRecognition\Tests\Integration;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
+/**
+ * @group DB
+ */
 class AppTest extends IntegrationTestCase {
 
 	public function setUp(): void {

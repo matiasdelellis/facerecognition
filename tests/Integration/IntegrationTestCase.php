@@ -28,6 +28,7 @@ use OC\Files\View;
 
 use OCP\IConfig;
 use OCP\IUser;
+use OCP\IUserManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
@@ -39,6 +40,12 @@ use Test\TestCase;
 
 /**
  * Main class that all integration tests should inherit from.
+ *
+ * Note that every test that inherits from this one has to be annotated with
+ * `@group DB`: these tests do touch the database, and the TestCase of the
+ * server refuses the connection to the ones that do not say so. The annotation
+ * cannot be put here, since PHPUnit reads it from the test class itself and
+ * does not walk up the hierarchy.
  */
 abstract class IntegrationTestCase extends TestCase {
 	/** @var IAppContainer */
@@ -61,7 +68,7 @@ abstract class IntegrationTestCase extends TestCase {
 		}
 
 		// Create user on which we will upload images and do testing
-		$userManager = OC::$server->getUserManager();
+		$userManager = OC::$server->get(IUserManager::class);
 		$username = 'testuser' . rand(0, PHP_INT_MAX);
 		$this->user = $userManager->createUser($username, 'password');
 		$this->loginAsUser($username);

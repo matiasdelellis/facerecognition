@@ -41,6 +41,9 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 use Test\TestCase;
 
+/**
+ * @group DB
+ */
 class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 
 	/**
@@ -142,9 +145,8 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	private function createStaleImagesRemovalTask() {
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
 		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
-		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
 		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
 		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		return new StaleImagesRemovalTask($imageMapper, $faceMapper, $personMapper, $fileService, $settingsService);
+		return new StaleImagesRemovalTask($imageMapper, $faceMapper, $fileService, $settingsService);
 	}
 }

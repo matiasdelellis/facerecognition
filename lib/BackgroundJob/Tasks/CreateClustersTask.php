@@ -28,6 +28,7 @@ use OCP\IUser;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
@@ -38,10 +39,31 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Clusterer\ChineseWhispers;
 
 use OCA\FaceRecognition\Service\SettingsService;
+
 /**
- * Taks that, for each user, creates person clusters for each.
+ * Task that puts the faces of each user in clusters of similar faces.
+ *
+ * The clusters are grown, never rebuilt. Each run clusters the faces that do
+ * not belong to any cluster yet, together with a few faces of each existing
+ * cluster, and reads the result through those sampled faces: a group holding
+ * samples of one cluster hands its new faces to that cluster, and a group
+ * holding none is a cluster of its own.
+ *
+ * Two things follow from that. A face that already has a cluster is never
+ * moved, so a cluster keeps its ID and therefore its name, and no run can
+ * take a name away. And the size of the clustering is bounded by the two
+ * settings that say how many faces to take and how many to sample, so a
+ * cluster with fifty thousand faces costs the same as one with five.
+ *
+ * What it gives up is the ability to undo its own mistakes: a face left in the
+ * wrong cluster stays there. Two clusters that should be one are put back
+ * together when a face arrives that belongs to both, and otherwise it takes an
+ * explicit `occ face:reset --clustering`.
  */
 class CreateClustersTask extends FaceRecognitionBackgroundTask {
+	/** @var ClusterMapper Cluster mapper*/
+	private $clusterMapper;
+
 	/** @var PersonMapper Person mapper*/
 	private $personMapper;
 
@@ -55,18 +77,21 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private $settingsService;
 
 	/**
+	 * @param ClusterMapper $clusterMapper
 	 * @param PersonMapper $personMapper
 	 * @param ImageMapper $imageMapper
 	 * @param FaceMapper $faceMapper
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(PersonMapper    $personMapper,
+	public function __construct(ClusterMapper   $clusterMapper,
+	                            PersonMapper    $personMapper,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
 	                            SettingsService $settingsService)
 	{
 		parent::__construct();
 
+		$this->clusterMapper   = $clusterMapper;
 		$this->personMapper    = $personMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
@@ -87,235 +112,264 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
-			$this->createClusterIfNeeded($user);
-			yield;
+			yield from $this->clusterFacesOfUser($user);
 		}
 
 		return true;
 	}
 
 	/**
-	 * @return void
+	 * Puts every face of the user that has no cluster yet in one.
+	 *
+	 * It yields after each batch, so that a run that is out of time stops here
+	 * and the next one picks up the remaining faces.
 	 */
-	private function createClusterIfNeeded(string $userId) {
+	private function clusterFacesOfUser(string $userId): \Generator {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		// Depending on whether we already have clusters, decide if we should create/recreate them.
-		//
-		$hasPersons = $this->personMapper->countPersons($userId, $modelId) > 0;
-		if ($hasPersons) {
-			$forceRecreate = $this->needRecreateBySettings($userId);
-			$haveEnoughFaces = $this->hasNewFacesToRecreate($userId, $modelId);
-			$haveStaled = $this->hasStalePersonsToRecreate($userId, $modelId);
-
-			if ($forceRecreate) {
-				$this->logInfo('Clusters already exist, but there was some change that requires recreating the clusters');
-			}
-			else if ($haveEnoughFaces || $haveStaled) {
-				$this->logInfo('Face clustering will be recreated with new information or changes');
-			}
-			else {
-				// If there is no invalid persons, and there is no recent new faces, no need to recreate cluster
-				$this->logInfo('Clusters already exist, estimated there is no need to recreate them');
-				return;
-			}
-		}
-		else {
-			// User should not be able to use this directly, used in tests
-			$forceTestCreation = $this->settingsService->_getForceCreateClusters($userId);
-			$needCreate = $this->needCreateFirstTime($userId, $modelId);
-
-			if ($forceTestCreation) {
-				$this->logInfo('Force the creation of clusters for testing');
-			}
-			else if ($needCreate) {
-				$this->logInfo('Face clustering will be created for the first time.');
-			}
-			else {
-				$this->logInfo(
-					'Skipping cluster creation, not enough data (yet) collected. ' .
-					'For cluster creation, you need either one of the following:');
-				$this->logInfo('* have 1000 faces already processed');
-				$this->logInfo('* or you need to have 95% of you images processed');
-				$this->logInfo('Use stats command to track progress');
-				return;
-			}
+		if ($this->settingsService->getNeedRecreateClusters($userId)) {
+			// The clustering settings changed, so what is in the database was
+			// obtained with other parameters and has to be built again. Note
+			// that this loses the names, exactly as `face:reset --clustering`.
+			$this->logInfo('The clustering settings changed: discarding the clusters of ' . $userId);
+			$this->faceMapper->unsetClustersRelationForUser($userId, $modelId);
+			$this->clusterMapper->deleteUserClusters($userId);
+			$this->personMapper->deleteUserPersons($userId);
+			$this->settingsService->setNeedRecreateClusters(false, $userId);
 		}
 
-		// Ok. If we are here, the clusters must be recreated.
-		//
+		$minFaceSize = $this->settingsService->getMinimumFaceSize();
+		$minConfidence = $this->settingsService->getMinimumConfidence();
+		$facesPerRun = $this->settingsService->getClusteringFacesPerRun();
+		$samplesPerCluster = $this->settingsService->getClusteringSamplesPerCluster();
 
-		$min_face_size = $this->settingsService->getMinimumFaceSize();
-		$min_confidence = $this->settingsService->getMinimumConfidence();
+		yield from $this->clusterAloneFaces($userId, $modelId, $minFaceSize, $minConfidence, $facesPerRun);
 
-		$faces = $this->faceMapper->getGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
+		while (true) {
+			$newFaces = $this->faceMapper->findUnassignedGroupableFaces(
+				$userId, $modelId, $minFaceSize, $minConfidence, $facesPerRun);
 
-		$facesCount = count($faces);
-		$this->logInfo('There are ' . $facesCount . ' faces for clustering.');
+			if (count($newFaces) === 0) {
+				break;
+			}
 
-		// The default slice is just one for the total.
-		$noSlices = 1;
-		$sliceSize = $facesCount;
+			list($sampleOf, $sizes) = $this->faceMapper->findClusterSamples(
+				$userId, $modelId, $minFaceSize, $minConfidence, $samplesPerCluster);
+			$decisions = $this->clusterMapper->findDecisions($userId, $modelId);
 
-		// Now calculate it if there is a batch size configured.
-		$batchSize = $this->settingsService->getClusterigBatchSize();
-		if ($facesCount > 0 && $batchSize > 0) {
-			// The minimum batch size is 2000 faces.
-			$batchSize = max($batchSize, 2000);
-			// The maximun batch size is the faces count.
-			$batchSize = min($batchSize, $facesCount);
+			$this->logInfo(sprintf('Clustering %d faces without a cluster, with %d faces of the %d existing clusters',
+			                       count($newFaces), count($sampleOf), count($sizes)));
 
-			// Calculate the number of slices and their sizes.
-			$noSlices = intval($facesCount / $batchSize) + 1;
-			$sliceSize = ceil($facesCount / $noSlices);
+			$descriptors = $this->faceMapper->findDescriptorsBathed(array_merge($newFaces, array_keys($sampleOf)));
+			// A face deleted while this was running leaves a hole behind.
+			$descriptors = array_values(array_filter($descriptors, 'is_array'));
+			$groups = $this->getNewClusters($descriptors);
+			unset($descriptors);
+
+			$plan = self::planGroups($groups, $sampleOf, $sizes, $decisions);
+			unset($groups);
+
+			$placed = $this->applyPlan($userId, $modelId, $plan);
+
+			yield;
+
+			if ($placed === 0) {
+				// Nothing was placed, so the next round would ask for the same
+				// faces and never end. It should not happen, every face of the
+				// input ends up in a group.
+				$this->logInfo('None of the faces could be placed in a cluster, giving up for now');
+				break;
+			}
+
+			if (count($newFaces) < $facesPerRun) {
+				// That was the whole backlog.
+				break;
+			}
 		}
 
-		$this->logDebug('We will cluster these with ' . $noSlices . ' batch(es) of ' . $sliceSize . ' faces.');
-
-		$newClusters = [];
-		// Obtain the clusters in batches and append them.
-		for ($i = 0; $i < $noSlices ; $i++) {
-			// Get the batches.
-			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
-			// Get the indices, obtain the partial clusters and incorporate them.
-			$faceIds = array_map(function ($face) { return $face['id']; }, $facesSliced);
-			$facesDescripted = $this->faceMapper->findDescriptorsBathed($faceIds);
-			$newClusters = array_merge($newClusters, $this->getNewClusters($facesDescripted));
-			// Discard variables aggressively to improve memory consumption.
-			unset($facesDescripted);
-			unset($facesSliced);
-		}
-
-		// Append non groupable faces on a single step.
-		$nonGroupables = $this->faceMapper->getNonGroupableFaces($userId, $modelId, $min_face_size, $min_confidence);
-		$this->logInfo('We will add '. count($nonGroupables) . ' faces that cannot be grouped.');
-		$newClusters = array_merge($newClusters, $this->getFakeClusters($nonGroupables));
-
-		// Cluster is associative array where key is person ID.
-		// Value is array of face IDs. For old clusters, person IDs are some existing person IDs,
-		// and for new clusters is whatever chinese whispers decides to identify them.
-		//
-		$currentClusters = $this->getCurrentClusters(array_merge($faces, $nonGroupables));
-		$this->logInfo(count($newClusters) . ' clusters found after clustering');
-
-		// Discard variables aggressively to improve memory consumption.
-		unset($faces);
-		unset($nonGroupables);
-
-		// New merge
-		$mergedClusters = $this->mergeClusters($currentClusters, $newClusters);
-
-		$this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $mergedClusters);
-
-		// Remove all orphaned persons (those without any faces)
-		// NOTE: we will do this for all models, not just for current one, but this is not problem.
-		$orphansDeleted = $this->personMapper->deleteOrphaned($userId);
+		$orphansDeleted = $this->clusterMapper->deleteOrphaned($userId);
 		if ($orphansDeleted > 0) {
-			$this->logInfo('Deleted ' . $orphansDeleted . ' persons without faces');
+			$this->logInfo('Deleted ' . $orphansDeleted . ' clusters without faces');
 		}
 
-		// Prevents not create/recreate the clusters unnecessarily.
-
-		$this->settingsService->setNeedRecreateClusters(false, $userId);
-		$this->settingsService->_setForceCreateClusters(false, $userId);
+		$personsDeleted = $this->personMapper->deleteOrphaned($userId);
+		if ($personsDeleted > 0) {
+			$this->logInfo('Deleted ' . $personsDeleted . ' persons without clusters');
+		}
 	}
 
 	/**
-	 * Evaluate whether we want to recreate clusters. We want to recreate clusters/persons if:
-	 * - Some cluster/person is invalidated (is_valid is false for someone)
-	 *   - This means some image that belonged to this user is changed, deleted etc.
-	 * - There are some new faces. Now, we don't want to jump the gun here. We want to either have:
-	 *   - more than 25 new faces, or
-	 *   - less than 25 new faces, but they are older than 2h
-	 *
-	 * (basically, we want to avoid recreating cluster for each new face being uploaded,
-	 *  however, we don't want to wait too much as clusters could be changed a lot)
+	 * Faces that are too small, too uncertain, or that the user detached, are
+	 * not compared with anything: each one gets a cluster of its own.
 	 */
-	private function hasNewFacesToRecreate(string $userId, int $modelId): bool {
-		//
-		$facesWithoutPersons = $this->faceMapper->countFaces($userId, $modelId, true);
-		$this->logDebug(sprintf('Found %d faces without associated persons for user %s and model %d',
-		                $facesWithoutPersons, $userId, $modelId));
+	private function clusterAloneFaces(string $userId, int $modelId, int $minFaceSize,
+	                                   float $minConfidence, int $facesPerRun): \Generator {
+		while (true) {
+			$faces = $this->faceMapper->findUnassignedNonGroupableFaces(
+				$userId, $modelId, $minFaceSize, $minConfidence, $facesPerRun);
 
-		// todo: get rid of magic numbers (move to config)
-		if ($facesWithoutPersons === 0)
-			return false;
+			if (count($faces) === 0) {
+				break;
+			}
 
-		if ($facesWithoutPersons >= 25)
-			return true;
+			$this->logInfo('Adding ' . count($faces) . ' faces that cannot be grouped');
+			foreach ($faces as $faceId) {
+				$this->clusterMapper->attachFaces([$faceId], $this->clusterMapper->create($userId, $modelId));
+			}
 
-		// We have some faces, but not that many, let's see when oldest one is generated.
-		$oldestFace = $this->faceMapper->getOldestCreatedFaceWithoutPerson($userId, $modelId);
-		$oldestFaceTimestamp = $oldestFace->creationTime->getTimestamp();
-		$currentTimestamp = (new \DateTime())->getTimestamp();
-		$this->logDebug(sprintf('Oldest face without persons for user %s and model %d is from %s',
-		                $userId, $modelId, $oldestFace->creationTime->format('Y-m-d H:i:s')));
+			yield;
 
-		// todo: get rid of magic numbers (move to config)
-		if ($currentTimestamp - $oldestFaceTimestamp > 2 * 60 * 60)
-			return true;
-
-		return false;
-	}
-
-	private function hasStalePersonsToRecreate(string $userId, int $modelId): bool {
-		return $this->personMapper->countClusters($userId, $modelId, true) > 0;
-	}
-
-	private function needRecreateBySettings(string $userId): bool {
-		return $this->settingsService->getNeedRecreateClusters($userId);
-	}
-
-	private function needCreateFirstTime(string $userId, int $modelId): bool {
-		// User should not be able to use this directly, used in tests
-		if ($this->settingsService->_getForceCreateClusters($userId))
-			return true;
-
-		$imageCount = $this->imageMapper->countUserImages($userId, $modelId);
-		if ($imageCount === 0)
-			return false;
-
-		$imageProcessed = $this->imageMapper->countUserImages($userId, $modelId, true);
-		if ($imageProcessed === 0)
-			return false;
-
-		// These are basic criteria without which we should not even consider creating clusters.
-		// These clusters will be small and not "stable" enough and we should better wait for more images to come.
-		// todo: get rid of magic numbers (move to config)
-		$facesCount = $this->faceMapper->countFaces($userId, $modelId);
-		if ($facesCount > 1000)
-			return true;
-
-		$percentImagesProcessed = $imageProcessed / floatval($imageCount);
-		if ($percentImagesProcessed > 0.95)
-			return true;
-
-		return false;
-	}
-
-	private function getCurrentClusters(array $faces): array {
-		$chineseClusters = array();
-		foreach($faces as $face) {
-			if ($face['person'] !== null) {
-				if (!isset($chineseClusters[$face['person']])) {
-					$chineseClusters[$face['person']] = array();
-				}
-				$chineseClusters[$face['person']][] = $face['id'];
+			if (count($faces) < $facesPerRun) {
+				break;
 			}
 		}
-		return $chineseClusters;
 	}
 
-	private function getFakeClusters(array $faces): array {
-		$newClusters = array();
-		for ($i = 0, $c = count($faces); $i < $c; $i++) {
-			$fakeCluster = [];
-			$fakeCluster[] = $faces[$i]['id'];
-			$newClusters[] = $fakeCluster;
+	/**
+	 * Turns the groups the clustering found into what has to happen in the
+	 * database. It is separated out, and free of any dependency, because this
+	 * is where every decision about the identity of a cluster is taken.
+	 *
+	 * A group is read through the sampled faces it contains:
+	 *
+	 *  - samples of a single cluster: the new faces of the group join it;
+	 *  - no samples at all: the new faces of the group become a new cluster;
+	 *  - samples of several clusters: those clusters are the same appearance of
+	 *    the same person, split in two by the order in which the faces
+	 *    arrived, so the biggest one absorbs the others. Two ages or two poses
+	 *    of one person never land in the same group, since they are farther
+	 *    apart than the threshold, so this cannot collapse them.
+	 *
+	 * A cluster the user assigned to a person, or hid, is never absorbed,
+	 * because that is a decision of theirs and not of the algorithm. It can
+	 * still absorb the ones nobody assigned, which is how a person reaches the
+	 * faces of a fragment.
+	 *
+	 * @param array $groups Face IDs of each group found, as returned by getNewClusters()
+	 * @param array $sampleOf Cluster each sampled face belongs to, [faceId => clusterId]
+	 * @param array $sizes Number of faces of each cluster, [clusterId => size]
+	 * @param array $decisions Person and visibility of each cluster,
+	 *  [clusterId => ['person' => int|null, 'is_visible' => bool]]
+	 *
+	 * @return array ['attach' => [clusterId => faceIds], 'create' => [faceIds, ...],
+	 *  'absorb' => [winnerId => loserIds]]
+	 */
+	public static function planGroups(array $groups, array $sampleOf, array $sizes, array $decisions): array {
+		$attach = [];
+		$create = [];
+		$absorb = [];
+
+		// The samples of one cluster can end up in different groups, so a
+		// cluster absorbed by one group can still be named by another one.
+		$absorbedBy = [];
+		$survivorOf = function (int $clusterId) use (&$absorbedBy): int {
+			while (isset($absorbedBy[$clusterId])) {
+				$clusterId = $absorbedBy[$clusterId];
+			}
+			return $clusterId;
+		};
+
+		$assigned = function (int $clusterId) use ($decisions): bool {
+			return !is_null($decisions[$clusterId]['person'] ?? null);
+		};
+		$visible = function (int $clusterId) use ($decisions): bool {
+			return $decisions[$clusterId]['is_visible'] ?? true;
+		};
+
+		foreach ($groups as $faceIds) {
+			$owners = [];
+			$newFaces = [];
+			foreach ($faceIds as $faceId) {
+				if (isset($sampleOf[$faceId])) {
+					$owners[$survivorOf($sampleOf[$faceId])] = true;
+				} else {
+					$newFaces[] = $faceId;
+				}
+			}
+			$owners = array_keys($owners);
+
+			if (empty($owners)) {
+				if (!empty($newFaces)) {
+					$create[] = $newFaces;
+				}
+				continue;
+			}
+
+			if (count($owners) > 1) {
+				// The cluster that keeps its identity: the one of a person, then
+				// the visible one, then the biggest, and the oldest on a tie.
+				usort($owners, function (int $a, int $b) use ($assigned, $visible, $sizes): int {
+					if ($assigned($a) !== $assigned($b)) return $assigned($a) ? -1 : 1;
+					if ($visible($a) !== $visible($b)) return $visible($a) ? -1 : 1;
+					$sizeA = $sizes[$a] ?? 0;
+					$sizeB = $sizes[$b] ?? 0;
+					if ($sizeA !== $sizeB) return $sizeB <=> $sizeA;
+					return $a <=> $b;
+				});
+
+				$winner = $owners[0];
+				foreach (array_slice($owners, 1) as $loser) {
+					if ($assigned($loser) || !$visible($loser)) {
+						continue;
+					}
+					$absorb[$winner][] = $loser;
+					$absorbedBy[$loser] = $winner;
+					$sizes[$winner] = ($sizes[$winner] ?? 0) + ($sizes[$loser] ?? 0);
+					unset($sizes[$loser]);
+
+					// The faces that were going to that cluster go to this one.
+					if (isset($attach[$loser])) {
+						$attach[$winner] = array_merge($attach[$winner] ?? [], $attach[$loser]);
+						unset($attach[$loser]);
+					}
+				}
+				$owners = [$winner];
+			}
+
+			if (!empty($newFaces)) {
+				$owner = $owners[0];
+				$attach[$owner] = array_merge($attach[$owner] ?? [], $newFaces);
+			}
 		}
-		return $newClusters;
+
+		return ['attach' => $attach, 'create' => $create, 'absorb' => $absorb];
 	}
 
+	/**
+	 * @return int Faces that were given a cluster
+	 */
+	private function applyPlan(string $userId, int $modelId, array $plan): int {
+		$absorbed = 0;
+		foreach ($plan['absorb'] as $winner => $losers) {
+			$this->clusterMapper->absorbClusters((int) $winner, $losers);
+			$absorbed += count($losers);
+		}
+
+		$attached = 0;
+		foreach ($plan['attach'] as $clusterId => $faceIds) {
+			$this->clusterMapper->attachFaces($faceIds, (int) $clusterId);
+			$attached += count($faceIds);
+		}
+
+		$created = 0;
+		foreach ($plan['create'] as $faceIds) {
+			$this->clusterMapper->attachFaces($faceIds, $this->clusterMapper->create($userId, $modelId));
+			$created += count($faceIds);
+		}
+
+		$this->logInfo(sprintf('%d faces joined an existing cluster, %d new clusters, %d clusters merged',
+		                       $attached, count($plan['create']), $absorbed));
+
+		return $attached + $created;
+	}
+
+	/**
+	 * Groups the given faces by similarity with chinese whispers.
+	 *
+	 * @param array $faces Faces to group, each one with its 'id' and its 'descriptor'
+	 *
+	 * @return array Face IDs of each group found
+	 */
 	private function getNewClusters(array $faces): array {
 		// Clustering parameters
 		$sensitivity = $this->settingsService->getSensitivity();
@@ -374,69 +428,5 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			$newClusters[$newChineseClustersByIndex[$i]][] = $faces[$i]['id'];
 		}
 		return $newClusters;
-	}
-
-	/**
-	 * todo: only reason this is public is because of tests. Go figure it out better.
-	 */
-	public function mergeClusters(array $oldCluster, array $newCluster): array {
-		// Create map of face transitions
-		$transitions = array();
-		foreach ($newCluster as $newPerson=>$newFaces) {
-			foreach ($newFaces as $newFace) {
-				$oldPersonFound = null;
-				foreach ($oldCluster as $oldPerson => $oldFaces) {
-					if (in_array($newFace, $oldFaces)) {
-						$oldPersonFound = $oldPerson;
-						break;
-					}
-				}
-				$transitions[$newFace] = array($oldPersonFound, $newPerson);
-			}
-		}
-		// Count transitions
-		$transitionCount = array();
-		foreach ($transitions as $transition) {
-			$key = $transition[0] . ':' . $transition[1];
-			if (array_key_exists($key, $transitionCount)) {
-				$transitionCount[$key]++;
-			} else {
-				$transitionCount[$key] = 1;
-			}
-		}
-		// Create map of new person -> old person transitions
-		$newOldPersonMapping = array();
-		$oldPersonProcessed = array(); // store this, so we don't waste cycles for in_array()
-		arsort($transitionCount);
-		foreach ($transitionCount as $transitionKey => $count) {
-			$transition = explode(":", $transitionKey);
-			$oldPerson = intval($transition[0]);
-			$newPerson = intval($transition[1]);
-			if (!array_key_exists($newPerson, $newOldPersonMapping)) {
-				if (($oldPerson === 0) || (!array_key_exists($oldPerson, $oldPersonProcessed))) {
-					$newOldPersonMapping[$newPerson] = $oldPerson;
-					$oldPersonProcessed[$oldPerson] = 0;
-				} else {
-					$newOldPersonMapping[$newPerson] = 0;
-				}
-			}
-		}
-		// Starting with new cluster, convert all new person IDs with old person IDs
-		$maxOldPersonId = 1;
-		if (count($oldCluster) > 0) {
-			$maxOldPersonId = (int) max(array_keys($oldCluster)) + 1;
-		}
-
-		$result = array();
-		foreach ($newCluster as $newPerson => $newFaces) {
-			$oldPerson = $newOldPersonMapping[$newPerson];
-			if ($oldPerson === 0) {
-				$result[$maxOldPersonId] = $newFaces;
-				$maxOldPersonId++;
-			} else {
-				$result[$oldPerson] = $newFaces;
-			}
-		}
-		return $result;
 	}
 }

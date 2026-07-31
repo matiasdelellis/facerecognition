@@ -20,7 +20,7 @@
   -
   -->
 <template>
-	<li class='face-entry' :data-id='person.person_id'>
+	<li class='face-entry' :data-id='person.cluster_id'>
 	<template v-if="person.name">
 		<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" style="width: 48px;height: 48px;">
 			<img class='face-preview' :src='person.thumb_url' width="48" height="48"/>
@@ -123,7 +123,7 @@ export default {
 		},
 
 		doDetachFace(person) {
-			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id + '/detach'), {
+			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.cluster_id + '/detach'), {
 				face: person.face_id
 			}).then(function (response) {
 				emit('facerecognition:person:updated')
@@ -135,7 +135,7 @@ export default {
 
 		doNameSubmit: function(person, name) {
 			const self = this
-			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id), {
+			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.cluster_id), {
 				name: name
 			}).then(function (response) {
 				emit('facerecognition:person:updated')

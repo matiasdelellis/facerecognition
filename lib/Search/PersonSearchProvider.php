@@ -134,7 +134,7 @@ class PersonSearchProvider implements IProvider {
 					true
 				);
 			},
-			$this->personMapper->findPersonsLike($user->getUID(),
+			$this->personMapper->findLike($user->getUID(),
 				$this->modelId,
 				$query->getTerm(),
 				$page * $limit,

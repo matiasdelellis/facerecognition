@@ -31,15 +31,18 @@ namespace OCA\FaceRecognition\Listener;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
+use OCP\Files\FileInfo;
 use OCP\Files\Folder;
 use OCP\Files\Events\Node\NodeDeletedEvent;
+
+use OCP\IUserSession;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use Psr\Log\LoggerInterface;
 
@@ -48,14 +51,17 @@ class PostDeleteListener implements IEventListener {
 	/** @var LoggerInterface $logger */
 	private $logger;
 
+	/** @var IUserSession */
+	private $userSession;
+
 	/** @var FaceMapper */
 	private $faceMapper;
 
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -64,16 +70,18 @@ class PostDeleteListener implements IEventListener {
 	private $fileService;
 
 	public function __construct(LoggerInterface       $logger,
+	                            IUserSession          $userSession,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
-	                            PersonMapper          $personMapper,
+	                            ClusterMapper         $clusterMapper,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService)
 	{
 		$this->logger                = $logger;
+		$this->userSession           = $userSession;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
-		$this->personMapper          = $personMapper;
+		$this->clusterMapper         = $clusterMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 	}
@@ -94,10 +102,6 @@ class PostDeleteListener implements IEventListener {
 			return;
 		}
 
-		if ($node instanceof Folder) {
-			return;
-		}
-
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		if ($modelId === SettingsService::FALLBACK_CURRENT_MODEL) {
 			$this->logger->debug("Skipping deleting file since there are no configured model");
@@ -108,16 +112,29 @@ class PostDeleteListener implements IEventListener {
 		if ($this->fileService->isUserFile($node)) {
 			$owner = $node->getOwner()->getUid();
 		} else {
-			if (!\OC::$server->getUserSession()->isLoggedIn()) {
-				$this->logger->debug('Skipping deleting the file ' . $node->getName() .  ' since we cannot determine the owner');
+			if (!$this->userSession->isLoggedIn()) {
+				$this->logger->debug('Skipping deleting ' . $node->getName() .  ' since we cannot determine the owner');
 				return;
 			}
-			$owner = \OC::$server->getUserSession()->getUser()->getUID();
+			$owner = $this->userSession->getUser()->getUID();
 		}
 
 		$enabled = $this->settingsService->getUserEnabled($owner);
 		if (!$enabled) {
 			$this->logger->debug('The user ' . $owner . ' not have the analysis enabled. Skipping');
+			return;
+		}
+
+		// Note that the node of a deletion is a NonExistingFile, whatever was
+		// deleted, so being a folder has to be asked to its type and not to the
+		// class of the node.
+		if ($node instanceof Folder || $node->getType() === FileInfo::TYPE_FOLDER) {
+			// The event only carries the folder, and walking it here would make
+			// the hook as slow as the folder is big. Just remember that there is
+			// something to look for, and let StaleImagesRemovalTask find the
+			// images that are gone, which is what it is for.
+			$this->logger->debug('Deleted the folder ' . $node->getName() . ', its images will be removed in the next background job');
+			$this->settingsService->setNeedRemoveStaleImages(true, $owner);
 			return;
 		}
 
@@ -151,9 +168,9 @@ class PostDeleteListener implements IEventListener {
 
 		$imageId = $this->imageMapper->imageExists($image);
 		if ($imageId !== null) {
-			// note that invalidatePersons depends on existence of faces for a given image,
-			// and we must invalidate before we delete faces!
-			$this->personMapper->invalidatePersons($imageId);
+			// Note that the clusters of these faces are not invalidated: the
+			// clustering does not rebuild them, so removing the faces is the
+			// whole of it, and any cluster left without faces is deleted below.
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
@@ -164,8 +181,8 @@ class PostDeleteListener implements IEventListener {
 
 			// If any person is now without faces, remove those (empty) persons
 			foreach ($facesToRemove as $faceToRemove) {
-				if ($faceToRemove->getPerson() !== null) {
-					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
+				if ($faceToRemove->getCluster() !== null) {
+					$this->clusterMapper->removeIfEmpty($faceToRemove->getCluster());
 				}
 			}
 		}

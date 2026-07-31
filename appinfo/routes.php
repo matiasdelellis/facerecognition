@@ -61,6 +61,12 @@ return ['routes' =>
 		'url'  => '/clustersIgnored',
 		'verb' => 'GET'
 	],
+	// Get the clusters that could be the same person as this one.
+	[
+		'name' => 'cluster#findSimilar',
+		'url'  => '/cluster/{id}/similar',
+		'verb' => 'GET'
+	],
 	// Change visibility to cluster
 	[
 		'name' => 'cluster#setVisibility',

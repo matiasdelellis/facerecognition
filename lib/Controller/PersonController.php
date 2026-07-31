@@ -38,6 +38,8 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Db\ClusterMapper;
+
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
@@ -52,6 +54,9 @@ class PersonController extends Controller {
 
 	/** @var ImageMapper */
 	private $imageMapper;
+
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var PersonMapper */
 	private $personMapper;
@@ -69,6 +74,7 @@ class PersonController extends Controller {
 	                            IRequest        $request,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
+	                            ClusterMapper   $clusterMapper,
 	                            PersonMapper    $personmapper,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
@@ -78,6 +84,7 @@ class PersonController extends Controller {
 
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
+		$this->clusterMapper   = $clusterMapper;
 		$this->personMapper    = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
@@ -100,7 +107,7 @@ class PersonController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
+		$personsNames = $this->personMapper->findAll($this->userId, $modelId);
 		foreach ($personsNames as $personNamed) {
 			$name = $personNamed->getName();
 			$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
@@ -166,12 +173,12 @@ class PersonController extends Controller {
 	 * @return DataResponse
 	 */
 	public function updateName($personName, $name): DataResponse {
-		$modelId = $this->settingsService->getCurrentFaceModel();
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($clusters as $person) {
-			$person->setName($name);
-			$this->personMapper->update($person);
+		// Renaming is one row now: every cluster of theirs points at it.
+		$person = $this->personMapper->findByName($this->userId, $personName);
+		if (!is_null($person)) {
+			$this->personMapper->rename($person->getId(), $name);
 		}
+
 		return $this->find($name);
 	}
 
@@ -185,10 +192,16 @@ class PersonController extends Controller {
 	*/
 	public function setVisibility ($personName, bool $visible): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($clusters as $cluster) {
-			$this->personMapper->setVisibility($cluster->getId(), $visible);
+
+		$person = $this->personMapper->findByName($this->userId, $personName);
+		if (!is_null($person)) {
+			foreach ($this->clusterMapper->findByPerson($this->userId, $modelId, $person->getId()) as $cluster) {
+				$this->clusterMapper->setVisibility($cluster->getId(), $visible);
+			}
+			// Hiding the clusters left the person without any.
+			$this->personMapper->deleteOrphaned($this->userId);
 		}
+
 		return $this->find($personName);
 	}
 
@@ -205,7 +218,7 @@ class PersonController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findPersonsLike($this->userId, $modelId, $query);
+		$persons = $this->personMapper->findLike($this->userId, $modelId, $query);
 		foreach ($persons as $person) {
 			$name = [];
 			$name['name'] = $person->getName();

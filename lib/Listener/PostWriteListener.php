@@ -35,13 +35,14 @@ use OCP\Files\Folder;
 use OCP\Files\Events\Node\NodeWrittenEvent;
 
 use OCP\IUserManager;
+use OCP\IUserSession;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use Psr\Log\LoggerInterface;
 
@@ -53,14 +54,17 @@ class PostWriteListener implements IEventListener {
 	/** @var IUserManager */
 	private $userManager;
 
+	/** @var IUserSession */
+	private $userSession;
+
 	/** @var FaceMapper */
 	private $faceMapper;
 
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -70,17 +74,19 @@ class PostWriteListener implements IEventListener {
 
 	public function __construct(LoggerInterface       $logger,
 	                            IUserManager          $userManager,
+	                            IUserSession          $userSession,
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
-	                            PersonMapper          $personMapper,
+	                            ClusterMapper         $clusterMapper,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService)
 	{
 		$this->logger                = $logger;
 		$this->userManager           = $userManager;
+		$this->userSession           = $userSession;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
-		$this->personMapper          = $personMapper;
+		$this->clusterMapper         = $clusterMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 	}
@@ -115,11 +121,11 @@ class PostWriteListener implements IEventListener {
 		if ($this->fileService->isUserFile($node)) {
 			$owner = $node->getOwner()->getUid();
 		} else {
-			if (!\OC::$server->getUserSession()->isLoggedIn()) {
+			if (!$this->userSession->isLoggedIn()) {
 				$this->logger->debug('Skipping interting file ' . $node->getName() . ' since we cannot determine the owner.');
 				return;
 			}
-			$owner = \OC::$server->getUserSession()->getUser()->getUID();
+			$owner = $this->userSession->getUser()->getUID();
 		}
 
 		if (!$this->userManager->userExists($owner)) {
@@ -173,9 +179,9 @@ class PostWriteListener implements IEventListener {
 			$this->imageMapper->insert($image);
 		} else {
 			$this->imageMapper->resetImage($image);
-			// note that invalidatePersons depends on existence of faces for a given image,
-			// and we must invalidate before we delete faces!
-			$this->personMapper->invalidatePersons($imageId);
+			// The faces of the previous version of the image are dropped, and
+			// the ones of the new version are clustered on the next run. The
+			// clusters they belonged to are left alone: nothing rebuilds them.
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
@@ -183,8 +189,8 @@ class PostWriteListener implements IEventListener {
 
 			// If any person is now without faces, remove those (empty) persons
 			foreach ($facesToRemove as $faceToRemove) {
-				if ($faceToRemove->getPerson() !== null) {
-					$this->personMapper->removeIfEmpty($faceToRemove->getPerson());
+				if ($faceToRemove->getCluster() !== null) {
+					$this->clusterMapper->removeIfEmpty($faceToRemove->getCluster());
 				}
 			}
 		}

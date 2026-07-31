@@ -38,20 +38,30 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Db\Cluster;
+use OCA\FaceRecognition\Db\ClusterMapper;
+
 use OCA\FaceRecognition\Db\Person;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Service\ClusterLinkService;
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
 
 
 class ClusterController extends Controller {
 
+	/** @var ClusterLinkService */
+	private $clusterLinkService;
+
 	/** @var FaceMapper */
 	private $faceMapper;
 
 	/** @var ImageMapper */
 	private $imageMapper;
+
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var PersonMapper */
 	private $personMapper;
@@ -66,22 +76,26 @@ class ClusterController extends Controller {
 	private $userId;
 
 	public function __construct($AppName,
-	                            IRequest        $request,
-	                            FaceMapper      $faceMapper,
-	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personmapper,
-	                            SettingsService $settingsService,
-	                            UrlService      $urlService,
+	                            IRequest           $request,
+	                            FaceMapper         $faceMapper,
+	                            ImageMapper        $imageMapper,
+	                            ClusterMapper      $clusterMapper,
+	                            PersonMapper       $personmapper,
+	                            ClusterLinkService $clusterLinkService,
+	                            SettingsService    $settingsService,
+	                            UrlService         $urlService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
 
-		$this->faceMapper      = $faceMapper;
-		$this->imageMapper     = $imageMapper;
-		$this->personMapper    = $personmapper;
-		$this->settingsService = $settingsService;
-		$this->urlService      = $urlService;
-		$this->userId          = $UserId;
+		$this->faceMapper         = $faceMapper;
+		$this->imageMapper        = $imageMapper;
+		$this->clusterMapper      = $clusterMapper;
+		$this->personMapper       = $personmapper;
+		$this->clusterLinkService = $clusterLinkService;
+		$this->settingsService    = $settingsService;
+		$this->urlService         = $urlService;
+		$this->userId             = $UserId;
 	}
 
 	/**
@@ -90,24 +104,24 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function find(int $id): DataResponse {
-		$person = $this->personMapper->find($this->userId, $id);
+		$cluster = $this->clusterMapper->find($this->userId, $id);
 
 		$resp = [];
 		$faces = [];
-		$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $this->settingsService->getCurrentFaceModel());
-		foreach ($personFaces as $personFace) {
-			$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+		$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $this->settingsService->getCurrentFaceModel());
+		foreach ($clusterFaces as $clusterFace) {
+			$image = $this->imageMapper->find($this->userId, $clusterFace->getImage());
 
 			$file =  $this->urlService->getFileNode($image->getFile());
 			if ($file === null) continue;
 
 			$face = [];
-			$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+			$face['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), 50);
 			$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 			$faces[] = $face;
 		}
-		$resp['name'] = $person->getName();
-		$resp['id'] = $person->getId();
+		$resp['name'] = $this->nameOf($cluster);
+		$resp['id'] = $cluster->getId();
 		$resp['faces'] = $faces;
 
 		return new DataResponse($resp);
@@ -129,29 +143,34 @@ class ClusterController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
-		foreach ($persons as $person) {
-			$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId);
+		$person = $this->personMapper->findByName($this->userId, $personName);
+		if (is_null($person)) {
+			return new DataResponse($resp);
+		}
+
+		$clusters = $this->clusterMapper->findByPerson($this->userId, $modelId, $person->getId());
+		foreach ($clusters as $cluster) {
+			$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
 
 			$faces = [];
-			foreach ($personFaces as $personFace) {
-				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			foreach ($clusterFaces as $clusterFace) {
+				$image = $this->imageMapper->find($this->userId, $clusterFace->getImage());
 
 				$file = $this->urlService->getFileNode($image->getFile());
 				if ($file === null) continue;
 
 				$face = [];
-				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), 50);
 				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 				$faces[] = $face;
 			}
 
-			$cluster = [];
-			$cluster['name'] = $person->getName();
-			$cluster['count'] = count($personFaces);
-			$cluster['id'] = $person->getId();
-			$cluster['faces'] = $faces;
-			$resp['clusters'][] = $cluster;
+			$entry = [];
+			$entry['name'] = $person->getName();
+			$entry['count'] = count($clusterFaces);
+			$entry['id'] = $cluster->getId();
+			$entry['faces'] = $faces;
+			$resp['clusters'][] = $entry;
 		}
 
 		return new DataResponse($resp);
@@ -175,22 +194,22 @@ class ClusterController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+		$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
-			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minClusterSize)
 				continue;
 
-			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
+			$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
 			$faces = [];
-			foreach ($personFaces as $personFace) {
-				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			foreach ($clusterFaces as $clusterFace) {
+				$image = $this->imageMapper->find($this->userId, $clusterFace->getImage());
 
 				$file = $this->urlService->getFileNode($image->getFile());
 				if ($file === null) continue;
 
 				$face = [];
-				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), 50);
 				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 
 				$faces[] = $face;
@@ -224,22 +243,22 @@ class ClusterController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-		$clusters = $this->personMapper->findIgnored($this->userId, $modelId);
+		$clusters = $this->clusterMapper->findIgnored($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
-			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minClusterSize)
 				continue;
 
-			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
+			$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, 40);
 			$faces = [];
-			foreach ($personFaces as $personFace) {
-				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			foreach ($clusterFaces as $clusterFace) {
+				$image = $this->imageMapper->find($this->userId, $clusterFace->getImage());
 
 				$file = $this->urlService->getFileNode($image->getFile());
 				if ($file === null) continue;
 
 				$face = [];
-				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 50);
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), 50);
 				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 
 				$faces[] = $face;
@@ -256,6 +275,40 @@ class ClusterController extends Controller {
 	}
 
 	/**
+	 * Other clusters that could be the same person as this one.
+	 *
+	 * The clustering never joins them by itself: a person at another age, from
+	 * another angle or without the beard is farther than the sensitivity, and
+	 * joining on so little evidence is how two people end up together. So they
+	 * are proposed here, and naming one of them is what actually links them.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @param int $id of the cluster
+	 *
+	 * @return DataResponse
+	 */
+	public function findSimilar(int $id): DataResponse {
+		// Throws if the cluster is not from this user.
+		$this->clusterMapper->find($this->userId, $id);
+
+		$modelId = $this->settingsService->getCurrentFaceModel();
+
+		$clusters = [];
+		foreach ($this->clusterLinkService->findCandidates($this->userId, $id) as $candidate) {
+			$faces = $this->faceMapper->findFromCluster($this->userId, $candidate['id'], $modelId, 1);
+			if (empty($faces)) {
+				continue;
+			}
+
+			$candidate['thumbUrl'] = $this->urlService->getThumbUrl(current($faces)->getId(), 128);
+			$clusters[] = $candidate;
+		}
+
+		return new DataResponse(['clusters' => $clusters]);
+	}
+
+	/**
 	 * @NoAdminRequired
 	 *
 	 * @param int $id
@@ -265,7 +318,7 @@ class ClusterController extends Controller {
 	 */
 	public function setVisibility (int $id, bool $visible): DataResponse {
 		$resp = array();
-		$this->personMapper->setVisibility($id, $visible);
+		$this->clusterMapper->setVisibility($id, $visible);
 		return new DataResponse($resp);
 	}
 
@@ -279,8 +332,16 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
-		$person = $this->personMapper->detachFace($id, $face, $name);
-		return new DataResponse($person);
+		$cluster = $this->clusterMapper->find($this->userId, $id);
+
+		$personId = null;
+		if (!is_null($name) && $name !== '') {
+			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
+		}
+
+		$detached = $this->clusterMapper->detachFace($cluster->getId(), $face, $personId);
+
+		return new DataResponse($this->describe($detached));
 	}
 
 	/**
@@ -293,14 +354,52 @@ class ClusterController extends Controller {
 	 * @return DataResponse new person with that update.
 	 */
 	public function updateName($id, $name, $face_id = null): DataResponse {
-		if (is_null($face_id)) {
-			$person = $this->personMapper->find($this->userId, $id);
-			$person->setName($name);
-			$this->personMapper->update($person);
-		} else {
-			$person = $this->personMapper->detachFace($id, $face_id, $name);
+		$cluster = $this->clusterMapper->find($this->userId, $id);
+
+		// Naming a cluster is saying which person it is one of the looks of.
+		$personId = null;
+		if (!is_null($name) && $name !== '') {
+			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
 		}
-		return new DataResponse($person);
+
+		if (is_null($face_id)) {
+			$this->clusterMapper->setPerson($cluster->getId(), $personId);
+			$cluster = $this->clusterMapper->find($this->userId, $id);
+		} else {
+			$cluster = $this->clusterMapper->detachFace($cluster->getId(), $face_id, $personId);
+		}
+
+		// A person nobody points at any more is not a person.
+		$this->personMapper->deleteOrphaned($this->userId);
+
+		return new DataResponse($this->describe($cluster));
+	}
+
+	/**
+	 * Name of the person the cluster belongs to, if any.
+	 */
+	private function nameOf(Cluster $cluster): ?string {
+		if (is_null($cluster->getPerson())) {
+			return null;
+		}
+
+		try {
+			return $this->personMapper->find($this->userId, $cluster->getPerson())->getName();
+		} catch (\Exception $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * The cluster as the clients of this API expect it, which is with the name
+	 * of its person and not with the id of it.
+	 */
+	private function describe(Cluster $cluster): array {
+		return [
+			'id' => $cluster->getId(),
+			'name' => $this->nameOf($cluster),
+			'is_visible' => $cluster->getIsVisible(),
+		];
 	}
 
 }

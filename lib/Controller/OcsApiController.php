@@ -39,6 +39,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Db\Person;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -51,6 +52,9 @@ class OcsApiController extends OCSController {
 
 	/** @var ImageMapper */
 	private $imageMapper;
+
+/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var PersonMapper */
 	private $personMapper;
@@ -69,7 +73,8 @@ class OcsApiController extends OCSController {
 		IRequest        $request,
 		FaceMapper      $faceMapper,
 		ImageMapper     $imageMapper,
-		PersonMapper    $personmapper,
+ClusterMapper   $clusterMapper,
+	                            PersonMapper    $personmapper,
 		SettingsService $settingsService,
 		UrlService      $urlService,
 		$UserId)
@@ -78,6 +83,7 @@ class OcsApiController extends OCSController {
 
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
+$this->clusterMapper  = $clusterMapper;
 		$this->personMapper    = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
@@ -113,21 +119,20 @@ class OcsApiController extends OCSController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
-		foreach ($personsNames as $personNamed) {
+		$persons = $this->personMapper->findAll($this->userId, $modelId);
+		foreach ($persons as $person) {
 			$facesCount = 0;
 			$thumbFaceId = null;
-			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
-			foreach ($persons as $person) {
-				$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId);
-				if (is_null($thumbFaceId)) {
-					$thumbFaceId = $personFaces[0]->getId();
+			foreach ($this->clustersOfName($person->getName()) as $cluster) {
+				$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
+				if (is_null($thumbFaceId) && !empty($clusterFaces)) {
+					$thumbFaceId = $clusterFaces[0]->getId();
 				}
-				$facesCount += count($personFaces);
+				$facesCount += count($clusterFaces);
 			}
 
 			$respPerson = [];
-			$respPerson['name'] = $personNamed->getName();
+			$respPerson['name'] = $person->getName();
 			$respPerson['thumbFaceId'] = $thumbFaceId;
 			$respPerson['count'] = $facesCount;
 
@@ -162,7 +167,7 @@ class OcsApiController extends OCSController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $name);
+		$clusters = $this->clustersOfName($name);
 		foreach ($clusters as $cluster) {
 			$faces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
 			foreach ($faces as $face) {
@@ -177,6 +182,23 @@ class OcsApiController extends OCSController {
 		}
 
 		return new DataResponse($resp);
+	}
+
+
+	/**
+	 * The clusters of the person of that name, which are the different ways
+	 * their face was found.
+	 *
+	 * @return \OCA\FaceRecognition\Db\Cluster[]
+	 */
+	private function clustersOfName(string $name): array {
+		$person = $this->personMapper->findByName($this->userId, $name);
+		if (is_null($person)) {
+			return [];
+		}
+
+		return $this->clusterMapper->findByPerson($this->userId,
+			$this->settingsService->getCurrentFaceModel(), $person->getId());
 	}
 
 }

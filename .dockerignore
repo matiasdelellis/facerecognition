@@ -1,0 +1,9 @@
+.git
+.github
+build
+js
+node_modules
+vendor
+clover.xml
+translationtool.phar
+translationfiles

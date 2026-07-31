@@ -149,7 +149,7 @@ class SyncAlbumsCommand extends Command {
 			} else{
 				$output->writeln("List of defined persons for the user <$userId> :");
 				$modelId = $this->settingsService->getCurrentFaceModel();
-				$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
+				$distintNames = $this->personMapper->findAll($userId, $modelId);
 				foreach ($distintNames as $key=>$distintName) {
 					if ($key > 0 ){
 						$output->write(", ");

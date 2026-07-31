@@ -69,7 +69,7 @@ class TempImage extends Image {
 		$this->maxImageArea      = $maxImageArea;
 		$this->minImageSide      = $minImageSide;
 
-		$this->tempManager       = \OC::$server->getTempManager();
+		$this->tempManager       = \OC::$server->get(ITempManager::class);
 		$this->imaginary         = new Imaginary();
 
 		$this->prepareImage();

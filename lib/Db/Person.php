@@ -1,9 +1,9 @@
 <?php
 /**
- * @copyright Copyright (c) 2020-2021, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2026, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
  *
- * @author Branko Kokanovic <branko@kokanovic.org>
+ * @author Matias De lellis <mati86dl@gmail.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -28,62 +28,37 @@ use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
- * Person represent one cluster, set of faces. It belongs to $user_id.
+ * Somebody the user named.
+ *
+ * A person has as many clusters as different ways their face was found: another
+ * age, another angle, with and without a beard. Which clusters those are is
+ * something only the user can say, and saying it once holds for a whole
+ * cluster.
  *
  * @method string getUser()
+ * @method void setUser(string $user)
  * @method string getName()
  * @method void setName(string $name)
- * @method bool getIsVisible()
  */
 class Person extends Entity implements JsonSerializable {
 	/**
 	 * User this person belongs to
 	 *
 	 * @var string
-	 * */
+	 */
 	protected $user;
 
 	/**
-	 * Name for this person/cluster. Must exists, even if linked user is set.
+	 * Name the user gave them. Two people of one user can be called the same.
 	 *
 	 * @var string
 	 */
 	protected $name;
 
-	/**
-	 * Whether this person is visible/relevant to user.
-	 *
-	 * @var bool
-	 */
-	protected $isVisible;
-
-	/**
-	 * Whether this person is still valid
-	 *
-	 * @var bool
-	 */
-	protected $isValid;
-
-	/**
-	 * Last timestamp when this person/cluster was created, or when it was refreshed
-	 *
-	 * @var \DateTime|null
-	 */
-	protected $lastGenerationTime;
-
-	/**
-	 * Foreign key to other user that this person belongs to (if it is on same Nextcloud instance).
-	 * It is set by owner of this cluster. It is optional.
-	 *
-	 * @var string|null
-	*/
-	protected $linkedUser;
-
 	public function __construct() {
 		$this->addType('id', 'integer');
 		$this->addType('user', 'string');
-		$this->addType('isVisible', 'bool');
-		$this->addType('isValid', 'bool');
+		$this->addType('name', 'string');
 	}
 
 	public function jsonSerialize() {
@@ -91,28 +66,6 @@ class Person extends Entity implements JsonSerializable {
 			'id' => $this->id,
 			'user' => $this->user,
 			'name' => $this->name,
-			'is_visible' => $this->isVisible,
-			'is_valid' => $this->isValid,
-			'last_generation_time' => $this->lastGenerationTime,
-			'linked_user' => $this->linkedUser
 		];
-	}
-
-	public function setIsVisible($isVisible): void {
-		if (is_bool($isVisible)) {
-			$this->isVisible = $isVisible;
-		} else {
-			$this->isVisible = filter_var($isVisible, FILTER_VALIDATE_BOOLEAN);
-		}
-		$this->markFieldUpdated('isVisible');
-	}
-
-	public function setIsValid($isValid): void {
-		if (is_bool($isValid)) {
-			$this->isValid = $isValid;
-		} else {
-			$this->isValid = filter_var($isValid, FILTER_VALIDATE_BOOLEAN);
-		}
-		$this->markFieldUpdated('isValid');
 	}
 }

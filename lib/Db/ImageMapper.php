@@ -181,7 +181,7 @@ class ImageMapper extends QBMapper {
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
 	 * @param int $modelId Model Id to get images for.
 	 */
-	public function findImagesWithoutFaces(IUser $user = null, int $modelId): array {
+	public function findImagesWithoutFaces(?IUser $user, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb
 			->select(['id', 'user', 'file', 'model'])
@@ -211,10 +211,11 @@ class ImageMapper extends QBMapper {
 		$qb->select('i.id', 'i.file')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('f.cluster', 'c.id'))
+			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
 
 		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
@@ -231,10 +232,11 @@ class ImageMapper extends QBMapper {
 		$qb->select('i.file')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('f.cluster', 'c.id'))
+			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)))
 			->orderBy('i.file', 'DESC');
 
@@ -249,10 +251,11 @@ class ImageMapper extends QBMapper {
 		$qb->select($qb->func()->count('*'))
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('f.cluster', 'c.id'))
+			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
 
 		$result = $qb->executeQuery();
@@ -273,7 +276,7 @@ class ImageMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	public function imageProcessed(Image $image, array $faces, int $duration, \Exception $e = null): void {
+	public function imageProcessed(Image $image, array $faces, int $duration, ?\Exception $e = null): void {
 		$this->db->beginTransaction();
 		try {
 			// Update image itself

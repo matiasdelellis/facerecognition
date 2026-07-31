@@ -1,6 +1,84 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.94] - 2026-07-31
+- Nextcloud 34 is the only supported version, and PHP 8.2 the minimum, which is
+  what NC34 asks for. Nextcloud 31, 32 and 33 are dropped: nobody is testing the
+  app against them, and claiming a version that is not tried is worse than not
+  claiming it. Users on those versions should stay on 0.9.93.
+- The three places that still asked the server container for a service by name
+  use dependency injection instead, since NC34 removed those getters:
+  `IUserSession` is injected into the write and delete listeners, `TempImage`
+  asks the container for `ITempManager` the same way it already asked for the
+  rest, and the integration tests ask it for `IUserManager`.
+- The integration tests say `@group DB`, which is what the `TestCase` of the
+  server wants from a test that touches the database. Without it the connection
+  is replaced by one that fails, so every one of them was failing on setUp.
+
+## [0.9.93] - 2026-07-31
+- `facerecog_faces.person` is called `cluster`, which is what it holds: the
+  cluster of faces that look alike this one. Who that cluster is, if the user
+  said, is the `person` of the cluster. Along with it, the names that said person
+  and meant cluster: `Face::getPerson()` is `getCluster()`,
+  `FaceMapper::getOldestCreatedFaceWithoutPerson()` is `...WithoutCluster()`,
+  `unsetPersonsRelationForUser()` is `unsetClustersRelationForUser()`, and the
+  `person_id` and `person_visible` fields of the sidebar payload are `cluster_id`
+  and `cluster_visible`.
+
+## [0.9.92] - 2026-07-31
+- A person and a cluster are two tables now. `facerecog_clusters` holds the sets
+  of faces that look alike, and `facerecog_persons` holds the people, one row
+  per person instead of the name repeated in every cluster of theirs. That is
+  what the app always meant: one person has as many clusters as ways their face
+  was found, another age, another angle, with and without a beard.
+  - Renaming a person is one statement instead of one per cluster.
+  - Listing them is one query instead of one per name.
+  - Two people of one user can be called the same, which before were one.
+  - Note that the clusters get new IDs, so a link or an API client that kept a
+    cluster ID has to ask for it again. The names are not affected.
+- `GET /cluster/{id}/similar` reports the person of each candidate, so the client
+  can tell apart proposing a name from proposing to join two known people.
+
+## [0.9.91] - 2026-07-31
+- The clusters are grown instead of being rebuilt. Each run clusters the faces
+  that have no cluster yet together with a few faces of each existing cluster,
+  so a face that already has a cluster is never moved: a cluster keeps its ID,
+  and no run can take away a name the user gave it. Before, adding a single
+  image moved around two thirds of the faces and deleted some named clusters.
+- Two clusters are put together when a face that belongs to both arrives, which
+  is what repairs the clusters of a same person split by the order in which the
+  faces were analyzed.
+- Deleting an image only deletes its faces. It no longer invalidates clusters
+  nor triggers a full reclustering, and the clusters left without faces are
+  removed on the next run.
+- The size of the clustering is bounded by the new `clustering_faces_per_run`
+  and `clustering_samples_per_cluster` settings, and no longer depends on the
+  size of the library: a cluster with fifty thousand faces costs the same as one
+  with five. This replaces `clustering_batch_size`, which sliced the faces by
+  the order of the database and therefore split people between slices.
+- Clusters are created from the first faces analyzed, without waiting for 1000
+  faces or for 95% of the images to be processed.
+- New `GET /cluster/{id}/similar`: the clusters that could be the same person as
+  a given one. One person is several clusters, since the same face at another
+  age, from another angle or with the beard shaved lands farther apart than the
+  sensitivity, and the clustering should not join those on its own. So they are
+  proposed instead, and naming one of them is what links them. The candidates
+  are computed when asked for, out of a few faces of each cluster, and nothing
+  is stored: there is nothing to keep up to date afterwards. Clusters that hold
+  faces of a same image are never proposed, since those are two people.
+- A row of `facerecog_persons` is a cluster, and it now says which model it
+  belongs to. That removes the `EXISTS (SELECT 1 FROM faces JOIN images ...)`
+  that seven queries carried only to find that out, and turns
+  `deleteUserModel()` into a single statement. Three columns are dropped in the
+  same migration: `is_valid`, which nothing invalidates any more and could only
+  hide a cluster from its user, and `last_generation_time` and `linked_user`,
+  which were only ever written.
+- Deleting a folder now asks for a stale images removal, so its images stop
+  being counted as analyzed. The folder is still not walked in the hook, which
+  would make it as slow as the folder is big: the work is left to the background
+  job. Note that the node of a deletion is always a `NonExistingFile`, so being
+  a folder is asked to its type and not to the class of the node.
+
 ## [0.9.90] - 2026-05-31
 - Support Nextcloud 33.
 - Support PHP 8.5 in line with NC33.

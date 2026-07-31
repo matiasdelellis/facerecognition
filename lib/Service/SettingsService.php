@@ -89,8 +89,37 @@ class SettingsService {
 	const USER_ENABLED_KEY = 'enabled';
 	// The default is defined by system 'default_enabled' key
 
-	const CLUSTERING_BATCH_SIZE_KEY = 'clustering_batch_size';
-	const DEFAULT_CLUSTERING_BATCH_SIZE = '-1';
+	/**
+	 * How many faces without a cluster are clustered on each run, and how many
+	 * faces of each existing cluster are put in with them. Together they bound
+	 * the input of the clustering, and therefore its time and its memory: the
+	 * input is FACES_PER_RUN + clusters * SAMPLES_PER_CLUSTER faces, and the
+	 * cost grows with the square of that.
+	 *
+	 * A bigger batch also gets closer to what clustering everything at once
+	 * would have given, so it should be as big as the memory allows.
+	 */
+	const CLUSTERING_FACES_PER_RUN_KEY = 'clustering_faces_per_run';
+	const DEFAULT_CLUSTERING_FACES_PER_RUN = '5000';
+	const MINIMUM_CLUSTERING_FACES_PER_RUN = '100';
+
+	const CLUSTERING_SAMPLES_PER_CLUSTER_KEY = 'clustering_samples_per_cluster';
+	const DEFAULT_CLUSTERING_SAMPLES_PER_CLUSTER = '10';
+	const MINIMUM_CLUSTERING_SAMPLES_PER_CLUSTER = '1';
+
+	/**
+	 * Distance up to which two clusters are proposed to the user as being the
+	 * same person. It is looser than the sensitivity on purpose: the whole point
+	 * is to propose what the clustering was too careful to join by itself, which
+	 * is what happens with another age, another pose or a shaved beard. The
+	 * clusters are not joined, they are only proposed.
+	 */
+	const LINK_SUGGESTION_SENSITIVITY_KEY = 'link_suggestion_sensitivity';
+	const DEFAULT_LINK_SUGGESTION_SENSITIVITY = '0.55';
+
+	/** How many faces of each cluster are compared to look for those. */
+	const LINK_SUGGESTION_SAMPLES_KEY = 'link_suggestion_samples';
+	const DEFAULT_LINK_SUGGESTION_SAMPLES = '3';
 
 	/** User setting that remember last images checked */
 	const STALE_IMAGES_LAST_CHECKED_KEY = 'stale_images_last_checked';
@@ -315,10 +344,44 @@ class SettingsService {
 		return ($enabled === 'true');
 	}
 
-	public function getClusterigBatchSize(): int {
-		if ($this->config->getSystemValue('dbtype', 'sqlite') === 'oci')
-			return 1000;
-		return intval($this->config->getAppValue(Application::APP_NAME, self::CLUSTERING_BATCH_SIZE_KEY, self::DEFAULT_CLUSTERING_BATCH_SIZE));
+	/**
+	 * Faces without a cluster that are taken on each run of the clustering.
+	 */
+	public function getClusteringFacesPerRun(): int {
+		$faces = intval($this->config->getAppValue(Application::APP_NAME,
+		                                           self::CLUSTERING_FACES_PER_RUN_KEY,
+		                                           self::DEFAULT_CLUSTERING_FACES_PER_RUN));
+		return max($faces, intval(self::MINIMUM_CLUSTERING_FACES_PER_RUN));
+	}
+
+	/**
+	 * Faces of each existing cluster that are clustered together with them, so
+	 * that the arriving faces can find the cluster they belong to. A cluster
+	 * contributes these many faces whether it has ten or fifty thousand.
+	 */
+	public function getClusteringSamplesPerCluster(): int {
+		$samples = intval($this->config->getAppValue(Application::APP_NAME,
+		                                             self::CLUSTERING_SAMPLES_PER_CLUSTER_KEY,
+		                                             self::DEFAULT_CLUSTERING_SAMPLES_PER_CLUSTER));
+		return max($samples, intval(self::MINIMUM_CLUSTERING_SAMPLES_PER_CLUSTER));
+	}
+
+	/**
+	 * Distance up to which two clusters are proposed as being one person.
+	 */
+	public function getLinkSuggestionSensitivity(): float {
+		return floatval($this->config->getAppValue(Application::APP_NAME,
+		                                           self::LINK_SUGGESTION_SENSITIVITY_KEY,
+		                                           self::DEFAULT_LINK_SUGGESTION_SENSITIVITY));
+	}
+
+	/**
+	 * Faces of each cluster compared when looking for those.
+	 */
+	public function getLinkSuggestionSamples(): int {
+		return max(1, intval($this->config->getAppValue(Application::APP_NAME,
+		                                                self::LINK_SUGGESTION_SAMPLES_KEY,
+		                                                self::DEFAULT_LINK_SUGGESTION_SAMPLES)));
 	}
 
 	public function getHandleSharedFiles(): bool {

@@ -42,7 +42,7 @@
 			<template v-if="this.knownPersons.length > 0">
 				<ul class='faces-list'>
 					<PersonRow v-for="person in this.knownPersons"
-						:key="person.person_id"
+						:key="person.cluster_id"
 						:person="person"
 					/>
 				</ul>
@@ -50,7 +50,7 @@
 			<template v-if="this.unknownPersons.length > 0">
 				<ul class='faces-list'>
 					<PersonRow v-for="person in this.unknownPersons"
-						:key="person.person_id"
+						:key="person.cluster_id"
 						:person="person"
 					/>
 				</ul>

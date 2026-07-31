@@ -38,6 +38,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Db\Person;
+use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -50,6 +51,9 @@ class ApiController extends NcApiController {
 
 	/** @var ImageMapper */
 	private $imageMapper;
+
+/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var PersonMapper */
 	private $personMapper;
@@ -68,7 +72,8 @@ class ApiController extends NcApiController {
 		IRequest        $request,
 		FaceMapper      $faceMapper,
 		ImageMapper     $imageMapper,
-		PersonMapper    $personmapper,
+ClusterMapper   $clusterMapper,
+	                            PersonMapper    $personmapper,
 		SettingsService $settingsService,
 		UrlService      $urlService,
 		$UserId)
@@ -77,6 +82,7 @@ class ApiController extends NcApiController {
 
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
+$this->clusterMapper  = $clusterMapper;
 		$this->personMapper    = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
@@ -112,21 +118,20 @@ class ApiController extends NcApiController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
-		foreach ($personsNames as $personNamed) {
+		$persons = $this->personMapper->findAll($this->userId, $modelId);
+		foreach ($persons as $person) {
 			$facesCount = 0;
 			$thumbFaceId = null;
-			$persons = $this->personMapper->findByName($this->userId, $modelId, $personNamed->getName());
-			foreach ($persons as $person) {
-				$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId);
-				if (is_null($thumbFaceId)) {
-					$thumbFaceId = $personFaces[0]->getId();
+			foreach ($this->clustersOfName($person->getName()) as $cluster) {
+				$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
+				if (is_null($thumbFaceId) && !empty($clusterFaces)) {
+					$thumbFaceId = $clusterFaces[0]->getId();
 				}
-				$facesCount += count($personFaces);
+				$facesCount += count($clusterFaces);
 			}
 
 			$respPerson = [];
-			$respPerson['name'] = $personNamed->getName();
+			$respPerson['name'] = $person->getName();
 			$respPerson['thumbFaceId'] = $thumbFaceId;
 			$respPerson['count'] = $facesCount;
 
@@ -161,7 +166,7 @@ class ApiController extends NcApiController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $name);
+		$clusters = $this->clustersOfName($name);
 		foreach ($clusters as $cluster) {
 			$faces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
 			foreach ($faces as $face) {
@@ -195,14 +200,14 @@ class ApiController extends NcApiController {
 
 		$list = [];
 		$modelId = $this->settingsService->getCurrentFaceModel();
-		$personsNames = $this->personMapper->findDistinctNames($this->userId, $modelId);
+		$personsNames = $this->personMapper->findAll($this->userId, $modelId);
 		foreach ($personsNames as $personNamed) {
 			$name = $personNamed->getName();
-			$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
+			$clusterFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
 
 			$person = [];
 			$person['name'] = $name;
-			$person['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), $thumb_size);
+			$person['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 			$person['count'] = $this->imageMapper->countFromPerson($this->userId, $modelId, $name);
 
 			$list[] = $person;
@@ -231,8 +236,8 @@ class ApiController extends NcApiController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$personFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
-		$resp['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), $thumb_size);
+		$clusterFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
+		$resp['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 
 		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
 		foreach ($images as $image) {
@@ -267,23 +272,24 @@ class ApiController extends NcApiController {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		$clusters = $this->clustersOfName($personName);
 		if (empty($clusters))
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 
 		if (!is_null($name)) {
-			foreach ($clusters as $person) {
-				$person->setName($name);
-				$this->personMapper->update($person);
+			$person = $this->personMapper->findByName($this->userId, $personName);
+			if (!is_null($person)) {
+				$this->personMapper->rename($person->getId(), $name);
 			}
 		}
-		// When change visibility it has a special treatment
+
+		// Hiding a cluster also forgets who it was, so the person can be left
+		// without clusters and stop being a person.
 		if (!is_null($visible)) {
-			foreach ($clusters as $person) {
-				$person->setIsVisible($visible);
-				$person->setName($visible ? $name : null);
-				$this->personMapper->update($person);
+			foreach ($clusters as $cluster) {
+				$this->clusterMapper->setVisibility($cluster->getId(), (bool) $visible);
 			}
+			$this->personMapper->deleteOrphaned($this->userId);
 		}
 
 		// FIXME: What should response?
@@ -304,19 +310,19 @@ class ApiController extends NcApiController {
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$cluster = [];
+		$cluster = $this->clusterMapper->find($this->userId, $clusterId);
+
 		if (!is_null($name)) {
-			$cluster = $this->personMapper->find($this->userId, $clusterId);
-			$cluster->setName($name);
-			$cluster = $this->personMapper->update($cluster);
+			$person = $this->personMapper->findOrCreateByName($this->userId, $name);
+			$this->clusterMapper->setPerson($cluster->getId(), $person->getId());
 		}
 
 		if (!is_null($visible)) {
-			$cluster = $this->personMapper->find($this->userId, $clusterId);
-			$cluster->setIsVisible($visible);
-			$cluster->setName($visible ? $name : null);
-			$cluster = $this->personMapper->update($cluster);
+			$this->clusterMapper->setVisibility($cluster->getId(), (bool) $visible);
 		}
+
+		$this->personMapper->deleteOrphaned($this->userId);
+		$cluster = $this->clusterMapper->find($this->userId, $clusterId);
 
 		// FIXME: What should response?
 		return new JSONResponse($cluster, Http::STATUS_OK);
@@ -339,23 +345,23 @@ class ApiController extends NcApiController {
 		if (is_null($minimum_count))
 			$minimum_count = $this->settingsService->getMinimumFacesInCluster();
 
-		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+		$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
-			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minimum_count)
 				continue;
 
-			$personFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, $max_previews);
+			$clusterFaces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId, $max_previews);
 
 			$faces = [];
-			foreach ($personFaces as $personFace) {
-				$image = $this->imageMapper->find($this->userId, $personFace->getImage());
+			foreach ($clusterFaces as $clusterFace) {
+				$image = $this->imageMapper->find($this->userId, $clusterFace->getImage());
 
 				$file = $this->urlService->getFileNode($image->getFile());
 				if ($file === null) continue;
 
 				$face = [];
-				$face['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), $thumb_size);
+				$face['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 				$face['fileUrl'] = $this->urlService->getRedirectToFileUrl($file);
 
 				$faces[] = $face;
@@ -393,14 +399,14 @@ class ApiController extends NcApiController {
 		$resp = [];
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
-		$persons = $this->personMapper->findPersonsLike($this->userId, $modelId, $query);
+		$persons = $this->personMapper->findLike($this->userId, $modelId, $query);
 		foreach ($persons as $person) {
 			$name = [];
 			$name['name'] = $person->getName();
 			$name['value'] = $person->getName();
 
-			$personFace = current($this->faceMapper->findFromPerson($this->userId, $person->getName(), $modelId, 1));
-			$name['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), $thumb_size);
+			$clusterFace = current($this->faceMapper->findFromPerson($this->userId, $person->getName(), $modelId, 1));
+			$name['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 
 			$resp[] = $name;
 		}
@@ -420,8 +426,32 @@ class ApiController extends NcApiController {
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
 		$face = $this->faceMapper->find($faceId);
-		$person = $this->personMapper->detachFace($face->getPerson(), $faceId, $name);
-		return new JSONResponse($person, Http::STATUS_OK);
+
+		$personId = null;
+		if (!is_null($name) && $name !== '') {
+			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
+		}
+
+		$cluster = $this->clusterMapper->detachFace($face->getCluster(), $faceId, $personId);
+
+		return new JSONResponse($cluster, Http::STATUS_OK);
+	}
+
+
+	/**
+	 * The clusters of the person of that name, which are the different ways
+	 * their face was found.
+	 *
+	 * @return \OCA\FaceRecognition\Db\Cluster[]
+	 */
+	private function clustersOfName(string $name): array {
+		$person = $this->personMapper->findByName($this->userId, $name);
+		if (is_null($person)) {
+			return [];
+		}
+
+		return $this->clusterMapper->findByPerson($this->userId,
+			$this->settingsService->getCurrentFaceModel(), $person->getId());
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * @copyright Copyright (c) 2020 Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2020-2026 Matias De lellis <mati86dl@gmail.com>
  *
  * @author Matias De lellis <mati86dl@gmail.com>
  *
@@ -16,55 +16,48 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-import Vue from 'vue'
+import { defineAsyncComponent, defineCustomElement } from 'vue'
+import { getSidebar } from '@nextcloud/files'
+import { translate as t } from '@nextcloud/l10n'
 
-import PersonsTab from './views/PersonsTab'
+const TAB_TAG_NAME = 'facerecognition-files-sidebar-tab'
 
-import { translate, translatePlural } from '@nextcloud/l10n'
+/**
+ * Inline SVG of the MDI "account-multiple" icon, kept here so the tab is
+ * self-contained and we don't have to ship a separate icon file.
+ */
+const TAB_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5"/></svg>'
 
-Vue.prototype.t = translate
-Vue.prototype.n = translatePlural
-Vue.prototype.OC = OC
-Vue.prototype.OCA = OCA
-
-if (!window.OCA.Facerecognition) {
-	window.OCA.Facerecognition = {}
+/**
+ * Decide whether the tab should be shown for the current node. The tab is
+ * only useful for files and folders, and the user must have face recognition
+ * enabled. The user-enabled check is also done on the server side, so the
+ * server response is what gates the actual content, this is just to avoid
+ * an unnecessary mount.
+ */
+function tabEnabled({ node }) {
+	if (!node) return false
+	return node.type === 'file' || node.type === 'folder'
 }
 
-const View = Vue.extend(PersonsTab)
-
-let TabInstance = null
-const personTab = new OCA.Files.Sidebar.Tab({
+getSidebar().registerTab({
 	id: 'facerecognition',
-	name: t('facerecognition', 'People'),
-	icon: 'icon-contacts-dark',
-	async mount(el, fileInfo, context) {
-		if (TabInstance) {
-			TabInstance.$destroy()
-		}
-		TabInstance = new View({
-			// Better integration with vue parent component
-			parent: context,
-		})
-		// Only mount after we have all the info we need
-		await TabInstance.update(fileInfo)
-		TabInstance.$mount(el)
-	},
-	update(fileInfo) {
-		TabInstance.update(fileInfo)
-	},
-	destroy() {
-		TabInstance.$destroy()
-		TabInstance = null
-	}
-})
+	displayName: t('facerecognition', 'People'),
+	iconSvgInline: TAB_ICON_SVG,
+	order: 50,
+	tagName: TAB_TAG_NAME,
+	enabled: tabEnabled,
 
-window.addEventListener('DOMContentLoaded', () => {
-	if (OCA.Files && OCA.Files.Sidebar) {
-		OCA.Files.Sidebar.registerTab(personTab)
-	}
+	async onInit() {
+		const PersonsTab = defineAsyncComponent(() => import('./views/PersonsTab.vue'))
+		// shadowRoot: false so the global Nextcloud stylesheet still applies.
+		const WebComponent = defineCustomElement(PersonsTab, { shadowRoot: false })
+		if (!customElements.get(TAB_TAG_NAME)) {
+			customElements.define(TAB_TAG_NAME, WebComponent)
+		}
+	},
 })

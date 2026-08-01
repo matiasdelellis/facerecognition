@@ -5,6 +5,7 @@ webpackConfig.entry = {
     'sidebar': path.join(__dirname, 'src', 'sidebarloader.js'),
     'admin': path.join(__dirname, 'src', 'admin.js'),
     'personal': path.join(__dirname, 'src', 'personal.js'),
+    'dialogs': path.join(__dirname, 'src', 'dialogs.js'),
 }
 
 module.exports = webpackConfig

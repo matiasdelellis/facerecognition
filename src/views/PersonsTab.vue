@@ -1,5 +1,5 @@
 <!--
-  - @copyright Copyright (c) 2020 Matias De lellis <mati86dl@gmail.com>
+  - @copyright Copyright (c) 2020-2026 Matias De lellis <mati86dl@gmail.com>
   -
   - @author Matias De lellis <mati86dl@gmail.com>
   -
@@ -16,7 +16,7 @@
   - GNU Affero General Public License for more details.
   -
   - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
+  - along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -
   -->
 <template>
@@ -80,31 +80,54 @@
 </template>
 <script>
 
-import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar'
-import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab'
-
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import Axios from '@nextcloud/axios'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 
-import PersonRow from './PersonRow'
+import PersonRow from './PersonRow.vue'
 
 export default {
 
-	name: 'PersonsTabApp',
+	name: 'PersonsTab',
 
 	components: {
-		NcAppSidebar,
-		NcAppSidebarTab,
 		PersonRow,
+	},
+
+	props: {
+		/** The current node the sidebar was opened for. */
+		node: {
+			type: Object,
+			required: true,
+		},
+		/** The folder currently shown in the files app (if any). */
+		folder: {
+			type: Object,
+			default: null,
+		},
+		/** The currently active view. */
+		view: {
+			type: Object,
+			default: null,
+		},
+		/** Whether this tab is the active one. */
+		active: {
+			type: Boolean,
+			default: false,
+		},
+	},
+
+	emits: [],
+
+	setup() {
+		return { t, n }
 	},
 
 	data() {
 		return {
 			error: '',
-			icon: 'icon-contacts-dark',
 			loading: true,
-			fileInfo: null,
-			name: t('facerecognition', 'People'),
 			isEnabledByUser: false,
 			isAllowedFile: false,
 			isParentEnabled: false,
@@ -112,33 +135,30 @@ export default {
 			isDirectory: false,
 			knownPersons: [],
 			unknownPersons: [],
+			isChildrensEnabled: false,
 		}
 	},
 
 	computed: {
-		/**
-		 * Needed to differenciate the tabs
-		 * pulled from the AppSidebarTab component
-		 *
-		 * @returns {string}
-		 */
-		id() {
-			return 'facerecognition'
-		},
-		/**
-		 * Returns the current active tab
-		 * needed because AppSidebarTab also uses $parent.activeTab
-		 *
-		 * @returns {string}
-		 */
-		activeTab() {
-			return this.$parent.activeTab
-		},
 		settingsUrl() {
-			return t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it', {settingsLink: OC.generateUrl('settings/user/facerecognition')})
+			return t('facerecognition', 'Open <a target="_blank" href="{settingsLink}">settings ↗</a> to enable it', { settingsLink: generateUrl('settings/user/facerecognition') })
 		},
 		faqUrl() {
-			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', {docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ'})
+			return t('facerecognition', 'See <a target="_blank" href="{docsLink}">documentation ↗</a>.', { docsLink: 'https://github.com/matiasdelellis/facerecognition/wiki/FAQ' })
+		},
+	},
+
+	watch: {
+		// The new sidebar passes a new `node` whenever the user opens a
+		// different file or folder, so we re-fetch on that.
+		node: {
+			immediate: true,
+			handler(newNode) {
+				if (newNode) {
+					this.resetState()
+					this.getFacesInfo()
+				}
+			},
 		},
 	},
 
@@ -146,18 +166,12 @@ export default {
 		subscribe('facerecognition:person:updated', this.handlePersonUpdate)
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		unsubscribe('facerecognition:person:updated', this.handlePersonUpdate)
 	},
 
 	methods: {
 		handlePersonUpdate() {
-			this.getFacesInfo(this.fileInfo)
-		},
-
-		async update(fileInfo) {
-			this.resetState()
-			this.fileInfo = fileInfo
 			this.getFacesInfo()
 		},
 
@@ -170,27 +184,21 @@ export default {
 		},
 
 		async getFacesInfo() {
-			const isDirectory = this.fileInfo.isDirectory()
-			if (isDirectory) {
-				var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
-			} else {
-				var infoUrl = OC.generateUrl('/apps/facerecognition/file')
-			}
+			const node = this.node
+			if (!node) return
+
+			const isDirectory = node.type === 'folder'
+			const infoUrl = generateUrl('/apps/facerecognition/' + (isDirectory ? 'folder' : 'file'))
 
 			try {
 				this.loading = true
-
 				const response = await Axios.get(infoUrl, {
-					params: {
-						// TODO: replace with proper getFUllpath implementation of our own FileInfo model
-						fullpath: (this.fileInfo.path + '/' + this.fileInfo.name).replace('//', '/')
-					}
+					params: { fullpath: node.path },
 				})
 				this.processFacesData(response.data, isDirectory)
-
 				this.loading = false
 			} catch (error) {
-				this.error = error
+				this.error = error?.response?.data?.message || error?.message || ''
 				this.loading = false
 				console.error('Error loading info of image', error)
 			}
@@ -198,16 +206,14 @@ export default {
 
 		async enableDirectoryCheck(event) {
 			const isEnabled = event.target.checked
-			var infoUrl = OC.generateUrl('/apps/facerecognition/folder')
+			const infoUrl = generateUrl('/apps/facerecognition/folder')
 			try {
 				const response = await Axios.put(infoUrl, {
-					// TODO: replace with proper getFUllpath implementation of our own FileInfo model
-					fullpath: (this.fileInfo.path + '/' + this.fileInfo.name).replace('//', '/'),
-					detection: isEnabled
+					fullpath: this.node.path,
+					detection: isEnabled,
 				})
 				this.processFacesData(response.data, true)
 			} catch (error) {
-				this.error = error
 				console.error('Error enabling/disabling directory', error)
 			}
 		},
@@ -222,24 +228,23 @@ export default {
 			this.knownPersons = []
 			this.unknownPersons = []
 
-			if (!data.enabled)
-				return;
+			if (!data.enabled) {
+				return
+			}
 
 			if (!isDirectory) {
-				var _self = this;
-				data.persons.forEach(function(person) {
-					if (person.name != null)
-						_self.knownPersons.push(person);
-					else
-						_self.unknownPersons.push(person);
-				});
-				this.knownPersons = this.knownPersons.sort(function(a, b) {
-					if (a.name > b.name)
-						return 1;
-					if (a.name < b.name)
-						return -1;
-					return 0;
-				});
+				data.persons.forEach((person) => {
+					if (person.name != null) {
+						this.knownPersons.push(person)
+					} else {
+						this.unknownPersons.push(person)
+					}
+				})
+				this.knownPersons = this.knownPersons.sort((a, b) => {
+					if (a.name > b.name) return 1
+					if (a.name < b.name) return -1
+					return 0
+				})
 			}
 		},
 	},

@@ -14,6 +14,18 @@ All notable changes to this project will be documented in this file.
 - The integration tests say `@group DB`, which is what the `TestCase` of the
   server wants from a test that touches the database. Without it the connection
   is replaced by one that fails, so every one of them was failing on setUp.
+- The personal settings page has a "Find similar" action on every cluster of
+  a person: it lists the other clusters that look the same but were not
+  clustered with it, and each one can be confirmed (linked to the person) or
+  dismissed (hidden) without leaving the page. The dialogs, the admin sliders,
+  and the personal page are vanilla JS: the jQuery / ocdialog / `OC.filePath`
+  dependencies that NC34 dropped are gone.
+- The Files sidebar tab is Vue 3 and registered through `@nextcloud/files`
+  `getSidebar().registerTab()` as a `defineCustomElement`, the way NC34
+  expects; the old `OCA.Files.Sidebar.Tab` is gone. The "Add name" input
+  inside it is a small Vue 3 autocomplete component that calls
+  `/apps/facerecognition/autocomplete/{query}` and lets the user pick one of
+  the existing names or type a new one.
 
 ## [0.9.93] - 2026-07-31
 - `facerecog_faces.person` is called `cluster`, which is what it holds: the

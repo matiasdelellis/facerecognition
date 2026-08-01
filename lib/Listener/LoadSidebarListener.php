@@ -38,9 +38,10 @@ class LoadSidebarListener implements IEventListener {
 			return;
 		}
 
-		Util::addScript('facerecognition', 'vendor/autocomplete');
-		Util::addScript('facerecognition', 'facerecognition-dialogs');
-		Util::addScript('facerecognition', 'facerecognition-sidebar');
+		// Section 5 is the Files app section in Nextcloud 34's page layout, so
+		// the script ends up in the same context as the Files app's bundle and
+		// can call `getSidebar()`.
+		Util::addScript('facerecognition', 'facerecognition-sidebar', 'files');
 		Util::addStyle('facerecognition', 'fr-dialogs');
 	}
 

@@ -11,6 +11,11 @@
 				<span class="title-name">{{this.name}}</span>
 				<a id="rename-cluster" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{this.id}}"></a>
 				<a id="hide-cluster" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{this.id}}"></a>
+				{{#unless this.suggestionsLoading}}
+					{{#unless this.suggestions}}
+						<a id="find-similar-cluster" title="{{findSimilarHint}}" class="title-icon icon-search" data-id="{{this.id}}"></a>
+					{{/unless}}
+				{{/unless}}
 			</h2>
 			<div class="faces-previews">
 				{{#each this.faces}}
@@ -19,6 +24,49 @@
 					</a>
 				{{/each}}
 			</div>
+			{{#if this.suggestionsLoading}}
+				<div class="cluster-suggestions cluster-suggestions-loading">
+					<span class="icon-loading-small"></span>
+					{{suggestionsLoadingMsg}}
+				</div>
+			{{else if this.suggestions}}
+				<div class="cluster-suggestions" data-cluster-id="{{this.id}}">
+					<h4 class="suggestions-title">
+						{{suggestionsTitleFmt this.name}}
+					</h4>
+					{{#if this.suggestions.length}}
+						<ul class="suggestions-list">
+							{{#each this.suggestions}}
+								<li class="suggestion-entry">
+									<div class="suggestion-thumb lozad" data-background-image="{{thumbUrl}}" width="64" height="64"></div>
+									<div class="suggestion-info">
+										<span class="suggestion-name">
+											{{#if name}}
+												{{name}}
+											{{else}}
+												<em>{{unknownPersonLabel}}</em>
+											{{/if}}
+										</span>
+										<span class="suggestion-count">{{noPhotos count}}</span>
+									</div>
+									<div class="suggestion-actions">
+										<button type="button" class="accept-suggestion primary" data-cluster-id="{{../id}}" data-suggestion-id="{{id}}" title="{{../acceptHint}}">
+											<span class="icon icon-checkmark"></span>
+											<span class="suggestion-action-label">{{../acceptLabel}}</span>
+										</button>
+										<button type="button" class="reject-suggestion" data-cluster-id="{{../id}}" data-suggestion-id="{{id}}" title="{{../rejectHint}}">
+											<span class="icon icon-close"></span>
+											<span class="suggestion-action-label">{{../rejectLabel}}</span>
+										</button>
+									</div>
+								</li>
+							{{/each}}
+						</ul>
+					{{else}}
+						<p class="suggestions-empty">{{suggestionsEmptyMsg}}</p>
+					{{/if}}
+				</div>
+			{{/if}}
 		{{/each}}
 	</div>
 {{else if personName}}

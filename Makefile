@@ -64,10 +64,7 @@ js/vendor/egg.js:
 	mkdir -p js/vendor
 	wget https://raw.githubusercontent.com/mikeflynn/egg.js/master/egg.js -O js/vendor/egg.js
 
-js/vendor/facerecognition-dialogs.js:
-	cp src/dialogs.js -f js/facerecognition-dialogs.js
-
-javascript-deps: js/vendor/handlebars.js js/vendor/autocomplete.js js/vendor/lozad.js js/vendor/egg.js js/vendor/facerecognition-dialogs.js
+javascript-deps: js/vendor/handlebars.js js/vendor/autocomplete.js js/vendor/lozad.js js/vendor/egg.js
 
 vendor-deps: composer javascript-deps
 

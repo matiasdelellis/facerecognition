@@ -1,5 +1,5 @@
 <!--
-  - @copyright Copyright (c) 2020 Matias De lellis <mati86dl@gmail.com>
+  - @copyright Copyright (c) 2020-2026 Matias De lellis <mati86dl@gmail.com>
   -
   - @author Matias De lellis <mati86dl@gmail.com>
   -
@@ -16,54 +16,62 @@
   - GNU Affero General Public License for more details.
   -
   - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
+  - along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -
   -->
 <template>
 	<li class='face-entry' :data-id='person.cluster_id'>
-	<template v-if="person.name">
-		<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" style="width: 48px;height: 48px;">
-			<img class='face-preview' :src='person.thumb_url' width="48" height="48"/>
-		</a>
-		<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" class="face-name">
-			<h5>{{ person.name }}</h5>
-		</a>
-		<a :title='wrongPersonTitle' rel="noreferrer noopener" class="icon-action icon-disabled-user" v-on:click="detachFace"/>
-	</template>
-	<template v-else>
-		<template v-if="!editing">
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;" v-on:click="nameEdit">
-				<img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/>
+		<template v-if="person.name">
+			<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" class="face-thumb">
+				<img class='face-preview' :src='person.thumb_url' width="48" height="48"/>
 			</a>
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="nameEdit">
-				<h5>{{ t('facerecognition', 'Add name') }}</h5>
+			<a :href="person.photos_url" :title='seePhotosTitle' target="_blank" rel="noreferrer noopener" class="face-name">
+				<h5>{{ person.name }}</h5>
 			</a>
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="nameEdit"/>
+			<a :title='wrongPersonTitle' rel="noreferrer noopener" class="icon-action icon-disabled-user" v-on:click="detachFace($event)"/>
 		</template>
 		<template v-else>
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;">
-				<img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/>
-			</a>
-			<input ref="input" v-model="newName" :placeholder="addNamePersonTitle" :title="addNamePersonTitle" type="text" class="face-name face-name-input" @keydown.enter="nameSubmit" @keydown.esc="cancelEdit">
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-confirm" v-on:click="nameSubmit"/>
+			<template v-if="!editing">
+				<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-thumb" v-on:click="nameEdit($event)">
+					<img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/>
+				</a>
+				<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="nameEdit($event)">
+					<h5>{{ addNamePersonTitle }}</h5>
+				</a>
+				<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="nameEdit($event)"/>
+			</template>
+			<template v-else>
+				<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-thumb">
+					<img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/>
+				</a>
+				<AutocompleteInput
+					ref="autocomplete"
+					:value="newName"
+					:placeholder="addNamePersonTitle"
+					:title="addNamePersonTitle"
+					@update:value="newName = $event"
+					@submit="nameSubmit"
+					@cancel="cancelEdit" />
+				<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-confirm" v-on:click="confirmFromClick($event)"/>
+			</template>
 		</template>
-	</template>
 	</li>
 </template>
 
 <script>
 import Axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { translate as t } from '@nextcloud/l10n'
 import { emit } from '@nextcloud/event-bus'
+
+import AutocompleteInput from '../components/AutocompleteInput.vue'
 
 export default {
 
 	name: 'PersonRow',
 
-	data() {
-		return {
-			editing: false,
-			newName: "",
-		}
+	components: {
+		AutocompleteInput,
 	},
 
 	props: {
@@ -71,6 +79,17 @@ export default {
 			type: Object,
 			required: true,
 		},
+	},
+
+	setup() {
+		return { t }
+	},
+
+	data() {
+		return {
+			editing: false,
+			newName: '',
+		}
 	},
 
 	computed: {
@@ -81,66 +100,83 @@ export default {
 			return t('facerecognition', 'Add name')
 		},
 		wrongPersonTitle() {
-			return t('facerecognition', 'This person is not {name}', {name: this.person.name})
+			return t('facerecognition', 'This person is not {name}', { name: this.person.name })
 		},
 	},
 
 	methods: {
-		nameEdit() {
-			this.newName = ""
+		nameEdit(event) {
+			if (event) {
+				event.preventDefault()
+				event.stopPropagation()
+			}
+			this.newName = ''
 			this.editing = true
 			this.$nextTick(() => {
-				this.$refs.input.focus()
+				const ac = this.$refs.autocomplete
+				if (ac) ac.focus()
 			})
 		},
 
 		cancelEdit() {
-			event.preventDefault()
-			event.stopPropagation()
-
 			this.editing = false
+			this.newName = ''
 		},
 
+		/**
+		 * Triggered by the autocomplete's `submit` event (Enter key) and the
+		 * confirm icon click. Forwards the typed name to the server.
+		 */
 		nameSubmit() {
-			event.preventDefault()
-			event.stopPropagation()
-
-			this.doNameSubmit(this.person, this.newName)
+			const name = this.newName.trim()
+			if (name === '') {
+				return
+			}
+			this.doNameSubmit(this.person, name)
 			this.editing = false
 		},
 
-		detachFace() {
-			const self = this
+		/** Click on the confirm icon: stop propagation so the row click does not fire. */
+		confirmFromClick(event) {
+			if (event) {
+				event.preventDefault()
+				event.stopPropagation()
+			}
+			this.nameSubmit()
+		},
+
+		detachFace(event) {
+			if (event) {
+				event.preventDefault()
+				event.stopPropagation()
+			}
 			OC.dialogs.confirm(
 				t('facerecognition', 'This photo will be separated from the person. If you rename it again, it will only be done on this photo. If you want to change the name of all the photos of this person, you must go to the image view and edit there.'),
-				t('facerecognition', 'This person is not {name}', {name: this.person.name}),
-				function(success) {
+				t('facerecognition', 'This person is not {name}', { name: this.person.name }),
+				(success) => {
 					if (success) {
-						self.doDetachFace(self.person)
+						this.doDetachFace(this.person)
 					}
 				}
 			)
 		},
 
 		doDetachFace(person) {
-			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.cluster_id + '/detach'), {
-				face: person.face_id
-			}).then(function (response) {
+			Axios.put(generateUrl('/apps/facerecognition/cluster/' + person.cluster_id + '/detach'), {
+				face: person.face_id,
+			}).then(() => {
 				emit('facerecognition:person:updated')
-			}).catch(function (error) {
-				self.error = error
+			}).catch((error) => {
 				console.error('There was an error applying that change', error)
 			})
 		},
 
-		doNameSubmit: function(person, name) {
-			const self = this
-			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.cluster_id), {
-				name: name
-			}).then(function (response) {
+		doNameSubmit(person, name) {
+			Axios.put(generateUrl('/apps/facerecognition/cluster/' + person.cluster_id), {
+				name: name,
+			}).then(() => {
 				emit('facerecognition:person:updated')
-			}).catch(function (error) {
-				self.error = error
+			}).catch((error) => {
 				console.error('Error renaming person', error)
 			})
 		},
@@ -150,19 +186,30 @@ export default {
 
 <style scoped>
 
-.faces-list {
-	padding: 10px 0 15px;
-}
-
 .face-entry {
 	display: flex;
 	align-items: center;
 	margin-bottom: 8px;
 }
 
+.face-thumb {
+	flex: 0 0 auto;
+	width: 48px;
+	height: 48px;
+	display: inline-block;
+}
+
 .face-name {
-	width: 100%;
+	flex: 1 1 auto;
 	padding: 8px;
+	min-width: 0;
+}
+
+.face-name h5 {
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .unknown-name {
@@ -185,6 +232,7 @@ export default {
 	min-height: 36px;
 	border-radius: 18px;
 	opacity: 0.7;
+	cursor: pointer;
 }
 
 .icon-action:hover {

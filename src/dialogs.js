@@ -1,5 +1,5 @@
 /*
- * @copyright 2019-2021 Matias De lellis <mati86dl@gmail.com>
+ * @copyright 2019-2026 Matias De lellis <mati86dl@gmail.com>
  *
  * @author 2019 Matias De lellis <mati86dl@gmail.com>
  *
@@ -20,467 +20,451 @@
  */
 
 /**
- * this class to ease the usage of jquery dialogs
+ * Vanilla JS replacement of the legacy jQuery dialogs.
+ * Uses the native <dialog> element with showModal().
  */
-const FrDialogs = {
+(function (window, document) {
+    'use strict';
 
-	hide: function (faces, callback) {
-		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-hidee-dialog';
-			var dialogId = '#' + dialogName;
-			var $dlg = $tmpl.octemplate({
-				dialog_name: dialogName,
-				title: t('facerecognition', 'Hide person'),
-				message: t('facerecognition', 'You can still see that person in the photos, but assigning a name will only be for that photo.'),
-				type: 'none'
-			});
+    function once(fn) {
+        let called = false;
+        return function () {
+            if (called) return;
+            called = true;
+            return fn.apply(this, arguments);
+        };
+    }
 
-			$dlg.append($('<br/>'));
+    function el(tag, props, children) {
+        const node = document.createElement(tag);
+        if (props) {
+            for (const key in props) {
+                if (key === 'class') {
+                    node.className = props[key];
+                } else if (key === 'text') {
+                    node.textContent = props[key];
+                } else if (key === 'style' && typeof props[key] === 'object') {
+                    Object.assign(node.style, props[key]);
+                } else {
+                    node.setAttribute(key, props[key]);
+                }
+            }
+        }
+        if (children) {
+            for (const child of children) {
+                if (child) node.appendChild(child);
+            }
+        }
+        return node;
+    }
 
-			var div = $('<div/>').attr('style', 'text-align: center');
-			$dlg.append(div);
+    function makeFaceThumb(face) {
+        const img = el('img', {
+            class: 'face-preview-dialog',
+            src: face.thumbUrl,
+            width: '50',
+            height: '50',
+        });
+        if (face.fileUrl) {
+            return el('a', {
+                href: face.fileUrl,
+                target: '_blank',
+                rel: 'noreferrer noopener',
+            }, [img]);
+        }
+        return img;
+    }
 
-			for (var face of faces) {
-				if (face['fileUrl'] !== undefined) {
-					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
-				} else {
-					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
-				}
-			}
+    function getAutocomplete(query) {
+        return fetch(OC.generateUrl('/apps/facerecognition/autocomplete/' + encodeURIComponent(query)), {
+            headers: { 'OCS-APIRequest': 'true', 'requesttoken': OC.requestToken },
+            credentials: 'same-origin',
+        }).then((response) => {
+            if (!response.ok) {
+                return [];
+            }
+            return response.json();
+        }).catch(() => []);
+    }
 
-			$('body').append($dlg);
+    function attachAutocomplete(input) {
+        if (typeof window.AutoComplete !== 'function') return;
+        new window.AutoComplete({
+            input: input,
+            lookup(query) {
+                return getAutocomplete(query);
+            },
+            silent: true,
+            highlight: false,
+        });
+    }
 
-			// wrap callback in _.once():
-			// only call callback once and not twice (button handler and close
-			// event) but call it for the close event, if ESC or the x is hit
-			if (callback !== undefined) {
-				callback = _.once(callback);
-			}
+    /**
+     * Build a dialog scaffold with header, message and a content node.
+     * Returns { dialog, content } so the caller can append the body parts.
+     */
+    function buildDialog(id, title, message) {
+        const titleEl = el('h3', { class: 'fr-dialog-title', text: title });
+        const messageEl = el('p', { class: 'fr-dialog-message', text: message });
+        const content = el('div', { class: 'fr-dialog-content' });
+        const dialog = el('dialog', { id: id, class: 'fr-dialog' }, [titleEl, messageEl, content]);
+        document.body.appendChild(dialog);
+        return { dialog: dialog, content: content };
+    }
 
-			var buttonlist = [{
-				text: t('facerecognition', 'Cancel'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(false);
-					}
-				}
-			}, {
-				text: t('facerecognition', 'Hide'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true);
-					}
-				},
-				defaultButton: true
-			}];
+    function makeButton(label, kind) {
+        return el('button', {
+            type: 'button',
+            class: kind || '',
+            text: label,
+        });
+    }
 
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close: function () {
-					// callback is already fired if Yes/No is clicked directly
-					if (callback !== undefined) {
-						callback(false);
-					}
-				}
-			});
-		});
-	},
+    /**
+     * Show a modal <dialog> with a list of buttons.
+     * Resolves with the value the chosen button reports (or null on cancel/close).
+     *
+     * @param {HTMLDialogElement} dialog
+     * @param {Array<{label: string, value: *, primary?: boolean}>} buttons
+     * @returns {Promise<*>}
+     */
+    function showModal(dialog, buttons) {
+        const actions = el('div', { class: 'fr-dialog-actions' });
+        let resolver;
+        const promise = new Promise((resolve) => {
+            resolver = resolve;
+        });
+        const resolveOnce = once(function (value) {
+            resolver(value);
+        });
 
-	rename: function (name, faces, callback) {
-		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-rename-dialog';
-			var dialogId = '#' + dialogName;
-			var $dlg = $tmpl.octemplate({
-				dialog_name: dialogName,
-				title: t('facerecognition', 'Rename person'),
-				message: t('facerecognition', 'Please enter a name to rename the person'),
-				type: 'none'
-			});
+        buttons.forEach(function (spec) {
+            const btn = makeButton(spec.label, spec.primary ? 'primary' : 'secondary');
+            btn.addEventListener('click', function () {
+                // Resolve before closing, since dialog.close() synchronously
+                // dispatches the 'close' event (which would resolve with null).
+                resolveOnce(spec.value);
+                if (typeof dialog.close === 'function') {
+                    dialog.close(spec.value);
+                }
+            });
+            actions.appendChild(btn);
+        });
+        dialog.appendChild(actions);
 
-			$dlg.append($('<br/>'));
+        // ESC / dialog close events
+        dialog.addEventListener('close', function () {
+            // If a button was clicked, close() was called with its value and the
+            // button handler already resolved. Otherwise, the user closed via
+            // ESC and we resolve with null.
+            resolveOnce(null);
+        });
 
-			var div = $('<div/>').attr('style', 'text-align: center');
-			$dlg.append(div);
+        // Click on backdrop closes (native <dialog> doesn't auto-handle this)
+        dialog.addEventListener('click', function (event) {
+            if (event.target === dialog) {
+                if (typeof dialog.close === 'function') {
+                    dialog.close();
+                }
+            }
+        });
 
-			for (var face of faces) {
-				if (face['fileUrl'] !== undefined) {
-					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
-				} else {
-					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
-				}
-			}
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            // Very old browsers: fall back to a manual overlay
+            dialog.setAttribute('open', '');
+        }
+        return promise;
+    }
 
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', name).attr('value', name);
-			$dlg.append(input);
+    function destroyDialog(dialog) {
+        if (dialog && dialog.parentNode) {
+            dialog.parentNode.removeChild(dialog);
+        }
+    }
 
-			$('body').append($dlg);
+    const FrDialogs = {
 
-			// wrap callback in _.once():
-			// only call callback once and not twice (button handler and close
-			// event) but call it for the close event, if ESC or the x is hit
-			if (callback !== undefined) {
-				callback = _.once(callback);
-			}
+        hide: function (faces, callback) {
+            const id = 'fr-hide-dialog';
+            const built = buildDialog(
+                id,
+                t('facerecognition', 'Hide person'),
+                t('facerecognition', 'You can still see that person in the photos, but assigning a name will only be for that photo.')
+            );
 
-			var buttonlist = [{
-				text: t('facerecognition', 'Cancel'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(false, input.val().trim());
-					}
-				}
-			}, {
-				text: t('facerecognition', 'Rename'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, input.val().trim());
-					}
-				},
-				defaultButton: true
-			}];
+            built.content.appendChild(el('br'));
+            const thumbs = el('div', { style: { textAlign: 'center' } });
+            faces.forEach(function (face) {
+                thumbs.appendChild(makeFaceThumb(face));
+            });
+            built.content.appendChild(thumbs);
 
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close: function () {
-					// callback is already fired if Yes/No is clicked directly
-					if (callback !== undefined) {
-						callback(false, input.val());
-					}
-				}
-			});
+            const wrappedCallback = callback !== undefined ? once(function (value) {
+                destroyDialog(built.dialog);
+                callback(value === true);
+            }) : null;
 
-			new AutoComplete({
-				input: document.getElementById(dialogName + "-input"),
-				lookup (query) {
-					return new Promise(resolve => {
-						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
-						});
-					});
-				},
-				silent: true,
-				highlight: false
-			});
+            const promise = showModal(built.dialog, [
+                { label: t('facerecognition', 'Cancel'), value: false },
+                { label: t('facerecognition', 'Hide'), value: true, primary: true },
+            ]);
 
-			$(dialogId + "-input").keydown(function(event) {
-				// It only prevents the that change the image when you press arrow keys.
-				event.stopPropagation();
-				if (event.key === "Enter") {
-					// It only prevents the that change the image when you press enter.
-					event.preventDefault();
-				}
-			});
+            if (wrappedCallback) {
+                promise.then(function (value) {
+                    wrappedCallback(value === true);
+                });
+            }
+            return promise;
+        },
 
-			input.focus();
-			input.select();
-		});
-	},
+        rename: function (name, faces, callback) {
+            const id = 'fr-rename-dialog';
+            const built = buildDialog(
+                id,
+                t('facerecognition', 'Rename person'),
+                t('facerecognition', 'Please enter a name to rename the person')
+            );
 
-	detachFace: function (face, oldName, callback) {
-		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-detach-face-dialog';
-			var dialogId = '#' + dialogName;
-			var $dlg = $tmpl.octemplate({
-				dialog_name: dialogName,
-				title: t('facerecognition', 'This person is not {name}', {name: oldName}),
-				message: t('facerecognition', 'Optionally you can assign the correct name'),
-				type: 'none'
-			});
+            built.content.appendChild(el('br'));
+            const thumbs = el('div', { style: { textAlign: 'center' } });
+            faces.forEach(function (face) {
+                thumbs.appendChild(makeFaceThumb(face));
+            });
+            built.content.appendChild(thumbs);
 
-			$dlg.append($('<br/>'));
+            const input = el('input', {
+                type: 'text',
+                id: id + '-input',
+                placeholder: name,
+                value: name,
+            });
+            built.content.appendChild(input);
 
-			var div = $('<div/>').attr('style', 'text-align: center');
-			$dlg.append(div);
+            attachAutocomplete(input);
 
-			div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
+            input.addEventListener('keydown', function (event) {
+                // Prevent the host app from interpreting the key
+                event.stopPropagation();
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const primary = built.dialog.querySelector('button.primary');
+                    if (primary) primary.click();
+                }
+            });
 
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
-			$dlg.append(input);
+            // Focus and select after the dialog is shown
+            requestAnimationFrame(function () {
+                input.focus();
+                input.select();
+            });
 
-			$('body').append($dlg);
+            const wrappedCallback = callback !== undefined ? once(function (result, value) {
+                destroyDialog(built.dialog);
+                callback(result, value);
+            }) : null;
 
-			// wrap callback in _.once():
-			// only call callback once and not twice (button handler and close
-			// event) but call it for the close event, if ESC or the x is hit
-			if (callback !== undefined) {
-				callback = _.once(callback);
-			}
+            const promise = showModal(built.dialog, [
+                { label: t('facerecognition', 'Cancel'), value: 'cancel' },
+                { label: t('facerecognition', 'Rename'), value: 'ok', primary: true },
+            ]);
 
-			var buttonlist = [{
-				text: t('facerecognition', 'Cancel'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(false, null);
-					}
-				},
-			}, {
-				text: t('facerecognition', 'Save'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, input.val().trim().length > 0 ? input.val().trim() : null);
-					}
-				},
-				defaultButton: true
-			}];
+            if (wrappedCallback) {
+                promise.then(function (value) {
+                    if (value === 'ok') {
+                        wrappedCallback(true, (input.value || '').trim());
+                    } else {
+                        wrappedCallback(false, input.value);
+                    }
+                });
+            }
+            return promise;
+        },
 
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close: function () {
-					// callback is already fired if Yes/No is clicked directly
-					if (callback !== undefined) {
-						callback(false, null);
-					}
-				}
-			});
+        detachFace: function (face, oldName, callback) {
+            const id = 'fr-detach-face-dialog';
+            const built = buildDialog(
+                id,
+                t('facerecognition', 'This person is not {name}', { name: oldName }),
+                t('facerecognition', 'Optionally you can assign the correct name')
+            );
 
-			new AutoComplete({
-				input: document.getElementById(dialogName + "-input"),
-				lookup (query) {
-					return new Promise(resolve => {
-						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
-						});
-					});
-				},
-				silent: true,
-				highlight: false
-			});
+            built.content.appendChild(el('br'));
+            const thumbs = el('div', { style: { textAlign: 'center' } });
+            thumbs.appendChild(makeFaceThumb(face));
+            built.content.appendChild(thumbs);
 
-			$(dialogId + "-input").keydown(function(event) {
-				// It only prevents the that change the image when you press arrow keys.
-				event.stopPropagation();
-				if (event.key === "Enter") {
-					// It only prevents the that change the image when you press enter.
-					event.preventDefault();
-				}
-			});
+            const input = el('input', {
+                type: 'text',
+                id: id + '-input',
+                placeholder: t('facerecognition', 'Please assign a name to this person.'),
+            });
+            built.content.appendChild(input);
 
-			input.focus();
-		});
-	},
+            attachAutocomplete(input);
 
-	assignName: function (faces, callback) {
-		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-assign-dialog';
-			var dialogId = '#' + dialogName;
-			var $dlg = $tmpl.octemplate({
-				dialog_name: dialogName,
-				title: t('facerecognition', 'Add name'),
-				message: t('facerecognition', 'Please assign a name to this person.'),
-				type: 'none'
-			});
+            input.addEventListener('keydown', function (event) {
+                event.stopPropagation();
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const primary = built.dialog.querySelector('button.primary');
+                    if (primary) primary.click();
+                }
+            });
 
-			$dlg.append($('<br/>'));
+            requestAnimationFrame(function () {
+                input.focus();
+            });
 
-			var div = $('<div/>').attr('style', 'text-align: center');
-			$dlg.append(div);
+            const wrappedCallback = callback !== undefined ? once(function (result, value) {
+                destroyDialog(built.dialog);
+                callback(result, value);
+            }) : null;
 
-			for (var face of faces) {
-				if (face['fileUrl'] !== undefined) {
-					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
-				} else {
-					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
-				}
-			}
+            const promise = showModal(built.dialog, [
+                { label: t('facerecognition', 'Cancel'), value: 'cancel' },
+                { label: t('facerecognition', 'Save'), value: 'ok', primary: true },
+            ]);
 
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
-			$dlg.append(input);
+            if (wrappedCallback) {
+                promise.then(function (value) {
+                    if (value === 'ok') {
+                        const trimmed = (input.value || '').trim();
+                        wrappedCallback(true, trimmed.length > 0 ? trimmed : null);
+                    } else {
+                        wrappedCallback(false, null);
+                    }
+                });
+            }
+            return promise;
+        },
 
-			$('body').append($dlg);
+        assignName: function (faces, callback) {
+            const id = 'fr-assign-dialog';
+            const built = buildDialog(
+                id,
+                t('facerecognition', 'Add name'),
+                t('facerecognition', 'Please assign a name to this person.')
+            );
 
-			// wrap callback in _.once():
-			// only call callback once and not twice (button handler and close
-			// event) but call it for the close event, if ESC or the x is hit
-			if (callback !== undefined) {
-				callback = _.once(callback);
-			}
+            built.content.appendChild(el('br'));
+            const thumbs = el('div', { style: { textAlign: 'center' } });
+            faces.forEach(function (face) {
+                thumbs.appendChild(makeFaceThumb(face));
+            });
+            built.content.appendChild(thumbs);
 
-			var buttonlist = [{
-				text: t('facerecognition', 'Ignore'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, null);
-					}
-				},
-			}, {
-				text: t('facerecognition', 'Skip for now'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, '');
-					}
-				},
-				defaultButton: false
-			}, {
-				text: t('facerecognition', 'Save'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, input.val().trim());
-					}
-				},
-				defaultButton: true
-			}];
+            const input = el('input', {
+                type: 'text',
+                id: id + '-input',
+                placeholder: t('facerecognition', 'Please assign a name to this person.'),
+            });
+            built.content.appendChild(input);
 
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close: function () {
-					// callback is already fired if Yes/No is clicked directly
-					if (callback !== undefined) {
-						callback(false, '');
-					}
-				}
-			});
+            attachAutocomplete(input);
 
-			new AutoComplete({
-				input: document.getElementById(dialogName + "-input"),
-				lookup (query) {
-					return new Promise(resolve => {
-						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
-						});
-					});
-				},
-				silent: true,
-				highlight: false
-			});
+            input.addEventListener('keydown', function (event) {
+                event.stopPropagation();
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const primary = built.dialog.querySelector('button.primary');
+                    if (primary) primary.click();
+                }
+            });
 
-			$(dialogId + "-input").keydown(function(event) {
-				// It only prevents the that change the image when you press arrow keys.
-				event.stopPropagation();
-				if (event.key === "Enter") {
-					// It only prevents the that change the image when you press enter.
-					event.preventDefault();
-				}
-			});
+            requestAnimationFrame(function () {
+                input.focus();
+            });
 
-			input.focus();
-		});
-	},
+            const wrappedCallback = callback !== undefined ? once(function (result, value) {
+                destroyDialog(built.dialog);
+                callback(result, value);
+            }) : null;
 
-	assignIgnored: function (faces, callback) {
-		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
-			var dialogName = 'fr-assign-dialog';
-			var dialogId = '#' + dialogName;
-			var $dlg = $tmpl.octemplate({
-				dialog_name: dialogName,
-				title: t('facerecognition', 'Add name'),
-				message: t('facerecognition', 'Please assign a name to this person.'),
-				type: 'none'
-			});
+            const promise = showModal(built.dialog, [
+                { label: t('facerecognition', 'Ignore'), value: 'ignore' },
+                { label: t('facerecognition', 'Skip for now'), value: 'skip' },
+                { label: t('facerecognition', 'Save'), value: 'ok', primary: true },
+            ]);
 
-			$dlg.append($('<br/>'));
+            if (wrappedCallback) {
+                promise.then(function (value) {
+                    if (value === 'ok') {
+                        wrappedCallback(true, (input.value || '').trim());
+                    } else if (value === 'skip') {
+                        wrappedCallback(true, '');
+                    } else if (value === 'ignore') {
+                        wrappedCallback(true, null);
+                    } else {
+                        wrappedCallback(false, '');
+                    }
+                });
+            }
+            return promise;
+        },
 
-			var div = $('<div/>').attr('style', 'text-align: center');
-			$dlg.append(div);
+        assignIgnored: function (faces, callback) {
+            const id = 'fr-assign-ignored-dialog';
+            const built = buildDialog(
+                id,
+                t('facerecognition', 'Add name'),
+                t('facerecognition', 'Please assign a name to this person.')
+            );
 
-			for (var face of faces) {
-				if (face['fileUrl'] !== undefined) {
-					div.append($('<a href="' + face['fileUrl'] + '" target="_blank"><img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/></a>'));
-				} else {
-					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
-				}
-			}
+            built.content.appendChild(el('br'));
+            const thumbs = el('div', { style: { textAlign: 'center' } });
+            faces.forEach(function (face) {
+                thumbs.appendChild(makeFaceThumb(face));
+            });
+            built.content.appendChild(thumbs);
 
-			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
-			$dlg.append(input);
+            const input = el('input', {
+                type: 'text',
+                id: id + '-input',
+                placeholder: t('facerecognition', 'Please assign a name to this person.'),
+            });
+            built.content.appendChild(input);
 
-			$('body').append($dlg);
+            attachAutocomplete(input);
 
-			// wrap callback in _.once():
-			// only call callback once and not twice (button handler and close
-			// event) but call it for the close event, if ESC or the x is hit
-			if (callback !== undefined) {
-				callback = _.once(callback);
-			}
+            input.addEventListener('keydown', function (event) {
+                event.stopPropagation();
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const primary = built.dialog.querySelector('button.primary');
+                    if (primary) primary.click();
+                }
+            });
 
-			var buttonlist = [{
-				text: t('facerecognition', 'Keep ignored'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, null);
-					}
-				},
-			}, {
-				text: t('facerecognition', 'Save'),
-				click: function () {
-					$(dialogId).ocdialog('close');
-					if (callback !== undefined) {
-						callback(true, input.val().trim());
-					}
-				},
-				defaultButton: true
-			}];
+            requestAnimationFrame(function () {
+                input.focus();
+            });
 
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close: function () {
-					// callback is already fired if Yes/No is clicked directly
-					if (callback !== undefined) {
-						callback(false, '');
-					}
-				}
-			});
+            const wrappedCallback = callback !== undefined ? once(function (result, value) {
+                destroyDialog(built.dialog);
+                callback(result, value);
+            }) : null;
 
-			new AutoComplete({
-				input: document.getElementById(dialogName + "-input"),
-				lookup (query) {
-					return new Promise(resolve => {
-						$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
-							resolve(names);
-						});
-					});
-				},
-				silent: true,
-				highlight: false
-			});
+            const promise = showModal(built.dialog, [
+                { label: t('facerecognition', 'Keep ignored'), value: 'ignore' },
+                { label: t('facerecognition', 'Save'), value: 'ok', primary: true },
+            ]);
 
-			$(dialogId + "-input").keydown(function(event) {
-				// It only prevents the that change the image when you press arrow keys.
-				event.stopPropagation();
-				if (event.key === "Enter") {
-					// It only prevents the that change the image when you press enter.
-					event.preventDefault();
-				}
-			});
+            if (wrappedCallback) {
+                promise.then(function (value) {
+                    if (value === 'ok') {
+                        wrappedCallback(true, (input.value || '').trim());
+                    } else if (value === 'ignore') {
+                        wrappedCallback(true, null);
+                    } else {
+                        wrappedCallback(false, '');
+                    }
+                });
+            }
+            return promise;
+        },
+    };
 
-			input.focus();
-		});
-	},
-
-	_getMessageTemplate: function () {
-		var defer = $.Deferred();
-		if (!this.$messageTemplate) {
-			var self = this;
-			$.get(OC.filePath('facerecognition', 'templates', 'message.html'), function (tmpl) {
-				self.$messageTemplate = $(tmpl);
-				defer.resolve(self.$messageTemplate);
-			})
-			.fail(function (jqXHR, textStatus, errorThrown) {
-				defer.reject(jqXHR.status, errorThrown);
-			});
-		} else {
-			defer.resolve(this.$messageTemplate);
-		}
-		return defer.promise();
-	}
-
-}
+    window.FrDialogs = FrDialogs;
+})(window, document);

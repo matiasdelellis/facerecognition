@@ -189,7 +189,7 @@ class BackgroundCommand extends Command {
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $user, $maxImageArea, $mode);
+		$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea);
 
 		// Release obtained lock
 		//

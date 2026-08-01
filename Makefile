@@ -104,7 +104,7 @@ build-vue:
 js-templates:
 	node_modules/handlebars/bin/handlebars src/templates -f js/facerecognition-templates.js
 
-build: test-bin-deps build-vue vendor-deps js-templates
+build: test-bin-deps vendor-deps build-vue js-templates
 	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 

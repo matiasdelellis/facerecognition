@@ -1,3 +1,5 @@
+import { showError, showInfo, showWarning } from '@nextcloud/dialogs';
+
 (function (OC, window) {
 'use strict';
 
@@ -277,7 +279,7 @@ View.prototype = {
         this._persons.load().then(function () {
             self.renderContent();
         }).catch(function () {
-            OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
+            showError(t('facerecognition', 'There was an error trying to show your friends'));
         });
     },
     setEnabledUser: function (enabled) {
@@ -287,14 +289,14 @@ View.prototype = {
             value: enabled,
         }).then(function () {
             if (enabled) {
-                OC.Notification.showTemporary(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
+                showInfo(t('facerecognition', 'The analysis is enabled, please be patient, you will soon see your friends here.'));
             } else {
-                OC.Notification.showTemporary(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
+                showInfo(t('facerecognition', 'The analysis is disabled. Soon all the information found for facial recognition will be removed.'));
             }
             self._enabled = enabled;
             self.reload();
         }).catch(function () {
-            OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to change the analysis state'));
+            showError(t('facerecognition', 'There was an error trying to change the analysis state'));
         });
     },
     renameUnassignedClusterDialog: function () {
@@ -302,7 +304,7 @@ View.prototype = {
         const unassignedClusters = this._persons.getUnassignedClusters();
         const cluster = unassignedClusters.shift();
         if (cluster === undefined) {
-            OC.Notification.showTemporary(t('facerecognition', 'You don\'t have more people to recognize.'));
+            showInfo(t('facerecognition', 'You don\'t have more people to recognize.'));
             self.renderContent();
             if (self._persons.mustReload()) {
                 self.reload();
@@ -316,7 +318,7 @@ View.prototype = {
                         self._persons.renameCluster(cluster.id, name).then(function () {
                             self.renameUnassignedClusterDialog();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            showError(t('facerecognition', 'There was an error renaming this person'));
                         });
                     } else {
                         self.renameUnassignedClusterDialog();
@@ -325,7 +327,7 @@ View.prototype = {
                     self._persons.setClusterVisibility(cluster.id, false).then(function () {
                         self.renameUnassignedClusterDialog();
                     }).catch(function () {
-                        OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
+                        showError(t('facerecognition', 'There was an error ignoring this person'));
                     });
                 }
             } else {
@@ -340,7 +342,7 @@ View.prototype = {
         const ignoredClusters = this._persons.getIgnoredClusters();
         const cluster = ignoredClusters.shift();
         if (cluster === undefined) {
-            OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
+            showInfo(t('facerecognition', 'You no longer have people ignored'));
             self.renderContent();
             if (self._persons.mustReload()) {
                 self.reload();
@@ -354,7 +356,7 @@ View.prototype = {
                         self._persons.renameCluster(cluster.id, name).then(function () {
                             self.renameIgnoredClusterDialog();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            showError(t('facerecognition', 'There was an error renaming this person'));
                         });
                     } else {
                         self.renameIgnoredClusterDialog();
@@ -473,7 +475,7 @@ View.prototype = {
                     if (self._persons.getUnassignedClusters().length > 0) {
                         self.renameUnassignedClusterDialog();
                     } else {
-                        OC.Notification.showTemporary(t('facerecognition', 'You dont have more people to recognize.'));
+                        showInfo(t('facerecognition', 'You dont have more people to recognize.'));
                     }
                 });
             });
@@ -489,7 +491,7 @@ View.prototype = {
                     if (self._persons.getIgnoredClusters().length > 0) {
                         self.renameIgnoredClusterDialog();
                     } else {
-                        OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
+                        showInfo(t('facerecognition', 'You no longer have people ignored'));
                     }
                 });
             });
@@ -526,7 +528,7 @@ View.prototype = {
                 self._persons.loadPerson(name).then(function () {
                     self.renderContent();
                 }).catch(function () {
-                    OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+                    showError(t('facerecognition', 'There was an error when trying to find photos of your friend'));
                 });
             });
         });
@@ -540,7 +542,7 @@ View.prototype = {
                         self._persons.renamePerson(person.name, value).then(function () {
                             self.renderContent();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            showError(t('facerecognition', 'There was an error renaming this person'));
                         });
                     }
                 });
@@ -557,7 +559,7 @@ View.prototype = {
                             self._persons.unsetActive();
                             self.reload();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'An error occurred while hiding this person'));
+                            showError(t('facerecognition', 'An error occurred while hiding this person'));
                         });
                     }
                 });
@@ -573,7 +575,7 @@ View.prototype = {
                         self._persons.renameCluster(id, value).then(function () {
                             self.renderContent();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this cluster of faces'));
+                            showError(t('facerecognition', 'There was an error renaming this cluster of faces'));
                         });
                     }
                 });
@@ -589,7 +591,7 @@ View.prototype = {
                         self._persons.setClusterVisibility(id, false).then(function () {
                             self.renderContent();
                         }).catch(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'An error occurred while hiding this group of faces'));
+                            showError(t('facerecognition', 'An error occurred while hiding this group of faces'));
                         });
                     }
                 });
@@ -605,7 +607,7 @@ View.prototype = {
                     self.renderContent();
                 }).catch(function () {
                     buttonEl.style.display = '';
-                    OC.Notification.showTemporary(t('facerecognition', 'There was an error looking for similar clusters'));
+                    showError(t('facerecognition', 'There was an error looking for similar clusters'));
                 });
             });
         });
@@ -621,7 +623,7 @@ View.prototype = {
                 self._persons.acceptSuggestion(clusterId, suggestion).then(function () {
                     self.renderContent();
                 }).catch(function () {
-                    OC.Notification.showTemporary(t('facerecognition', 'There was an error accepting the suggestion'));
+                    showError(t('facerecognition', 'There was an error accepting the suggestion'));
                 });
             });
         });
@@ -637,7 +639,7 @@ View.prototype = {
                 self._persons.rejectSuggestion(clusterId, suggestion).then(function () {
                     self.renderContent();
                 }).catch(function () {
-                    OC.Notification.showTemporary(t('facerecognition', 'There was an error rejecting the suggestion'));
+                    showError(t('facerecognition', 'There was an error rejecting the suggestion'));
                 });
             });
         });
@@ -650,7 +652,7 @@ View.prototype = {
                 self._persons.loadClustersByName(person.name).then(function () {
                     self.renderContent();
                 }).catch(function () {
-                    OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+                    showError(t('facerecognition', 'There was an error when trying to find photos of your friend'));
                 });
             });
         }
@@ -723,21 +725,21 @@ if (personName !== undefined) {
     persons.loadPerson(personName).then(function () {
         view.renderContent();
     }).catch(function () {
-        OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
+        showError(t('facerecognition', 'There was an error when trying to find photos of your friend'));
     });
 } else {
     view.renderContent();
     persons.load().then(function () {
         view.renderContent();
     }).catch(function () {
-        OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
+        showError(t('facerecognition', 'There was an error trying to show your friends'));
     });
 }
 
 if (window.Egg) {
     new window.Egg("up,up,down,down,left,right,left,right,b,a", function () {
         if (!OC.isUserAdmin()) {
-            OC.Notification.showTemporary(t('facerecognition', 'You must be administrator to configure this feature'));
+            showWarning(t('facerecognition', 'You must be administrator to configure this feature'));
             return;
         }
         postForm(OC.generateUrl('apps/facerecognition/setappvalue'), {

@@ -1,9 +1,12 @@
 /* Dialog */
 
 .fr-dialog {
+	position: fixed;
+	inset: 0;
 	width: min(560px, 90vw);
 	max-width: 90vw;
 	max-height: 90vh;
+	margin: auto;
 	overflow: auto;
 	padding: 20px;
 	border: none;

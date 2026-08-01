@@ -1,5 +1,7 @@
 'use strict';
 
+import { showError, showSuccess } from '@nextcloud/dialogs';
+
 (function () {
     const state = {
         OK: 0,
@@ -157,7 +159,7 @@
                     value: range.value.toString(),
                 }).then((data) => {
                     if (data.status === state.SUCCESS) {
-                        OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                        showSuccess(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
                         hide(restore);
                         hide(save);
                     } else {
@@ -166,7 +168,7 @@
                         setText(value, getFourByThreeRelation(suggestedImageArea));
                         let message = t('facerecognition', 'The change could not be applied.');
                         message += ' - ' + data.message;
-                        OC.Notification.showTemporary(message);
+                        showError(message);
                     }
                 }).catch(() => { /* ignore */ });
             });
@@ -220,7 +222,7 @@
                     value: range.value.toString(),
                 }).then((data) => {
                     if (data.status === state.SUCCESS) {
-                        OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                        showSuccess(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
                         hide(restore);
                         hide(save);
                     }
@@ -276,7 +278,7 @@
                     value: range.value.toString(),
                 }).then((data) => {
                     if (data.status === state.SUCCESS) {
-                        OC.Notification.showTemporary(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                        showSuccess(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
                         hide(restore);
                         hide(save);
                     }
@@ -332,7 +334,7 @@
                     value: range.value.toString(),
                 }).then((data) => {
                     if (data.status === state.SUCCESS) {
-                        OC.Notification.showTemporary(t('facerecognition', 'Done'));
+                        showSuccess(t('facerecognition', 'Done'));
                         hide(restore);
                         hide(save);
                     }

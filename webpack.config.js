@@ -8,4 +8,8 @@ webpackConfig.entry = {
     'dialogs': path.join(__dirname, 'src', 'dialogs.js'),
 }
 
+// Keep the third-party vendor scripts (js/vendor/) when webpack cleans the
+// output directory on every build, otherwise they would be deleted.
+webpackConfig.output.clean = { keep: /vendor\// }
+
 module.exports = webpackConfig

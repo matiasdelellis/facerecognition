@@ -98,13 +98,13 @@ l10n-deps:
 build-dev:
 	npm run dev
 
-build-vue:
+build-vue: npm-deps
 	npm run build
 
 js-templates:
 	node_modules/handlebars/bin/handlebars src/templates -f js/facerecognition-templates.js
 
-build: test-bin-deps vendor-deps build-vue js-templates
+build: test-bin-deps build-vue vendor-deps js-templates
 	@echo ""
 	@echo "Build done. You can enable the application in Nextcloud."
 

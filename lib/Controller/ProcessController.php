@@ -63,32 +63,36 @@ class ProcessController extends Controller {
 	public function index(): JSONResponse {
 
 		$model = $this->settingsService->getCurrentFaceModel();
+		$refinementEnabled = $this->settingsService->getRefinementEnabled();
 
 		$totalImages = $this->imageMapper->countImages($model);
-		// An image is only done when it was refined, unless the refinement is
-		// disabled: with the two passes, being processed alone is not finished.
-		$refinementEnabled = $this->settingsService->getRefinementEnabled();
-		$doneImages = $refinementEnabled
-			? $this->imageMapper->countRefinedImages($model)
-			: $this->imageMapper->countProcessedImages($model);
+		$processedImages = $this->imageMapper->countProcessedImages($model);
+		// The images that are left are the ones the analysis will take, and the
+		// done ones are all the rest: an image that failed is not taken again,
+		// so it is done as far as the progress goes.
+		$remainingImages = $this->imageMapper->countRemainingImages($model, $refinementEnabled);
+		$doneImages = $totalImages - $remainingImages;
 		// What is left is refinement, which costs much more than the fast pass,
 		// so the estimate is made with the time the refined images took.
 		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($model, $refinementEnabled);
 
 		// The analysis has started once an image was worked on, in either pass.
-		$status = ($this->imageMapper->countProcessedImages($model) > 0);
+		$status = ($processedImages > 0);
 
-		$estimatedTime = ($totalImages - $doneImages) * $avgProcessingTime/1000;
+		$estimatedFinalize = $remainingImages * $avgProcessingTime/1000;
 
-		$estimatedFinalize = $estimatedTime;
-
-		// The key keeps its name for the frontend, but it counts the images
-		// that have nothing pending, which with the two passes means refined.
+		// The processedImages key keeps its name for the frontend, but it counts
+		// the images that have nothing left to do, which with the two passes
+		// means refined. The pendingImages are the ones that were not processed
+		// yet, which the fast pass is still to take (or the refinement, at full
+		// quality), and they let the frontend show the progress of both passes.
 		$params = array(
 			'status' => $status,
 			'estimatedFinalize' => $estimatedFinalize,
 			'totalImages' => $totalImages,
-			'processedImages' => $doneImages
+			'processedImages' => $doneImages,
+			'pendingImages' => $totalImages - $processedImages,
+			'refinementEnabled' => $refinementEnabled
 		);
 
 		return new JSONResponse($params);

@@ -80,25 +80,41 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
             const barEl = $('#progress-bar');
             let desc = '';
             if (progress.status) {
+                // The images pending for the fast pass are only meaningful when
+                // the refinement is enabled: otherwise there is a single pass.
+                const twoPasses = (progress.refinementEnabled !== false);
+                const pendingImages = twoPasses ? (progress.pendingImages || 0) : 0;
                 if (progress.processedImages == progress.totalImages) {
                     desc = t('facerecognition', 'The analysis is finished');
                     desc += ' - ';
                     desc += n('facerecognition', '%n image was analyzed', '%n images were analyzed', progress.totalImages);
                 } else {
-                    const queuedImages = (progress.totalImages - progress.processedImages);
+                    const remainingImages = (progress.totalImages - progress.processedImages);
                     const estimatedFinalizeDate = Date.now() + progress.estimatedFinalize * 1000;
                     desc = t('facerecognition', 'Analyzing images');
                     desc += ' - ';
                     desc += n('facerecognition', '%n image detected', '%n images detected', progress.totalImages);
+                    if (pendingImages > 0) {
+                        desc += ' - ';
+                        desc += n('facerecognition', '%n image pending for the fast pass', '%n images pending for the fast pass', pendingImages);
+                    }
                     desc += ' - ';
-                    desc += n('facerecognition', '%n image in queue', '%n images in queue', queuedImages);
+                    desc += n('facerecognition', '%n image in queue', '%n images in queue', remainingImages);
                     desc += ' - ';
                     desc += t('facerecognition', 'Ends approximately {estimatedFinalize}', { estimatedFinalize: OC.Util.relativeModifiedDate(estimatedFinalizeDate) });
                 }
                 setText(textEl, desc);
                 if (barEl) {
-                    barEl.value = progress.processedImages;
-                    barEl.max = progress.totalImages;
+                    if (twoPasses) {
+                        // Every image is worked on twice, so the bar counts both
+                        // passes. Otherwise it would not move at all while the
+                        // fast pass goes over the whole library.
+                        barEl.value = (progress.totalImages - pendingImages) + progress.processedImages;
+                        barEl.max = progress.totalImages * 2;
+                    } else {
+                        barEl.value = progress.processedImages;
+                        barEl.max = progress.totalImages;
+                    }
                 }
             } else {
                 if (barEl) barEl.value = 0;

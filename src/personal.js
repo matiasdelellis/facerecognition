@@ -568,7 +568,7 @@ View.prototype = {
 
         $$('#facerecognition #rename-cluster', root).forEach(function (button) {
             button.addEventListener('click', function () {
-                const id = this.dataset.id;
+                const id = parseInt(this.dataset.id, 10);
                 const person = self._persons.getNamedClusterById(id);
                 window.FrDialogs.rename(person.name, [person.faces[0]], function (result, value) {
                     if (result === true && value) {
@@ -584,7 +584,7 @@ View.prototype = {
 
         $$('#facerecognition #hide-cluster', root).forEach(function (button) {
             button.addEventListener('click', function () {
-                const id = this.dataset.id;
+                const id = parseInt(this.dataset.id, 10);
                 const person = self._persons.getNamedClusterById(id);
                 window.FrDialogs.hide([person.faces[0]], function (result) {
                     if (result === true) {

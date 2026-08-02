@@ -140,21 +140,41 @@ class ImageMapper extends QBMapper {
 	}
 
 	/**
-	 * Images that are fully analyzed: processed and refined with the current
-	 * model at maximum quality. When the refinement is disabled, being
-	 * processed is enough, so the progress counts the processed ones instead.
+	 * Images that the analysis still has to take, which is exactly what
+	 * findImagesToProcess() returns, or findImagesWithoutFaces() when the
+	 * refinement is disabled.
 	 *
-	 * @return int Images that have nothing pending
+	 * The progress is counted with the same condition that picks the work, so
+	 * that both cannot drift apart. Counting the refined images instead would
+	 * leave the images that failed out of the progress forever: they stay
+	 * processed and not refined, and they are not taken again until the user
+	 * resets the errors.
+	 *
+	 * @param int $model Model to count the images of
+	 * @param bool $refinementEnabled Whether the refinement pass is enabled
+	 *
+	 * @return int Images that are left to analyze
 	 */
-	public function countRefinedImages(int $model): int {
+	public function countRemainingImages(int $model, bool $refinementEnabled): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
 			->from($this->getTableName())
-			->where($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->eq('is_refined', $qb->createParameter('is_refined')))
-			->setParameter('model', $model)
-			->setParameter('is_refined', True, IQueryBuilder::PARAM_BOOL);
+			->where($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+
+		$notProcessed = $qb->expr()->eq('is_processed', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL));
+		if ($refinementEnabled) {
+			$query->andWhere($qb->expr()->orX(
+				$notProcessed,
+				$qb->expr()->andX(
+					$qb->expr()->eq('is_refined', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL)),
+					$qb->expr()->isNull('error')
+				)
+			));
+		} else {
+			$query->andWhere($notProcessed);
+		}
+
 		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();

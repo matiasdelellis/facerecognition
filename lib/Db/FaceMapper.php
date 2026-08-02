@@ -443,6 +443,55 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
+	 * Copies the faces of one image to another, so that the analysis of a file
+	 * can be reused for the same file of another user (a shared photo keeps its
+	 * file id in every account).
+	 *
+	 * The faces are not inserted: the caller passes them to imageProcessed(),
+	 * which replaces the faces of the image and can carry the clusters of the
+	 * old ones over the new ones, as it does with the faces the model finds.
+	 *
+	 * Only the geometry and the descriptor are copied. The cluster is left
+	 * unassigned and the face is made groupable again: the clusters, persons
+	 * and detached faces are decisions of the user that made them, and must not
+	 * leak to the user that reuses the analysis.
+	 *
+	 * @param int $fromImageId Image to copy the faces of
+	 * @param int $toImageId Image to copy the faces to
+	 *
+	 * @return Face[] The copied faces
+	 */
+	public function copyFaces(int $fromImageId, int $toImageId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('x', 'y', 'width', 'height', 'confidence', 'landmarks', 'descriptor')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('image', $qb->createNamedParameter($fromImageId)));
+
+		$result = $qb->executeQuery();
+		$rows = $result->fetchAll();
+		$result->closeCursor();
+
+		$faces = [];
+		foreach ($rows as $row) {
+			$face = new Face();
+			$face->image       = $toImageId;
+			$face->cluster     = null;
+			$face->isGroupable = true;
+			$face->x           = (int)$row['x'];
+			$face->y           = (int)$row['y'];
+			$face->width       = (int)$row['width'];
+			$face->height      = (int)$row['height'];
+			$face->confidence  = (float)$row['confidence'];
+			$face->landmarks   = json_decode($row['landmarks'], true);
+			$face->descriptor  = json_decode($row['descriptor'], true);
+			$face->setCreationTime(new \DateTime());
+			$faces[] = $face;
+		}
+
+		return $faces;
+	}
+
+	/**
 	 * Removes all faces contained in one image.
 	 * Note that this is independent of any Model
 	 *

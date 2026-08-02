@@ -197,6 +197,32 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					continue;
 				}
 
+				// Another user may have already analyzed this very file: a
+				// shared photo keeps the file id of its owner in every account,
+				// so it shows up in the tables of several users with the same
+				// file id. When an analyzed copy exists, reuse its faces instead
+				// of running the model again. In the refinement pass only a
+				// refined result is good enough: reusing a fast-pass one would
+				// leave this image pending for ever.
+				$reusedFrom = $this->imageMapper->findProcessedDuplicate($image->getFile(), $image->getModel(), $image->getUser());
+				if (!is_null($reusedFrom) && (!$refined || $reusedFrom->getIsRefined())) {
+					$faces = $this->faceMapper->copyFaces($reusedFrom->getId(), $image->getId());
+
+					// Like the faces that the model finds in the refinement,
+					// the reused ones replace the fast-pass faces, carrying
+					// the cluster of the face found in the same place so a
+					// person is never lost.
+					if ($refined) {
+						$this->inheritClusters($image, $faces);
+					}
+
+					$endMillis = round(microtime(true) * 1000);
+					$duration = (int) max($endMillis - $startMillis, 0);
+					$this->imageMapper->imageProcessed($image, $faces, $duration, null, $reusedFrom->getIsRefined());
+
+					$this->logInfo('Faces found: ' . count($faces) . ' (reused from the analysis of the user ' . $reusedFrom->getUser() . ')');
+					continue;
+				}
 
 				// Get an temp Image to process this image.
 				$tempImage = $this->getTempImage($image);

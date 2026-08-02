@@ -109,6 +109,39 @@ class ImageMapper extends QBMapper {
 		return $row ? (int)$row['id'] : null;
 	}
 
+	/**
+	 * An image of the same file that another user already processed, to reuse
+	 * its analysis instead of running the model again.
+	 *
+	 * A photo that is shared keeps the file id of its owner in every account,
+	 * so the same photo appears in the table of several users with the same
+	 * file id. This returns the analyzed copy, if there is one. Only results
+	 * without error can be trusted.
+	 *
+	 * @param int $fileId File id of the image to get a duplicate of
+	 * @param int $modelId Model the image was analyzed with
+	 * @param string $excludeUser User that must not be matched
+	 *
+	 * @return Image|null The analyzed image of another user, or null when there is none
+	 */
+	public function findProcessedDuplicate(int $fileId, int $modelId, string $excludeUser): ?Image {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id', 'user', 'file', 'model', 'is_processed', 'is_refined', 'error', 'last_processed_time', 'processing_duration')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('file', $qb->createNamedParameter($fileId)))
+			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)))
+			->andWhere($qb->expr()->isNull('error'))
+			->andWhere($qb->expr()->neq('user', $qb->createNamedParameter($excludeUser)))
+			->setMaxResults(1);
+
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+
 	public function countImages(int $model): int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb

@@ -37,8 +37,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\Helper\CommandLock;
 
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
+use OCA\FaceRecognition\BackgroundJob\WorkerConfig;
 
 class BackgroundCommand extends Command {
+
+	private const ENV_WORKER_CONF = 'FACERECOGNITION_WORKER_CONF';
 
 	/** @var BackgroundService */
 	protected $backgroundService;
@@ -92,18 +95,6 @@ class BackgroundCommand extends Command {
 				'First pass of the analysis: process all images with the fast HOG model on a small image, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode.'
 			)
 			->addOption(
-				'analyze-mode',
-				null,
-				InputOption::VALUE_NONE,
-				'Execute only the action of analyzing the images to obtain the faces and their descriptors.'
-			)
-			->addOption(
-				'cluster-mode',
-				null,
-				InputOption::VALUE_NONE,
-				'Execute only the action of face clustering to get the people.'
-			)
-			->addOption(
 				'defer-clustering',
 				null,
 				InputOption::VALUE_NONE,
@@ -115,6 +106,12 @@ class BackgroundCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely.',
 				0
+			)
+			->addOption(
+				'workers',
+				'w',
+				InputOption::VALUE_REQUIRED,
+				'Spawn multiple parallel workers to speed up the image analysis. Requires the pcntl extension.'
 			);
 	}
 
@@ -171,10 +168,6 @@ class BackgroundCommand extends Command {
 			$mode = 'sync-mode';
 		} else if ($input->getOption('fast-mode')) {
 			$mode = 'fast-mode';
-		} else if ($input->getOption('analyze-mode')) {
-			$mode = 'analyze-mode';
-		} else if ($input->getOption('cluster-mode')) {
-			$mode = 'cluster-mode';
 		} else if ($input->getOption('defer-clustering')) {
 			$mode = 'defer-mode';
 		}
@@ -183,10 +176,67 @@ class BackgroundCommand extends Command {
 		//
 		$verbose = $input->getOption('verbose');
 
-		// In image analysis mode it run in parallel.
-		// In any other case acquire lock so that only one background task can run
+		// Worker configuration. A worker is a re-executed copy of this command
+		// that the coordinator spawns, so it is told which share of the images
+		// it has to analyze, and in which mode, through an environment
+		// variable. A worker never takes the global lock, which the coordinator
+		// is already holding, so the workers do not fight each other.
 		//
-		$globalLock = ($mode != 'analyze-mode');
+		$workerConfig = $this->getWorkerConfigFromEnvironment();
+		if (!is_null($workerConfig)) {
+			$mode = $workerConfig->getMode();
+		}
+
+		// If we are the coordinator (we were asked to spawn workers and we are
+		// not a worker ourselves), fork the workers and wait for them. The
+		// workers re-execute this same command with the worker configuration in
+		// the environment, and do the actual analysis.
+		//
+		$workers = $input->getOption('workers');
+		if (is_null($workerConfig) && !is_null($workers)) {
+			$workerCount = intval($workers);
+			if ($mode === 'sync-mode') {
+				$output->writeln('<error>--workers is only supported when the command analyzes the images, so it cannot be used with --sync-mode.</error>');
+				return 1;
+			}
+			if ($workerCount <= 0) {
+				$output->writeln('<error>Invalid worker count: ' . $workerCount . '</error>');
+				return 1;
+			}
+			if (!function_exists('pcntl_fork') || !function_exists('pcntl_exec') || !function_exists('pcntl_waitpid')) {
+				$output->writeln('<error>The pcntl extension is not available or is disabled in this PHP build, so workers cannot be spawned. ' .
+					'Install pcntl (on FreeBSD: pkg install php<version>-pcntl; on Debian/Ubuntu it is included in php-cli), ' .
+					'or run the analysis without --workers.</error>');
+				return 1;
+			}
+
+			// The coordinator runs the file synchronization before spawning the
+			// workers (so they analyze the images that were just added), and
+			// the clustering once they are done. It holds the global lock
+			// during the whole run, so only one such command runs at a time.
+			//
+			$lock = CommandLock::Lock('face:background_job');
+			if (!$lock) {
+				$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+				return 1;
+			}
+
+			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_BEFORE_ANALYSIS);
+
+			$exitCode = $this->coordinate($output, $workerCount, $mode);
+			if ($exitCode === 0) {
+				$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_AFTER_ANALYSIS);
+			}
+
+			CommandLock::Unlock($lock);
+			return $exitCode;
+		}
+
+		// Acquire the lock so that only one background task can run at a time.
+		// A worker never acquires it: the coordinator that spawned it is
+		// already holding it.
+		//
+		$globalLock = is_null($workerConfig);
 		if ($globalLock) {
 			$lock = CommandLock::Lock('face:background_job');
 			if (!$lock) {
@@ -197,7 +247,7 @@ class BackgroundCommand extends Command {
 
 		// Main thing
 		//
-		$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea);
+		$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
 
 		// Release obtained lock
 		//
@@ -206,5 +256,102 @@ class BackgroundCommand extends Command {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Reads the worker configuration from the environment, if this process is
+	 * a worker spawned by the coordinator.
+	 *
+	 * @return WorkerConfig|null The worker configuration, or null if this
+	 * process is not a worker.
+	 *
+	 * @throws \InvalidArgumentException If the worker configuration is invalid.
+	 */
+	private function getWorkerConfigFromEnvironment(): ?WorkerConfig {
+		$workerConfigEnv = getenv(self::ENV_WORKER_CONF);
+		if (!$workerConfigEnv) {
+			return null;
+		}
+
+		$data = json_decode($workerConfigEnv, true);
+		if (!is_array($data)) {
+			throw new \InvalidArgumentException('Invalid worker configuration in ' . self::ENV_WORKER_CONF . ' environment variable.');
+		}
+
+		return WorkerConfig::fromJson($data);
+	}
+
+	/**
+	 * Spawns the given number of workers, each one re-executing this same
+	 * command with its share of the work, and waits for them all.
+	 *
+	 * @param OutputInterface $output Output to write to.
+	 * @param int $workerCount Number of workers to spawn.
+	 * @param string $mode The mode of the run, which each worker inherits. Of
+	 * the whole run a worker only executes the analysis, but the mode still
+	 * tells it which pass to run: the fast one of `--fast-mode` or the
+	 * refinement of every other mode.
+	 *
+	 * @return int 0 if all workers succeeded, 1 otherwise.
+	 */
+	private function coordinate(OutputInterface $output, int $workerCount, string $mode): int {
+		$workerPids = [];
+		for ($i = 0; $i < $workerCount; $i++) {
+			$output->writeln('Spawning worker ' . $i);
+
+			$workerConfig = new WorkerConfig($i, $workerCount, $mode);
+			$pid = pcntl_fork();
+			if ($pid == -1) {
+				$output->writeln('<error>Failed to fork worker</error>');
+				// Reap the workers that were already spawned, so they do not
+				// stay around as zombies.
+				foreach ($workerPids as $workerPid) {
+					pcntl_waitpid($workerPid, $status);
+				}
+				return 1;
+			} elseif ($pid) {
+				// Parent
+				$workerPids[] = $pid;
+			} else {
+				// Child: re-execute the command as a worker. exec replaces the
+				// process image, so it never returns on success: the forked
+				// state (database connections, etc.) is discarded and each
+				// worker starts fresh. When it returns it is because it failed,
+				// so print the error and give up.
+				$env = getenv();
+				$env[self::ENV_WORKER_CONF] = json_encode($workerConfig);
+				pcntl_exec(PHP_BINARY, $_SERVER['argv'], $env);
+				$output->writeln('<error>Failed to re-exec worker</error>');
+				exit(1);
+			}
+		}
+
+		$workerFailed = false;
+		foreach ($workerPids as $index => $pid) {
+			$status = 0;
+			pcntl_waitpid($pid, $status);
+			if (pcntl_wifexited($status)) {
+				// Normal exit: report its exit code.
+				$exitCode = pcntl_wexitstatus($status);
+				$output->writeln('Worker ' . $index . ' exited with code ' . $exitCode);
+			} else {
+				// The worker did not exit normally: it was killed by a signal
+				// (e.g. the OOM-killer, since each worker loads its own copy
+				// of the model) or it was stopped. Either way it did not do
+				// its share of the work, so treat it as a failure and do not
+				// report a success. pcntl_wexitstatus() is undefined when the
+				// worker died from a signal and would often read as 0.
+				$signal = pcntl_wifsignaled($status) ? pcntl_wtermsig($status) : null;
+				$exitCode = 1;
+				$output->writeln('<error>Worker ' . $index . ' did not exit normally' .
+					(is_null($signal) ? '' : ', killed by signal ' . $signal) . '</error>');
+			}
+
+			if ($exitCode !== 0) {
+				$workerFailed = true;
+			}
+		}
+
+		return $workerFailed ? 1 : 0;
 	}
 }

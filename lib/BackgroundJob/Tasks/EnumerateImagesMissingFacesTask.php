@@ -79,9 +79,42 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 		}
 		yield;
 
+		// When running in parallel as a worker, only take the share of the
+		// images that this worker owns, so that each image is analyzed by
+		// exactly one worker. Each worker shuffles its own share.
+		$images = $this->filterForWorker($images);
+
 		shuffle($images);
 		$this->context->propertyBag['images'] = $images;
 
 		return true;
+	}
+
+	/**
+	 * When this task runs in parallel as a worker, keeps only the images that
+	 * belong to this worker. The work is statically partitioned by the image
+	 * id, in the same way previewgenerator partitions the previews by the file
+	 * id. Without a worker configuration all the images are kept.
+	 *
+	 * The partition is done here and not in the query, because there is no
+	 * portable way to write it: Oracle does not have the '%' operator, SQLite
+	 * does not have the MOD() function, and the query builder does not expose
+	 * modulo at all. Each worker therefore queries all the images and discards
+	 * the ones that are not its own.
+	 *
+	 * @param Image[] $images Images to filter
+	 *
+	 * @return Image[] The images that this worker has to analyze
+	 */
+	private function filterForWorker(array $images): array {
+		$workerIndex = $this->context->propertyBag['worker_index'] ?? null;
+		$workerCount = $this->context->propertyBag['worker_count'] ?? null;
+		if (is_null($workerIndex) || is_null($workerCount)) {
+			return $images;
+		}
+
+		return array_values(array_filter($images, function (Image $image) use ($workerIndex, $workerCount): bool {
+			return ($image->getId() % $workerCount) === $workerIndex;
+		}));
 	}
 }

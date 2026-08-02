@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+- `face:background_job` can analyze the images in parallel with `--workers=N`.
+  The command becomes the coordinator of the run: it does the file
+  synchronization, spawns the workers that analyze the images (each one taking
+  the share of the images whose id modulo the worker count is its own index),
+  and does the clustering. So the whole parallel run is a single scheduled
+  command. It needs the `pcntl` extension, and every worker loads its own copy
+  of the model, so the memory grows with the number of workers.
+- **The `--analyze-mode` and `--cluster-mode` options of `face:background_job`
+  are removed.** They existed to parallelize the analysis by hand, running one
+  synchronization, several analyzers and one clustering as separate commands,
+  which is what `--workers` now does on its own and better: it partitions the
+  images instead of letting the analyzers race for them, it holds the lock for
+  the whole run, and it reports a failure when a worker dies. Cron jobs using
+  those options will fail with `The "--analyze-mode" option does not exist.`
+  and have to be changed to a single `face:background_job --workers=N`. To
+  cluster without analyzing, `face:reset --clustering` followed by a regular
+  run does the same thing.
+
 ## [0.9.94] - 2026-07-31
 - Nextcloud 34 is the only supported version, and PHP 8.2 the minimum, which is
   what NC34 asks for. Nextcloud 31, 32 and 33 are dropped: nobody is testing the

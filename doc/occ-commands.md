@@ -104,8 +104,8 @@ occ face:setup -m 1 -M 1G
 
 ```
 occ face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT]
-    [-M|--max_image_area MAX_IMAGE_AREA] [--sync-mode] [--analyze-mode]
-    [--cluster-mode] [--defer-clustering]
+    [-M|--max_image_area MAX_IMAGE_AREA] [-w|--workers WORKERS]
+    [--sync-mode] [--fast-mode] [--defer-clustering]
 ```
 
 This command does all the work. It is responsible for searching the images,
@@ -126,17 +126,17 @@ timeout.
 | `-u, --user_id USER_ID` | Analyze faces for the given user only. If not given, analyzes images for all users. |
 | `-t, --timeout TIMEOUT` | Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely. |
 | `-M, --max_image_area MAX_IMAGE_AREA` | Caps maximum area (in pixels^2) of the image to be fed to the neural network, effectively lowering needed memory. |
+| `-w, --workers WORKERS` | Spawn this number of parallel workers to analyze the images, each one taking its share. Only meaningful in the modes that analyze the images (`--fast-mode`, `--defer-clustering` and the default mode); it fails with `--sync-mode`. Requires the `pcntl` extension. |
 | `--sync-mode` | Execute only the actions related to synchronizing the files: new users, shared or deleted files, etc. |
-| `--analyze-mode` | Execute only the action of analyzing the images to obtain the faces and their descriptors. |
-| `--cluster-mode` | Execute only the action of face clustering to get the people. |
+| `--fast-mode` | First pass of the analysis: process all images with the fast HOG model on a small image, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode. |
 | `--defer-clustering` | Defer the face clustering at the end of the analysis to get persons in a simple execution of the command. |
 
 ### Options precedence
 
 The mode options are mutually exclusive and are evaluated in this order:
-`--sync-mode`, `--analyze-mode`, `--cluster-mode`, `--defer-clustering`. If more
-than one is given, only the first one in that order takes effect. If none is
-given, the command runs in its default mode, which performs all the steps.
+`--sync-mode`, `--fast-mode`, `--defer-clustering`. If more than one is given,
+only the first one in that order takes effect. If none is given, the command
+runs in its default mode, which performs all the steps.
 
 ### Behavior
 
@@ -147,7 +147,9 @@ given, the command runs in its default mode, which performs all the steps.
 * **`TIMEOUT`**: if supplied it will stop after the indicated seconds, and
   continue in the next execution. The timeout must be a positive value in
   seconds. Use this value in conjunction with the times of the scheduled task to
-  distribute the system load during the day.
+  distribute the system load during the day. With `--workers` it bounds each
+  stage of the run instead of the whole command, see
+  [Parallel workers](#parallel-workers---workers).
 * **`MAX_IMAGE_AREA`**: if supplied, caps the maximum area (in pixels^2) of the
   image fed to the neural network. It must be a positive number. Use this if
   face detection crashes randomly.
@@ -155,11 +157,84 @@ given, the command runs in its default mode, which performs all the steps.
   deferring the face clustering at the end of the analysis to get persons in a
   simple execution of the command.
 
+### Parallel workers (`--workers`)
+
+To speed up the analysis you can run several workers in parallel, each one
+analyzing its own share of the images. It works with a single scheduled
+command, in any mode that analyzes the images:
+
+```bash
+# Full run (sync, parallel analysis and clustering) with a single command
+occ face:background_job --workers=4
+
+# Same, with the fast first pass
+occ face:background_job --fast-mode --workers=4
+```
+
+How it works:
+
+* The command acts as a coordinator: it forks the requested number of workers,
+  and each worker re-executes the command with an environment variable telling
+  it which share of the images to analyze, and in which mode (so it runs the
+  fast or the refinement pass).
+* The coordinator runs the file synchronization before spawning the workers, so
+  they analyze the images that were just added. Where the clustering runs
+  depends on the mode, and is exactly where it runs in a sequential run of that
+  same mode:
+  * With `--fast-mode` and `--defer-clustering` it runs **after** the workers,
+    over the faces they just found. If any worker failed, it is skipped.
+  * In the default mode it runs **before** the analysis, over the faces of the
+    previous run, just as it does without `--workers`. Nothing is left to do
+    once the workers finish, so the persons of this run appear when the next
+    one starts.
+* Each image is assigned to exactly one worker, statically partitioned by its
+  id (`image id % worker count == worker index`), so the workers do not step on
+  each other. The per-image lock acts as a safety net if two runs overlap.
+* The partition is by id, not by cost: every worker gets the same number of
+  images, but not the same amount of work, since an image can take from a few
+  milliseconds (one that was already processed, or that has to be skipped) to
+  several seconds. The command lasts as long as its slowest worker, so the
+  speedup is somewhat below the number of workers, and noticeably so when there
+  are few images left to analyze.
+* `--timeout` bounds each stage, not the whole command: the synchronization,
+  each worker and the clustering apply it independently. So a full run can take
+  up to twice `-t` in the default mode, and up to three times `-t` with
+  `--fast-mode` and `--defer-clustering`. Take it into account when you schedule
+  the command, so that two runs do not overlap.
+* When the coordinator ends it waits for all the workers, and the command
+  reports failure if any of them failed or was killed (for instance, by the
+  OOM-killer).
+
+Requirements and caveats:
+
+* `--workers` is only meaningful when the command analyzes the images, so it
+  fails with `--sync-mode` (`--workers is only supported when the command
+  analyzes the images...`).
+* It requires the `pcntl` PHP extension, which is part of the standard CLI
+  build on Unix-like systems (Linux, macOS, BSD) but is **not available on
+  Windows** and can be missing or disabled on custom builds. When it is not
+  available the command fails with a message explaining how to install it
+  (e.g. `pkg install php<version>-pcntl` on FreeBSD, or the `php-cli` package
+  on Debian/Ubuntu).
+* Every worker loads its own copy of the recognition model in memory, so the
+  memory needed is roughly the memory of one worker times the number of
+  workers. For instance, `--workers=4` needs about 4 times the memory of a
+  single run. Check the memory you assigned with `occ face:setup`.
+* SQLite is a single-writer database and is not suitable for concurrent
+  writers, so `--workers` is not recommended on instances that use it. MySQL,
+  MariaDB and PostgreSQL handle the concurrent writes of the workers fine.
+
 ### Locking
 
-Except in `--analyze-mode`, the command acquires a global lock, so only one
-background task can run at a time. In `--analyze-mode` it runs in parallel (no
-lock is acquired), which allows running several analyzers concurrently.
+The command acquires a global lock, so only one background task can run at a
+time. With `--workers` the coordinator holds it from the moment it starts until
+the last worker finishes, so only one such run happens at a time, while the
+workers themselves never acquire it: the coordinator that spawned them is
+already holding it.
+
+The lock is a file in the temporary directory of the machine, so it only
+serializes the runs of that machine. Parallelizing the analysis is what
+`--workers` is for.
 
 ### Scheduling examples
 
@@ -174,8 +249,8 @@ occ face:background_job -u new_user -t 900
 # Full run, at most 2 hours
 occ face:background_job -t 7200
 
-# Only analyze images (no clustering), without lock, for user alice
-occ face:background_job -u alice --analyze-mode
+# Full run (sync, analysis and clustering) with 4 parallel workers
+occ face:background_job --workers=4
 
 # Cap the image area to lower memory usage
 occ face:background_job -M 250000
@@ -288,7 +363,9 @@ returns an error.
 * `--image-errors` resets only the images that had errors, to try to analyze
   them again.
 * `--clustering` resets only the clustering of persons, and only clustering
-  needs to be done again.
+  needs to be done again. The next `face:background_job` does it: the clustering
+  is the first thing the default mode runs, and the analysis that follows it
+  finds nothing to do when every image was already analyzed.
 
 ### Examples
 

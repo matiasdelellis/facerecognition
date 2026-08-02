@@ -177,11 +177,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 			$startMillis = round(microtime(true) * 1000);
 
+			$lockKey = 'facerecognition/' . $image->getId();
+			$lockType = ILockingProvider::LOCK_EXCLUSIVE;
+			$lockAcquired = false;
+
 			try {
 				// Get a image lock
-				$lockKey = 'facerecognition/' . $image->getId();
-				$lockType = ILockingProvider::LOCK_EXCLUSIVE;
 				$this->lockingProvider->acquireLock($lockKey, $lockType);
+				$lockAcquired = true;
 
 				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
 
@@ -191,8 +194,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$alreadyDone = $refined ? $dbImage->getIsRefined() : $dbImage->getIsProcessed();
 				if ($alreadyDone) {
 					$this->logInfo('Faces found: 0. Image will be skipped since it was already processed.');
-					// Release lock of file.
-					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
 				}
 
@@ -204,8 +205,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
 					$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
 					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
-					// Release lock of file.
-					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
 				}
 
@@ -214,8 +213,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					// Keep the faces that were already found, if any, and mark
 					// the image as done for this pass.
 					$this->imageMapper->imageProcessed($image, array(), 0, null, $refined, false);
-					// Release lock of file.
-					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
 				}
 
@@ -246,9 +243,6 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
 				$this->imageMapper->imageProcessed($image, $faces, $duration, null, $refined);
-
-				// Release lock of file.
-				$this->lockingProvider->releaseLock($lockKey, $lockType);
 			} catch (\OCP\Lock\LockedException $e) {
 				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
 			} catch (\Exception $e) {
@@ -264,6 +258,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				// never be analyzed does not cost every run.
 				$this->imageMapper->imageProcessed($image, array(), 0, $e, $refined, false);
 			} finally {
+				// Release lock of file, whenever it was acquired. The previous
+				// code only released it on the happy paths, so an image that
+				// failed was left locked and skipped on every later run.
+				if ($lockAcquired) {
+					$this->lockingProvider->releaseLock($lockKey, $lockType);
+				}
 				// Clean temporary image.
 				if (isset($tempImage)) {
 					$tempImage->clean();

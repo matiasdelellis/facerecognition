@@ -29,6 +29,7 @@ use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Helper\Requirements;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use OCA\FaceRecognition\BackgroundJob\WorkerConfig;
 
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CheckCronTask;
@@ -51,6 +52,22 @@ use Symfony\Component\Console\Output\OutputInterface;
  * reason about them and test them independently. Other than that, they are really glorified functions.
  */
 class BackgroundService {
+
+	public const STAGE_ALL = 'all';
+	public const STAGE_BEFORE_ANALYSIS = 'before-analysis';
+	public const STAGE_AFTER_ANALYSIS = 'after-analysis';
+
+	/** @var string[] Tasks that every run executes */
+	private const CHECK_TASKS = [
+		CheckRequirementsTask::class,
+		CheckCronTask::class,
+	];
+
+	/** @var string[] Tasks that do the image analysis, and nothing else */
+	private const ANALYSIS_TASKS = [
+		EnumerateImagesMissingFacesTask::class,
+		ImageProcessingTask::class,
+	];
 
 	/** @var Application $application */
 	private $application;
@@ -80,10 +97,18 @@ class BackgroundService {
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
 	 * @param string $runMode The command execution mode
+	 * @param WorkerConfig|null $workerConfig Which share of the images this
+	 * process has to analyze, when it runs in parallel as a worker. Null when
+	 * it is a regular, single-threaded run.
+	 * @param string $stage Which tasks of the run have to be executed. Used by
+	 * the coordinator of the parallel run to run the file synchronization
+	 * before spawning the workers (`STAGE_BEFORE_ANALYSIS`) and the clustering
+	 * after they finish (`STAGE_AFTER_ANALYSIS`). Everything else runs the
+	 * whole run (`STAGE_ALL`).
 	 *
 	 * @return void
 	 */
-	public function execute(int $timeout, bool $verbose, string $runMode, ?IUser $user = null, ?int $maxImageArea = null) {
+	public function execute(int $timeout, bool $verbose, string $runMode, ?IUser $user = null, ?int $maxImageArea = null, ?WorkerConfig $workerConfig = null, string $stage = self::STAGE_ALL) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
@@ -91,57 +116,43 @@ class BackgroundService {
 		$this->context->setRunningThroughCommand();
 		$this->context->propertyBag['max_image_area'] = $maxImageArea;
 		$this->context->propertyBag['run_mode'] = $runMode;
+		if (!is_null($workerConfig)) {
+			$this->context->propertyBag['worker_index'] = $workerConfig->getWorkerIndex();
+			$this->context->propertyBag['worker_count'] = $workerConfig->getWorkerCount();
+			$this->context->logger->logInfo(sprintf("[W %d/%d] Starting worker", $workerConfig->getWorkerIndex(), $workerConfig->getWorkerCount()));
+		}
 
-		// Here we are defining all the tasks that will get executed.
+		// Build the list of tasks of the run, and filter it according to what
+		// this process has to do.
 		//
-		$task_classes = [
-			CheckRequirementsTask::class,
-			CheckCronTask::class,
-		];
-
-		switch ($runMode)
-		{
-			case 'sync-mode':
-				$task_classes[] = DisabledUserRemovalTask::class;
-				$task_classes[] = StaleImagesRemovalTask::class;
-				$task_classes[] = AddMissingImagesTask::class;
-				break;
-			case 'fast-mode':
-				// First pass of the analysis: process all images with the fast
-				// HOG model on a small image, to get groupings and persons
-				// quickly. The refinement to maximum quality is done by the
-				// default mode.
-				$task_classes[] = DisabledUserRemovalTask::class;
-				$task_classes[] = StaleImagesRemovalTask::class;
-				$task_classes[] = AddMissingImagesTask::class;
-				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
-				$task_classes[] = CreateClustersTask::class;
-				break;
-			case 'analyze-mode':
-				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
-				break;
-			case 'cluster-mode':
-				$task_classes[] = CreateClustersTask::class;
-				break;
-			case 'defer-mode':
-				$task_classes[] = DisabledUserRemovalTask::class;
-				$task_classes[] = StaleImagesRemovalTask::class;
-				$task_classes[] = AddMissingImagesTask::class;
-				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
-				$task_classes[] = CreateClustersTask::class;
-				break;
-			case 'default-mode':
-			default:
-				$task_classes[] = DisabledUserRemovalTask::class;
-				$task_classes[] = StaleImagesRemovalTask::class;
-				$task_classes[] = CreateClustersTask::class;
-				$task_classes[] = AddMissingImagesTask::class;
-				$task_classes[] = EnumerateImagesMissingFacesTask::class;
-				$task_classes[] = ImageProcessingTask::class;
-				break;
+		$task_classes = $this->buildTaskList($runMode);
+		if (!is_null($workerConfig)) {
+			// A worker only analyzes its own share of the images. The checks
+			// are kept: a worker is a fresh process that loads its own copy of
+			// the model, so it validates the requirements on its own instead
+			// of trusting the ones the coordinator did.
+			$task_classes = array_values(array_filter($task_classes, function (string $taskClass): bool {
+				return in_array($taskClass, self::CHECK_TASKS, true) ||
+				       in_array($taskClass, self::ANALYSIS_TASKS, true);
+			}));
+		} elseif ($stage === self::STAGE_BEFORE_ANALYSIS) {
+			// The coordinator runs everything up to the analysis, so the
+			// workers analyze the images that were just added. If there is no
+			// analysis in this run, there is nothing to skip.
+			$firstAnalysisTask = array_search(self::ANALYSIS_TASKS[0], $task_classes, true);
+			if ($firstAnalysisTask !== false) {
+				$task_classes = array_slice($task_classes, 0, (int) $firstAnalysisTask);
+			}
+		} elseif ($stage === self::STAGE_AFTER_ANALYSIS) {
+			// The coordinator runs what is left once the workers finished,
+			// that is the clustering that is deferred to the end. If there is
+			// no analysis in this run, there is nothing to run after it.
+			$lastAnalysisTask = array_search(self::ANALYSIS_TASKS[1], $task_classes, true);
+			if ($lastAnalysisTask !== false) {
+				$task_classes = array_slice($task_classes, (int) $lastAnalysisTask + 1);
+			} else {
+				$task_classes = [];
+			}
 		}
 
 		// Main logic to iterate over all tasks and executes them.
@@ -189,5 +200,55 @@ class BackgroundService {
 				throw $e;
 			}
 		}
+	}
+
+	/**
+	 * Builds the ordered list of tasks of a single-threaded run of the given
+	 * mode.
+	 *
+	 * @param string $runMode The command execution mode
+	 *
+	 * @return string[] The classes of the tasks to execute, in order
+	 */
+	private function buildTaskList(string $runMode): array {
+		$task_classes = self::CHECK_TASKS;
+
+		switch ($runMode)
+		{
+			case 'sync-mode':
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				break;
+			case 'fast-mode':
+				// First pass of the analysis: process all images with the fast
+				// HOG model on a small image, to get groupings and persons
+				// quickly. The refinement to maximum quality is done by the
+				// default mode.
+			case 'defer-mode':
+				// Both run the same tasks in the same order, with the
+				// clustering deferred to the end so that a single run gets to
+				// the persons. What sets them apart is not the list but the
+				// analysis itself: the context asks the run mode which pass it
+				// is (`isFastMode()`), and the fast one uses the smaller model.
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
+				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = CreateClustersTask::class;
+				break;
+			case 'default-mode':
+			default:
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = CreateClustersTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
+				$task_classes[] = ImageProcessingTask::class;
+				break;
+		}
+
+		return $task_classes;
 	}
 }

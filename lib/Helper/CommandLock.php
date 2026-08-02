@@ -44,7 +44,11 @@ class CommandLock {
 	}
 
 	public static function lock(string $lockDescription) {
-		$fp = fopen(self::LockFile(), 'c');
+		// The 'e' mode sets close-on-exec on the descriptor, so the workers
+		// that the coordinator forks (and that re-execute this command) drop
+		// their copy of the lock: if the coordinator dies, the orphaned
+		// workers must not keep blocking the command.
+		$fp = fopen(self::LockFile(), 'ce');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;
 		}

@@ -128,6 +128,16 @@ The application is designed to run as a scheduled task. This allows analyze the
 photos and showing the results to the user progressively. You can read about
 some ways to configure it within our documentation about [Schedule Background Task](https://github.com/matiasdelellis/facerecognition/wiki/Schedule-Background-Task).
 
+To speed up the analysis on machines with several cores, the image analysis can
+run in parallel with `occ face:background_job --workers=4`. The command then
+acts as a coordinator: it runs the file synchronization and the clustering
+itself, and spawns the workers that analyze the images, each one taking its own
+share. Every worker loads its own copy of the model in memory, so the memory
+needed grows with the number of workers. It requires the `pcntl` extension
+(standard on Linux, macOS and FreeBSD, not available on Windows), and is not
+recommended on instances that use SQLite. See
+[doc/occ-commands.md](doc/occ-commands.md#face-background_job) for details.
+
 ## How it works inside
 
 The [`doc/`](doc/) directory documents the parts that are not obvious from the

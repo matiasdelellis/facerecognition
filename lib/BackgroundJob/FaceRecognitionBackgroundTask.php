@@ -70,13 +70,29 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	}
 
 	/**
+	 * Prefix of the worker that is running this task, when it runs in parallel
+	 * as a worker, so that the logs of the different processes can be told
+	 * apart. Empty when it is a regular, single-threaded run.
+	 *
+	 * @return string
+	 */
+	private function getWorkerPrefix(): string {
+		$workerIndex = $this->context->propertyBag['worker_index'] ?? null;
+		$workerCount = $this->context->propertyBag['worker_count'] ?? null;
+		if (is_null($workerIndex) || is_null($workerCount)) {
+			return '';
+		}
+		return sprintf('[W %d/%d] ', $workerIndex, $workerCount);
+	}
+
+	/**
 	 * Wrapper for info logging. It using this log call, it will indent log messages,
 	 * so there is nice visual that those messages belongs to particular task.
 	 *
 	 * @return void
 	 */
 	protected function logInfo(string $message): void {
-		$this->context->logger->logInfo("\t" . $message);
+		$this->context->logger->logInfo("\t" . $this->getWorkerPrefix() . $message);
 	}
 
 	/**
@@ -87,7 +103,7 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	 */
 	protected function logDebug(string $message): void {
 		if ($this->context->verbose) {
-			$this->context->logger->logDebug("\t" . $message);
+			$this->context->logger->logDebug("\t" . $this->getWorkerPrefix() . $message);
 		}
 	}
 }

@@ -69,7 +69,14 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user, $modelId);
+		// The fast pass only takes the images that were never processed. Any
+		// other run also takes the ones that were analyzed in the fast pass and
+		// still have to be refined, unless the refinement is disabled.
+		if ($context->isRunningInFastMode() || !$this->settingsService->getRefinementEnabled()) {
+			$images = $this->imageMapper->findImagesWithoutFaces($this->context->user, $modelId);
+		} else {
+			$images = $this->imageMapper->findImagesToProcess($this->context->user, $modelId);
+		}
 		yield;
 
 		shuffle($images);

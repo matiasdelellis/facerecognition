@@ -34,11 +34,14 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 
 use OCA\FaceRecognition\Db\Face;
+use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Helper\FaceRect;
 use OCA\FaceRecognition\Helper\TempImage;
 
+use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
@@ -49,11 +52,20 @@ use OCA\FaceRecognition\Service\SettingsService;
  * Taks that get all images that are still not processed and processes them.
  * Processing image means that each image is prepared, faces extracted form it,
  * and for each found face - face descriptor is extracted.
+ *
+ * The analysis happens in two passes. The fast pass (--fast-mode) uses the HOG
+ * model on a small image, so that groupings and persons appear quickly. The
+ * refinement pass uses the current model at maximum resolution, replacing the
+ * faces of each image with higher quality ones; the new faces keep the cluster
+ * of the old face found in the same place, so a person is never lost.
  */
 class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
+
+	/** @var FaceMapper Face mapper*/
+	protected $faceMapper;
 
 	/** @var FileService */
 	protected $fileService;
@@ -76,12 +88,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
+	 * @param FaceMapper $faceMapper Face mapper
 	 * @param FileService $fileService
 	 * @param SettingsService $settingsService
 	 * @param ModelManager $modelManager Model manager
 	 * @param ILockingProvider $lockingProvider
 	 */
 	public function __construct(ImageMapper      $imageMapper,
+	                            FaceMapper       $faceMapper,
 	                            FileService      $fileService,
 	                            SettingsService  $settingsService,
 	                            ModelManager     $modelManager,
@@ -90,6 +104,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		parent::__construct();
 
 		$this->imageMapper        = $imageMapper;
+		$this->faceMapper         = $faceMapper;
 		$this->fileService        = $fileService;
 		$this->settingsService    = $settingsService;
 		$this->modelManager       = $modelManager;
@@ -114,12 +129,48 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
-		// Get current model.
-		$this->model = $this->modelManager->getCurrentModel();
+		// The fast pass uses the HOG model on a small image, the refinement pass
+		// the current model at maximum quality.
+		if ($this->context->isRunningInFastMode()) {
+			$fastModel = $this->modelManager->getModel(DlibHogModel::FACE_MODEL_ID);
+			$currentModel = $this->modelManager->getCurrentModel();
+
+			// The fast pass writes its faces in the rows of the current model,
+			// and the refinement replaces them with the faces of that model, so
+			// both passes must produce comparable descriptors. The HOG model
+			// agrees with the models that align the face and compute the
+			// descriptor the same way (models 1 and 4), but not with the ones
+			// that align it with the 68-point predictor (model 2) or use
+			// another network (model 6). With a current model that is not
+			// comparable, the fast pass falls back to it: slower, but the
+			// fast-pass faces stay comparable with the refined ones.
+			$fastPassUsesHog = !is_null($currentModel) &&
+			                   ($currentModel->getDescriptorType() === $fastModel->getDescriptorType());
+			$this->model = $fastPassUsesHog ? $fastModel : ($currentModel ?? $fastModel);
+			if (!$fastPassUsesHog && !is_null($currentModel)) {
+				$this->logInfo('Fast pass: the HOG descriptors are not comparable with the ones of the ' . $this->model->getName() . ' model, using the current model for the fast pass');
+			}
+
+			// The model of the fast pass must be installed and usable. The files
+			// of each model live in their own folder, so having another model
+			// installed does not install this one, and the fast pass is not the
+			// place to download it: the admin does that with face:setup.
+			$modelError = '';
+			if (!$this->model->isInstalled()) {
+				throw new \RuntimeException('The fast pass cannot run: the ' . $this->model->getName() . ' model is not installed. Install it with the occ face:setup -m ' . $this->model->getId() . ' command.');
+			}
+			if (!$this->model->meetDependencies($modelError)) {
+				throw new \RuntimeException('The fast pass cannot run: ' . $modelError);
+			}
+			$this->logInfo('Fast pass: using the ' . $this->model->getName() . ' model on a small image');
+		} else {
+			$this->model = $this->modelManager->getCurrentModel();
+		}
 
 		// Open model.
 		$this->model->open();
 
+		$refined = !$this->context->isRunningInFastMode();
 		$images = $context->propertyBag['images'];
 		foreach($images as $image) {
 			yield;
@@ -133,7 +184,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->lockingProvider->acquireLock($lockKey, $lockType);
 
 				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
-				if ($dbImage->getIsProcessed()) {
+
+				// An image is done when it was processed, and in the refinement
+				// pass it also has to have been refined. The images that were
+				// only analyzed in the fast pass have to be taken again.
+				$alreadyDone = $refined ? $dbImage->getIsRefined() : $dbImage->getIsProcessed();
+				if ($alreadyDone) {
 					$this->logInfo('Faces found: 0. Image will be skipped since it was already processed.');
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
@@ -155,7 +211,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				if ($tempImage->getSkipped() === true) {
 					$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-					$this->imageMapper->imageProcessed($image, array(), 0);
+					// Keep the faces that were already found, if any, and mark
+					// the image as done for this pass.
+					$this->imageMapper->imageProcessed($image, array(), 0, null, $refined, false);
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
@@ -177,10 +235,17 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					$faces[] = $face;
 				}
 
+				if ($refined) {
+					// The new faces replace the fast-pass ones, but the faces
+					// found again in the same place keep their cluster, and with
+					// it the person the user gave the cluster.
+					$this->inheritClusters($image, $faces);
+				}
+
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
-				$this->imageMapper->imageProcessed($image, $faces, $duration);
+				$this->imageMapper->imageProcessed($image, $faces, $duration, null, $refined);
 
 				// Release lock of file.
 				$this->lockingProvider->releaseLock($lockKey, $lockType);
@@ -193,8 +258,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->logInfo('Faces found: 0. Image will be skipped because of the following error: ' . $e->getMessage());
 				$this->logDebug((string) $e);
 
-				// Save an empty entry so it can be analyzed again later
-				$this->imageMapper->imageProcessed($image, array(), 0, $e);
+				// Record the error, without touching the faces: the image keeps
+				// the ones it had, and with them the person. It is not taken
+				// again until the user resets the errors, so a file that can
+				// never be analyzed does not cost every run.
+				$this->imageMapper->imageProcessed($image, array(), 0, $e, $refined, false);
 			} finally {
 				// Clean temporary image.
 				if (isset($tempImage)) {
@@ -250,22 +318,39 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			return $this->maxImageAreaCached;
 		}
 
-		// Get this setting on main app_config.
-		// Note that this option has lower and upper limits and validations
-		$this->maxImageAreaCached = $this->settingsService->getAnalysisImageArea();
+		// The fast pass works on a small image, to be quick and to need no
+		// memory; the refinement pass uses the configured analysis area.
+		//
+		$fastMode = $this->context->isRunningInFastMode();
+		if ($fastMode) {
+			$area = $this->settingsService->getFastPassImageArea();
+		} else {
+			// Get this setting on main app_config.
+			// Note that this option has lower and upper limits and validations
+			$area = $this->settingsService->getAnalysisImageArea();
+		}
 
+		// The overrides below replace the area of the analysis, but in the fast
+		// pass they are only a ceiling: they are there to keep an image from
+		// being too big, and an override bigger than the fast pass area would
+		// make the fast pass work on a bigger image than it asked for, which is
+		// the opposite of being fast.
+		//
 		// Check if admin override it in config and it is valid value
 		//
 		$maxImageArea = $this->settingsService->getMaximumImageArea();
 		if ($maxImageArea > 0) {
-			$this->maxImageAreaCached = $maxImageArea;
+			$area = $fastMode ? min($area, $maxImageArea) : $maxImageArea;
 		}
 		// Also check if we are provided value from command line.
 		//
 		if ((array_key_exists('max_image_area', $this->context->propertyBag)) &&
 		    (!is_null($this->context->propertyBag['max_image_area']))) {
-			$this->maxImageAreaCached = $this->context->propertyBag['max_image_area'];
+			$commandArea = $this->context->propertyBag['max_image_area'];
+			$area = $fastMode ? min($area, $commandArea) : $commandArea;
 		}
+
+		$this->maxImageAreaCached = $area;
 
 		return $this->maxImageAreaCached;
 	}
@@ -299,6 +384,54 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$landmarks[] = $landmark;
 		}
 		return $landmarks;
+	}
+
+	/**
+	 * Carries the cluster of the old faces of the image to the new ones, so that
+	 * the refinement pass does not lose the person that the user named.
+	 *
+	 * The faces of both passes are stored in the coordinates of the original
+	 * image, so a new face that overlaps an old one is the same face of the same
+	 * person, and it keeps the cluster, and with it the person.
+	 */
+	private function inheritClusters(Image $image, array $faces): void {
+		$oldFaces = $this->faceMapper->findByImage($image->getId());
+		if (count($oldFaces) === 0) {
+			return;
+		}
+
+		$old = [];
+		foreach ($oldFaces as $oldFace) {
+			$old[] = [
+				'left' => $oldFace->getX(),
+				'right' => $oldFace->getX() + $oldFace->getWidth(),
+				'top' => $oldFace->getY(),
+				'bottom' => $oldFace->getY() + $oldFace->getHeight(),
+				'cluster' => $oldFace->getCluster(),
+				'is_groupable' => $oldFace->getIsGroupable(),
+			];
+		}
+
+		$new = [];
+		foreach ($faces as $face) {
+			$new[] = [
+				'left' => $face->getX(),
+				'right' => $face->getX() + $face->getWidth(),
+				'top' => $face->getY(),
+				'bottom' => $face->getY() + $face->getHeight(),
+			];
+		}
+
+		$assigned = FaceRect::matchClusters($new, $old);
+		foreach ($assigned as $newIndex => $inheritance) {
+			$faces[$newIndex]->setCluster($inheritance['cluster']);
+			if (!$inheritance['is_groupable']) {
+				// The old face was a face the user detached: the new one keeps
+				// its cluster and stays non-groupable, so that the clustering
+				// does not put it back where the user took it out of.
+				$faces[$newIndex]->setIsGroupable(false);
+			}
+		}
 	}
 
 }

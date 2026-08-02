@@ -61,6 +61,20 @@ class SettingsService {
 	const DEFAULT_ANALYSIS_IMAGE_AREA = -1; // It is dynamically configured according to hardware
 	const MAXIMUM_ANALYSIS_IMAGE_AREA = 3840*2160;
 
+	/**
+	 * Image area used by the fast, first pass of the analysis. Its minimum is
+	 * lower than the one of the analysis area: the point of the fast pass is to
+	 * go over the library quickly, and the faces it misses on a small image are
+	 * found by the refinement anyway.
+	 */
+	const FAST_PASS_IMAGE_AREA_KEY = 'fast_pass_image_area';
+	const MINIMUM_FAST_PASS_IMAGE_AREA = 320*240;
+	const DEFAULT_FAST_PASS_IMAGE_AREA = 640*480;
+
+	/** Whether the refinement pass, that re-analyzes the images at maximum quality, is enabled */
+	const REFINEMENT_ENABLED_KEY = 'refinement_enabled';
+	const DEFAULT_REFINEMENT_ENABLED = 'true';
+
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
 	const MINIMUM_SENSITIVITY = '0.2';
@@ -301,6 +315,33 @@ class SettingsService {
 
 	public function getAnalysisImageArea(): int {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval(self::DEFAULT_ANALYSIS_IMAGE_AREA)));
+	}
+
+	/**
+	 * Image area the fast pass works on. It is only reachable through
+	 * `occ config:app:set`, which does not validate, so the value is clamped.
+	 * The floor is lower than the one of the analysis area, so that the fast
+	 * pass can be asked for something smaller than what a final analysis would
+	 * accept, which is the whole point of it.
+	 */
+	public function getFastPassImageArea(): int {
+		$area = intval($this->config->getAppValue(Application::APP_NAME, self::FAST_PASS_IMAGE_AREA_KEY, strval(self::DEFAULT_FAST_PASS_IMAGE_AREA)));
+		$area = max($area, self::MINIMUM_FAST_PASS_IMAGE_AREA);
+		$area = min($area, self::MAXIMUM_ANALYSIS_IMAGE_AREA);
+		return $area;
+	}
+
+	public function setFastPassImageArea(int $imageArea): void {
+		$this->config->setAppValue(Application::APP_NAME, self::FAST_PASS_IMAGE_AREA_KEY, strval($imageArea));
+	}
+
+	public function getRefinementEnabled(): bool {
+		$enabled = $this->config->getAppValue(Application::APP_NAME, self::REFINEMENT_ENABLED_KEY, self::DEFAULT_REFINEMENT_ENABLED);
+		return ($enabled === 'true');
+	}
+
+	public function setRefinementEnabled(bool $enabled): void {
+		$this->config->setAppValue(Application::APP_NAME, self::REFINEMENT_ENABLED_KEY, $enabled ? 'true' : 'false');
 	}
 
 	public function setAssignedMemory(int $assignedMemory): void {

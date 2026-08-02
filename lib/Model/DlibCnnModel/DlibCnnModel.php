@@ -106,6 +106,10 @@ class DlibCnnModel implements IModel {
 		return static::FACE_MODEL_DOC;
 	}
 
+	public function getDescriptorType(): string {
+		return static::FACE_MODEL_FILES['predictor']['filename'] . '|' . static::FACE_MODEL_FILES['resnet']['filename'];
+	}
+
 	public function isInstalled(): bool {
 		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES['detector']['filename']))
 			return false;

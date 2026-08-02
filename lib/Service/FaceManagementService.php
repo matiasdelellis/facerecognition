@@ -210,6 +210,24 @@ class FaceManagementService {
 	}
 
 	/**
+	 * Marks all the images as not refined, so the refinement pass analyzes them
+	 * again with the current model (e.g. after increasing the size of the
+	 * images). The faces and clusters are kept.
+	 * If no user is given, resetting is executed for all users.
+	 *
+	 * @param IUser|null $user Optional user to execute resetting for
+	 *
+	 * @return void
+	 */
+	public function resetRefined(?IUser $user = null): void {
+		$model = $this->settingsService->getCurrentFaceModel();
+		$eligible_users = $this->getEligiblesUserId($user);
+		foreach($eligible_users as $userId) {
+			$this->imageMapper->resetRefined($userId, $model);
+		}
+	}
+
+	/**
 	 * Eliminate all faces relations with person.
 	 *
 	 * @param string $user ID of user to execute resetting for

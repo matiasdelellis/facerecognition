@@ -82,6 +82,14 @@ class FaceRecognitionContext {
 		return false;
 	}
 
+	public function isRunningInFastMode(): bool {
+		if ((array_key_exists('run_mode', $this->propertyBag)) &&
+		    (!is_null($this->propertyBag['run_mode']))) {
+			return ($this->propertyBag['run_mode'] === 'fast-mode');
+		}
+		return false;
+	}
+
 	public function isRunningThroughCommand(): bool {
 		return $this->isRunningThroughCommand;
 	}

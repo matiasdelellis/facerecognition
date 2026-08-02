@@ -15,10 +15,17 @@ graph LR
 ## facerecog_images
 
 One row per file and model: `user`, `file`, `model`, `is_processed`, `error`,
-`last_processed_time`, `processing_duration`.
+`last_processed_time`, `processing_duration`, `is_refined`.
 
 A file analyzed with two models has two rows. The model of everything else is
 read from here or copied from it.
+
+Since 0.9.95 the analysis can run in two passes, a fast one and a refinement
+one, on the same row. The fast pass (HOG on a small image) sets `is_processed`
+and leaves `is_refined` false, and the refinement pass (the current model on a
+full-size image) sets `is_refined`. An image is due for processing when
+`is_processed` is false, and due for refinement when it is processed but not
+refined yet. See [clustering.md](clustering.md).
 
 ## facerecog_faces
 
@@ -63,7 +70,7 @@ was a cluster, and the person was the `name` repeated in every cluster of
 theirs. Renaming meant one statement per cluster, listing the people meant one
 query per name, and two people called the same were one.
 
-Five migrations do the change, and they run in this order:
+Six migrations do the change, and they run in this order:
 
 | migration | what it does |
 | --- | --- |
@@ -72,6 +79,7 @@ Five migrations do the change, and they run in this order:
 | `Version0992Date20260731130001` | Leaves `facerecog_persons` with `id`, `user` and `name`. |
 | `Version0993Date20260731160000` | Adds `facerecog_faces.cluster` and copies `person` into it. |
 | `Version0993Date20260731160001` | Drops `facerecog_faces.person`. |
+| `Version0995Date20260801000000` | Adds `facerecog_images.is_refined` for the two-pass analysis, marking as refined every image that was already processed. |
 
 The clusters get **new ids** on the way, so a link or an API client that kept a
 cluster id has to ask for it again. Names are not affected.

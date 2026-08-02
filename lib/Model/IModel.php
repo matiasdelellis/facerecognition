@@ -64,6 +64,18 @@ interface IModel {
 	public function getMaximumArea(): int;
 
 	/**
+	 * Identifies how the descriptors are computed: the face alignment (which
+	 * landmark predictor) and the network that turns the aligned face into the
+	 * descriptor. Two models only produce comparable descriptors when this
+	 * method returns the same value, i.e. when a face analyzed with one of them
+	 * could have been analyzed with the other. The HOG model aligns with the
+	 * 5-point predictor and uses the standard network, like models 1 and 4, so
+	 * they agree with each other; model 2 aligns with the 68-point predictor,
+	 * and model 6 uses a different network, so neither agrees with the HOG one.
+	 */
+	public function getDescriptorType(): string;
+
+	/**
 	 * Get the Mime Type preferred by the model
 	 *
 	 * @return string mimetype

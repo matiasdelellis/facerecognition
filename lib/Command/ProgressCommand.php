@@ -93,11 +93,18 @@ class ProgressCommand extends Command {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$totalImages = $this->imageMapper->countImages($modelId);
-		$processedImages = $this->imageMapper->countProcessedImages($modelId);
+		// An image is only done when it was refined, unless the refinement is
+		// disabled: with the two passes, being processed alone is not finished.
+		$refinementEnabled = $this->settingsService->getRefinementEnabled();
+		$doneImages = $refinementEnabled
+			? $this->imageMapper->countRefinedImages($modelId)
+			: $this->imageMapper->countProcessedImages($modelId);
 
-		$remainingImages = $totalImages - $processedImages;
+		$remainingImages = $totalImages - $doneImages;
 
-		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId);
+		// What is left is refinement, which costs much more than the fast pass,
+		// so the estimate is made with the time the refined images took.
+		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($modelId, $refinementEnabled);
 		$estimatedSeconds = (int) ($remainingImages * $avgProcessingTime/1000);
 
 		if ($input->getOption('json')) {

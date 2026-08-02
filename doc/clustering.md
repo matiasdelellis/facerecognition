@@ -149,6 +149,60 @@ Passes that only merge, over the samples and with no new faces, were measured an
 dropped: they moved 0.874 to 0.877. A fragment hangs from faces that are not in
 the samples, so comparing samples against samples does not find it.
 
+## Two passes: fast, then refined
+
+Since 0.9.95 the same run can be asked for twice. `face:background_job --fast-mode`
+runs the whole pipeline with the HOG model on a small image (see
+`fast_pass_image_area`), to get groupings and persons quickly. The default mode
+refines: it re-processes every image that was processed but not refined yet, with
+the current model on a full-size image. See `is_refined` in
+[data-model.md](data-model.md).
+
+Both passes write in the rows of the current model, so their descriptors must be
+comparable. The fast pass uses the HOG model only when it computes the descriptors
+the same way as the current model (`Model::getDescriptorType()`): that holds for
+models 1 and 4, which align with the 5-point predictor and use the same network.
+Model 2 aligns with the 68-point predictor, and model 6 uses a different network,
+so with either of them the fast pass falls back to the current model: slower, but
+the fast-pass faces stay comparable with the refined ones.
+
+The model the fast pass ends up using has to be installed. The files of each model
+live in their own folder, so having the current model installed does not install
+the HOG one: with models 1 and 4 the fast pass also needs `occ face:setup -m 3`.
+It is not downloaded on the fly, the run stops with that message instead. The
+requirements checked are still those of the current model, so `--fast-mode` does
+not run where the default mode cannot: both write in the same rows.
+
+The refinement keeps the work of the fast pass. A face is replaced by the one the
+second pass finds in the same image, and the new face inherits the cluster of the
+one it replaced when their bounding boxes overlap: each new face is matched to at
+most one old face, greedily, by IoU at `0.35` (`FaceRect::matchClusters()`). So a
+person keeps its cluster and its name across the refinement, even for an image
+that was the only one of that person. An old face without a cluster has nothing to
+inherit.
+
+A face the user detached keeps being detached: the new face inherits its solo
+cluster and its non-groupable state, so the clustering does not put it back where
+the user took it out of.
+
+A failure of the refinement pass does not destroy the fast-pass faces. The old
+faces are kept, and with them the person, and the image stays at the quality the
+fast pass gave it. It is not taken again on its own: a file that cannot be
+analyzed would be retried by every run for as long as it exists, so it waits for
+an `occ face:reset --error` like it did before the refinement existed.
+
+Because a cluster never moves a face that already has one, the inherited face
+stays exactly where the fast pass put it, and the names survive.
+
+The images that were already processed before the upgrade are marked as refined by
+the migration, so an existing library is not re-analyzed: only the images that the
+fast pass analyzed are refined, and only once.
+
+To refine everything again, e.g. after raising `analysis_image_area` to work on
+bigger images, `occ face:reset --refined` sets `is_refined` to false again. It
+keeps the faces and their clusters, and the next run re-processes every image at
+the new size and inherits the clusters as usual.
+
 ## Suggesting who a cluster is
 
 One person is several clusters, and no threshold fixes that. At 0.4 the clusters
@@ -195,6 +249,8 @@ one answer holds for all its faces.
 | `clustering_samples_per_cluster` | 10 | Faces of each cluster put in with them. |
 | `link_suggestion_sensitivity` | 0.55 | Distance up to which two clusters are proposed as one person. Looser than the sensitivity on purpose. |
 | `link_suggestion_samples` | 3 | Faces of each cluster compared when looking for candidates. |
+| `fast_pass_image_area` | 640×480 | Max area of the image the fast pass works on. Clamped to 320×240 at the low end, lower than what the analysis area accepts. |
+| `refinement_enabled` | true | When false, the default mode never re-processes an image that already has faces. |
 
 Changing `sensitivity` or `min_confidence` means what is in the database was
 obtained with other parameters, so the clusters are discarded and grown again on

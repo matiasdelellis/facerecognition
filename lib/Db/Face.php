@@ -129,7 +129,7 @@ class Face extends Entity implements JsonSerializable {
 		$this->addType('id', 'integer');
 		$this->addType('image', 'integer');
 		$this->addType('cluster', 'integer');
-		$this->addType('isGroupable', 'bool');
+		$this->addType('isGroupable', 'boolean');
 		$this->addType('descriptor', 'json');
 		$this->addType('creationTime', 'datetime');
 	}
@@ -143,15 +143,16 @@ class Face extends Entity implements JsonSerializable {
 	 */
 	public static function fromModel(int $imageId, array $faceFromModel): Face {
 		$face = new Face();
-		$face->image      = $imageId;
-		$face->cluster    = null;
-		$face->x          = $faceFromModel['left'];
-		$face->y          = $faceFromModel['top'];
-		$face->width      = $faceFromModel['right'] - $faceFromModel['left'];
-		$face->height     = $faceFromModel['bottom'] - $faceFromModel['top'];
-		$face->confidence = $faceFromModel['detection_confidence'];
-		$face->landmarks  = isset($faceFromModel['landmarks']) ? $faceFromModel['landmarks'] : [];
-		$face->descriptor = isset($faceFromModel['descriptor']) ? $faceFromModel['descriptor'] : [];
+		$face->image       = $imageId;
+		$face->cluster     = null;
+		$face->isGroupable = true;
+		$face->x           = $faceFromModel['left'];
+		$face->y           = $faceFromModel['top'];
+		$face->width       = $faceFromModel['right'] - $faceFromModel['left'];
+		$face->height      = $faceFromModel['bottom'] - $faceFromModel['top'];
+		$face->confidence  = $faceFromModel['detection_confidence'];
+		$face->landmarks   = isset($faceFromModel['landmarks']) ? $faceFromModel['landmarks'] : [];
+		$face->descriptor  = isset($faceFromModel['descriptor']) ? $faceFromModel['descriptor'] : [];
 		$face->setCreationTime(new \DateTime());
 		return $face;
 	}

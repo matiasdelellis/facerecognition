@@ -111,6 +111,13 @@ class ResetCommand extends Command {
 				InputOption::VALUE_NONE,
 				'Just reset the clustering.',
 				null
+			)
+			->addOption(
+				'refined',
+				null,
+				InputOption::VALUE_NONE,
+				'Reset the refinement, so all the images are analyzed again at maximum quality (e.g. after increasing the size of the images).',
+				null
 			);
 	}
 
@@ -185,6 +192,15 @@ class ResetCommand extends Command {
 				$ret = 1;
 			}
 		}
+		else if ($input->getOption('refined')) {
+			if ($this->confirmate()) {
+				$this->resetRefined($user);
+				$output->writeln('Reset refinement done. Next runs of face:background_job will refine all the images again.');
+			} else {
+				$output->writeln('Aborted');
+				$ret = 1;
+			}
+		}
 		else {
 			$output->writeln('You must specify what you want to reset');
 			$ret = 1;
@@ -207,6 +223,13 @@ class ResetCommand extends Command {
 	 */
 	private function resetClusters(?\OCP\IUser $user): void {
 		$this->faceManagementService->resetClusters($user);
+	}
+
+	/**
+	 * @param \OCP\IUser|null $user
+	 */
+	private function resetRefined(?\OCP\IUser $user): void {
+		$this->faceManagementService->resetRefined($user);
 	}
 
 	/**

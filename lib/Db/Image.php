@@ -45,6 +45,9 @@ use OCP\AppFramework\Db\Entity;
  * @method bool getIsProcessed()
  * @method void setIsProcessed($isProcessed)
  *
+ * @method bool getIsRefined()
+ * @method void setIsRefined($isRefined)
+ *
  * @method void setLastProcessedTime($lastProcessedTime)
  *
  * @method void setProcessingDuration(int $processingDuration)
@@ -83,6 +86,15 @@ class Image extends Entity implements JsonSerializable {
 	protected $isProcessed;
 
 	/**
+	 * Whether the faces of this image were already obtained in a second, higher
+	 * quality pass, replacing the fast-pass faces. Images that are processed but
+	 * not refined still have the cheap HOG faces and must be taken again.
+	 *
+	 * @var bool
+	 */
+	protected $isRefined;
+
+	/**
 	 * Description of error that happened during image processing.
 	 * If it exist, image processing should be skipped even if $is_processed is false.
 	 *
@@ -109,7 +121,8 @@ class Image extends Entity implements JsonSerializable {
 		$this->addType('user', 'string');
 		$this->addType('file', 'integer');
 		$this->addType('model', 'integer');
-		$this->addType('isProcessed', 'bool');
+		$this->addType('isProcessed', 'boolean');
+		$this->addType('isRefined', 'boolean');
 	}
 
 	public function jsonSerialize() {
@@ -119,6 +132,7 @@ class Image extends Entity implements JsonSerializable {
 			'file' => $this->file,
 			'model' => $this->model,
 			'is_processed' => $this->isProcessed,
+			'is_refined' => $this->isRefined,
 			'error' => $this->error,
 			'last_processed_time' => $this->lastProcessedTime,
 			'processing_duration' => $this->processingDuration
@@ -132,6 +146,15 @@ class Image extends Entity implements JsonSerializable {
 			$this->isProcessed = filter_var($isProcessed, FILTER_VALIDATE_BOOLEAN);
 		}
 		$this->markFieldUpdated('isProcessed');
+	}
+
+	public function setIsRefined($isRefined): void {
+		if (is_bool($isRefined)) {
+			$this->isRefined = $isRefined;
+		} else {
+			$this->isRefined = filter_var($isRefined, FILTER_VALIDATE_BOOLEAN);
+		}
+		$this->markFieldUpdated('isRefined');
 	}
 
 }

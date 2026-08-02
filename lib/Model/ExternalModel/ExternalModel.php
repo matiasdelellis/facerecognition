@@ -83,6 +83,14 @@ class ExternalModel implements IModel {
 		return static::FACE_MODEL_DOC;
 	}
 
+	/**
+	 * The alignment of the external service is not known here, so its
+	 * descriptors are only comparable with the ones it produces itself.
+	 */
+	public function getDescriptorType(): string {
+		return 'external';
+	}
+
 	public function isInstalled(): bool {
 		$this->modelUrl = $this->settingsService->getExternalModelUrl();
 		$this->modelApiKey = $this->settingsService->getExternalModelApiKey();

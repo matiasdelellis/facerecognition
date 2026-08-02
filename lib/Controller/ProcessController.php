@@ -65,21 +65,30 @@ class ProcessController extends Controller {
 		$model = $this->settingsService->getCurrentFaceModel();
 
 		$totalImages = $this->imageMapper->countImages($model);
-		$processedImages = $this->imageMapper->countProcessedImages($model);
-		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($model);
+		// An image is only done when it was refined, unless the refinement is
+		// disabled: with the two passes, being processed alone is not finished.
+		$refinementEnabled = $this->settingsService->getRefinementEnabled();
+		$doneImages = $refinementEnabled
+			? $this->imageMapper->countRefinedImages($model)
+			: $this->imageMapper->countProcessedImages($model);
+		// What is left is refinement, which costs much more than the fast pass,
+		// so the estimate is made with the time the refined images took.
+		$avgProcessingTime = $this->imageMapper->avgProcessingDuration($model, $refinementEnabled);
 
-		// TODO: How to know the real state of the process?
-		$status = ($processedImages > 0);
+		// The analysis has started once an image was worked on, in either pass.
+		$status = ($this->imageMapper->countProcessedImages($model) > 0);
 
-		$estimatedTime = ($totalImages - $processedImages) * $avgProcessingTime/1000;
+		$estimatedTime = ($totalImages - $doneImages) * $avgProcessingTime/1000;
 
 		$estimatedFinalize = $estimatedTime;
 
+		// The key keeps its name for the frontend, but it counts the images
+		// that have nothing pending, which with the two passes means refined.
 		$params = array(
 			'status' => $status,
 			'estimatedFinalize' => $estimatedFinalize,
 			'totalImages' => $totalImages,
-			'processedImages' => $processedImages
+			'processedImages' => $doneImages
 		);
 
 		return new JSONResponse($params);

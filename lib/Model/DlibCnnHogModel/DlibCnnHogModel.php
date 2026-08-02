@@ -68,6 +68,10 @@ class DlibCnnHogModel implements IModel {
 		return static::FACE_MODEL_DOC;
 	}
 
+	public function getDescriptorType(): string {
+		return $this->dlibCnn5Model->getDescriptorType();
+	}
+
 	public function isInstalled(): bool {
 		if (!$this->dlibCnn5Model->isInstalled())
 			return false;

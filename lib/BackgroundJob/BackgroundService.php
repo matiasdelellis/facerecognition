@@ -106,6 +106,18 @@ class BackgroundService {
 				$task_classes[] = StaleImagesRemovalTask::class;
 				$task_classes[] = AddMissingImagesTask::class;
 				break;
+			case 'fast-mode':
+				// First pass of the analysis: process all images with the fast
+				// HOG model on a small image, to get groupings and persons
+				// quickly. The refinement to maximum quality is done by the
+				// default mode.
+				$task_classes[] = DisabledUserRemovalTask::class;
+				$task_classes[] = StaleImagesRemovalTask::class;
+				$task_classes[] = AddMissingImagesTask::class;
+				$task_classes[] = EnumerateImagesMissingFacesTask::class;
+				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = CreateClustersTask::class;
+				break;
 			case 'analyze-mode':
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
 				$task_classes[] = ImageProcessingTask::class;

@@ -86,6 +86,12 @@ class BackgroundCommand extends Command {
 				'Execute all actions related to synchronizing the files. New users, shared or deleted files, etc.'
 			)
 			->addOption(
+				'fast-mode',
+				null,
+				InputOption::VALUE_NONE,
+				'First pass of the analysis: process all images with the fast HOG model on a small image, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode.'
+			)
+			->addOption(
 				'analyze-mode',
 				null,
 				InputOption::VALUE_NONE,
@@ -163,6 +169,8 @@ class BackgroundCommand extends Command {
 		$mode = 'default-mode';
 		if ($input->getOption('sync-mode')) {
 			$mode = 'sync-mode';
+		} else if ($input->getOption('fast-mode')) {
+			$mode = 'fast-mode';
 		} else if ($input->getOption('analyze-mode')) {
 			$mode = 'analyze-mode';
 		} else if ($input->getOption('cluster-mode')) {

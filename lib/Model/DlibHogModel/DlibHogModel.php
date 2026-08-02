@@ -116,6 +116,10 @@ class DlibHogModel implements IModel {
 		return static::FACE_MODEL_DOC;
 	}
 
+	public function getDescriptorType(): string {
+		return static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR] . '|' . static::FACE_MODEL_FILES[self::I_MODEL_RESNET];
+	}
+
 	public function isInstalled(): bool {
 		if (!$this->modelService->modelFileExists($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_PREDICTOR]))
 			return false;

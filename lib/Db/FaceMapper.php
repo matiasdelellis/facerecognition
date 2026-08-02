@@ -435,7 +435,7 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findByImage(int $imageId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image', 'cluster')
+		$qb->select('id', 'image', 'cluster', 'x', 'y', 'width', 'height', 'is_groupable')
 			->from($this->getTableName())
 			->where($qb->expr()->eq('image', $qb->createNamedParameter($imageId)));
 		$faces = $this->findEntities($qb);
@@ -547,6 +547,7 @@ class FaceMapper extends QBMapper {
 			->values([
 				'image' => $qb->createNamedParameter($face->image),
 				'cluster' => $qb->createNamedParameter($face->cluster),
+				'is_groupable' => $qb->createNamedParameter($face->isGroupable, IQueryBuilder::PARAM_BOOL),
 				'x' => $qb->createNamedParameter($face->x),
 				'y' => $qb->createNamedParameter($face->y),
 				'width' => $qb->createNamedParameter($face->width),

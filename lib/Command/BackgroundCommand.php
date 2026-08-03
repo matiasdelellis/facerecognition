@@ -26,6 +26,7 @@ namespace OCA\FaceRecognition\Command;
 use OCP\Files\IRootFolder;
 use OCP\App\IAppManager;
 use OCP\IConfig;
+use OCP\IUser;
 use OCP\IUserManager;
 
 use Symfony\Component\Console\Command\Command;
@@ -123,57 +124,10 @@ class BackgroundCommand extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$this->backgroundService->setLogger($output);
 
-		// Extract user, if any
-		//
-		$userId = $input->getOption('user_id');
-		$user = null;
-
-		if (!is_null($userId)) {
-			$user = $this->userManager->get($userId);
-			if ($user === null) {
-				throw new \InvalidArgumentException("User with id <$userId> in unknown.");
-			}
-		}
-
-		// Extract timeout
-		//
-		$timeout = $input->getOption('timeout');
-		if (!is_null($timeout)) {
-			if ($timeout < 0) {
-				throw new \InvalidArgumentException("Timeout must be positive value in seconds.");
-			}
-		} else {
-			$timeout = 0;
-		}
-
-		// Extract max image area
-		//
-		$maxImageArea = $input->getOption('max_image_area');
-		if (!is_null($maxImageArea)) {
-			$maxImageArea = intval($maxImageArea);
-
-			if ($maxImageArea === 0) {
-				throw new \InvalidArgumentException("Max image area must be positive number.");
-			}
-
-			if ($maxImageArea < 0) {
-				throw new \InvalidArgumentException("Max image area must be positive value.");
-			}
-		}
-
-		// Extract mode from options
-		//
-		$mode = 'default-mode';
-		if ($input->getOption('sync-mode')) {
-			$mode = 'sync-mode';
-		} else if ($input->getOption('fast-mode')) {
-			$mode = 'fast-mode';
-		} else if ($input->getOption('defer-clustering')) {
-			$mode = 'defer-mode';
-		}
-
-		// Extract verbosity (for command, we don't need this, but execute asks for it, if running from cron job).
-		//
+		$user = $this->getUser($input);
+		$timeout = $this->getTimeout($input);
+		$maxImageArea = $this->getMaxImageArea($input);
+		$mode = $this->getMode($input);
 		$verbose = $input->getOption('verbose');
 
 		// Worker configuration. A worker is a re-executed copy of this command
@@ -192,35 +146,168 @@ class BackgroundCommand extends Command {
 		// workers re-execute this same command with the worker configuration in
 		// the environment, and do the actual analysis.
 		//
-		$workers = $input->getOption('workers');
-		if (is_null($workerConfig) && !is_null($workers)) {
-			$workerCount = intval($workers);
-			if ($mode === 'sync-mode') {
-				$output->writeln('<error>--workers is only supported when the command analyzes the images, so it cannot be used with --sync-mode.</error>');
-				return 1;
-			}
-			if ($workerCount <= 0) {
-				$output->writeln('<error>Invalid worker count: ' . $workerCount . '</error>');
-				return 1;
-			}
-			if (!function_exists('pcntl_fork') || !function_exists('pcntl_exec') || !function_exists('pcntl_waitpid')) {
-				$output->writeln('<error>The pcntl extension is not available or is disabled in this PHP build, so workers cannot be spawned. ' .
-					'Install pcntl (on FreeBSD: pkg install php<version>-pcntl; on Debian/Ubuntu it is included in php-cli), ' .
-					'or run the analysis without --workers.</error>');
-				return 1;
-			}
+		$workerCount = $this->getWorkerCount($input);
+		if (is_null($workerConfig) && !is_null($workerCount)) {
+			return $this->runAsCoordinator($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerCount);
+		}
 
+		// Either a plain run or a worker. Both analyze the images; the worker
+		// gets its share of the work from the worker configuration, and the
+		// plain run (which is also the coordinator, when there are no workers)
+		// additionally runs the file synchronization and the clustering.
+		//
+		return $this->runAnalysis($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
+	}
+
+	/**
+	 * Extract the user to analyze, if any.
+	 *
+	 * @param InputInterface $input
+	 *
+	 * @return IUser|null The user to analyze, or null for all users.
+	 *
+	 * @throws \InvalidArgumentException If the given user id does not exist.
+	 */
+	private function getUser(InputInterface $input): ?IUser {
+		$userId = $input->getOption('user_id');
+		if (is_null($userId)) {
+			return null;
+		}
+
+		$user = $this->userManager->get($userId);
+		if ($user === null) {
+			throw new \InvalidArgumentException("User with id <$userId> in unknown.");
+		}
+
+		return $user;
+	}
+
+	/**
+	 * Extract the timeout.
+	 *
+	 * @param InputInterface $input
+	 *
+	 * @return int The timeout in seconds, or 0 for no timeout.
+	 *
+	 * @throws \InvalidArgumentException If the given timeout is negative.
+	 */
+	private function getTimeout(InputInterface $input): int {
+		$timeout = $input->getOption('timeout');
+		if (is_null($timeout)) {
+			return 0;
+		}
+
+		if ($timeout < 0) {
+			throw new \InvalidArgumentException("Timeout must be positive value in seconds.");
+		}
+
+		return $timeout;
+	}
+
+	/**
+	 * Extract the maximum image area.
+	 *
+	 * @param InputInterface $input
+	 *
+	 * @return int|null The maximum area in pixels^2, or null if not capped.
+	 *
+	 * @throws \InvalidArgumentException If the given area is not positive.
+	 */
+	private function getMaxImageArea(InputInterface $input): ?int {
+		$maxImageArea = $input->getOption('max_image_area');
+		if (is_null($maxImageArea)) {
+			return null;
+		}
+
+		$maxImageArea = intval($maxImageArea);
+		if ($maxImageArea === 0) {
+			throw new \InvalidArgumentException("Max image area must be positive number.");
+		}
+
+		if ($maxImageArea < 0) {
+			throw new \InvalidArgumentException("Max image area must be positive value.");
+		}
+
+		return $maxImageArea;
+	}
+
+	/**
+	 * Extract the run mode from the command line options.
+	 *
+	 * @param InputInterface $input
+	 *
+	 * @return string The mode: `sync-mode`, `fast-mode`, `defer-mode` or `default-mode`.
+	 */
+	private function getMode(InputInterface $input): string {
+		if ($input->getOption('sync-mode')) {
+			return 'sync-mode';
+		}
+
+		if ($input->getOption('fast-mode')) {
+			return 'fast-mode';
+		}
+
+		if ($input->getOption('defer-clustering')) {
+			return 'defer-mode';
+		}
+
+		return 'default-mode';
+	}
+
+	/**
+	 * Extract the number of workers to spawn.
+	 *
+	 * @param InputInterface $input
+	 *
+	 * @return int|null The number of workers, or null if `--workers` was not given.
+	 */
+	private function getWorkerCount(InputInterface $input): ?int {
+		$workers = $input->getOption('workers');
+		if (is_null($workers)) {
+			return null;
+		}
+
+		return intval($workers);
+	}
+
+	/**
+	 * Run this command as the coordinator: synchronize the files, spawn the
+	 * workers and wait for them, and cluster the faces once they are done.
+	 *
+	 * @param OutputInterface $output
+	 * @param int $timeout
+	 * @param bool $verbose
+	 * @param string $mode
+	 * @param IUser|null $user
+	 * @param int|null $maxImageArea
+	 * @param int $workerCount
+	 *
+	 * @return int 0 on success, 1 otherwise.
+	 */
+	private function runAsCoordinator(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, int $workerCount): int {
+		if ($mode === 'sync-mode') {
+			$output->writeln('<error>--workers is only supported when the command analyzes the images, so it cannot be used with --sync-mode.</error>');
+			return 1;
+		}
+
+		if ($workerCount <= 0) {
+			$output->writeln('<error>Invalid worker count: ' . $workerCount . '</error>');
+			return 1;
+		}
+
+		if (!function_exists('pcntl_fork') || !function_exists('pcntl_exec') || !function_exists('pcntl_waitpid')) {
+			$output->writeln('<error>The pcntl extension is not available or is disabled in this PHP build, so workers cannot be spawned. ' .
+				'Install pcntl (on FreeBSD: pkg install php<version>-pcntl; on Debian/Ubuntu it is included in php-cli), ' .
+				'or run the analysis without --workers.</error>');
+			return 1;
+		}
+
+		return $this->withGlobalLock($output, function () use ($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerCount) {
 			// The coordinator runs the file synchronization before spawning the
 			// workers (so they analyze the images that were just added), and
 			// the clustering once they are done. It holds the global lock
 			// during the whole run, so only one such command runs at a time.
 			//
-			$lock = CommandLock::Lock('face:background_job');
-			if (!$lock) {
-				$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
-				return 1;
-			}
-
 			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_BEFORE_ANALYSIS);
 
 			$exitCode = $this->coordinate($output, $workerCount, $mode);
@@ -228,34 +315,61 @@ class BackgroundCommand extends Command {
 				$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_AFTER_ANALYSIS);
 			}
 
-			CommandLock::Unlock($lock);
 			return $exitCode;
-		}
+		});
+	}
 
+	/**
+	 * Run the image analysis, either as a worker or as a plain run.
+	 *
+	 * @param OutputInterface $output
+	 * @param int $timeout
+	 * @param bool $verbose
+	 * @param string $mode
+	 * @param IUser|null $user
+	 * @param int|null $maxImageArea
+	 * @param WorkerConfig|null $workerConfig
+	 *
+	 * @return int 0 on success, 1 otherwise.
+	 */
+	private function runAnalysis(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, ?WorkerConfig $workerConfig): int {
 		// Acquire the lock so that only one background task can run at a time.
 		// A worker never acquires it: the coordinator that spawned it is
 		// already holding it.
 		//
-		$globalLock = is_null($workerConfig);
-		if ($globalLock) {
-			$lock = CommandLock::Lock('face:background_job');
-			if (!$lock) {
-				$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
-				return 1;
-			}
+		$run = function () use ($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig) {
+			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
+			return 0;
+		};
+
+		if (!is_null($workerConfig)) {
+			return $run();
 		}
 
-		// Main thing
-		//
-		$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
+		return $this->withGlobalLock($output, $run);
+	}
 
-		// Release obtained lock
-		//
-		if ($globalLock) {
+	/**
+	 * Execute the given callback while holding the global lock, so only one
+	 * background task runs at a time.
+	 *
+	 * @param OutputInterface $output
+	 * @param callable():int $run The work to do while holding the lock.
+	 *
+	 * @return int The exit code of the run, or 1 if the lock could not be taken.
+	 */
+	private function withGlobalLock(OutputInterface $output, callable $run): int {
+		$lock = CommandLock::Lock('face:background_job');
+		if (!$lock) {
+			$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			return 1;
+		}
+
+		try {
+			return $run();
+		} finally {
 			CommandLock::Unlock($lock);
 		}
-
-		return 0;
 	}
 
 	/**

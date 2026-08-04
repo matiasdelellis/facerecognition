@@ -77,9 +77,12 @@ class MemoryLimits {
 	/**
 	 * @return float Total memory available on system, in bytes, or negative if
 	 * we don't know any better
-	 * Only linux is currently supported.
+	 * Only linux and FreeBSD are currently supported.
 	 */
 	public static function getSystemMemory(): float {
+		if (php_uname("s") == "FreeBSD")
+			return str_replace('hw.physmem: ', '', exec('sysctl hw.physmem') ?: '-2');
+
 		if (php_uname("s") !== "Linux")
 			return -1;
 

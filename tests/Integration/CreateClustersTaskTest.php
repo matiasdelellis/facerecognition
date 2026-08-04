@@ -234,13 +234,23 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * Base value of every component of a descriptor. It only has to be a
+	 * number with decimals: the components must reach dlib as doubles, and a
+	 * whole number is written by json_encode() without decimals, so it comes
+	 * back from the database as an int and dlib_vector_length() reads it as a
+	 * zero. Since it is added to every component of every descriptor, it
+	 * cancels out and no distance changes.
+	 */
+	const DESCRIPTOR_BASE = 0.5;
+
+	/**
 	 * A descriptor whose distance to descriptor(0.0) is proportional to $offset,
 	 * so that the fixtures can be written in terms of "close" and "far".
 	 */
 	private function descriptor(float $offset): array {
 		$descriptor = [];
 		for ($i = 0; $i < 128; $i++) {
-			$descriptor[] = $offset;
+			$descriptor[] = self::DESCRIPTOR_BASE + $offset;
 		}
 		return $descriptor;
 	}

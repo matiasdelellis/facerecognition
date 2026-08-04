@@ -80,10 +80,7 @@ class ModelService {
 	public function prepareModelFolder(int $modelId) {
 		// Custum folder
 		if (!is_null($this->settingsService->getSystemModelPath())) {
-			$modelFolder = $this->modelsFolder . '/' . $modelId;
-			if (!is_dir($modelFolder)) {
-				mkdir($modelFolder, 0770, true);
-			}
+			$this->makeModelFolder($modelId);
 			return;
 		}
 
@@ -92,6 +89,24 @@ class ModelService {
 			$this->appData->getFolder('/models/' . $modelId);
 		} catch (NotFoundException $e) {
 			$this->appData->newFolder('/models/' . $modelId);
+		}
+
+		// The models are written and read with plain filesystem calls, so what
+		// matters is that the directory is really there. The appData entry can
+		// outlive the directory itself, and then getFolder() succeeds and
+		// newFolder() is never called, leaving nothing to write into.
+		$this->makeModelFolder($modelId);
+	}
+
+	/**
+	 * Create the directory of a model on disk, when it is not there yet.
+	 *
+	 * @return void
+	 */
+	private function makeModelFolder(int $modelId) {
+		$modelFolder = $this->modelsFolder . '/' . $modelId;
+		if (!is_dir($modelFolder)) {
+			mkdir($modelFolder, 0770, true);
 		}
 	}
 

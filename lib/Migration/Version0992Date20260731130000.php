@@ -155,7 +155,7 @@ class Version0992Date20260731130000 extends SimpleMigrationStep {
 			$qb->setParameter('model', $cluster['model'], IQueryBuilder::PARAM_INT);
 			$qb->setParameter('is_visible', $cluster['is_visible'], IQueryBuilder::PARAM_BOOL);
 			$qb->executeStatement();
-			$newIdOf[$cluster['id']] = (int) $qb->getLastInsertId();
+			$newIdOf[$cluster['id']] = $qb->getLastInsertId();
 		}
 
 		return $newIdOf;

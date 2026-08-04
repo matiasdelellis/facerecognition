@@ -108,8 +108,13 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 				return false;
 			}
 		} else {
-			$this->logDebug("Image Backend: Imagick");
+			// GD decodes the images, and whatever it cannot read falls back to
+			// Imagick, so they are not two alternative backends.
+			$this->logDebug("Image Backend: " . (extension_loaded('imagick') ? "GD, with Imagick as fallback" : "GD"));
 		}
+
+		$supportedFormats = $this->settingsService->getAllowedMimetypes();
+		$this->logDebug("Supported image formats: " . implode(', ', $supportedFormats));
 
 		if (!Requirements::hasEnoughMemory()) {
 			$error_message =

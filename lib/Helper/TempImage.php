@@ -113,85 +113,127 @@ class TempImage extends Image {
 	 *
 	 */
 	private function prepareImage() {
-
 		if ($this->imaginary->isEnabled()) {
-			$fileInfo = $this->imaginary->getInfo($this->imagePath);
-
-			$widthOrig = $fileInfo['width'];
-			$heightOrig = $fileInfo['height'];
-			if (($widthOrig < $this->minImageSide) ||
-			    ($heightOrig < $this->minImageSide)) {
-				$this->skipped = true;
-				return;
-			}
-
-			$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
-
-			$newWidth = intval(round($widthOrig * $scaleFactor));
-			$newHeight = intval(round($heightOrig * $scaleFactor));
-
-			$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $fileInfo['autorotate'], $this->preferredMimeType);
-			$this->loadFromData($resizedResource);
-
-			if (!$this->valid()) {
-				throw new \RuntimeException("Imaginary image response is not valid.");
-			}
-
-			$this->ratio = 1 / $scaleFactor;
+			$this->prepareWithImaginary();
+		} else {
+			$this->prepareLocally();
 		}
-		else {
-			$this->loadFromFile($this->imagePath);
-			$this->fixOrientation();
 
-			if (!$this->valid()) {
-				throw new \RuntimeException("Local image is not valid, probably cannot be loaded");
-			}
-
-			if ((imagesx($this->resource()) < $this->minImageSide) ||
-			    (imagesy($this->resource()) < $this->minImageSide)) {
-				$this->skipped = true;
-				return;
-			}
-
-			$this->ratio = $this->resizeOCImage();
+		if ($this->skipped) {
+			return;
 		}
 
 		$this->tempPath = $this->tempManager->getTemporaryFile();
 		$this->save($this->tempPath, $this->preferredMimeType);
+	}
 
+	/**
+	 * Prepare the temporary image using the Imaginary service, that does the
+	 * resize in the server side.
+	 */
+	private function prepareWithImaginary() {
+		$fileInfo = $this->imaginary->getInfo($this->imagePath);
+
+		$widthOrig = $fileInfo['width'];
+		$heightOrig = $fileInfo['height'];
+		if ($this->isTooSmall($widthOrig, $heightOrig)) {
+			return;
+		}
+
+		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
+		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
+
+		$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $fileInfo['autorotate'], $this->preferredMimeType);
+		$this->loadFromData($resizedResource);
+
+		if (!$this->valid()) {
+			throw new \RuntimeException("Imaginary image response is not valid.");
+		}
+
+		$this->ratio = 1 / $scaleFactor;
+	}
+
+	/**
+	 * Prepare the temporary image locally, resizing it in memory.
+	 */
+	private function prepareLocally() {
+		// The image is loaded into this instance, and the maximum area is
+		// already imposed on the decoding, so that a format that only Imagick
+		// can read does not have to be held whole in memory first.
+		$sourceSize = ImageUtil::loadInto($this, $this->imagePath, true, $this->maxImageArea);
+		if ($sourceSize === null) {
+			throw new \RuntimeException("Local image is not valid, probably cannot be loaded");
+		}
+
+		// Everything is measured against the source image, and not against
+		// what was loaded, since the decoding may have shrunk it already.
+		[$widthOrig, $heightOrig] = $sourceSize;
+		if ($this->isTooSmall($widthOrig, $heightOrig)) {
+			return;
+		}
+
+		$this->ratio = $this->resizeOCImage($widthOrig, $heightOrig);
+	}
+
+	/**
+	 * Marks the image as skipped when it is smaller than the minimum side.
+	 *
+	 * @return bool true when the image must be skipped
+	 */
+	private function isTooSmall(int $width, int $height): bool {
+		if (($width < $this->minImageSide) || ($height < $this->minImageSide)) {
+			$this->skipped = true;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Size the image must have to reach the maximum image area, preserving
+	 * the ratio.
+	 *
+	 * @return int[] width and height of the resized image
+	 */
+	private function getTargetSize(int $width, int $height, float $scaleFactor): array {
+		return [
+			intval(round($width * $scaleFactor)),
+			intval(round($height * $scaleFactor)),
+		];
 	}
 
 	/**
 	 * Resizes the image to reach max image area, but preserving ratio.
 	 *
+	 * @param int $widthOrig width of the source image
+	 * @param int $heightOrig height of the source image
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function resizeOCImage(): float {
-		$widthOrig = imagesx($this->resource());
-		$heightOrig = imagesy($this->resource());
-
+	private function resizeOCImage(int $widthOrig, int $heightOrig): float {
 		if (($widthOrig <= 0) || ($heightOrig <= 0)) {
 			$message = "Image is having non-positive width or height, cannot continue";
 			throw new \RuntimeException($message);
 		}
 
 		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
+		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
 
-		$newWidth = intval(round($widthOrig * $scaleFactor));
-		$newHeight = intval(round($heightOrig * $scaleFactor));
-
-		$success = $this->preciseResize($newWidth, $newHeight);
-		if ($success === false) {
-			throw new \RuntimeException("Error during image resize");
+		// The decoding may have already downscaled it to about this same size,
+		// in which case there is nothing left to resize.
+		if ((imagesx($this->resource()) !== $newWidth) ||
+		    (imagesy($this->resource()) !== $newHeight)) {
+			$success = $this->preciseResize($newWidth, $newHeight);
+			if ($success === false) {
+				throw new \RuntimeException("Error during image resize");
+			}
 		}
 
 		return 1 / $scaleFactor;
 	}
 
 	/**
-	 * Resizes the image to reach max image area, but preserving ratio.
+	 * Ratio between the maximum image area and the original one, to rescale.
 	 *
-	 * @return float Ratio of resize. 1 if there was no resize
+	 * @return float scale factor to apply to the image
 	 */
 	private function getResizeRatio($widthOrig, $heightOrig): float {
 		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);

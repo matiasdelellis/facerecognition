@@ -23,4 +23,22 @@ class Requirements
 		return $appManager->isEnabledForUser('memories');
 	}
 
+	/**
+	 * Formats that the Imagick extension can decode, as an array of format
+	 * names (for example "HEIC" or "WEBP"). Empty when Imagick is not loaded.
+	 *
+	 * @return string[]
+	 */
+	public static function imagickSupportedFormats(): array {
+		if (!extension_loaded('imagick')) {
+			return [];
+		}
+
+		try {
+			return \Imagick::queryFormats();
+		} catch (\Exception $e) {
+			return [];
+		}
+	}
+
 }

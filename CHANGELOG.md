@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Support images in more formats out of the box: GIF, BMP and WebP, plus
+  HEIC/HEIF, TIFF and AVIF. Each format is only enabled when the active image
+  backend can actually decode it, so no file is indexed just to fail later:
+  GD covers GIF, BMP and WebP, the Imagick extension adds HEIC/HEIF, TIFF and
+  AVIF when it has the delegates, and Imaginary covers all of them except BMP,
+  that libvips cannot read. The `enabledFaceRecognitionMimetype` system setting
+  still forces extra mimetypes on top.
 - `face:background_job` can analyze the images in parallel with `--workers=N`.
   The command becomes the coordinator of the run: it does the file
   synchronization, spawns the workers that analyze the images (each one taking

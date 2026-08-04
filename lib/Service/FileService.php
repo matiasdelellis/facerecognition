@@ -253,22 +253,32 @@ class FileService {
 	}
 
 	/**
-	 * Get a path to either the local file or temporary file
+	 * Get a local path to the file, copying it to a temporary file when it
+	 * cannot be accessed directly (encrypted files, external storages).
 	 *
 	 * @param File $file
-	 * @param int $maxSize maximum size for temporary files
-	 * @return string|null
+	 * @return string|null path to the file, or null when it cannot be obtained
 	 */
-	public function getLocalFile(File $file, ?int $maxSize = null): ?string {
-		$useTempFile = $file->isEncrypted() || !$file->getStorage()->isLocal();
-		if ($useTempFile) {
+	public function getLocalFile(File $file): ?string {
+		if ($file->isEncrypted() || !$file->getStorage()->isLocal()) {
 			$absPath = $this->tempManager->getTemporaryFile();
+			if ($absPath === false) {
+				return null;
+			}
 
 			$content = $file->fopen('r');
-			if ($maxSize !== null) {
-				$content = stream_get_contents($content, $maxSize);
+			if ($content === false) {
+				return null;
 			}
-			file_put_contents($absPath, $content);
+
+			$written = file_put_contents($absPath, $content);
+			fclose($content);
+
+			// A truncated copy would only fail later, when it is decoded, with
+			// an error that says nothing about the disk being full.
+			if ($written === false) {
+				return null;
+			}
 
 			return $absPath;
 		} else {
@@ -305,9 +315,15 @@ class FileService {
 
 	/**
 	 * Create a temporary file and return the path
+	 *
+	 * @throws \RuntimeException when the temporary file cannot be created
 	 */
 	public function getTemporaryFile(string $postFix = ''): string {
-		return $this->tempManager->getTemporaryFile($postFix);
+		$tempFile = $this->tempManager->getTemporaryFile($postFix);
+		if ($tempFile === false) {
+			throw new \RuntimeException('Could not create a temporary file. Check the permissions of the temporary directory.');
+		}
+		return $tempFile;
 	}
 
 	/**

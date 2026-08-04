@@ -22,15 +22,23 @@
 				<referencedClass name="CnnFaceDetection" />
 				<referencedClass name="FaceLandmarkDetection" />
 				<referencedClass name="FaceRecognition" />
+				<referencedClass name="Imagick" />
 				<referencedClass name="OC" />
 				<referencedClass name="OC_App" />
 				<referencedClass name="OC_Util" />
 				<referencedClass name="OC\DB\QueryBuilder\Literal" />
-				<referencedClass name="OC\Files\View" />
 				<referencedClass name="OC\Hooks\Emitter" />
 				<referencedClass name="OCA\Files\Event\LoadSidebar" />
+				<referencedClass name="OCA\Viewer\Event\LoadViewer" />
 			</errorLevel>
 		</UndefinedClass>
+		<UndefinedFunction>
+			<errorLevel type="suppress">
+				<referencedFunction name="dlib_face_detection" />
+				<referencedFunction name="dlib_vector_length" />
+				<referencedFunction name="dlib_chinese_whispers" />
+			</errorLevel>
+		</UndefinedFunction>
 		<UndefinedDocblockClass>
 			<errorLevel type="suppress">
 				<referencedClass name="CnnFaceDetection" />

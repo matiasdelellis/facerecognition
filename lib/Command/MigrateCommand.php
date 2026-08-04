@@ -46,8 +46,7 @@ use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\FileService;
 
 use OCA\FaceRecognition\Helper\CommandLock;
-
-use OCP\Image as OCP_Image;
+use OCA\FaceRecognition\Helper\ImageUtil;
 
 class MigrateCommand extends Command {
 
@@ -282,13 +281,21 @@ class MigrateCommand extends Command {
 		}
 
 		$localPath = $this->fileService->getLocalFile($file);
+		if ($localPath === null) {
+			return null;
+		}
 
-		$image = new OCP_Image();
-		$image->loadFromFile($localPath);
-		if ($image->getOrientation() > 1) {
+		// The orientation is not fixed here so we can detect it, and only copy
+		// the image to a temporary file when it must be rotated.
+		$loaded = ImageUtil::loadFromPath($localPath, false);
+		if ($loaded === null) {
+			return null;
+		}
+
+		if ($loaded->getOrientation() > 1) {
 			$tempPath = $this->fileService->getTemporaryFile();
-			$image->fixOrientation();
-			$image->save($tempPath, 'image/png');
+			$loaded->fixOrientation();
+			$loaded->save($tempPath, 'image/png');
 			return $tempPath;
 		}
 

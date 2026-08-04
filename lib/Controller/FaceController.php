@@ -30,6 +30,7 @@ use OCP\IRequest;
 use OCP\IPreview;
 use OCP\IConfig;
 use OCP\Files\IRootFolder;
+use OCP\Files\File;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -44,7 +45,9 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
+use OCA\FaceRecognition\Helper\ImageUtil;
 use OCA\FaceRecognition\Helper\Requirements;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 class FaceController extends Controller {
@@ -70,6 +73,9 @@ class FaceController extends Controller {
 	/** @var IConfig */
 	private $config;
 
+	/** @var FileService */
+	private $fileService;
+
 	/** @var string */
 	private $userId;
 
@@ -82,6 +88,7 @@ class FaceController extends Controller {
 	                            SettingsService $settingsService,
 	                            IPreview        $preview,
 	                            IConfig         $config,
+	                            FileService     $fileService,
 	                            $UserId)
 	{
 		parent::__construct($AppName, $request);
@@ -93,6 +100,7 @@ class FaceController extends Controller {
 		$this->settingsService = $settingsService;
 		$this->preview         = $preview;
 		$this->config          = $config;
+		$this->fileService     = $fileService;
 		$this->userId          = $UserId;
 	}
 
@@ -115,13 +123,17 @@ class FaceController extends Controller {
 		}
 
 		$fileId = $image->getFile();
-
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 		$nodes = $userFolder->getById($fileId);
-		$file = $nodes[0];
+		$file = $nodes[0] ?? null;
+		if (!$file instanceof File) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
-		// Try preview-based approach for HEIC support (requires Memories)
-		// Skip if obfuscation enabled (hipsterize needs original image)
+		// Try the preview-based approach first: it also works for formats the
+		// local backend cannot decode, like HEIC (it requires Memories). It is
+		// skipped when the faces are obfuscated, since hipsterize needs the
+		// original image.
 		if (!$this->settingsService->getObfuscateFaces()) {
 			$previewResp = $this->getThumbFromPreview($face, $file, $fileId, $size);
 			if ($previewResp !== null) {
@@ -129,51 +141,78 @@ class FaceController extends Controller {
 			}
 		}
 
-		// Fallback: Original GD-based approach (works for JPEG/PNG)
-		$ownerView = new \OC\Files\View('/'. $this->userId . '/files');
-		$path = $userFolder->getRelativePath($file->getPath());
-
-		$img = new OCP_Image();
-		$fileName = $ownerView->getLocalFile($path);
-		$img->loadFromFile($fileName);
-		$img->fixOrientation();
-
-		$x = $face->getX();
-		$y = $face->getY();
-		$w = $face->getWidth();
-		$h = $face->getHeight();
-
-		$padding = $h*0.35;
-		$x -= $padding;
-		$y -= $padding;
-		$w += $padding*2;
-		$h += $padding*2;
+		// Fallback: load the original image (works for every format the local
+		// image backend can decode, like JPEG, PNG and HEIC with Imagick).
+		$img = $this->loadImage($file);
+		if ($img === null) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		if ($this->settingsService->getObfuscateFaces()) {
 			$this->hipsterize($img, $face);
 		}
 
-		$img->crop($x, $y, $w, $h);
+		$rect = $this->getPaddedFaceRect($face);
+		$img->crop($rect['x'], $rect['y'], $rect['w'], $rect['h']);
 		$img->scaleDownToFit($size, $size);
 
-		$resp = new DataDisplayResponse($img->data(), Http::STATUS_OK, ['Content-Type' => $img->mimeType()]);
-		$resp->setETag((string)crc32($img->data()));
+		return $this->buildThumbResponse($img);
+	}
+
+	/**
+	 * Load the image of a file, fixing its EXIF orientation.
+	 *
+	 * @param File $file file to load
+	 * @return OCP_Image|null the loaded image, or null when it cannot be loaded
+	 */
+	private function loadImage(File $file): ?OCP_Image {
+		$localPath = $this->fileService->getLocalFile($file);
+		if ($localPath === null) {
+			return null;
+		}
+		return ImageUtil::loadFromPath($localPath);
+	}
+
+	/**
+	 * Response with an image, cached for a week.
+	 */
+	private function buildThumbResponse(OCP_Image $image): DataDisplayResponse {
+		$resp = new DataDisplayResponse($image->data(), Http::STATUS_OK, ['Content-Type' => $image->mimeType()]);
+		$resp->setETag((string)crc32($image->data()));
 		$resp->cacheFor(7 * 24 * 60 * 60);
 		$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
-
 		return $resp;
+	}
+
+	/**
+	 * Face rectangle enlarged by 35% of its height, the margin used around the
+	 * face in the thumbnails.
+	 *
+	 * It is rounded here, and not by the caller, because crop() takes integers
+	 * and PHP deprecates passing a float that loses precision.
+	 *
+	 * @return int[] x, y, w and h
+	 */
+	private function getPaddedFaceRect(Face $face): array {
+		$padding = $face->getHeight() * 0.35;
+		return [
+			'x' => (int) round($face->getX() - $padding),
+			'y' => (int) round($face->getY() - $padding),
+			'w' => (int) round($face->getWidth() + $padding * 2),
+			'h' => (int) round($face->getHeight() + $padding * 2),
+		];
 	}
 
 	/**
 	 * Generate face thumbnail using preview system (HEIC-compatible)
 	 *
 	 * @param Face $face Face entity with coordinates
-	 * @param \OCP\Files\File $file File node
+	 * @param File $file File to preview
 	 * @param int $fileId File ID for Memories lookup
 	 * @param int $size Target thumbnail size
 	 * @return DataDisplayResponse|null Response if successful, null to fallback
 	 */
-	private function getThumbFromPreview(Face $face, $file, int $fileId, int $size): ?DataDisplayResponse {
+	private function getThumbFromPreview(Face $face, File $file, int $fileId, int $size): ?DataDisplayResponse {
 		try {
 			// Check if Memories is installed
 			if (!Requirements::memoriesIsInstalled()) {
@@ -207,46 +246,21 @@ class FaceController extends Controller {
 				return null;
 			}
 
-			$previewWidth = $previewImg->width();
-			$previewHeight = $previewImg->height();
+			// The face rectangle lives in the space of the original image, so
+			// it must be scaled to the (smaller) space of the preview.
+			$scaleX = $previewImg->width() / $originalWidth;
+			$scaleY = $previewImg->height() / $originalHeight;
 
-			// Calculate scale ratios
-			$scaleX = $previewWidth / $originalWidth;
-			$scaleY = $previewHeight / $originalHeight;
+			$rect = $this->getPaddedFaceRect($face);
 
-			// Get face coordinates in original space
-			$x = $face->getX();
-			$y = $face->getY();
-			$w = $face->getWidth();
-			$h = $face->getHeight();
-
-			// Apply padding (35% of height, same as original code)
-			$padding = $h * 0.35;
-			$x -= $padding;
-			$y -= $padding;
-			$w += $padding * 2;
-			$h += $padding * 2;
-
-			// Scale to preview space
-			$previewX = (int)($x * $scaleX);
-			$previewY = (int)($y * $scaleY);
-			$previewW = (int)($w * $scaleX);
-			$previewH = (int)($h * $scaleY);
-
-			// Crop face region
-			$previewImg->crop($previewX, $previewY, $previewW, $previewH);
-
-			// Scale to requested thumbnail size
+			// Crop the face region and scale it to the requested thumbnail size
+			$previewImg->crop((int)($rect['x'] * $scaleX),
+			                  (int)($rect['y'] * $scaleY),
+			                  (int)($rect['w'] * $scaleX),
+			                  (int)($rect['h'] * $scaleY));
 			$previewImg->scaleDownToFit($size, $size);
 
-			// Create response (same as original code)
-			$resp = new DataDisplayResponse($previewImg->data(), Http::STATUS_OK, ['Content-Type' => $previewImg->mimeType()]);
-			$resp->setETag((string)crc32($previewImg->data()));
-			$resp->cacheFor(7 * 24 * 60 * 60);
-			$resp->setLastModified(new \DateTime('now', new \DateTimeZone('GMT')));
-
-			return $resp;
-
+			return $this->buildThumbResponse($previewImg);
 		} catch (\OCP\Files\NotFoundException $e) {
 			// Preview generation failed
 			return null;
@@ -266,6 +280,9 @@ class FaceController extends Controller {
 	public function getPersonThumb (string $name, int $size) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));
+		if ($personFace === false) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 		return $this->getThumb($personFace->getId(), $size);
 	}
 

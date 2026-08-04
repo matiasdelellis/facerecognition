@@ -182,7 +182,7 @@ class ClusterMapper extends QBMapper {
 				'model' => $qb->createNamedParameter($modelId, IQueryBuilder::PARAM_INT)])
 			->executeStatement();
 
-		return (int) $qb->getLastInsertId();
+		return $qb->getLastInsertId();
 	}
 
 	/**

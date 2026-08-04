@@ -26,6 +26,9 @@ namespace OCA\FaceRecognition\Service;
 
 use OCA\FaceRecognition\AppInfo\Application;
 
+use OCA\FaceRecognition\Helper\Imaginary;
+use OCA\FaceRecognition\Helper\Requirements;
+
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCP\IConfig;
@@ -182,8 +185,66 @@ class SettingsService {
 	/** System setting to enable mimetypes */
 
 	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
-	private $allowedMimetypes = ['image/jpeg', 'image/png'];
+
+	/**
+	 * Mimetypes that every image backend decodes: GD, Imagick and Imaginary all
+	 * read them, so the analysis is always enabled for them.
+	 */
+	const BASE_MIMETYPES = [
+		'image/jpeg',
+		'image/png',
+	];
+
+	/**
+	 * Mimetypes of the formats that only some backends decode, grouped by the
+	 * name of the format the backend has to support. A group is only enabled
+	 * when the active backend reports it, so a file is never indexed just to
+	 * fail later, when it is decoded.
+	 */
+	const EXTENDED_MIMETYPES = [
+		'GIF'  => ['image/gif'],
+		'BMP'  => ['image/bmp', 'image/x-ms-bmp'],
+		'WEBP' => ['image/webp'],
+		'HEIC' => ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'],
+		'TIFF' => ['image/tiff', 'image/x-tiff'],
+		'AVIF' => ['image/avif'],
+	];
+
+	/**
+	 * Extended formats that Imaginary decodes. It is built on libvips, that
+	 * does not read BMP, so that group stays disabled with this backend.
+	 */
+	const IMAGINARY_FORMATS = ['GIF', 'WEBP', 'HEIC', 'TIFF', 'AVIF'];
+
+	/**
+	 * Extended formats that GD decodes, and that Nextcloud OCP\Image actually
+	 * routes to it, mapped to the name of the imagetypes() flag that tells
+	 * whether this build supports them. AVIF is left out on purpose: GD may be
+	 * able to read it while OCP\Image does not, so it is only enabled through
+	 * Imagick.
+	 */
+	const GD_FORMATS = [
+		'GIF'  => 'IMG_GIF',
+		'BMP'  => 'IMG_BMP',
+		'WEBP' => 'IMG_WEBP',
+	];
+
+	/**
+	 * Names Imagick may report for each extended format. It lists TIFF as both
+	 * TIFF and TIF, BMP has a couple of variants, and the HEIC delegate is
+	 * sometimes reported only as HEIF, so any of the aliases enables the group.
+	 */
+	const IMAGICK_FORMATS = [
+		'GIF'  => ['GIF'],
+		'BMP'  => ['BMP', 'BMP2', 'BMP3'],
+		'WEBP' => ['WEBP'],
+		'HEIC' => ['HEIC', 'HEIF'],
+		'TIFF' => ['TIFF', 'TIF'],
+		'AVIF' => ['AVIF'],
+	];
+
 	private $cachedAllowedMimetypes = false;
+	private $allowedMimetypes = [];
 
 	/** System setting to use custom folder for models */
 	const SYSTEM_MODEL_PATH = 'facerecognition.model_path';
@@ -472,15 +533,83 @@ class SettingsService {
 	 * System settings that must be configured according to the server configuration.
 	 */
 	public function isAllowedMimetype(string $mimetype): bool {
-		if (!$this->cachedAllowedMimetypes) {
-			$systemMimetypes = $this->config->getSystemValue(self::SYSTEM_ENABLED_MIMETYPES, $this->allowedMimetypes);
-			$this->allowedMimetypes = array_merge($this->allowedMimetypes, $systemMimetypes);
-			$this->allowedMimetypes = array_unique($this->allowedMimetypes);
+		return in_array($mimetype, $this->getAllowedMimetypes());
+	}
 
+	/**
+	 * Mimetypes that the analysis is enabled for: the base ones that every
+	 * image backend can decode, the extended ones that the active backend can
+	 * actually decode, and any additional one forced by the administrator
+	 * through the 'enabledFaceRecognitionMimetype' system setting.
+	 *
+	 * @return string[] list of allowed mimetypes
+	 */
+	public function getAllowedMimetypes(): array {
+		if (!$this->cachedAllowedMimetypes) {
+			$mimetypes = self::BASE_MIMETYPES;
+
+			foreach ($this->getBackendSupportedFormats() as $format) {
+				$mimetypes = array_merge($mimetypes, self::EXTENDED_MIMETYPES[$format] ?? []);
+			}
+
+			// An explicit administrator configuration is always honored, even
+			// if it names a format that this app cannot decode by itself.
+			$systemMimetypes = $this->config->getSystemValue(self::SYSTEM_ENABLED_MIMETYPES, []);
+			if (is_array($systemMimetypes)) {
+				$mimetypes = array_merge($mimetypes, $systemMimetypes);
+			}
+
+			$this->allowedMimetypes = array_values(array_unique($mimetypes));
 			$this->cachedAllowedMimetypes = true;
 		}
 
-		return in_array($mimetype, $this->allowedMimetypes);
+		return $this->allowedMimetypes;
+	}
+
+	/**
+	 * Names of the extended formats that the active image backend can decode.
+	 *
+	 * With Imaginary it is whatever that service reads. Without it the images
+	 * are decoded locally: GD reads the file, through Nextcloud OCP\Image, and
+	 * whatever GD cannot read falls back to the Imagick extension, so a format
+	 * is enabled when either of the two handles it.
+	 *
+	 * @return string[] names of the supported formats
+	 */
+	protected function getBackendSupportedFormats(): array {
+		if ($this->isImaginaryEnabled()) {
+			return self::IMAGINARY_FORMATS;
+		}
+
+		$formats = [];
+
+		foreach (self::GD_FORMATS as $format => $flag) {
+			if (defined($flag) && ((imagetypes() & constant($flag)) !== 0)) {
+				$formats[] = $format;
+			}
+		}
+
+		$imagick = array_flip(array_map('strtoupper', Requirements::imagickSupportedFormats()));
+
+		foreach (self::IMAGICK_FORMATS as $format => $names) {
+			if (in_array($format, $formats, true)) {
+				continue;
+			}
+			if (count(array_intersect_key($imagick, array_flip($names))) > 0) {
+				$formats[] = $format;
+			}
+		}
+
+		return $formats;
+	}
+
+	/**
+	 * Whether the server is configured to use Imaginary to process the images.
+	 * Imaginary is the only way to decode formats like HEIC or TIFF without an
+	 * Imagick build with the proper delegates.
+	 */
+	protected function isImaginaryEnabled(): bool {
+		return $this->config->getSystemValueString(Imaginary::SYSTEM_URL, 'invalid') !== 'invalid';
 	}
 
 	/**

@@ -77,7 +77,7 @@ class Cluster extends Entity implements JsonSerializable {
 		$this->addType('user', 'string');
 		$this->addType('model', 'integer');
 		$this->addType('person', 'integer');
-		$this->addType('isVisible', 'bool');
+		$this->addType('isVisible', 'boolean');
 	}
 
 	public function jsonSerialize() {

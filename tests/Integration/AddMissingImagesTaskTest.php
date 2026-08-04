@@ -106,10 +106,16 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		$this->doMissingImageScan($this->user);
 
-		// We should find 3 images only - foo2.jpg, foo3.png and dir/foo6.png. BMP mimetype (foo5.bmp) is not enabled by default.
+		// foo2.jpg, foo3.png and dir/foo6.png are always found, and everything
+		// under dir_nomedia is always skipped. dir/foo5.bmp is found as well
+		// when the image backend decodes BMP, which GD does on any usual build,
+		// so the expected count is asked to the service instead of hardcoded.
+		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$expectedImages = $settingsService->isAllowedMimetype('image/bmp') ? 4 : 3;
+
 		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$this->assertEquals(3, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
-		$this->assertEquals(3, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
+		$this->assertEquals($expectedImages, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals($expectedImages, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 	}
 
 	/**

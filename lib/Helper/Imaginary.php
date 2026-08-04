@@ -31,6 +31,10 @@ use OC\StreamImage;
 
 class Imaginary {
 
+	/** System settings where the server configures the Imaginary service */
+	const SYSTEM_URL = 'preview_imaginary_url';
+	const SYSTEM_KEY = 'preview_imaginary_key';
+
 	/** @var IConfig */
 	private $config;
 
@@ -43,12 +47,12 @@ class Imaginary {
 	}
 
 	public function isEnabled(): bool {
-		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
+		$imaginaryUrl = $this->config->getSystemValueString(self::SYSTEM_URL, 'invalid');
 		return ($imaginaryUrl !== 'invalid');
 	}
 
 	public function getUrl(): ?string {
-		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
+		$imaginaryUrl = $this->config->getSystemValueString(self::SYSTEM_URL, 'invalid');
 		if ($imaginaryUrl === 'invalid')
 			return null;
 
@@ -56,12 +60,12 @@ class Imaginary {
 	}
 
 	public function hasKey(): bool {
-		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
+		$imaginaryKey = $this->config->getSystemValueString(self::SYSTEM_KEY, 'invalid');
 		return ($imaginaryKey !== 'invalid');
 	}
 
 	public function getKey(): ?string {
-		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
+		$imaginaryKey = $this->config->getSystemValueString(self::SYSTEM_KEY, 'invalid');
 		if ($imaginaryKey === 'invalid')
 			return null;
                
@@ -202,7 +206,12 @@ class Imaginary {
 			throw new \RuntimeException('Error generating temporary image in Imaginary: ' . json_decode($response->getBody())['message']);
 		}
 
-		return $response->getBody();
+		$body = $response->getBody();
+		if ($body === null) {
+			throw new \RuntimeException('Imaginary answered the resize with an empty body.');
+		}
+
+		return $body;
 	}
 
 }

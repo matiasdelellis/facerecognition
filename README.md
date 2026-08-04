@@ -102,6 +102,22 @@ the Nextcloud settings panel. This configuration will depend on your
 installation and has a direct impact on memory consumption. For details and
 advanced information read the documentation about [Temporary files](https://github.com/matiasdelellis/facerecognition/wiki/Settings#temporary-files).
 
+#### Supported image formats
+
+JPEG and PNG are analyzed on any setup. The rest depends on what the image
+backend of your server can decode:
+
+* Decoding the images locally, GD adds GIF, BMP and WebP, and the Imagick
+  extension adds HEIC/HEIF, TIFF and AVIF, when it was built with the proper
+  delegates (libheif, libtiff, libavif).
+* With an [Imaginary](https://github.com/h2non/imaginary) service, configured
+  with the `preview_imaginary_url` key, GIF, WebP, HEIC/HEIF, TIFF and AVIF are
+  analyzed. BMP is not, since Imaginary cannot read it.
+
+The requirements check that runs at the start of `occ face:background_job`
+writes the resulting list to the log, in debug level. To force any additional
+mimetype, add it to the `enabledFaceRecognitionMimetype` array in `config.php`.
+
 #### Test the application
 
 We recommend test the application intensively before proceeding to analyze the

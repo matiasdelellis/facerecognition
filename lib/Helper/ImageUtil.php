@@ -33,8 +33,8 @@ class ImageUtil {
 	 *
 	 * @param string $path local path of the image
 	 * @param bool $fixOrientation whether to rotate it according to the EXIF data
-	 * @param int|null $maxArea area to downscale the image to when it has to be
-	 *                          decoded with Imagick, or null to keep it whole
+	 * @param int|null $maxArea area to downscale the image to when it cannot be
+	 *                          decoded with GD, or null to keep it whole
 	 * @return Image|null the loaded image, or null when it cannot be decoded
 	 */
 	public static function loadFromPath(string $path, bool $fixOrientation = true, ?int $maxArea = null): ?Image {
@@ -47,7 +47,15 @@ class ImageUtil {
 	 *
 	 * The image is loaded with the usual GD backend (through Nextcloud
 	 * OCP\Image), and when that cannot decode the file (HEIC, TIFF or AVIF,
-	 * for example) it falls back to the Imagick extension.
+	 * for example) it falls back to the Imagick extension, and finally to the
+	 * Imaginary service, that is the only one that reads these formats when
+	 * Imagick is not built with the proper delegates.
+	 *
+	 * Imagick is tried first because it decodes locally, without having to
+	 * upload the file to a service, and because for the formats that get here
+	 * it orients the image just like Imaginary does. Imagick simply does not
+	 * apply the EXIF orientation of a HEIC or an AVIF, the same as the service.
+	 * Where the two do not agree, decodeWithImagick() steps aside.
 	 *
 	 * It fills an instance given by the caller instead of returning a new one,
 	 * so that a subclass of Image can be loaded directly, without having to
@@ -60,8 +68,8 @@ class ImageUtil {
 	 * @param Image $image instance to load the image into
 	 * @param string $path local path of the image
 	 * @param bool $fixOrientation whether to rotate it according to the EXIF data
-	 * @param int|null $maxArea area to downscale the image to when it has to be
-	 *                          decoded with Imagick, or null to keep it whole
+	 * @param int|null $maxArea area to downscale the image to when it cannot be
+	 *                          decoded with GD, or null to keep it whole
 	 * @return int[]|null width and height of the source image, or null when it
 	 *                    cannot be decoded
 	 */
@@ -74,18 +82,84 @@ class ImageUtil {
 			return [$image->width(), $image->height()];
 		}
 
-		$decoded = self::decodeWithImagick($path, $fixOrientation, $maxArea);
+		$imaginary = new Imaginary();
+		$hasImaginary = $imaginary->isEnabled();
+
+		$decoded = self::decodeWithImagick($path, $fixOrientation, $maxArea, $hasImaginary);
+		if (($decoded === null) && $hasImaginary) {
+			$decoded = self::decodeWithImaginary($imaginary, $path, $fixOrientation, $maxArea);
+		}
 		if ($decoded === null) {
 			return null;
 		}
 
-		// Imagick already oriented the image, and the PNG blob carries no EXIF
-		// data, so there is nothing left to fix here.
+		// The image is already oriented by the backend that decoded it, and the
+		// PNG blob carries no EXIF data, so there is nothing left to fix here.
 		if (($image->loadFromData($decoded['data']) === false) || !$image->valid()) {
 			return null;
 		}
 
 		return [$decoded['width'], $decoded['height']];
+	}
+
+	/**
+	 * Decode an image with the Imaginary service into a PNG blob, that the GD
+	 * backend is then able to read.
+	 *
+	 * It is the same service, and the same orientation criteria, that the
+	 * analysis uses to obtain the temporary images, so what is loaded here is
+	 * the image on which the faces were found.
+	 *
+	 * @param Imaginary $imaginary service to decode the image with
+	 * @param string $path local path of the image
+	 * @param bool $fixOrientation whether to rotate it according to the EXIF data
+	 * @param int|null $maxArea area to downscale the image to, or null to keep
+	 *                          it whole
+	 * @return array{data: string, width: int, height: int}|null the PNG data and
+	 *         the size it had before the downscale, or null when the service
+	 *         cannot decode the image
+	 */
+	private static function decodeWithImaginary(Imaginary $imaginary, string $path, bool $fixOrientation, ?int $maxArea): ?array {
+		try {
+			$info = $imaginary->getInfo($path);
+
+			// The size is the one the service reports, that is already rotated
+			// when it is going to rotate the image itself.
+			$width = (int) $info['width'];
+			$height = (int) $info['height'];
+			if (($width <= 0) || ($height <= 0)) {
+				return null;
+			}
+
+			// The resize is done by the service, so the image never travels at
+			// full resolution, and only the downscaled one is held in memory.
+			$newWidth = $width;
+			$newHeight = $height;
+			$area = $width * $height;
+			if (($maxArea !== null) && ($maxArea > 0) && ($area > $maxArea)) {
+				$scale = sqrt($maxArea / $area);
+				$newWidth = (int) max(1, round($width * $scale));
+				$newHeight = (int) max(1, round($height * $scale));
+			}
+
+			$data = $imaginary->getResized($path, $newWidth, $newHeight,
+			                               $fixOrientation && $info['autorotate'],
+			                               'image/png');
+			if (is_resource($data)) {
+				$data = stream_get_contents($data);
+			}
+			if (!is_string($data) || ($data === '')) {
+				return null;
+			}
+
+			return [
+				'data'   => $data,
+				'width'  => $width,
+				'height' => $height,
+			];
+		} catch (\Exception $e) {
+			return null;
+		}
 	}
 
 	/**
@@ -96,11 +170,13 @@ class ImageUtil {
 	 * @param bool $fixOrientation whether to rotate it according to the EXIF data
 	 * @param int|null $maxArea area to downscale the image to, or null to keep
 	 *                          it whole
+	 * @param bool $hasImaginary whether the Imaginary service is configured, and
+	 *                           can therefore take the images this one leaves
 	 * @return array{data: string, width: int, height: int}|null the PNG data and
 	 *         the size it had before the downscale, or null when it cannot be
-	 *         decoded
+	 *         decoded, or when Imaginary has to decode it instead
 	 */
-	private static function decodeWithImagick(string $path, bool $fixOrientation, ?int $maxArea): ?array {
+	private static function decodeWithImagick(string $path, bool $fixOrientation, ?int $maxArea, bool $hasImaginary = false): ?array {
 		if (!extension_loaded('imagick')) {
 			return null;
 		}
@@ -113,6 +189,17 @@ class ImageUtil {
 			// Sequences, like a HEIC burst or an animated GIF, are decoded
 			// whole, but only the first frame is of any use to us.
 			$imagick->setFirstIterator();
+
+			// The images were analyzed by Imaginary, that only applies the EXIF
+			// orientation when it is greater than 4 (see Imaginary::getInfo).
+			// Imagick applies all of them, so the ones in between would end up
+			// oriented differently than when the faces were found on them, and
+			// are left to the service. Imagick reports no orientation at all
+			// for HEIC or AVIF, so those never take this exit.
+			$orientation = $imagick->getImageOrientation();
+			if ($hasImaginary && $fixOrientation && ($orientation > 1) && ($orientation <= 4)) {
+				return null;
+			}
 
 			if ($fixOrientation) {
 				$imagick->autoOrient();

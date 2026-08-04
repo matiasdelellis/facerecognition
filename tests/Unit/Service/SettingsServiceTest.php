@@ -106,30 +106,43 @@ class SettingsServiceTest extends TestCase {
 		foreach (SettingsService::EXTENDED_MIMETYPES['HEIC'] as $mimetype) {
 			$this->assertTrue($service->isAllowedMimetype($mimetype), $mimetype . ' should be allowed');
 		}
-		foreach (['image/webp', 'image/tiff', 'image/avif', 'image/gif', 'image/bmp'] as $mimetype) {
+		foreach (['image/tiff', 'image/avif'] as $mimetype) {
 			$this->assertFalse($service->isAllowedMimetype($mimetype), $mimetype . ' should not be allowed');
 		}
 	}
 
-	/**
-	 * Imaginary is built on libvips, that does not read BMP. Enabling it would
-	 * only index files that fail later, when they are decoded.
-	 */
-	public function testImaginaryEnablesEveryExtendedFormatButBmp() {
+	public function testImaginaryEnablesEveryExtendedFormat() {
 		$config = $this->makeConfig([], 'http://localhost:9000');
 		$service = new SettingsService($config, null);
 
-		foreach (SettingsService::EXTENDED_MIMETYPES['BMP'] as $mimetype) {
-			$this->assertFalse($service->isAllowedMimetype($mimetype), $mimetype . ' should not be allowed with Imaginary');
-		}
-		foreach (['image/gif', 'image/webp', 'image/heic', 'image/tiff', 'image/avif'] as $mimetype) {
+		foreach ($this->allExtendedMimetypes() as $mimetype) {
 			$this->assertTrue($service->isAllowedMimetype($mimetype), $mimetype . ' should be allowed with Imaginary');
 		}
 	}
 
-	public function testAdministratorConfigIsAlwaysHonored() {
-		$service = $this->makeSettingsService($this->makeConfig(['image/jxl']));
+	/**
+	 * GIF, BMP and WEBP are the formats of memes and screenshots, so they are
+	 * never enabled by the backend detection, no matter what it can decode.
+	 */
+	public function testNonPhotographicFormatsAreNeverEnabledByTheBackend() {
+		$mimetypes = ['image/gif', 'image/bmp', 'image/x-ms-bmp', 'image/webp'];
 
+		$formats = array_keys(SettingsService::EXTENDED_MIMETYPES);
+		$service = $this->makeSettingsService($this->makeConfig(), $formats);
+		foreach ($mimetypes as $mimetype) {
+			$this->assertFalse($service->isAllowedMimetype($mimetype), $mimetype . ' should not be allowed by backend detection');
+		}
+
+		$imaginary = new SettingsService($this->makeConfig([], 'http://localhost:9000'), null);
+		foreach ($mimetypes as $mimetype) {
+			$this->assertFalse($imaginary->isAllowedMimetype($mimetype), $mimetype . ' should not be allowed with Imaginary');
+		}
+	}
+
+	public function testAdministratorConfigIsAlwaysHonored() {
+		$service = $this->makeSettingsService($this->makeConfig(['image/gif', 'image/jxl']));
+
+		$this->assertTrue($service->isAllowedMimetype('image/gif'));
 		$this->assertTrue($service->isAllowedMimetype('image/jxl'));
 		$this->assertTrue($service->isAllowedMimetype('image/jpeg'));
 	}

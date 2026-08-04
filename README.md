@@ -104,19 +104,23 @@ advanced information read the documentation about [Temporary files](https://gith
 
 #### Supported image formats
 
-JPEG and PNG are analyzed on any setup. The rest depends on what the image
-backend of your server can decode:
+JPEG and PNG are analyzed on any setup. On top of those, HEIC/HEIF, TIFF and
+AVIF are analyzed when the image backend of your server can decode them:
 
-* Decoding the images locally, GD adds GIF, BMP and WebP, and the Imagick
-  extension adds HEIC/HEIF, TIFF and AVIF, when it was built with the proper
-  delegates (libheif, libtiff, libavif).
+* Decoding the images locally, the three depend on the Imagick extension, when
+  it was built with the proper delegates (libheif, libtiff, libavif).
 * With an [Imaginary](https://github.com/h2non/imaginary) service, configured
-  with the `preview_imaginary_url` key, GIF, WebP, HEIC/HEIF, TIFF and AVIF are
-  analyzed. BMP is not, since Imaginary cannot read it.
+  with the `preview_imaginary_url` key, the three are analyzed.
+
+GIF, BMP and WebP are deliberately left out, even though the local backends read
+them: they are the formats of memes, stickers and screenshots, so analyzing them
+mostly fills the results with the faces of drawings and video captures, that you
+then have to reject by hand.
 
 The requirements check that runs at the start of `occ face:background_job`
 writes the resulting list to the log, in debug level. To force any additional
-mimetype, add it to the `enabledFaceRecognitionMimetype` array in `config.php`.
+mimetype, GIF and WebP among them, add it to the
+`enabledFaceRecognitionMimetype` array in `config.php`.
 
 #### Test the application
 

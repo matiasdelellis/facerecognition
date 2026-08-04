@@ -25,7 +25,7 @@ class Requirements
 
 	/**
 	 * Formats that the Imagick extension can decode, as an array of format
-	 * names (for example "HEIC" or "WEBP"). Empty when Imagick is not loaded.
+	 * names (for example "HEIC" or "TIFF"). Empty when Imagick is not loaded.
 	 *
 	 * @return string[]
 	 */

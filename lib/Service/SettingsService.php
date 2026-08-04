@@ -200,11 +200,16 @@ class SettingsService {
 	 * name of the format the backend has to support. A group is only enabled
 	 * when the active backend reports it, so a file is never indexed just to
 	 * fail later, when it is decoded.
+	 *
+	 * Only the formats that a camera or a phone writes are listed. GIF, BMP and
+	 * WEBP are left out on purpose, even though the local backends read them:
+	 * they are the formats of memes, stickers and screenshots, that would fill
+	 * the analysis with drawings and video captures, and every face found on
+	 * one of those is a cluster the user has to reject by hand. An
+	 * administrator that does keep photographs in them can still enable each
+	 * mimetype through the 'enabledFaceRecognitionMimetype' system setting.
 	 */
 	const EXTENDED_MIMETYPES = [
-		'GIF'  => ['image/gif'],
-		'BMP'  => ['image/bmp', 'image/x-ms-bmp'],
-		'WEBP' => ['image/webp'],
 		'HEIC' => ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'],
 		'TIFF' => ['image/tiff', 'image/x-tiff'],
 		'AVIF' => ['image/avif'],
@@ -212,32 +217,16 @@ class SettingsService {
 
 	/**
 	 * Extended formats that Imaginary decodes. It is built on libvips, that
-	 * does not read BMP, so that group stays disabled with this backend.
+	 * reads every one of them.
 	 */
-	const IMAGINARY_FORMATS = ['GIF', 'WEBP', 'HEIC', 'TIFF', 'AVIF'];
-
-	/**
-	 * Extended formats that GD decodes, and that Nextcloud OCP\Image actually
-	 * routes to it, mapped to the name of the imagetypes() flag that tells
-	 * whether this build supports them. AVIF is left out on purpose: GD may be
-	 * able to read it while OCP\Image does not, so it is only enabled through
-	 * Imagick.
-	 */
-	const GD_FORMATS = [
-		'GIF'  => 'IMG_GIF',
-		'BMP'  => 'IMG_BMP',
-		'WEBP' => 'IMG_WEBP',
-	];
+	const IMAGINARY_FORMATS = ['HEIC', 'TIFF', 'AVIF'];
 
 	/**
 	 * Names Imagick may report for each extended format. It lists TIFF as both
-	 * TIFF and TIF, BMP has a couple of variants, and the HEIC delegate is
-	 * sometimes reported only as HEIF, so any of the aliases enables the group.
+	 * TIFF and TIF, and the HEIC delegate is sometimes reported only as HEIF,
+	 * so any of the aliases enables the group.
 	 */
 	const IMAGICK_FORMATS = [
-		'GIF'  => ['GIF'],
-		'BMP'  => ['BMP', 'BMP2', 'BMP3'],
-		'WEBP' => ['WEBP'],
 		'HEIC' => ['HEIC', 'HEIF'],
 		'TIFF' => ['TIFF', 'TIF'],
 		'AVIF' => ['AVIF'],
@@ -570,9 +559,10 @@ class SettingsService {
 	 * Names of the extended formats that the active image backend can decode.
 	 *
 	 * With Imaginary it is whatever that service reads. Without it the images
-	 * are decoded locally: GD reads the file, through Nextcloud OCP\Image, and
-	 * whatever GD cannot read falls back to the Imagick extension, so a format
-	 * is enabled when either of the two handles it.
+	 * are decoded locally, and none of these formats ever reaches GD: Nextcloud
+	 * OCP\Image does not route any of them to it, not even AVIF, that GD may be
+	 * able to read on its own. So locally they all depend on the Imagick
+	 * extension being built with the proper delegates.
 	 *
 	 * @return string[] names of the supported formats
 	 */
@@ -582,19 +572,9 @@ class SettingsService {
 		}
 
 		$formats = [];
-
-		foreach (self::GD_FORMATS as $format => $flag) {
-			if (defined($flag) && ((imagetypes() & constant($flag)) !== 0)) {
-				$formats[] = $format;
-			}
-		}
-
 		$imagick = array_flip(array_map('strtoupper', Requirements::imagickSupportedFormats()));
 
 		foreach (self::IMAGICK_FORMATS as $format => $names) {
-			if (in_array($format, $formats, true)) {
-				continue;
-			}
 			if (count(array_intersect_key($imagick, array_flip($names))) > 0) {
 				$formats[] = $format;
 			}

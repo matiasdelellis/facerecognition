@@ -113,8 +113,13 @@ class FileService {
 	 * @return Node | null
 	 */
 	public function getFileByPath($fullpath, $userId = null): ?Node {
-		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
-		return $file;
+		try {
+			return $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+		} catch (NotFoundException $e) {
+			// The path can perfectly point to a file that was already deleted
+			// or renamed, so it is just missing, and not an error.
+			return null;
+		}
 	}
 
 	/**

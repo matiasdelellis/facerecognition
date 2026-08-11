@@ -2,6 +2,7 @@
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
 
@@ -88,6 +89,9 @@ class FileController extends Controller {
 		}
 
 		$file = $this->fileService->getFileByPath($fullpath);
+		if (is_null($file)) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		$fileId = $file->getId();
 		$modelId = $this->settingsService->getCurrentFaceModel();
@@ -150,6 +154,9 @@ class FileController extends Controller {
 		}
 
 		$folder = $this->fileService->getFileByPath($fullpath);
+		if (is_null($folder)) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		$resp['enabled'] = 'true';
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($folder);
@@ -170,6 +177,10 @@ class FileController extends Controller {
 	 */
 	public function setFolderOptions(string $fullpath, bool $detection) {
 		$folder = $this->fileService->getFileByPath($fullpath);
+		if (is_null($folder)) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+
 		$this->fileService->setDescendantDetection($folder, $detection);
 
 		return $this->getFolderOptions($fullpath);

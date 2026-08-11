@@ -319,6 +319,41 @@ class FileService {
 	}
 
 	/**
+	 * Return all images under a path of the user folder, that can be a folder,
+	 * and is then crawled recursively, or a single image.
+	 *
+	 * The settings that disable the analysis of a folder are honored just the
+	 * same when the path is named explicitly, so that asking for a path never
+	 * analyzes what the rest of the application deliberately leaves out.
+	 *
+	 * @param string $path path of the folder or the image, relative to the
+	 *                     files folder of the user
+	 * @param string|null $userId user the path belongs to
+	 * @return File[]|null the images found, or null when the path does not exist
+	 */
+	public function getPicturesFromPath(string $path, $userId = null): ?array {
+		$node = $this->getFileByPath($path, $userId);
+		if (is_null($node)) {
+			return null;
+		}
+
+		if (!$this->isAllowedNode($node) || $this->isUnderNoDetection($node)) {
+			return array();
+		}
+
+		if ($node instanceof Folder) {
+			return $this->getDescendantDetection($node) ? $this->getPicturesFromFolder($node) : array();
+		}
+
+		if (($node instanceof File) &&
+		    $this->settingsService->isAllowedMimetype($node->getMimeType())) {
+			return array($node);
+		}
+
+		return array();
+	}
+
+	/**
 	 * Create a temporary file and return the path
 	 *
 	 * @throws \RuntimeException when the temporary file cannot be created

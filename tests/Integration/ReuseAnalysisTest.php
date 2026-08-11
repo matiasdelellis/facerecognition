@@ -38,6 +38,7 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
 use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 use OCA\FaceRecognition\Model\ModelManager;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 /**
@@ -233,7 +234,8 @@ class ReuseAnalysisTest extends IntegrationTestCase {
 	private function refineOwner(): Image {
 		$imageMapper = $this->container->query(ImageMapper::class);
 		$settingsService = $this->container->query(SettingsService::class);
-		$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper);
+		$fileService = $this->container->query(FileService::class);
+		$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper, $fileService);
 
 		$this->context->user = $this->user;
 		$this->context->propertyBag['run_mode'] = 'default-mode';

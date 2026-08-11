@@ -84,11 +84,23 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 
 		// Check if we are called for one user only, or for all user in instance.
 		$insertedImages = 0;
+		$path = $this->context->getPath();
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
 			if (!$this->settingsService->getUserEnabled($user)) {
 				// Completely skip this task for this user, seems that disable analysis
 				$this->logInfo('Skipping image scan for user ' . $user . ' that has disabled the analysis');
+				continue;
+			}
+
+			if (!is_null($path)) {
+				// A run restricted to a path crawls that path even when the
+				// full scan of the user was already done, since that is the
+				// whole point of naming it. It does not mark the full scan as
+				// done either, because the rest of the images of the user were
+				// not even looked at.
+				$insertedImages += $this->addMissingImagesFromPath($user, $this->settingsService->getCurrentFaceModel(), $path);
+				yield;
 				continue;
 			}
 
@@ -124,6 +136,27 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	}
 
 	/**
+	 * Crawl a single path of a user, that can be a folder or an image
+	 *
+	 * @param string $userId ID of the user the path belongs to
+	 * @param int $model Used model
+	 * @param string $path Path to crawl, relative to the files folder of the user
+	 * @return int Number of missing images found
+	 */
+	private function addMissingImagesFromPath(string $userId, int $model, string $path): int {
+		$this->logInfo(sprintf('Finding missing images for user %s in %s', $userId, $path));
+		$this->fileService->setupFS($userId);
+
+		$nodes = $this->fileService->getPicturesFromPath($path, $userId);
+		if (is_null($nodes)) {
+			$this->logInfo(sprintf('The path %s does not exist for the user %s', $path, $userId));
+			return 0;
+		}
+
+		return $this->addMissingImages($userId, $model, $nodes);
+	}
+
+	/**
 	 * Recursively crawls given folder for a given user
 	 *
 	 * @param int $model Used model
@@ -131,8 +164,19 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @return int Number of missing images found
 	 */
 	private function parseUserFolder(string $userId, int $model, Folder $folder): int {
+		return $this->addMissingImages($userId, $model, $this->fileService->getPicturesFromFolder($folder));
+	}
+
+	/**
+	 * Inserts in the database the images that are not there yet
+	 *
+	 * @param string $userId ID of the user the images belong to
+	 * @param int $model Used model
+	 * @param File[] $nodes Images found in the filesystem
+	 * @return int Number of missing images found
+	 */
+	private function addMissingImages(string $userId, int $model, array $nodes): int {
 		$insertedImages = 0;
-		$nodes = $this->fileService->getPicturesFromFolder($folder);
 		foreach ($nodes as $file) {
 			$this->logDebug('Found ' . $file->getPath());
 

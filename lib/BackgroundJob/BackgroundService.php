@@ -97,6 +97,8 @@ class BackgroundService {
 	 * @param IUser|null $user ID of user to execute background operations for
 	 * @param int|null $maxImageArea Max image area (in pixels^2) to be fed to neural network when doing face detection
 	 * @param string $runMode The command execution mode
+	 * @param string|null $path Path of the user, relative to their files
+	 * folder, that the run is restricted to. Null to analyze everything.
 	 * @param WorkerConfig|null $workerConfig Which share of the images this
 	 * process has to analyze, when it runs in parallel as a worker. Null when
 	 * it is a regular, single-threaded run.
@@ -108,7 +110,7 @@ class BackgroundService {
 	 *
 	 * @return void
 	 */
-	public function execute(int $timeout, bool $verbose, string $runMode, ?IUser $user = null, ?int $maxImageArea = null, ?WorkerConfig $workerConfig = null, string $stage = self::STAGE_ALL) {
+	public function execute(int $timeout, bool $verbose, string $runMode, ?IUser $user = null, ?int $maxImageArea = null, ?string $path = null, ?WorkerConfig $workerConfig = null, string $stage = self::STAGE_ALL) {
 		// Put to context all the stuff we are figuring only now
 		//
 		$this->context->user = $user;
@@ -116,6 +118,7 @@ class BackgroundService {
 		$this->context->setRunningThroughCommand();
 		$this->context->propertyBag['max_image_area'] = $maxImageArea;
 		$this->context->propertyBag['run_mode'] = $runMode;
+		$this->context->propertyBag['path'] = $path;
 		if (!is_null($workerConfig)) {
 			$this->context->propertyBag['worker_index'] = $workerConfig->getWorkerIndex();
 			$this->context->propertyBag['worker_count'] = $workerConfig->getWorkerCount();

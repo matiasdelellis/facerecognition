@@ -40,6 +40,8 @@ use OCA\FaceRecognition\Helper\CommandLock;
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
 use OCA\FaceRecognition\BackgroundJob\WorkerConfig;
 
+use OCA\FaceRecognition\Service\FileService;
+
 class BackgroundCommand extends Command {
 
 	private const ENV_WORKER_CONF = 'FACERECOGNITION_WORKER_CONF';
@@ -50,16 +52,22 @@ class BackgroundCommand extends Command {
 	/** @var IUserManager */
 	protected $userManager;
 
+	/** @var FileService */
+	protected $fileService;
+
 	/**
 	 * @param BackgroundService $backgroundService
 	 * @param IUserManager $userManager
+	 * @param FileService $fileService
 	 */
 	public function __construct(BackgroundService $backgroundService,
-	                            IUserManager      $userManager) {
+	                            IUserManager      $userManager,
+	                            FileService       $fileService) {
 		parent::__construct();
 
 		$this->backgroundService = $backgroundService;
 		$this->userManager = $userManager;
+		$this->fileService = $fileService;
 	}
 
 	/**
@@ -74,6 +82,14 @@ class BackgroundCommand extends Command {
 				'u',
 				InputOption::VALUE_REQUIRED,
 				'Analyze faces for the given user only. If not given, analyzes images for all users.',
+				null
+			)
+			->addOption(
+				'path',
+				'p',
+				InputOption::VALUE_REQUIRED,
+				'Analyze only the images under this path of the user, that can be a folder or a single image, ' .
+				'relative to their files folder, as "Photos/Vacations". Requires --user_id.',
 				null
 			)
 			->addOption(
@@ -125,6 +141,7 @@ class BackgroundCommand extends Command {
 		$this->backgroundService->setLogger($output);
 
 		$user = $this->getUser($input);
+		$path = $this->getPath($input, $user);
 		$timeout = $this->getTimeout($input);
 		$maxImageArea = $this->getMaxImageArea($input);
 		$mode = $this->getMode($input);
@@ -148,7 +165,7 @@ class BackgroundCommand extends Command {
 		//
 		$workerCount = $this->getWorkerCount($input);
 		if (is_null($workerConfig) && !is_null($workerCount)) {
-			return $this->runAsCoordinator($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerCount);
+			return $this->runAsCoordinator($output, $timeout, $verbose, $mode, $user, $maxImageArea, $path, $workerCount);
 		}
 
 		// Either a plain run or a worker. Both analyze the images; the worker
@@ -156,7 +173,7 @@ class BackgroundCommand extends Command {
 		// plain run (which is also the coordinator, when there are no workers)
 		// additionally runs the file synchronization and the clustering.
 		//
-		return $this->runAnalysis($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
+		return $this->runAnalysis($output, $timeout, $verbose, $mode, $user, $maxImageArea, $path, $workerConfig);
 	}
 
 	/**
@@ -180,6 +197,46 @@ class BackgroundCommand extends Command {
 		}
 
 		return $user;
+	}
+
+	/**
+	 * Extract the path that the analysis is restricted to, if any.
+	 *
+	 * @param InputInterface $input
+	 * @param IUser|null $user The user to analyze.
+	 *
+	 * @return string|null The path relative to the files folder of the user, or
+	 * null to analyze everything.
+	 *
+	 * @throws \InvalidArgumentException If there is no user to relate the path
+	 * to, or the path does not exist for that user.
+	 */
+	private function getPath(InputInterface $input, ?IUser $user): ?string {
+		$path = $input->getOption('path');
+		if (is_null($path)) {
+			return null;
+		}
+
+		// A path only means something inside the files folder of a user, so
+		// there is nothing to resolve it against without one.
+		if (is_null($user)) {
+			throw new \InvalidArgumentException("The --path option requires an --user_id, since a path is relative to the files folder of a user.");
+		}
+
+		$path = trim(trim($path), '/');
+		if ($path === '') {
+			throw new \InvalidArgumentException("The --path option requires a path relative to the files folder of the user. Omit it to analyze everything.");
+		}
+
+		// Fail here, and not after taking the lock and running the checks, so a
+		// mistyped path does not look like a run that simply found nothing.
+		$userId = $user->getUID();
+		$this->fileService->setupFS($userId);
+		if (is_null($this->fileService->getFileByPath($path, $userId))) {
+			throw new \InvalidArgumentException("The path <$path> does not exist for the user <$userId>.");
+		}
+
+		return $path;
 	}
 
 	/**
@@ -280,11 +337,12 @@ class BackgroundCommand extends Command {
 	 * @param string $mode
 	 * @param IUser|null $user
 	 * @param int|null $maxImageArea
+	 * @param string|null $path
 	 * @param int $workerCount
 	 *
 	 * @return int 0 on success, 1 otherwise.
 	 */
-	private function runAsCoordinator(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, int $workerCount): int {
+	private function runAsCoordinator(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, ?string $path, int $workerCount): int {
 		if ($mode === 'sync-mode') {
 			$output->writeln('<error>--workers is only supported when the command analyzes the images, so it cannot be used with --sync-mode.</error>');
 			return 1;
@@ -302,17 +360,17 @@ class BackgroundCommand extends Command {
 			return 1;
 		}
 
-		return $this->withGlobalLock($output, function () use ($output, $timeout, $verbose, $mode, $user, $maxImageArea, $workerCount) {
+		return $this->withGlobalLock($output, function () use ($output, $timeout, $verbose, $mode, $user, $maxImageArea, $path, $workerCount) {
 			// The coordinator runs the file synchronization before spawning the
 			// workers (so they analyze the images that were just added), and
 			// the clustering once they are done. It holds the global lock
 			// during the whole run, so only one such command runs at a time.
 			//
-			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_BEFORE_ANALYSIS);
+			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $path, null, BackgroundService::STAGE_BEFORE_ANALYSIS);
 
 			$exitCode = $this->coordinate($output, $workerCount, $mode);
 			if ($exitCode === 0) {
-				$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, null, BackgroundService::STAGE_AFTER_ANALYSIS);
+				$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $path, null, BackgroundService::STAGE_AFTER_ANALYSIS);
 			}
 
 			return $exitCode;
@@ -328,17 +386,18 @@ class BackgroundCommand extends Command {
 	 * @param string $mode
 	 * @param IUser|null $user
 	 * @param int|null $maxImageArea
+	 * @param string|null $path
 	 * @param WorkerConfig|null $workerConfig
 	 *
 	 * @return int 0 on success, 1 otherwise.
 	 */
-	private function runAnalysis(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, ?WorkerConfig $workerConfig): int {
+	private function runAnalysis(OutputInterface $output, int $timeout, bool $verbose, string $mode, ?IUser $user, ?int $maxImageArea, ?string $path, ?WorkerConfig $workerConfig): int {
 		// Acquire the lock so that only one background task can run at a time.
 		// A worker never acquires it: the coordinator that spawned it is
 		// already holding it.
 		//
-		$run = function () use ($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig) {
-			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $workerConfig);
+		$run = function () use ($timeout, $verbose, $mode, $user, $maxImageArea, $path, $workerConfig) {
+			$this->backgroundService->execute($timeout, $verbose, $mode, $user, $maxImageArea, $path, $workerConfig);
 			return 0;
 		};
 

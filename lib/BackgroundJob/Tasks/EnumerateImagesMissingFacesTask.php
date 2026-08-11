@@ -25,6 +25,7 @@ namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
@@ -42,16 +43,22 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
+	/** @var FileService */
+	private $fileService;
+
 	/**
 	 * @param SettingsService $settingsService Settings service
 	 * @param ImageMapper $imageMapper Image mapper
+	 * @param FileService $fileService File service
 	 */
 	public function __construct(SettingsService $settingsService,
-	                            ImageMapper     $imageMapper)
+	                            ImageMapper     $imageMapper,
+	                            FileService     $fileService)
 	{
 		parent::__construct();
 		$this->settingsService = $settingsService;
 		$this->imageMapper     = $imageMapper;
+		$this->fileService     = $fileService;
 	}
 
 	/**
@@ -79,6 +86,10 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 		}
 		yield;
 
+		// When the run is restricted to a path, only take the images that are
+		// under it.
+		$images = $this->filterForPath($images);
+
 		// When running in parallel as a worker, only take the share of the
 		// images that this worker owns, so that each image is analyzed by
 		// exactly one worker. Each worker shuffles its own share.
@@ -88,6 +99,45 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 		$this->context->propertyBag['images'] = $images;
 
 		return true;
+	}
+
+	/**
+	 * When the run is restricted to a path, keeps only the images that are
+	 * under it. Without a path all the images are kept.
+	 *
+	 * The path is resolved here, and not taken from the task that crawls the
+	 * filesystem, because a worker of a parallel run only executes the
+	 * analysis, and has to know its own share of the images anyway.
+	 *
+	 * @param Image[] $images Images to filter
+	 *
+	 * @return Image[] The images that are under the path of the run
+	 */
+	private function filterForPath(array $images): array {
+		$path = $this->context->getPath();
+		if (is_null($path) || is_null($this->context->user)) {
+			return $images;
+		}
+
+		$userId = $this->context->user->getUID();
+		$this->fileService->setupFS($userId);
+
+		$pictures = $this->fileService->getPicturesFromPath($path, $userId);
+		if (is_null($pictures)) {
+			$this->logInfo(sprintf('The path %s does not exist for the user %s', $path, $userId));
+			return array();
+		}
+
+		// The images are matched by file id, which is what relates a row of
+		// the table to a file of the user.
+		$fileIds = array();
+		foreach ($pictures as $picture) {
+			$fileIds[$picture->getId()] = true;
+		}
+
+		return array_values(array_filter($images, function (Image $image) use ($fileIds): bool {
+			return isset($fileIds[$image->getFile()]);
+		}));
 	}
 
 	/**

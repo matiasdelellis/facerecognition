@@ -74,6 +74,14 @@ class FaceRecognitionContext {
 		return $eligable_users;
 	}
 
+	/**
+	 * Path that the run is restricted to, relative to the files folder of the
+	 * user, or null when the whole library of the eligible users is analyzed.
+	 */
+	public function getPath(): ?string {
+		return $this->propertyBag['path'] ?? null;
+	}
+
 	public function isRunningInSyncMode(): bool {
 		if ((array_key_exists('run_mode', $this->propertyBag)) &&
 		    (!is_null($this->propertyBag['run_mode']))) {

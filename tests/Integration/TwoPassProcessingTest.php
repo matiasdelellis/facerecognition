@@ -258,7 +258,7 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 
 		if (!$fastPass) {
 			// The refinement takes the images that the fast pass left behind.
-			$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper);
+			$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper, $fileService);
 			$generator = $enumerateTask->execute($this->context);
 			foreach ($generator as $_) {
 			}

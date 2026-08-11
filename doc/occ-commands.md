@@ -124,8 +124,9 @@ occ face:setup --external_model_url http://localhost:5000 \
 **Description:** Equivalent of cron job to analyze images, extract faces and create clusters from found faces.
 
 ```
-occ face:background_job [-u|--user_id USER_ID] [-t|--timeout TIMEOUT]
-    [-M|--max_image_area MAX_IMAGE_AREA] [-w|--workers WORKERS]
+occ face:background_job [-u|--user_id USER_ID] [-p|--path PATH]
+    [-t|--timeout TIMEOUT] [-M|--max_image_area MAX_IMAGE_AREA]
+    [-w|--workers WORKERS]
     [--sync-mode] [--fast-mode] [--defer-clustering]
 ```
 
@@ -145,6 +146,7 @@ timeout.
 | Option | Description |
 | --- | --- |
 | `-u, --user_id USER_ID` | Analyze faces for the given user only. If not given, analyzes images for all users. |
+| `-p, --path PATH` | Analyze only the images under this path of the user, that can be a folder or a single image, relative to their files folder. Requires `--user_id`. |
 | `-t, --timeout TIMEOUT` | Sets timeout in seconds for this command. Default is without timeout, e.g. command runs indefinitely. |
 | `-M, --max_image_area MAX_IMAGE_AREA` | Caps maximum area (in pixels^2) of the image to be fed to the neural network, effectively lowering needed memory. |
 | `-w, --workers WORKERS` | Spawn this number of parallel workers to analyze the images, each one taking its share. Only meaningful in the modes that analyze the images (`--fast-mode`, `--defer-clustering` and the default mode); it fails with `--sync-mode`. Requires the `pcntl` extension. |
@@ -177,6 +179,42 @@ runs in its default mode, which performs all the steps.
 * **`--defer-clustering`**: changes the order of execution of the process,
   deferring the face clustering at the end of the analysis to get persons in a
   simple execution of the command.
+
+### Restricting the run to a path (`--path`)
+
+`--path` analyzes only the images under a path of a user, instead of their whole
+library. The path is relative to the files folder of the user, so it requires
+`--user_id`, and it can be a folder, which is crawled recursively, or a single
+image:
+
+```bash
+# Analyze only the images of a folder
+occ face:background_job -u alice --path Photos/Vacations
+
+# Analyze a single image
+occ face:background_job -u alice --path Photos/Vacations/beach.jpg
+```
+
+What it does and what it does not:
+
+* It restricts **which images are analyzed**: the images under the path that are
+  not in the database yet are added, and only those are then analyzed. The rest
+  of the run behaves as usual, so the clustering still groups every face of the
+  user, and not only the faces that this run found.
+* It does **not** re-analyze an image that was already processed. `--path` says
+  where to look, not what to do again. To analyze something again, reset it
+  first with [face:reset](#face-reset).
+* It honors the settings that disable the analysis of a folder (`.nomedia`,
+  `.noimage` and `.facerecognition.json`), so naming a path explicitly never
+  analyzes what the rest of the application deliberately leaves out. A path with
+  the analysis disabled simply finds no images.
+* The full scan of the user is **not** marked as done, since the rest of their
+  images were not even looked at, so a later run without `--path` still crawls
+  the whole library.
+* The command fails with `The path <PATH> does not exist for the user <USER_ID>.`
+  when the path is not there, instead of running and finding nothing.
+* It can be combined with `--workers`: the images under the path are still
+  partitioned between the workers.
 
 ### Parallel workers (`--workers`)
 

@@ -607,10 +607,24 @@ class SettingsService {
 	}
 
 	/**
+	 * Set the url of the service that runs the external model.
+	 */
+	public function setExternalModelUrl(string $modelUrl): void {
+		$this->config->setSystemValue(self::SYSTEM_EXTERNAL_MODEL_URL, $modelUrl);
+	}
+
+	/**
 	 * External model Api Key
 	 */
 	public function getExternalModelApiKey(): ?string {
 		return $this->config->getSystemValue(self::SYSTEM_EXTERNAL_MODEL_API_KEY, null);
+	}
+
+	/**
+	 * Set the api key of the service that runs the external model.
+	 */
+	public function setExternalModelApiKey(string $apiKey): void {
+		$this->config->setSystemValue(self::SYSTEM_EXTERNAL_MODEL_API_KEY, $apiKey);
 	}
 
 }

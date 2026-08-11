@@ -32,6 +32,7 @@ command holds the lock.
 
 ```
 occ face:setup [-M|--memory MEMORY] [-m|--model MODEL]
+    [--external_model_url URL] [--external_model_api_key API_KEY]
 ```
 
 This command is responsible for making the necessary settings to use the
@@ -44,19 +45,23 @@ application command.
 | --- | --- |
 | `-M, --memory MEMORY` | The maximum memory assigned for image processing. |
 | `-m, --model MODEL` | The identifier number of the model to install. |
+| `--external_model_url URL` | The url of the service that runs the external model. |
+| `--external_model_api_key API_KEY` | The api key to access that service. |
 
 ### Behavior
 
 * If **no option** is supplied, the command prints the current configuration:
-  the minimum and maximum assignable memory, the memory currently assigned, and
-  a table of the available models with their id, whether they are the enabled
-  one (marked with `*`), name and description.
+  the minimum and maximum assignable memory, the memory currently assigned, the
+  configuration of the external model, and a table of the available models with
+  their id, whether they are the enabled one (marked with `*`), name and
+  description.
 * If **only** `-M/--memory` is supplied, it establishes the maximum memory used
   for image processing.
 * If **only** `-m/--model` is supplied, it installs the pre-trained model for
   facial recognition.
-* If **both** are supplied, both operations are performed, memory first and then
-  the model.
+* If **several** are supplied, all the operations are performed, in this order:
+  memory, external model settings, and then the model. So the external model can
+  be configured and installed with a single command.
 
 ### The memory value
 
@@ -83,6 +88,18 @@ the command checks:
 
 After a successful installation the model is configured as default.
 
+### The external model
+
+The external model (id 5) does not run on the server, but on a service that
+analyzes the images for it, so it needs to know where that service is and how to
+authenticate against it. Both values are stored as system settings, in
+`config.php`, and used only by that model.
+
+The url must be absolute, as `http://localhost:5000`, and the trailing slash is
+removed if it is given. The api key is not printed by the command when it shows
+the current configuration, that only reports whether it is configured or not, so
+it does not end up in a log or in a screenshot of a bug report.
+
 ### Examples
 
 ```bash
@@ -94,6 +111,10 @@ occ face:setup -M 2G
 
 # Install the model with id 1 and assign 1GB of memory
 occ face:setup -m 1 -M 1G
+
+# Configure the service of the external model and install it
+occ face:setup --external_model_url http://localhost:5000 \
+               --external_model_api_key some-super-secret-api-key -m 5
 ```
 
 ---

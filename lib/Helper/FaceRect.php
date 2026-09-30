@@ -25,6 +25,13 @@ namespace OCA\FaceRecognition\Helper;
 
 class FaceRect {
 
+	/**
+	 * Overlap (IoU) from which two boxes on the same image are taken for the
+	 * same face. The same face found twice lands at about 0.6 to 0.9, and two
+	 * faces next to each other near zero.
+	 */
+	public const SAME_FACE_MIN_OVERLAP = 0.35;
+
 	public static function overlapPercent(array $rectA, array $rectB): float {
 		// Firts face rect
 		$leftA = $rectA['left'];
@@ -78,16 +85,20 @@ class FaceRect {
 	 * A non-groupable old face is a face the user detached: it lives in a
 	 * cluster of its own and must not be grouped again. The new face keeps that
 	 * cluster and stays non-groupable, so the clustering does not put it back
-	 * into the cluster it was taken out of. An old face without a cluster has
-	 * nothing to inherit.
+	 * into the cluster it was taken out of.
+	 *
+	 * An old face without a cluster is matched too, and reported with a null
+	 * cluster, since there is nothing to inherit from it. It still says that
+	 * the new face is one the image already has, which is what keeps a face
+	 * the user marked, and that was not clustered yet, from being found twice.
 	 *
 	 * @param array $newFaces Faces as 'left', 'right', 'top', 'bottom', in original image coordinates
 	 * @param array $oldFaces Faces as 'left', 'right', 'top', 'bottom', with 'cluster' and 'is_groupable'
 	 * @param float $minOverlap Minimum IoU below which a match is not trusted
 	 *
-	 * @return array [index of the new face => ['cluster' => id, 'is_groupable' => bool]]
+	 * @return array [index of the new face => ['cluster' => id|null, 'is_groupable' => bool, 'old' => index of the old face]]
 	 */
-	public static function matchClusters(array $newFaces, array $oldFaces, float $minOverlap = 0.35): array {
+	public static function matchClusters(array $newFaces, array $oldFaces, float $minOverlap = self::SAME_FACE_MIN_OVERLAP): array {
 		$assigned = [];
 		$used = [];
 
@@ -96,9 +107,6 @@ class FaceRect {
 			$bestOverlap = $minOverlap;
 			foreach ($oldFaces as $oldIndex => $oldFace) {
 				if (isset($used[$oldIndex])) {
-					continue;
-				}
-				if (is_null($oldFace['cluster'])) {
 					continue;
 				}
 				$overlap = self::overlapPercent($newFace, $oldFace);
@@ -112,8 +120,9 @@ class FaceRect {
 				$used[$bestOld] = true;
 				$oldFace = $oldFaces[$bestOld];
 				$assigned[$newIndex] = [
-					'cluster' => (int) $oldFace['cluster'],
+					'cluster' => is_null($oldFace['cluster']) ? null : (int) $oldFace['cluster'],
 					'is_groupable' => (bool) $oldFace['is_groupable'],
+					'old' => $bestOld,
 				];
 			}
 		}

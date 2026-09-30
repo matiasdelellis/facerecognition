@@ -82,7 +82,7 @@ class FaceRectTest extends TestCase {
 	public function testMatchKeepsCluster() {
 		$old = [0 => $this->oldFace(0, 10, 10, 80, 80, 5)];
 		$new = [0 => $this->newFace(10, 10, 80, 80)];
-		$this->assertEquals([0 => ['cluster' => 5, 'is_groupable' => true]], FaceRect::matchClusters($new, $old));
+		$this->assertEquals([0 => ['cluster' => 5, 'is_groupable' => true, 'old' => 0]], FaceRect::matchClusters($new, $old));
 	}
 
 	/**
@@ -103,16 +103,36 @@ class FaceRectTest extends TestCase {
 	public function testDetachedOldFaceKeepsClusterAndIsGroupableFalse() {
 		$old = [0 => $this->oldFace(0, 10, 10, 80, 80, 5, false)];
 		$new = [0 => $this->newFace(10, 10, 80, 80)];
-		$this->assertEquals([0 => ['cluster' => 5, 'is_groupable' => false]], FaceRect::matchClusters($new, $old));
+		$this->assertEquals([0 => ['cluster' => 5, 'is_groupable' => false, 'old' => 0]], FaceRect::matchClusters($new, $old));
 	}
 
 	/**
-	 * An old face without a cluster has nothing to inherit.
+	 * An old face without a cluster, which is what a face marked by hand is
+	 * until the clustering places it, is still matched: the new face is one
+	 * the image already has. There is nothing to inherit from it.
 	 */
-	public function testOldFaceWithoutClusterIsNotInherited() {
+	public function testOldFaceWithoutClusterIsMatchedWithNothingToInherit() {
 		$old = [0 => $this->oldFace(0, 10, 10, 80, 80, null)];
 		$new = [0 => $this->newFace(10, 10, 80, 80)];
-		$this->assertEquals([], FaceRect::matchClusters($new, $old));
+		$this->assertEquals([0 => ['cluster' => null, 'is_groupable' => true, 'old' => 0]], FaceRect::matchClusters($new, $old));
+	}
+
+	/**
+	 * An old face with a cluster still reports it, next to one without.
+	 */
+	public function testOldFaceWithClusterStillReportsItsCluster() {
+		$old = [
+			0 => $this->oldFace(0, 10, 10, 80, 80, null),
+			1 => $this->oldFace(1, 200, 200, 80, 80, 4),
+		];
+		$new = [
+			0 => $this->newFace(200, 200, 80, 80),
+			1 => $this->newFace(10, 10, 80, 80),
+		];
+		$this->assertEquals([
+			0 => ['cluster' => 4, 'is_groupable' => true, 'old' => 1],
+			1 => ['cluster' => null, 'is_groupable' => true, 'old' => 0],
+		], FaceRect::matchClusters($new, $old));
 	}
 
 	/**
@@ -126,7 +146,7 @@ class FaceRectTest extends TestCase {
 			1 => $this->newFace(10, 10, 80, 80),
 		];
 		$assigned = FaceRect::matchClusters($new, $old);
-		$this->assertEquals([0 => ['cluster' => 7, 'is_groupable' => true]], $assigned);
+		$this->assertEquals([0 => ['cluster' => 7, 'is_groupable' => true, 'old' => 0]], $assigned);
 	}
 
 	/**
@@ -144,8 +164,8 @@ class FaceRectTest extends TestCase {
 		];
 		$assigned = FaceRect::matchClusters($new, $old);
 		$this->assertEquals([
-			0 => ['cluster' => 3, 'is_groupable' => true],
-			1 => ['cluster' => 9, 'is_groupable' => true],
+			0 => ['cluster' => 3, 'is_groupable' => true, 'old' => 0],
+			1 => ['cluster' => 9, 'is_groupable' => true, 'old' => 1],
 		], $assigned);
 	}
 
@@ -165,8 +185,8 @@ class FaceRectTest extends TestCase {
 		];
 		$assigned = FaceRect::matchClusters($new, $old);
 		$this->assertEquals([
-			0 => ['cluster' => 3, 'is_groupable' => true],
-			1 => ['cluster' => 9, 'is_groupable' => false],
+			0 => ['cluster' => 3, 'is_groupable' => true, 'old' => 0],
+			1 => ['cluster' => 9, 'is_groupable' => false, 'old' => 1],
 		], $assigned);
 	}
 

@@ -37,6 +37,10 @@ use OCP\AppFramework\Db\Entity;
  * @method int getWidth()
  * @method int getHeight()
  * @method float getConfidence()
+ * @method bool getIsGroupable()
+ * @method bool getIsManual()
+ * @method string|null getManualState()
+ * @method bool|null getBoxAdjusted()
  * @method void setImage(int $image)
  * @method void setCluster(int $cluster)
  * @method void setX(int $x)
@@ -44,8 +48,31 @@ use OCP\AppFramework\Db\Entity;
  * @method void setWidth(int $width)
  * @method void setHeight(int $height)
  * @method void setConfidence(float $confidence)
+ * @method void setIsGroupable(bool $isGroupable)
+ * @method void setIsManual(bool $isManual)
+ * @method void setManualState(?string $manualState)
+ * @method void setBoxAdjusted(bool $boxAdjusted)
  */
 class Face extends Entity implements JsonSerializable {
+
+	/**
+	 * States of the search for a descriptor in the region of a face the user
+	 * marked by hand. They say how that search ended, and nothing about the
+	 * clustering: whether a face takes part in it is derived from the face
+	 * itself, every time it is asked.
+	 */
+
+	/** Marked, and the search did not run yet */
+	public const MANUAL_STATE_PENDING = 'pending';
+
+	/** The search found a face in the marked region and took its descriptor */
+	public const MANUAL_STATE_FOUND = 'found';
+
+	/** The search ran and there was no face in the marked region */
+	public const MANUAL_STATE_NO_FACE = 'no_face';
+
+	/** The analysis of the whole photo found the same face by itself later */
+	public const MANUAL_STATE_CONFIRMED = 'confirmed';
 
 	/**
 	 * Image from this face originated from.
@@ -105,6 +132,31 @@ class Face extends Entity implements JsonSerializable {
 	public $isGroupable;
 
 	/**
+	 * Whether this face was added manually by the user (vs. detected by the model).
+	 *
+	 * @var bool
+	 **/
+	public $isManual;
+
+	/**
+	 * How the search for a descriptor ended, for a face the user marked by
+	 * hand: one of the MANUAL_STATE_* values. Null for every face that is not
+	 * such a marking, which are the ones the analysis found and the ones the
+	 * user only moved to another person.
+	 *
+	 * @var string|null
+	 **/
+	public $manualState;
+
+	/**
+	 * Whether the search for a descriptor put the box of a marking somewhere
+	 * else than where the user drew it.
+	 *
+	 * @var bool|null
+	 **/
+	public $boxAdjusted;
+
+	/**
 	 * landmarks for this face.
 	 *
 	 * @var array
@@ -130,6 +182,9 @@ class Face extends Entity implements JsonSerializable {
 		$this->addType('image', 'integer');
 		$this->addType('cluster', 'integer');
 		$this->addType('isGroupable', 'boolean');
+		$this->addType('isManual', 'boolean');
+		$this->addType('manualState', 'string');
+		$this->addType('boxAdjusted', 'boolean');
 		$this->addType('descriptor', 'json');
 		$this->addType('creationTime', 'datetime');
 	}
@@ -146,6 +201,7 @@ class Face extends Entity implements JsonSerializable {
 		$face->image       = $imageId;
 		$face->cluster     = null;
 		$face->isGroupable = true;
+		$face->isManual    = false;
 		$face->x           = $faceFromModel['left'];
 		$face->y           = $faceFromModel['top'];
 		$face->width       = $faceFromModel['right'] - $faceFromModel['left'];
@@ -168,6 +224,9 @@ class Face extends Entity implements JsonSerializable {
 			'height' => $this->height,
 			'confidence' => $this->confidence,
 			'is_groupable' => $this->isGroupable,
+			'is_manual' => $this->isManual,
+			'manual_state' => $this->manualState,
+			'box_adjusted' => $this->boxAdjusted,
 			'landmarks' => $this->landmarks,
 			'descriptor' => $this->descriptor,
 			'creation_time' => $this->creationTime

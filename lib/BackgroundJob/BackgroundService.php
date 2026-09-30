@@ -38,7 +38,11 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\ManualFaceDescriptorTask;
+use OCA\FaceRecognition\BackgroundJob\Tasks\ManualRegionTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
+
+use Psr\Log\LoggerInterface;
 
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -86,7 +90,10 @@ class BackgroundService {
 			throw new \LogicException('You cannot call setLogger after you set it once');
 		}
 
-		$this->context->logger = new FaceRecognitionLogger($logger);
+		// The warnings also go to the Nextcloud log: the console of a run from
+		// the system cron is usually thrown away.
+		$this->context->logger = new FaceRecognitionLogger($logger,
+			$this->application->getContainer()->get(LoggerInterface::class));
 	}
 
 	/**
@@ -236,6 +243,8 @@ class BackgroundService {
 				$task_classes[] = AddMissingImagesTask::class;
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
 				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = ManualFaceDescriptorTask::class;
+				$task_classes[] = ManualRegionTask::class;
 				$task_classes[] = CreateClustersTask::class;
 				break;
 			case 'default-mode':
@@ -246,6 +255,8 @@ class BackgroundService {
 				$task_classes[] = AddMissingImagesTask::class;
 				$task_classes[] = EnumerateImagesMissingFacesTask::class;
 				$task_classes[] = ImageProcessingTask::class;
+				$task_classes[] = ManualFaceDescriptorTask::class;
+				$task_classes[] = ManualRegionTask::class;
 				break;
 		}
 

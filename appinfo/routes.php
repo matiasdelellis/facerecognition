@@ -201,6 +201,52 @@ return ['routes' =>
 		'url'  => '/api/2.0/face/{faceId}/detach',
 		'verb' => 'PUT'
 	],
+	// List all faces for a given file (used by the manual-face dialog overlay)
+	[
+		'name' => 'Api#getFacesForFile',
+		'url'  => '/api/2.0/file/{fileId}/faces',
+		'verb' => 'GET'
+	],
+	// Name a face that is in no cluster yet, such as a marking saved without a name
+	[
+		'name' => 'Api#nameFace',
+		'url'  => '/api/2.0/face/{faceId}/name',
+		'verb' => 'PUT'
+	],
+	// Delete faces put there by hand, ignore faces, or stop ignoring them; the faces are in the body
+	[
+		'name' => 'Api#deleteFaces',
+		'url'  => '/api/2.0/faces/delete',
+		'verb' => 'POST'
+	],
+	[
+		'name' => 'Api#ignoreFaces',
+		'url'  => '/api/2.0/faces/ignore',
+		'verb' => 'POST'
+	],
+	[
+		'name' => 'Api#unignoreFaces',
+		'url'  => '/api/2.0/faces/unignore',
+		'verb' => 'POST'
+	],
+	// Delete regions drawn to be searched; the regions are in the body
+	[
+		'name' => 'Api#deleteRegions',
+		'url'  => '/api/2.0/regions/delete',
+		'verb' => 'POST'
+	],
+	// Add a manually drawn face, attached to a named person cluster or left for the clustering
+	[
+		'name' => 'Api#addManualFace',
+		'url'  => '/api/2.0/face/manual',
+		'verb' => 'POST'
+	],
+	// Queue a region of a photo to be searched for faces again by the background job
+	[
+		'name' => 'Api#addManualRegion',
+		'url'  => '/api/2.0/face/region',
+		'verb' => 'POST'
+	],
 
 ], 'ocs' => [
 

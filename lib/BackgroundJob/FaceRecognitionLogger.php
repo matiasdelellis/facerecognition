@@ -39,11 +39,22 @@ class FaceRecognitionLogger {
 	/** @var OutputInterface */
 	private $output;
 
-	public function __construct($logger) {
+	/** @var LoggerInterface|null Nextcloud log for the warnings of a command run */
+	private $warningLogger;
+
+	/**
+	 * @param LoggerInterface|OutputInterface $logger
+	 * @param LoggerInterface|null $warningLogger when $logger is the console of
+	 *   a command: the Nextcloud log, which gets the warnings as well. The
+	 *   background job only runs as a command, from the system cron, whose
+	 *   output is usually thrown away, and a warning must not go with it.
+	 */
+	public function __construct($logger, ?LoggerInterface $warningLogger = null) {
 		if (method_exists($logger, 'info') && method_exists($logger, 'debug')) {
 			$this->logger = $logger;
 		} else if ($logger instanceof OutputInterface) {
 			$this->output = $logger;
+			$this->warningLogger = $warningLogger;
 		} else {
 			throw new \InvalidArgumentException("Logger must be either instance of LoggerInterface or OutputInterface");
 		}
@@ -63,6 +74,24 @@ class FaceRecognitionLogger {
 			$this->logger->info($message);
 		} else if (!is_null($this->output)) {
 			$this->output->writeln($message);
+		} else {
+			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
+		}
+	}
+
+	/**
+	 * Something went wrong, but the run goes on. Logged as a warning, so that
+	 * it is in the Nextcloud log at the default log level, where the info
+	 * lines are not; in a command run both on the console and there.
+	 */
+	public function logWarning(string $message): void {
+		if (!is_null($this->logger)) {
+			$this->logger->warning($message);
+		} else if (!is_null($this->output)) {
+			$this->output->writeln($message);
+			if (!is_null($this->warningLogger)) {
+				$this->warningLogger->warning(trim($message), ['app' => 'facerecognition']);
+			}
 		} else {
 			throw new \RuntimeException("There are no configured loggers. Please file an issue at https://github.com/matiasdelellis/facerecognition/issues");
 		}

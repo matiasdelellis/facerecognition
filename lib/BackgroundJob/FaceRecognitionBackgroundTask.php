@@ -96,6 +96,16 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	}
 
 	/**
+	 * Wrapper for warning logging, indented like logInfo(): for what went
+	 * wrong without stopping the task.
+	 *
+	 * @return void
+	 */
+	protected function logWarning(string $message): void {
+		$this->context->logger->logWarning("\t" . $this->getWorkerPrefix() . $message);
+	}
+
+	/**
 	 * Wrapper for debug logging. It using this log call, it will indent log messages,
 	 * so there is nice visual that those messages belongs to particular task.
 	 *

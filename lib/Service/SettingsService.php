@@ -150,6 +150,10 @@ class SettingsService {
 	const FULL_IMAGE_SCAN_DONE_KEY = 'full_image_scan_done';
 	const DEFAULT_FULL_IMAGE_SCAN_DONE = 'false';
 
+	/** User setting that says the markings that were a face already there have been merged into it, once */
+	const MANUAL_DUPLICATES_MERGED_KEY = 'manual_duplicates_merged';
+	const DEFAULT_MANUAL_DUPLICATES_MERGED = 'false';
+
 	/** User setting that indicate that need to recreate clusters */
 	const USER_RECREATE_CLUSTERS_KEY = 'recreate_clusters';
 	const DEFAULT_USER_RECREATE_CLUSTERS = 'false';
@@ -292,6 +296,14 @@ class SettingsService {
 	 */
 	public function setUserFullScanDone (bool $fullScanDone, ?string $userId = null): void {
 		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? "true" : "false");
+	}
+
+	public function getManualDuplicatesMerged(string $userId): bool {
+		return $this->config->getUserValue($userId, Application::APP_NAME, self::MANUAL_DUPLICATES_MERGED_KEY, self::DEFAULT_MANUAL_DUPLICATES_MERGED) === 'true';
+	}
+
+	public function setManualDuplicatesMerged(string $userId): void {
+		$this->config->setUserValue($userId, Application::APP_NAME, self::MANUAL_DUPLICATES_MERGED_KEY, 'true');
 	}
 
 	public function getNeedRemoveStaleImages ($userId = null): bool {

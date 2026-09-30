@@ -478,11 +478,18 @@ class ImageMapper extends QBMapper {
 				->executeStatement();
 
 			if ($e === null && $replaceFaces) {
-				// Delete all previous faces, to replace them with the new ones.
+				// Delete the faces the model found last time, to replace them with
+				// the new ones, but keep the ones the user added by hand. A manual
+				// face is not something the analysis can produce again, so deleting
+				// it here would silently discard the user's own work.
 				//
 				$qb = $this->db->getQueryBuilder();
 				$qb->delete('facerecog_faces')
 					->where($qb->expr()->eq('image', $qb->createNamedParameter($image->id)))
+					->andWhere($qb->expr()->orX(
+						$qb->expr()->isNull('is_manual'),
+						$qb->expr()->eq('is_manual', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
+					))
 					->executeStatement();
 
 				// Insert all faces

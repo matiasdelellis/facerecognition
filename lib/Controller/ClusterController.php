@@ -334,6 +334,11 @@ class ClusterController extends Controller {
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
 		$cluster = $this->clusterMapper->find($this->userId, $id);
 
+		$refused = $this->refuseFace($face, (int) $cluster->getId());
+		if (!is_null($refused)) {
+			return $refused;
+		}
+
 		$personId = null;
 		if (!is_null($name) && $name !== '') {
 			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
@@ -356,6 +361,13 @@ class ClusterController extends Controller {
 	public function updateName($id, $name, $face_id = null): DataResponse {
 		$cluster = $this->clusterMapper->find($this->userId, $id);
 
+		if (!is_null($face_id)) {
+			$refused = $this->refuseFace((int) $face_id, (int) $cluster->getId());
+			if (!is_null($refused)) {
+				return $refused;
+			}
+		}
+
 		// Naming a cluster is saying which person it is one of the looks of.
 		$personId = null;
 		if (!is_null($name) && $name !== '') {
@@ -366,13 +378,39 @@ class ClusterController extends Controller {
 			$this->clusterMapper->setPerson($cluster->getId(), $personId);
 			$cluster = $this->clusterMapper->find($this->userId, $id);
 		} else {
-			$cluster = $this->clusterMapper->detachFace($cluster->getId(), $face_id, $personId);
+			$cluster = $this->clusterMapper->detachFace($cluster->getId(), (int) $face_id, $personId);
+			// Marked manual, so that analyzing the file again does not delete
+			// it and undo the change.
+			$this->faceMapper->markFaceManual((int) $face_id);
 		}
 
 		// A person nobody points at any more is not a person.
 		$this->personMapper->deleteOrphaned($this->userId);
 
 		return new DataResponse($this->describe($cluster));
+	}
+
+	/**
+	 * The answer that refuses a face given in a request, or null if the face
+	 * may be moved out of the cluster.
+	 *
+	 * The face comes from the request, and the cluster being the user's says
+	 * nothing about it: it has to be checked on its own before anything is
+	 * written. It also has to still be in that cluster, or detaching it would
+	 * change a cluster it is not in.
+	 */
+	private function refuseFace(int $faceId, int $clusterId): ?DataResponse {
+		$face = $this->faceMapper->find($faceId);
+		if (is_null($face)) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+		if (is_null($this->imageMapper->find($this->userId, $face->getImage()))) {
+			return new DataResponse([], Http::STATUS_FORBIDDEN);
+		}
+		if ((int) $face->getCluster() !== $clusterId) {
+			return new DataResponse(['error' => 'the face is not in this cluster'], Http::STATUS_CONFLICT);
+		}
+		return null;
 	}
 
 	/**

@@ -39,6 +39,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Helper\FaceRect;
+use OCA\FaceRecognition\Helper\ManualFaceDetector;
 use OCA\FaceRecognition\Helper\TempImage;
 
 use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
@@ -84,6 +85,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 	/** @var int|null $maxImageAreaCached Maximum image area (cached, so it is not recalculated for each image) */
 	private $maxImageAreaCached;
+
+	/** @var bool Whether the faces marked by hand can be told apart in this run */
+	private $manualFacesKnown = false;
 
 
 	/**
@@ -171,6 +175,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$this->model->open();
 
 		$refined = !$this->context->isRunningInFastMode();
+
+		$this->manualFacesKnown = $this->faceMapper->hasManualStateColumn();
+		if (!$this->manualFacesKnown) {
+			$this->logWarning(ManualFaceDetector::LOG_PREFIX . 'The faces marked by hand have no state yet, since the database migration of the app did not run: the found faces are not matched with them');
+		}
 		$images = $context->propertyBag['images'];
 		foreach($images as $image) {
 			yield;
@@ -212,9 +221,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					// the reused ones replace the fast-pass faces, carrying
 					// the cluster of the face found in the same place so a
 					// person is never lost.
-					if ($refined) {
-						$this->inheritClusters($image, $faces);
-					}
+					$faces = $this->reconcileWithOldFaces($image, $faces, $refined);
 
 					$endMillis = round(microtime(true) * 1000);
 					$duration = (int) max($endMillis - $startMillis, 0);
@@ -258,12 +265,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 					$faces[] = $face;
 				}
 
-				if ($refined) {
-					// The new faces replace the fast-pass ones, but the faces
-					// found again in the same place keep their cluster, and with
-					// it the person the user gave the cluster.
-					$this->inheritClusters($image, $faces);
-				}
+				// The new faces replace the fast-pass ones, but the faces
+				// found again in the same place keep their cluster, and with
+				// it the person the user gave the cluster. The faces the user
+				// put there are matched as well, see reconcileWithOldFaces().
+				$faces = $this->reconcileWithOldFaces($image, $faces, $refined);
 
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
@@ -450,6 +456,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$assigned = FaceRect::matchClusters($new, $old);
 		foreach ($assigned as $newIndex => $inheritance) {
+			if (is_null($inheritance['cluster'])) {
+				// The old face was not clustered yet: nothing to inherit.
+				continue;
+			}
 			$faces[$newIndex]->setCluster($inheritance['cluster']);
 			if (!$inheritance['is_groupable']) {
 				// The old face was a face the user detached: the new one keeps
@@ -458,6 +468,163 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$faces[$newIndex]->setIsGroupable(false);
 			}
 		}
+	}
+
+	/**
+	 * What the faces the analysis found do to the faces the image already has,
+	 * and which of them are left to insert.
+	 *
+	 * The faces the user put there, which are the ones marked by hand, the
+	 * ones found in a region the user marked and the ones moved to another
+	 * person, are not replaced by imageProcessed(). When the analysis finds
+	 * one of them by itself, there would be two faces in the same place, so
+	 * the analysis wins instead: what it found is written into the row of the
+	 * face the user put there (see resolveManualFaces()).
+	 *
+	 * This sits in the path of every photo, so nothing of it may keep a photo
+	 * from being processed. If it fails, the photo is processed as it was
+	 * before this existed: two faces in the same place are better than a photo
+	 * that records an error, since such a photo is not analyzed again until
+	 * the user resets the errors.
+	 *
+	 * That is also why the faces put there by hand are written before the
+	 * photo and not after it: a failure here can still fall back, while one
+	 * after imageProcessed() could not undo what it did. The other way round,
+	 * a failure of imageProcessed() after the takeover is the usual failure of
+	 * a photo: it records the error, keeps its other faces, and is analyzed
+	 * again once the errors are reset, which takes the same faces over again.
+	 *
+	 * @param Face[] $faces Faces the analysis found
+	 *
+	 * @return Face[] Faces to insert
+	 */
+	private function reconcileWithOldFaces(Image $image, array $faces, bool $refined): array {
+		if ($this->manualFacesKnown) {
+			try {
+				return $this->resolveManualFaces($image, $faces, $refined);
+			} catch (\Throwable $e) {
+				$this->logWarning(ManualFaceDetector::LOG_PREFIX . 'Image ' . $image->getId() . ': the found faces could not be matched with the ones put there by hand (' . $e->getMessage() . '), processing it as before');
+				$this->logDebug((string) $e);
+			}
+		}
+
+		if ($refined) {
+			$this->inheritClusters($image, $faces);
+		}
+		return $faces;
+	}
+
+	/**
+	 * Matches the faces the analysis found with the old faces of the image, in
+	 * one go, and decides for each match.
+	 *
+	 * A face of the analysis found again keeps its cluster in the refinement,
+	 * as inheritClusters() does, and is inserted.
+	 *
+	 * A face the user put there is overwritten with what the analysis found,
+	 * which keeps its id, its cluster and its protection from being replaced.
+	 * A marking records that the analysis confirmed it, and if its own search
+	 * had found no face, it gets back into the clustering: the analysis found
+	 * one. A face the user took out of its group stays out of the clustering,
+	 * marking or not: that is a decision of the user, and nothing the analysis
+	 * finds changes it.
+	 *
+	 * Only the refinement overwrites. The fast pass works on a deliberately
+	 * small image, and its descriptor must not replace one computed on a
+	 * region that was scaled up; there the find is dropped, and the face the
+	 * user put there stays as it is. The fast pass only matches with those
+	 * faces: the others are replaced as a whole, found again or not.
+	 *
+	 * @param Face[] $faces Faces the analysis found
+	 *
+	 * @return Face[] Faces to insert
+	 */
+	private function resolveManualFaces(Image $image, array $faces, bool $refined): array {
+		$manualFaces = [];
+		foreach ($this->faceMapper->findManualFacesOfImage($image->getId()) as $manualFace) {
+			$manualFaces[$manualFace->getId()] = $manualFace;
+		}
+
+		$oldFaces = $refined ? $this->faceMapper->findByImage($image->getId()) : array_values($manualFaces);
+		if (count($oldFaces) === 0) {
+			return $faces;
+		}
+
+		$old = [];
+		foreach ($oldFaces as $oldFace) {
+			$old[] = ManualFaceDetector::edges([
+				'x' => $oldFace->getX(),
+				'y' => $oldFace->getY(),
+				'width' => $oldFace->getWidth(),
+				'height' => $oldFace->getHeight(),
+			]) + [
+				'id' => $oldFace->getId(),
+				'cluster' => $oldFace->getCluster(),
+				'is_groupable' => $oldFace->getIsGroupable(),
+			];
+		}
+
+		$new = [];
+		foreach ($faces as $index => $face) {
+			$new[$index] = ManualFaceDetector::edges([
+				'x' => $face->getX(),
+				'y' => $face->getY(),
+				'width' => $face->getWidth(),
+				'height' => $face->getHeight(),
+			]);
+		}
+
+		$matches = FaceRect::matchClusters($new, $old);
+
+		// A marking whose search found no face goes back into the clustering
+		// when the analysis finds one, but not if the user ignored it: in its
+		// hidden cluster it would be a sample, and faces would join it there.
+		$ignored = [];
+		foreach ($manualFaces as $manualFace) {
+			if ($manualFace->getManualState() === Face::MANUAL_STATE_NO_FACE && !is_null($manualFace->getCluster())) {
+				$ignored = $this->faceMapper->findIgnoredFaceIdsOfImage($image->getId());
+				break;
+			}
+		}
+
+		$insert = [];
+		$overwrites = [];
+		foreach ($faces as $index => $face) {
+			$match = $matches[$index] ?? null;
+			if (is_null($match)) {
+				$insert[] = $face;
+				continue;
+			}
+
+			$oldId = $old[$match['old']]['id'];
+			if (isset($manualFaces[$oldId])) {
+				if ($refined) {
+					$state = $manualFaces[$oldId]->getManualState();
+					$overwrites[$oldId] = [
+						'face' => $face,
+						'confirm' => !is_null($state),
+						'regroup' => $state === Face::MANUAL_STATE_NO_FACE && !in_array($oldId, $ignored, true),
+					];
+				}
+				continue;
+			}
+
+			if ($refined && !is_null($match['cluster'])) {
+				$face->setCluster($match['cluster']);
+				if (!$match['is_groupable']) {
+					// The old face was a face the user detached: see inheritClusters().
+					$face->setIsGroupable(false);
+				}
+			}
+			$insert[] = $face;
+		}
+
+		$this->faceMapper->overwriteWithAnalysis($overwrites);
+		if (count($overwrites) > 0) {
+			$this->logInfo(ManualFaceDetector::LOG_PREFIX . 'Image ' . $image->getId() . ': the analysis found ' . count($overwrites) . ' face(s) put there by hand, and took them over');
+		}
+
+		return $insert;
 	}
 
 }

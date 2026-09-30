@@ -43,6 +43,9 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\ClusterMapper;
+use OCA\FaceRecognition\Db\ManualRegionMapper;
+
+use OCA\FaceRecognition\Helper\ManualFaceDetector;
 
 use Psr\Log\LoggerInterface;
 
@@ -66,6 +69,9 @@ class PostWriteListener implements IEventListener {
 	/** @var ClusterMapper */
 	private $clusterMapper;
 
+	/** @var ManualRegionMapper */
+	private $regionMapper;
+
 	/** @var SettingsService */
 	private $settingsService;
 
@@ -78,6 +84,7 @@ class PostWriteListener implements IEventListener {
 	                            FaceMapper            $faceMapper,
 	                            ImageMapper           $imageMapper,
 	                            ClusterMapper         $clusterMapper,
+	                            ManualRegionMapper    $regionMapper,
 	                            SettingsService       $settingsService,
 	                            FileService           $fileService)
 	{
@@ -87,6 +94,7 @@ class PostWriteListener implements IEventListener {
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;
 		$this->clusterMapper         = $clusterMapper;
+		$this->regionMapper          = $regionMapper;
 		$this->settingsService       = $settingsService;
 		$this->fileService           = $fileService;
 	}
@@ -193,6 +201,27 @@ class PostWriteListener implements IEventListener {
 					$this->clusterMapper->removeIfEmpty($faceToRemove->getCluster());
 				}
 			}
+
+			$this->removeRegions($imageId, $node->getName());
+		}
+	}
+
+	/**
+	 * The regions of the previous version go with its faces: what their search
+	 * found is gone, and the dialog would still show it. Saving the file must
+	 * not fail over this, so a failure is only logged, and before the
+	 * migration there is nothing to remove.
+	 */
+	private function removeRegions(int $imageId, string $name): void {
+		try {
+			if ($this->regionMapper->isAvailable()) {
+				$this->regionMapper->removeFromImage($imageId);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning(ManualFaceDetector::LOG_PREFIX . 'The regions of the previous version of ' . $name . ' could not be removed: ' . $e->getMessage(), [
+				'app' => 'facerecognition',
+				'exception' => $e,
+			]);
 		}
 	}
 

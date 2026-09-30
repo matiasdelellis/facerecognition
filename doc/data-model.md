@@ -42,6 +42,15 @@ confidence is below `min_confidence`, or the user detached it, which sets
 `is_groupable` to false. Those faces get a cluster of their own and are never
 compared, so they cannot attract other faces into it.
 
+`is_manual` says that the user put the face there, either by drawing it on a
+photo or by saying that a detected one is somebody else. Analyzing the file
+again replaces the faces the model found, and these are not among them: they
+are kept, because nothing would ever produce them a second time. A face drawn
+by hand starts without a descriptor, since no model was involved in finding it,
+and `ManualFaceDescriptorTask` looks for one in the marked region when the user
+asked for the face to be used for recognition. Until it has one the face takes
+no part in any comparison.
+
 ## facerecog_clusters
 
 A set of faces of one model that look alike: `user`, `model`, `is_visible`, and

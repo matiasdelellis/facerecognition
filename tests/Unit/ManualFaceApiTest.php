@@ -703,6 +703,63 @@ class ManualFaceApiTest extends TestCase {
 		$this->assertEquals(Http::STATUS_PRECONDITION_FAILED, $this->controller->unignoreFaces([100])->getStatus());
 	}
 
+	// --- deleteRegions ---------------------------------------------------
+
+	/** Region 5 on the image 10 of the user, 6 on the image 77 of somebody else. */
+	private function regions(): void {
+		$this->manualRegionMapper->method('isAvailable')->willReturn(true);
+		$regions = [];
+		foreach ([5 => 10, 6 => 77] as $id => $imageId) {
+			$region = new ManualRegion();
+			$region->setId($id);
+			$region->setImage($imageId);
+			$regions[$id] = $region;
+		}
+		$this->manualRegionMapper->method('findById')->willReturnCallback(function (int $id) use ($regions) {
+			return $regions[$id] ?? null;
+		});
+		$this->imageMapper->method('find')->willReturnCallback(function (string $user, int $imageId) {
+			return $imageId === 10 ? new Image() : null;
+		});
+	}
+
+	public function testARegionOfTheUserIsDeleted() {
+		$this->enableUser();
+		$this->regions();
+		$this->manualRegionMapper->expects($this->once())->method('deleteRegions')->with([5]);
+
+		$resp = $this->controller->deleteRegions([5, 5]);
+
+		$this->assertEquals(Http::STATUS_OK, $resp->getStatus());
+		$this->assertEquals(['regionIds' => [5]], $resp->getData());
+	}
+
+	public function testDeletingRegionsOfAnotherUserChangesNothing() {
+		$this->enableUser();
+		$this->regions();
+		$this->manualRegionMapper->expects($this->never())->method('deleteRegions');
+
+		$this->assertEquals(Http::STATUS_FORBIDDEN, $this->controller->deleteRegions([5, 6])->getStatus());
+		$this->assertEquals(Http::STATUS_NOT_FOUND, $this->controller->deleteRegions([5, 404])->getStatus());
+	}
+
+	/** @dataProvider badFaceListProvider */
+	public function testABadListOfRegionsIsRefused(array $regionIds) {
+		$this->enableUser();
+		$this->regions();
+		$this->manualRegionMapper->expects($this->never())->method('deleteRegions');
+
+		$this->assertEquals(Http::STATUS_BAD_REQUEST, $this->controller->deleteRegions($regionIds)->getStatus());
+	}
+
+	public function testDeletingRegionsBeforeTheMigrationIsRefused() {
+		$this->enableUser();
+		$this->manualRegionMapper->method('isAvailable')->willReturn(false);
+		$this->manualRegionMapper->expects($this->never())->method('deleteRegions');
+
+		$this->assertEquals(Http::STATUS_SERVICE_UNAVAILABLE, $this->controller->deleteRegions([5])->getStatus());
+	}
+
 	// --- getFacesForFile --------------------------------------------------
 
 	private function makeFace(int $id, ?int $cluster, int $size, float $confidence, ?bool $groupable, bool $manual, ?string $state, bool $boxAdjusted = false): Face {

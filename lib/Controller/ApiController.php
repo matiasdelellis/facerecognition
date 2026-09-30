@@ -637,6 +637,47 @@ $this->clusterMapper  = $clusterMapper;
 		return $faces;
 	}
 
+	/**
+	 * Deletes regions the user drew to be searched. One still waiting is not
+	 * searched any more; the faces the search of one already found stay, and
+	 * are deleted or ignored on their own. Nothing is deleted unless every
+	 * region is the user's.
+	 *
+	 * @NoAdminRequired
+	 * @CORS
+	 * @NoCSRFRequired
+	 *
+	 * @param int[] $regionIds
+	 */
+	public function deleteRegions(array $regionIds = []): JSONResponse {
+		if (!$this->settingsService->getUserEnabled($this->userId))
+			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
+
+		if (!$this->manualRegionMapper->isAvailable())
+			return $this->notMigrated('regions');
+
+		if (empty($regionIds) || count($regionIds) > self::MAX_FACES_PER_REQUEST)
+			return new JSONResponse(['error' => 'between 1 and ' . self::MAX_FACES_PER_REQUEST . ' regions are needed'], Http::STATUS_BAD_REQUEST);
+
+		$ids = [];
+		foreach (array_unique($regionIds) as $regionId) {
+			if (!is_numeric($regionId))
+				return new JSONResponse(['error' => 'a region is not a number'], Http::STATUS_BAD_REQUEST);
+
+			$region = $this->manualRegionMapper->findById((int) $regionId);
+			if (is_null($region))
+				return new JSONResponse(['error' => 'region ' . (int) $regionId . ' does not exist'], Http::STATUS_NOT_FOUND);
+			if (is_null($this->imageMapper->find($this->userId, $region->getImage())))
+				return new JSONResponse([], Http::STATUS_FORBIDDEN);
+
+			$ids[] = (int) $region->getId();
+		}
+
+		$this->manualRegionMapper->deleteRegions($ids);
+
+		return new JSONResponse(['regionIds' => $ids], Http::STATUS_OK);
+	}
+
 
 	/**
 	 * The clusters of the person of that name, which are the different ways

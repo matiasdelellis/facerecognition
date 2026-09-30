@@ -21,6 +21,7 @@
 namespace OCA\FaceRecognition\Db;
 
 use OCP\IDBConnection;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
@@ -129,6 +130,37 @@ class ManualRegionMapper extends QBMapper {
 			->orderBy('id', 'ASC');
 
 		return $this->findEntities($qb);
+	}
+
+	/**
+	 * One region, or null if there is none with that id.
+	 */
+	public function findById(int $regionId): ?ManualRegion {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($regionId, IQueryBuilder::PARAM_INT)));
+
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Deletes the given regions, whatever their state: a pending one is not
+	 * searched any more. The faces a search already found are not touched.
+	 *
+	 * @param int[] $regionIds
+	 */
+	public function deleteRegions(array $regionIds): void {
+		foreach (array_chunk(array_values(array_unique(array_map('intval', $regionIds))), 1000) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->delete($this->getTableName())
+				->where($qb->expr()->in('id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_INT_ARRAY)))
+				->executeStatement();
+		}
 	}
 
 	/**

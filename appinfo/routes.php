@@ -229,6 +229,12 @@ return ['routes' =>
 		'url'  => '/api/2.0/faces/unignore',
 		'verb' => 'POST'
 	],
+	// Delete regions drawn to be searched; the regions are in the body
+	[
+		'name' => 'Api#deleteRegions',
+		'url'  => '/api/2.0/regions/delete',
+		'verb' => 'POST'
+	],
 	// Add a manually drawn face, attached to a named person cluster or left for the clustering
 	[
 		'name' => 'Api#addManualFace',

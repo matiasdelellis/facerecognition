@@ -32,6 +32,7 @@ use OCA\FaceRecognition\Controller\ApiController;
 use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\ManualRegion;
 use OCA\FaceRecognition\Db\ManualRegionMapper;
@@ -245,6 +246,45 @@ class ManualRegionTest extends ManualFaceIntegrationTestCase {
 	/**
 	 * A region that fails records why, and it is not searched again.
 	 */
+	/**
+	 * The user deletes the regions they drew, searched or still waiting, and
+	 * the faces a search found stay. A region of somebody else is refused,
+	 * and then nothing is deleted.
+	 */
+	public function testRegionsAreDeletedAndTheirFacesStay() {
+		$image = $this->upload('lenna.jpg', $this->lenna());
+		$searched = $this->regionMapper->enqueue($image->getId(), 0, 0, 158, 158);
+		$this->runRegionTask();
+		$faces = $this->faceIdsOf($image->getId());
+		$this->assertNotEmpty($faces, 'The search found the face of lenna');
+		$waiting = $this->regionMapper->enqueue($image->getId(), 10, 10, 50, 50);
+
+		$imageMapper = $this->container->query(ImageMapper::class);
+		$other = new Image();
+		$other->setUser('somebody-else');
+		$other->setFile(2100000000 + rand(0, 100000));
+		$other->setModel(self::MODEL_ID);
+		$other->setIsProcessed(false);
+		$other = $imageMapper->insert($other);
+		$foreign = $this->regionMapper->enqueue($other->getId(), 0, 0, 10, 10);
+
+		try {
+			$refused = $this->controller()->deleteRegions([$searched->getId(), $foreign->getId()]);
+			$this->assertEquals(Http::STATUS_FORBIDDEN, $refused->getStatus());
+			$this->assertCount(2, $this->regionMapper->findByImage($image->getId()));
+
+			$resp = $this->controller()->deleteRegions([$searched->getId(), $waiting->getId()]);
+			$this->assertEquals(Http::STATUS_OK, $resp->getStatus());
+			$this->assertEquals(['regionIds' => [$searched->getId(), $waiting->getId()]], $resp->getData());
+			$this->assertEquals([], $this->regionMapper->findByImage($image->getId()));
+			$this->assertEquals([], $this->pendingIds(), 'The waiting one is not searched any more');
+			$this->assertEquals($faces, $this->faceIdsOf($image->getId()));
+		} finally {
+			$this->regionMapper->deleteRegions([$foreign->getId()]);
+			$imageMapper->delete($other);
+		}
+	}
+
 	public function testARegionThatFailsIsNotSearchedAgain() {
 		$image = $this->imageOfAMissingFile();
 		$region = $this->regionMapper->enqueue($image->getId(), 0, 0, 100, 100);

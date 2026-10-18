@@ -19,7 +19,7 @@
 		"@nextcloud/vue": "^8.0.0",
 		"handlebars": "^4.7.7",
 		"lozad": "^1.16.0",
-		"vue": "^3.5.0"
+		"vue": "^3.5.44"
 	},
 	"browserslist": [
 		"extends @nextcloud/browserslist-config"

@@ -31,8 +31,8 @@
 	"devDependencies": {
 		"@nextcloud/babel-config": "^1.0.0",
 		"@nextcloud/browserslist-config": "^2.3.0",
-		"@nextcloud/eslint-config": "^8.2.1",
-		"@nextcloud/stylelint-config": "^2.3.0",
+		"@nextcloud/eslint-config": "^9.0.1",
+		"@nextcloud/stylelint-config": "^3.2.2",
 		"@nextcloud/webpack-vue-config": "^7.0.0",
 		"terser-webpack-plugin": "^5.3.10"
 	},

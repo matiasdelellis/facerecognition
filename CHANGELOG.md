@@ -2,6 +2,28 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Fix cross-user access to faces and clusters: `detachFace` and
+  `setVisibility` now check that the cluster and the face belong to the user,
+  and the queries that list the photos of a person filter by the owner of the
+  image. A person with two clusters that have faces in the same photo is no
+  longer listed once per face.
+- Changing the clustering settings, or running `face:reset --clustering`,
+  deletes the clusters of the current model only. The data of another model,
+  kept after `face:migrate`, no longer points at deleted clusters.
+- A `.nomedia` or a `.facerecognition.json` in the root of the files of a user
+  now stops the full scan, instead of letting the scan re-add the whole library.
+- The capabilities report the analysis as disabled for users that disabled it,
+  and the autocomplete used by the sidebar returns names, not objects.
+- Fix several requests that answered 500 instead of 404 for unknown people,
+  clusters, faces or paths, and keep the analysis running when an image row
+  disappears while it is waiting to be processed.
+- A local Imaginary service works again: the requests now allow local addresses
+  and the error bodies are parsed as arrays. Model downloads verify the TLS
+  certificate, have timeouts and do not leave a partial file that looks
+  installed.
+- The stylelint configuration lints Vue and CSS instead of trying to parse JS,
+  and the ESLint configuration is present again. The npm package is aligned
+  with the version of the app.
 - Support images in HEIC/HEIF, TIFF and AVIF out of the box. Each format is only
   enabled when the active image backend can actually decode it, so no file is
   indexed just to fail later: locally they need the Imagick extension with the

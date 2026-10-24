@@ -238,8 +238,11 @@ class FaceManagementService {
 		$model = $this->settingsService->getCurrentFaceModel();
 
 		$this->faceMapper->unsetClustersRelationForUser($userId, $model);
-		$this->clusterMapper->deleteUserClusters($userId);
-		$this->personMapper->deleteUserPersons($userId);
+		// Reset the clustering of the current model only. Other models can
+		// have their own clusters when a user migrated between models, and
+		// deleting them would leave their faces pointing nowhere.
+		$this->clusterMapper->deleteUserModel($userId, $model);
+		$this->personMapper->deleteOrphaned($userId);
 	}
 
 	/**

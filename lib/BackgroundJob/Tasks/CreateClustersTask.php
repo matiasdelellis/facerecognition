@@ -131,10 +131,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			// The clustering settings changed, so what is in the database was
 			// obtained with other parameters and has to be built again. Note
 			// that this loses the names, exactly as `face:reset --clustering`.
-			$this->logInfo('The clustering settings changed: discarding the clusters of ' . $userId);
+			$this->logInfo('The clustering settings changed: discarding the clusters of ' . $userId . ' for the model ' . $modelId);
 			$this->faceMapper->unsetClustersRelationForUser($userId, $modelId);
-			$this->clusterMapper->deleteUserClusters($userId);
-			$this->personMapper->deleteUserPersons($userId);
+			// Only the clusters of this model are discarded. The faces and
+			// clusters of another model must stay as they are, or they would
+			// be left pointing at rows that no longer exist.
+			$this->clusterMapper->deleteUserModel($userId, $modelId);
+			$this->personMapper->deleteOrphaned($userId);
 			$this->settingsService->setNeedRecreateClusters(false, $userId);
 		}
 

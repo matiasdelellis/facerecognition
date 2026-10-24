@@ -162,10 +162,10 @@ class PhotoAlbums {
 		$personNames = array();
 		foreach ($personList as $person) {
 			$personName = $this->getPersonsNamesSelected($userId, $modelId, $person);
-			if ( $personName[0] === $person ){
+			if (!empty($personName) && $personName[0] === $person) {
 				array_push($personNames, $personName[0]);
 				$albumToCreateCombined .= $personName[0] . "+";
-			}else{
+			} else {
 				$output->writeln("Person name $person invalid - exit without creating combined album");
 				return;
 			}

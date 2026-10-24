@@ -93,23 +93,27 @@ class AlbumMapper {
 
 	public function delete(int $albumId): void {
 		$this->connection->beginTransaction();
+		try {
+			$query = $this->connection->getQueryBuilder();
+			$query->delete("photos_albums")
+				->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
+			$query->executeStatement();
 
-		$query = $this->connection->getQueryBuilder();
-		$query->delete("photos_albums")
-			->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
-		$query->executeStatement();
+			$query = $this->connection->getQueryBuilder();
+			$query->delete("photos_albums_files")
+				->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
+			$query->executeStatement();
 
-		$query = $this->connection->getQueryBuilder();
-		$query->delete("photos_albums_files")
-			->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
-		$query->executeStatement();
+			$query = $this->connection->getQueryBuilder();
+			$query->delete("photos_albums_collabs")
+				->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
+			$query->executeStatement();
 
-		$query = $this->connection->getQueryBuilder();
-		$query->delete("photos_albums_collabs")
-			->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)));
-		$query->executeStatement();
-
-		$this->connection->commit();
+			$this->connection->commit();
+		} catch (\Throwable $e) {
+			$this->connection->rollBack();
+			throw $e;
+		}
 	}
 
 	/**

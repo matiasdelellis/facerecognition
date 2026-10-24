@@ -48,6 +48,10 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Helper\CommandLock;
 use OCA\FaceRecognition\Helper\ImageUtil;
 
+/**
+ * @psalm-suppress UndefinedMethod OCP\Image extends the private OC\Image,
+ * whose methods are not part of the public stubs used by Psalm.
+ */
 class MigrateCommand extends Command {
 
 	/** @var FaceManagementService */
@@ -134,6 +138,9 @@ class MigrateCommand extends Command {
 			$output->writeln("You must indicate the ID of the model to migrate");
 			return 1;
 		}
+		// Console options are strings, and comparing them with the id of the
+		// current model (an int) would miss the "same model" case.
+		$modelId = (int) $modelId;
 
 		$model = $this->modelManager->getModel($modelId);
 		if (is_null($model)) {
@@ -147,7 +154,11 @@ class MigrateCommand extends Command {
 		}
 
 		$currentModel = $this->modelManager->getCurrentModel();
-		$currentModelId = (!is_null($currentModel)) ? $currentModel->getId() : -1;
+		if (is_null($currentModel)) {
+			$output->writeln("There is no current model configured. Run 'occ face:setup --model MODEL_ID' first.");
+			return 1;
+		}
+		$currentModelId = $currentModel->getId();
 
 		if ($currentModelId === $modelId) {
 			$output->writeln("The proposed model <$modelId> to migrate must be other than the current one <$currentModelId>");
@@ -189,20 +200,21 @@ class MigrateCommand extends Command {
 			return 1;
 		}
 
-		/**
-		 * Open the model and migrate to users.
-		 */
-		$currentModel->open();
+		try {
+			/**
+			 * Open the model and migrate to users.
+			 */
+			$currentModel->open();
 
-		foreach ($userIds as $mUserId) {
-			$this->migrateUser($currentModel, $modelId, $mUserId);
+			foreach ($userIds as $mUserId) {
+				$this->migrateUser($currentModel, $modelId, $mUserId);
+			}
+
+			$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+		} finally {
+			// Release the lock even when the migration fails.
+			CommandLock::Unlock($lock);
 		}
-
-		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
-
-		// Release obtained lock
-		//
-		CommandLock::Unlock($lock);
 
 		return 0;
 	}

@@ -24,27 +24,28 @@
 namespace OCA\FaceRecognition\AppInfo;
 
 use OCP\App\IAppManager;
-use OCP\IConfig;
 
 use OCP\Capabilities\ICapability;
+
+use OCA\FaceRecognition\Service\SettingsService;
 
 class Capabilities implements ICapability {
 
 	/** @var IAppManager */
 	private $appManager;
 
-	/** @var IConfig */
-	protected $config;
+	/** @var SettingsService */
+	private $settingsService;
 
-	/** @var string */
+	/** @var string|null */
 	private $userId;
 
-	public function __construct(IAppManager $appManager,
-	                            IConfig     $config,
+	public function __construct(IAppManager    $appManager,
+	                            SettingsService $settingsService,
 	                            $userId) {
-		$this->appManager = $appManager;
-		$this->config     = $config;
-		$this->userId     = $userId;
+		$this->appManager      = $appManager;
+		$this->settingsService = $settingsService;
+		$this->userId          = $userId;
 	}
 
 	public function getCapabilities() {
@@ -52,7 +53,7 @@ class Capabilities implements ICapability {
 			Application::APP_NAME => [
 				'version'     => $this->appManager->getAppVersion(Application::APP_NAME),
 				'apiVersions' => Application::API_VERSIONS,
-				'enabled'     => boolval($this->config->getUserValue($this->userId, Application::APP_NAME, 'enabled', false)),
+				'enabled'     => !is_null($this->userId) && $this->settingsService->getUserEnabled($this->userId),
 			],
 		];
 	}

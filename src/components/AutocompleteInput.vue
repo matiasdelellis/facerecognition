@@ -107,18 +107,38 @@ export default {
 			if (el) el.focus()
 		},
 
-		onInput() {
-			this.$emit('update:value', this.value)
-			this.debouncedFetch()
+		onInput(event) {
+			// Read the value from the event instead of the prop: the prop is
+			// updated by the parent after this handler, so it would be one
+			// keystroke behind.
+			const value = event.target.value
+			this.$emit('update:value', value)
+			this.debouncedFetch(value)
 		},
 
-		debouncedFetch() {
+		debouncedFetch(value) {
 			if (this.debounceTimer) clearTimeout(this.debounceTimer)
-			this.debounceTimer = setTimeout(() => this.fetchSuggestions(), DEBOUNCE_MS)
+			this.debounceTimer = setTimeout(() => this.fetchSuggestions(value), DEBOUNCE_MS)
 		},
 
-		fetchSuggestions() {
-			const query = this.value.trim()
+		/**
+		 * The legacy autocomplete endpoint answers with {name, value} objects,
+		 * while this input only needs the names. Accept both shapes so the
+		 * suggestion is always a string.
+		 */
+		normalizeSuggestions(names) {
+			if (!Array.isArray(names)) {
+				return []
+			}
+			return names
+				.map((suggestion) => typeof suggestion === 'string'
+					? suggestion
+					: (suggestion?.value ?? suggestion?.name ?? ''))
+				.filter((suggestion) => suggestion !== '')
+		},
+
+		fetchSuggestions(value = this.value) {
+			const query = value.trim()
 			if (query.length < MIN_QUERY_LENGTH) {
 				this.suggestions = []
 				this.isOpen = false
@@ -143,7 +163,7 @@ export default {
 				return response.json()
 			}).then((names) => {
 				if (this.currentRequest !== controller) return
-				this.suggestions = Array.isArray(names) ? names : []
+				this.suggestions = this.normalizeSuggestions(names)
 				this.isOpen = this.suggestions.length > 0
 				this.selectedIndex = -1
 			}).catch((err) => {

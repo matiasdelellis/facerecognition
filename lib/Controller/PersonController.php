@@ -114,7 +114,9 @@ class PersonController extends Controller {
 
 			$person = [];
 			$person['name'] = $name;
-			$person['thumbUrl'] = $this->urlService->getThumbUrl($personFace->getId(), 128);
+			$person['thumbUrl'] = $personFace === false
+				? null
+				: $this->urlService->getThumbUrl($personFace->getId(), 128);
 			$person['count'] = $this->imageMapper->countFromPerson($this->userId, $modelId, $name);
 
 			$resp['persons'][] = $person;
@@ -173,6 +175,11 @@ class PersonController extends Controller {
 	 * @return DataResponse
 	 */
 	public function updateName($personName, $name): DataResponse {
+		$name = trim($name);
+		if ($name === '') {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+
 		// Renaming is one row now: every cluster of theirs points at it.
 		$person = $this->personMapper->findByName($this->userId, $personName);
 		if (!is_null($person)) {

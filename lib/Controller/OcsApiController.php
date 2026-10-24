@@ -172,6 +172,9 @@ $this->clusterMapper  = $clusterMapper;
 			$faces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
 			foreach ($faces as $face) {
 				$image = $this->imageMapper->find($this->userId, $face->getImage());
+				if (is_null($image)) {
+					continue;
+				}
 
 				$respFace = [];
 				$respFace['id'] = $face->getId();

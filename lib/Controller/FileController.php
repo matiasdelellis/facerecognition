@@ -2,6 +2,8 @@
 namespace OCA\FaceRecognition\Controller;
 
 use OCP\IRequest;
+use OCP\Files\Folder;
+use OCP\Files\NotPermittedException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
@@ -154,11 +156,11 @@ class FileController extends Controller {
 		}
 
 		$folder = $this->fileService->getFileByPath($fullpath);
-		if (is_null($folder)) {
+		if (!($folder instanceof Folder)) {
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}
 
-		$resp['enabled'] = 'true';
+		$resp['enabled'] = true;
 		$resp['is_allowed'] = $this->fileService->isAllowedNode($folder);
 		$resp['parent_detection'] = !$this->fileService->isUnderNoDetection($folder);
 		$resp['descendant_detection'] = $this->fileService->getDescendantDetection($folder);
@@ -177,11 +179,21 @@ class FileController extends Controller {
 	 */
 	public function setFolderOptions(string $fullpath, bool $detection) {
 		$folder = $this->fileService->getFileByPath($fullpath);
-		if (is_null($folder)) {
+		if (!($folder instanceof Folder)) {
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}
 
-		$this->fileService->setDescendantDetection($folder, $detection);
+		if (!$folder->isUpdateable()) {
+			return new JSONResponse([], Http::STATUS_FORBIDDEN);
+		}
+
+		try {
+			if (!$this->fileService->setDescendantDetection($folder, $detection)) {
+				return new JSONResponse([], Http::STATUS_FORBIDDEN);
+			}
+		} catch (NotPermittedException $e) {
+			return new JSONResponse([], Http::STATUS_FORBIDDEN);
+		}
 
 		return $this->getFolderOptions($fullpath);
 	}

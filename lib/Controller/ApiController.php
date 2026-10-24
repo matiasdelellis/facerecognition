@@ -30,6 +30,7 @@ use OCP\Files\File;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\ApiController as NCApiController;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
@@ -171,6 +172,9 @@ $this->clusterMapper  = $clusterMapper;
 			$faces = $this->faceMapper->findFromCluster($this->userId, $cluster->getId(), $modelId);
 			foreach ($faces as $face) {
 				$image = $this->imageMapper->find($this->userId, $face->getImage());
+				if (is_null($image)) {
+					continue;
+				}
 
 				$respFace = [];
 				$respFace['id'] = $face->getId();
@@ -207,7 +211,9 @@ $this->clusterMapper  = $clusterMapper;
 
 			$person = [];
 			$person['name'] = $name;
-			$person['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
+			$person['thumbUrl'] = $clusterFace === false
+				? null
+				: $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 			$person['count'] = $this->imageMapper->countFromPerson($this->userId, $modelId, $name);
 
 			$list[] = $person;
@@ -236,8 +242,14 @@ $this->clusterMapper  = $clusterMapper;
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
+		if (is_null($this->personMapper->findByName($this->userId, $personName))) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+
 		$clusterFace = current($this->faceMapper->findFromPerson($this->userId, $personName, $modelId, 1));
-		$resp['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
+		$resp['thumbUrl'] = $clusterFace === false
+			? null
+			: $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 
 		$images = $this->imageMapper->findFromPerson($this->userId, $modelId, $personName);
 		foreach ($images as $image) {
@@ -277,6 +289,10 @@ $this->clusterMapper  = $clusterMapper;
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 
 		if (!is_null($name)) {
+			$name = trim($name);
+			if ($name === '') {
+				return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+			}
 			$person = $this->personMapper->findByName($this->userId, $personName);
 			if (!is_null($person)) {
 				$this->personMapper->rename($person->getId(), $name);
@@ -310,19 +326,28 @@ $this->clusterMapper  = $clusterMapper;
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$cluster = $this->clusterMapper->find($this->userId, $clusterId);
+		try {
+			$cluster = $this->clusterMapper->find($this->userId, $clusterId);
 
-		if (!is_null($name)) {
-			$person = $this->personMapper->findOrCreateByName($this->userId, $name);
-			$this->clusterMapper->setPerson($cluster->getId(), $person->getId());
+			if (!is_null($name)) {
+				// An empty name means "unknown person", while a missing name
+				// means that the caller does not want to change it.
+				$name = trim($name);
+				$personId = $name === ''
+					? null
+					: $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
+				$this->clusterMapper->setPerson($cluster->getId(), $personId);
+			}
+
+			if (!is_null($visible)) {
+				$this->clusterMapper->setVisibility($cluster->getId(), (bool) $visible);
+			}
+
+			$this->personMapper->deleteOrphaned($this->userId);
+			$cluster = $this->clusterMapper->find($this->userId, $clusterId);
+		} catch (DoesNotExistException $e) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}
-
-		if (!is_null($visible)) {
-			$this->clusterMapper->setVisibility($cluster->getId(), (bool) $visible);
-		}
-
-		$this->personMapper->deleteOrphaned($this->userId);
-		$cluster = $this->clusterMapper->find($this->userId, $clusterId);
 
 		// FIXME: What should response?
 		return new JSONResponse($cluster, Http::STATUS_OK);
@@ -393,7 +418,7 @@ $this->clusterMapper  = $clusterMapper;
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		if (strlen($query) < 3)
+		if (trim($query) === '')
 			return new JSONResponse([], Http::STATUS_OK);
 
 		$resp = [];
@@ -406,7 +431,9 @@ $this->clusterMapper  = $clusterMapper;
 			$name['value'] = $person->getName();
 
 			$clusterFace = current($this->faceMapper->findFromPerson($this->userId, $person->getName(), $modelId, 1));
-			$name['thumbUrl'] = $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
+			$name['thumbUrl'] = $clusterFace === false
+				? null
+				: $this->urlService->getThumbUrl($clusterFace->getId(), $thumb_size);
 
 			$resp[] = $name;
 		}
@@ -425,14 +452,23 @@ $this->clusterMapper  = $clusterMapper;
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$face = $this->faceMapper->find($faceId);
+		$face = $this->faceMapper->findForUser($this->userId, $faceId);
+		if (is_null($face) || is_null($face->getCluster())) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
+		$name = is_null($name) ? null : trim($name);
 		$personId = null;
 		if (!is_null($name) && $name !== '') {
 			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
 		}
 
-		$cluster = $this->clusterMapper->detachFace($face->getCluster(), $faceId, $personId);
+		try {
+			$cluster = $this->clusterMapper->detachFace($this->userId, $face->getCluster(), $faceId, $personId);
+		} catch (DoesNotExistException $e) {
+			$this->personMapper->deleteOrphaned($this->userId);
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		return new JSONResponse($cluster, Http::STATUS_OK);
 	}

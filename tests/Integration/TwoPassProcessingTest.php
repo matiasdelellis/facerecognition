@@ -170,7 +170,7 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 		$clusterId = $faces[0]->getCluster();
 
 		// The user detaches the face from its cluster.
-		$clusterMapper->detachFace($clusterId, $faces[0]->getId());
+		$clusterMapper->detachFace($this->user->getUID(), $clusterId, $faces[0]->getId());
 
 		// The refinement replaces the face, keeping the cluster and the
 		// non-groupable state.

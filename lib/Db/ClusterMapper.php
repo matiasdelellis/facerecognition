@@ -306,11 +306,30 @@ class ClusterMapper extends QBMapper {
 	 * Takes one face out of its cluster, because the user says it is not the
 	 * same person, and marks it as not groupable so that it is not put back.
 	 *
+	 * Both the cluster and the face come from the client, so they are checked
+	 * against the user here: a face can only be detached from the cluster it
+	 * really belongs to, and only by the owner of the images. Without that
+	 * check, passing the id of another user's face moves that face into a
+	 * cluster of the caller.
+	 *
+	 * @param string $userId Owner of the cluster and of the face
 	 * @param int|null $personId Person of the cluster the face goes to
 	 *
 	 * @return Cluster The cluster the face ended up in
+	 *
+	 * @throws DoesNotExistException If the cluster or the face do not belong
+	 * to the user, or the face is not in the cluster.
 	 */
-	public function detachFace(int $clusterId, int $faceId, $personId = null): Cluster {
+	public function detachFace(string $userId, int $clusterId, int $faceId, $personId = null): Cluster {
+		$old = $this->findById($clusterId);
+		if ($old->getUser() !== $userId) {
+			throw new DoesNotExistException('The cluster does not belong to the user');
+		}
+
+		if (!$this->faceBelongsToCluster($userId, $clusterId, $faceId)) {
+			throw new DoesNotExistException('The face does not belong to the cluster');
+		}
+
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_faces')
 			->set('is_groupable', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
@@ -325,8 +344,6 @@ class ClusterMapper extends QBMapper {
 			return $this->findById($clusterId);
 		}
 
-		$old = $this->findById($clusterId);
-
 		$newClusterId = $this->create($old->getUser(), $old->getModel());
 		if (!is_null($personId)) {
 			$this->setPerson($newClusterId, $personId);
@@ -334,6 +351,25 @@ class ClusterMapper extends QBMapper {
 		$this->attachFaces([$faceId], $newClusterId);
 
 		return $this->findById($newClusterId);
+	}
+
+	/**
+	 * Whether a face is part of a cluster and belongs to the user.
+	 */
+	private function faceBelongsToCluster(string $userId, int $clusterId, int $faceId): bool {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id')
+			->from('facerecog_faces', 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('f.id', $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->eq('f.cluster', $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)));
+
+		$result = $qb->executeQuery();
+		$found = $result->fetchOne();
+		$result->closeCursor();
+
+		return $found !== false;
 	}
 
 	public function findById(int $clusterId): Cluster {

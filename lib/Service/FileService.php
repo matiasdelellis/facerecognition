@@ -301,12 +301,22 @@ class FileService {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	public function getPicturesFromFolder(Folder $folder, $results = array()) {
+		// The method is called with the user folder to crawl the whole library,
+		// and the checks of the children are not enough for it: a .nomedia or a
+		// .facerecognition.json in the folder itself, including the root of the
+		// user, has to stop the crawl before it starts.
+		if (!$this->getDescendantDetection($folder)) {
+			return $results;
+		}
+
 		$nodes = $folder->getDirectoryListing();
 		foreach ($nodes as $node) {
 			if (!$this->isAllowedNode($node)) {
 				continue;
 			}
-			if ($node instanceof Folder && $this->getDescendantDetection($node)) {
+			if ($node instanceof Folder) {
+				// The recursive call checks the folder itself, including its
+				// .nomedia and .facerecognition.json, before crawling it.
 				$results = $this->getPicturesFromFolder($node, $results);
 			}
 			else if ($node instanceof File) {

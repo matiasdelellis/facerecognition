@@ -66,12 +66,12 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
-          extensions: zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql, pcntl
+          extensions: zip, gd, mbstring, iconv, fileinfo, intl, bz2, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql, pcntl
           coverage: none
 
       - name: Install pdlib
         run: |
-          sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev
+          sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev libpng-dev libbz2-dev
           sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
           sudo sh -c 'echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`'
 

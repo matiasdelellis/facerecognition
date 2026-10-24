@@ -37,7 +37,7 @@ class FaceModel extends Entity implements JsonSerializable {
 	protected $name;
 	protected $description;
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'name' => $this->name,

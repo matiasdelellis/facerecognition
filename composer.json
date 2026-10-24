@@ -21,7 +21,7 @@
     "require-dev": {
         "nextcloud/ocp": "dev-stable34",
         "phpunit/phpunit": "^9",
-        "psalm/phar": "^4.10",
+        "psalm/phar": "^6.20",
         "scrutinizer/ocular": "^1.8",
         "psr/log": "^3.0"
     },

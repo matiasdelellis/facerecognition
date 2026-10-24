@@ -84,7 +84,7 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
                 // the refinement is enabled: otherwise there is a single pass.
                 const twoPasses = (progress.refinementEnabled !== false);
                 const pendingImages = twoPasses ? (progress.pendingImages || 0) : 0;
-                if (progress.processedImages == progress.totalImages) {
+                if (progress.processedImages === progress.totalImages) {
                     desc = t('facerecognition', 'The analysis is finished');
                     desc += ' - ';
                     desc += n('facerecognition', '%n image was analyzed', '%n images were analyzed', progress.totalImages);

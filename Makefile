@@ -36,17 +36,15 @@ ifeq (,$(composer))
 	curl -sS https://getcomposer.org/installer | php
 	mv composer.phar $(build_tools_dir)
 	php $(build_tools_dir)/composer.phar install --prefer-dist
-	php $(build_tools_dir)/composer.phar update --prefer-dist
 else
 	composer install --prefer-dist
-	composer update --prefer-dist
 endif
 
 
 # Dependencies of the application
 
 npm-deps:
-	npm i
+	npm ci
 
 js/vendor/handlebars.js: npm-deps
 	mkdir -p js/vendor
@@ -115,6 +113,7 @@ appstore:
 	--exclude=build \
 	--exclude=cli \
 	--exclude=composer* \
+	--exclude=docker \
 	--exclude=translation* \
 	--exclude=node_modules \
 	--exclude=Makefile \

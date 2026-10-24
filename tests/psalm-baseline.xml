@@ -1,87 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.x-dev@">
+<files psalm-version="6.20.1@376425b8e67b79773add388e16b4f6be5693dc87">
   <file src="lib/AppInfo/Application.php">
-    <InvalidArgument occurrences="4">
-      <code>registerEventListener</code>
-      <code>registerEventListener</code>
-      <code>registerEventListener</code>
-      <code>registerEventListener</code>
+    <InvalidArgument>
+      <code><![CDATA[registerEventListener]]></code>
     </InvalidArgument>
-  </file>
-  <file src="lib/BackgroundJob/Tasks/ImageProcessingTask.php">
-    <MissingDependency occurrences="6">
-      <code>$tempImage</code>
-      <code>$tempImage</code>
-      <code>$tempImage</code>
-      <code>$tempImage</code>
-      <code>?TempImage</code>
-      <code>TempImage</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Command/MigrateCommand.php">
-    <MissingDependency occurrences="3">
-      <code>$loaded</code>
-      <code>$loaded</code>
-      <code>$loaded</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Controller/FaceController.php">
-    <MissingDependency occurrences="8">
-      <code>$img</code>
-      <code>$img</code>
-      <code>$this-&gt;rootFolder</code>
-      <code>?OCP_Image</code>
-      <code>IRootFolder</code>
-      <code>IRootFolder</code>
-      <code>OCP_Image</code>
-      <code>OCP_Image</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Helper/ImageUtil.php">
-    <MissingDependency occurrences="2">
-      <code>?Image</code>
-      <code>Image</code>
-    </MissingDependency>
   </file>
   <file src="lib/Helper/TempImage.php">
-    <MissingDependency occurrences="1">
-      <code>Image</code>
-    </MissingDependency>
-    <UnimplementedInterfaceMethod occurrences="1">
-      <code>TempImage</code>
+    <UnimplementedInterfaceMethod>
+      <code><![CDATA[TempImage]]></code>
     </UnimplementedInterfaceMethod>
-  </file>
-  <file src="lib/Search/PersonSearchProvider.php">
-    <MissingDependency occurrences="2">
-      <code>IRootFolder</code>
-      <code>IRootFolder</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Service/FileService.php">
-    <MissingDependency occurrences="5">
-      <code>$this-&gt;rootFolder</code>
-      <code>$this-&gt;rootFolder</code>
-      <code>$this-&gt;rootFolder</code>
-      <code>IRootFolder</code>
-      <code>IRootFolder</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Service/ModelService.php">
-    <MissingDependency occurrences="3">
-      <code>$this-&gt;rootFolder</code>
-      <code>IRootFolder</code>
-      <code>IRootFolder</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Service/UrlService.php">
-    <MissingDependency occurrences="2">
-      <code>IRootFolder</code>
-      <code>IRootFolder</code>
-    </MissingDependency>
-  </file>
-  <file src="lib/Settings/Personal.php">
-    <InvalidArgument occurrences="1">
-      <code>new LoadViewer()</code>
-    </InvalidArgument>
   </file>
 </files>

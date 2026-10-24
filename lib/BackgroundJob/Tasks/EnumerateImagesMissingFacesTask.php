@@ -70,6 +70,9 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 
 	/**
 	 * @inheritdoc
+	 *
+	 * @psalm-suppress InvalidReturnType The method always yields, but the
+	 * interface also allows a plain boolean for tasks that do not.
 	 */
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);

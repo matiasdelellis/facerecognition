@@ -502,7 +502,7 @@ View.prototype = {
                 const filename = this.dataset.id;
                 if (event.ctrlKey) {
                     const file = self._persons.getActivePerson().images.find(function (element) {
-                        return element.filename == filename;
+                        return element.filename === filename;
                     });
                     window.open(file.fileUrl, '_blank');
                 } else {

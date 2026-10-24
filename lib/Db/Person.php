@@ -61,7 +61,7 @@ class Person extends Entity implements JsonSerializable {
 		$this->addType('name', 'string');
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'user' => $this->user,

@@ -80,7 +80,7 @@ class Cluster extends Entity implements JsonSerializable {
 		$this->addType('isVisible', 'boolean');
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'user' => $this->user,

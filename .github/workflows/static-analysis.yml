@@ -15,12 +15,12 @@ jobs:
       name: Nextcloud ${{ matrix.ocp-version }}
       steps:
           - name: Checkout
-            uses: actions/checkout@master
+            uses: actions/checkout@v4
           - name: Set up php
-            uses: shivammathur/setup-php@master
+            uses: shivammathur/setup-php@v2
             with:
                 php-version: 8.2
-                tools: composer:v1
+                tools: composer:v2
                 coverage: none
           - name: Install dependencies
             run: composer i

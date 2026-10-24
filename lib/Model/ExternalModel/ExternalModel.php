@@ -167,14 +167,19 @@ class ExternalModel implements IModel {
 		curl_close($ch);
 	}
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
 		$ch = curl_init();
 		if ($ch === false) {
 			throw new \Exception('Curl error: unable to initialize curl');
 		}
 
 		$cFile = curl_file_create($imagePath);
-		$post = array('file'=> $cFile);
+		$post = array('file' => $cFile);
+		if ($fast) {
+			// The service can use a faster detector for the first pass. Its
+			// descriptors still have to be the ones of this model.
+			$post['fast'] = '1';
+		}
 
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/detect');
 		curl_setopt($ch, CURLOPT_POST, true);

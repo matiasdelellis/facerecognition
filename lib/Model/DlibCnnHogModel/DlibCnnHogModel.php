@@ -111,10 +111,16 @@ class DlibCnnHogModel implements IModel {
 		$this->dlibCnn5Model->open();
 	}
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
+		if ($fast) {
+			// The fast path of model 1 already uses HOG to propose the faces,
+			// so asking HOG again to validate them would be redundant.
+			return $this->dlibCnn5Model->detectFaces($imagePath, $compute, true);
+		}
+
 		$detectedFaces = [];
 
-		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath);
+		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath, $compute);
 		if (count($cnnFaces) === 0) {
 			return $detectedFaces;
 		}

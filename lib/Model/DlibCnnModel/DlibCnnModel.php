@@ -175,13 +175,36 @@ class DlibCnnModel implements IModel {
 	 * @return void
 	 */
 	public function open() {
-		$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
+		// The CNN detector is opened lazily: the fast pass uses HOG and does
+		// not need it, so loading it there would only waste memory, which is
+		// exactly what the fast pass is trying to save.
+		$this->cfd = null;
 		$this->fld = new \FaceLandmarkDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['predictor']['filename']));
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['resnet']['filename']));
 	}
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
-		$faces_detected = $this->cfd->detect($imagePath, 0);
+	private function openDetector(): void {
+		if (is_null($this->cfd)) {
+			$this->cfd = new \CnnFaceDetection($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES['detector']['filename']));
+		}
+	}
+
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
+		if ($fast) {
+			// The HOG detector is faster than the CNN one and gives boxes that
+			// this model can align with its own landmarks. The descriptor is
+			// still computed by this model, so the fast-pass faces are in the
+			// same descriptor space as the refined ones.
+			$faces_detected = dlib_face_detection($imagePath);
+			foreach ($faces_detected as &$face) {
+				// The HOG detector of dlib does not report a confidence.
+				$face['detection_confidence'] = 1.1;
+			}
+			unset($face);
+		} else {
+			$this->openDetector();
+			$faces_detected = $this->cfd->detect($imagePath, 0);
+		}
 
 		if (!$compute)
 			return $faces_detected;

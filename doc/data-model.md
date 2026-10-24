@@ -21,7 +21,7 @@ A file analyzed with two models has two rows. The model of everything else is
 read from here or copied from it.
 
 Since 0.9.95 the analysis can run in two passes, a fast one and a refinement
-one, on the same row. The fast pass (HOG on a small image) sets `is_processed`
+one, on the same row. The fast pass (the current model on a small image) sets `is_processed`
 and leaves `is_refined` false, and the refinement pass (the current model on a
 full-size image) sets `is_refined`. An image is due for processing when
 `is_processed` is false, and due for refinement when it is processed but not

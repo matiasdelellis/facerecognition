@@ -109,7 +109,7 @@ class BackgroundCommand extends Command {
 				'fast-mode',
 				null,
 				InputOption::VALUE_NONE,
-				'First pass of the analysis: process all images with the fast HOG model on a small image, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode.'
+				'First pass of the analysis: process all images with the current model on a small image, using its fast detection path, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode.'
 			)
 			->addOption(
 				'defer-clustering',

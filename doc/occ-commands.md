@@ -151,7 +151,7 @@ timeout.
 | `-M, --max_image_area MAX_IMAGE_AREA` | Caps maximum area (in pixels^2) of the image to be fed to the neural network, effectively lowering needed memory. |
 | `-w, --workers WORKERS` | Spawn this number of parallel workers to analyze the images, each one taking its share. Only meaningful in the modes that analyze the images (`--fast-mode`, `--defer-clustering` and the default mode); it fails with `--sync-mode`. Requires the `pcntl` extension. |
 | `--sync-mode` | Execute only the actions related to synchronizing the files: new users, shared or deleted files, etc. |
-| `--fast-mode` | First pass of the analysis: process all images with the fast HOG model on a small image, to get groupings and persons quickly. The refinement to maximum quality is done by the default mode. |
+| `--fast-mode` | First pass of the analysis: process all images with the current model on a small image, using its fast detection path, to get groupings and persons quickly. The descriptors are still the ones of the current model, so the refinement can replace the faces without changing their space. The refinement to maximum quality is done by the default mode. |
 | `--defer-clustering` | Defer the face clustering at the end of the analysis to get persons in a simple execution of the command. |
 
 ### Options precedence

@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- The fast pass uses the current model with a `fast` hint instead of the HOG
+  model. Any model can have a fast pass without installing model 3, and the
+  descriptors and the comparison metric stay the same between both passes.
 - Fix cross-user access to faces and clusters: `detachFace` and
   `setVisibility` now check that the cluster and the face belong to the user,
   and the queries that list the photos of a person filter by the owner of the

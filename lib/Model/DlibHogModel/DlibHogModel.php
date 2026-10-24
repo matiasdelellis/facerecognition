@@ -187,7 +187,8 @@ class DlibHogModel implements IModel {
 		$this->fr = new \FaceRecognition($this->modelService->getFileModelPath($this->getId(), static::FACE_MODEL_FILES[self::I_MODEL_RESNET]));
 	}
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
+		// This model is already the fast one; the flag does not change it.
 		$faces_detected = dlib_face_detection($imagePath);
 		foreach ($faces_detected as &$face) {
 			// Add and fake higher confidense value sinse this model does not provide it.

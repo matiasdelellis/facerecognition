@@ -60,10 +60,16 @@ class DlibTaguchiHogModel extends DlibCnnModel implements IModel {
 		]
 	];
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
+		if ($fast) {
+			// parent::detectFaces() with fast=true already uses HOG to propose
+			// the faces and the Taguchi predictor and network to describe them.
+			return parent::detectFaces($imagePath, $compute, true);
+		}
+
 		$detectedFaces = [];
 
-		$cnnFaces = parent::detectFaces($imagePath);
+		$cnnFaces = parent::detectFaces($imagePath, $compute);
 		if (count($cnnFaces) === 0) {
 			return $detectedFaces;
 		}

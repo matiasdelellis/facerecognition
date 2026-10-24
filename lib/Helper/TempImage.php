@@ -123,8 +123,16 @@ class TempImage extends Image {
 			return;
 		}
 
-		$this->tempPath = $this->tempManager->getTemporaryFile();
-		$this->save($this->tempPath, $this->preferredMimeType);
+		$tempPath = $this->tempManager->getTemporaryFile();
+		if ($tempPath === false) {
+			throw new \RuntimeException('Could not create the temporary image file. Check the permissions of the temporary directory.');
+		}
+
+		if (!$this->save($tempPath, $this->preferredMimeType)) {
+			throw new \RuntimeException('Could not write the temporary image to ' . $tempPath);
+		}
+
+		$this->tempPath = $tempPath;
 	}
 
 	/**

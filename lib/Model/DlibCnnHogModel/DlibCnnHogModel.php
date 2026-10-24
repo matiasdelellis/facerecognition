@@ -83,7 +83,10 @@ class DlibCnnHogModel implements IModel {
 			$error_message = "This Model depend on Model 1 and must install it.";
 			return false;
 		}
-		return true;
+
+		// The CNN part is the model 1 itself, so its dependencies are also
+		// ours: pdlib, the assigned memory and the system memory.
+		return $this->dlibCnn5Model->meetDependencies($error_message);
 	}
 
 	public function getMaximumArea(): int {

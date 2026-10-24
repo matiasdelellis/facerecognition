@@ -145,19 +145,22 @@ class Face extends Entity implements JsonSerializable {
 		$face = new Face();
 		$face->image       = $imageId;
 		$face->cluster     = null;
-		$face->isGroupable = true;
 		$face->x           = $faceFromModel['left'];
 		$face->y           = $faceFromModel['top'];
 		$face->width       = $faceFromModel['right'] - $faceFromModel['left'];
 		$face->height      = $faceFromModel['bottom'] - $faceFromModel['top'];
-		$face->confidence  = $faceFromModel['detection_confidence'];
+		$face->confidence  = $faceFromModel['detection_confidence'] ?? 0.0;
 		$face->landmarks   = isset($faceFromModel['landmarks']) ? $faceFromModel['landmarks'] : [];
 		$face->descriptor  = isset($faceFromModel['descriptor']) ? $faceFromModel['descriptor'] : [];
+		// A face without a descriptor cannot be compared with any other one.
+		// Marking it as not groupable gives it a cluster of its own instead of
+		// letting it join the first cluster it is compared with.
+		$face->isGroupable = !empty($face->descriptor);
 		$face->setCreationTime(new \DateTime());
 		return $face;
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'image' => $this->image,
@@ -175,7 +178,7 @@ class Face extends Entity implements JsonSerializable {
 	}
 
 	public function getLandmarks(): string {
-		return json_encode($this->landmarks);
+		return json_encode($this->landmarks) ?: '';
 	}
 
 	public function setLandmarks($landmarks): void {
@@ -184,7 +187,7 @@ class Face extends Entity implements JsonSerializable {
 	}
 
 	public function getDescriptor(): string {
-		return json_encode($this->descriptor);
+		return json_encode($this->descriptor) ?: '';
 	}
 
 	public function setDescriptor($descriptor): void {

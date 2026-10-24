@@ -589,7 +589,8 @@ class SettingsService {
 	 * Imagick build with the proper delegates.
 	 */
 	protected function isImaginaryEnabled(): bool {
-		return $this->config->getSystemValueString(Imaginary::SYSTEM_URL, 'invalid') !== 'invalid';
+		$url = trim($this->config->getSystemValueString(Imaginary::SYSTEM_URL, 'invalid'));
+		return $url !== '' && $url !== 'invalid';
 	}
 
 	/**

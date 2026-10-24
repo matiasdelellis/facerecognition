@@ -37,8 +37,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
 
-use OCP\AppFramework\Db\Entity;
-
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
 
@@ -50,6 +48,10 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
+/**
+ * @psalm-suppress UndefinedMethod OCP\Image extends the private OC\Image,
+ * whose methods are not part of the public stubs used by Psalm.
+ */
 class FaceController extends Controller {
 
 	/** @var IAppManager */
@@ -289,10 +291,13 @@ class FaceController extends Controller {
 	/**
 	 * @return void
 	 */
-	private function hipsterize(OCP_Image &$image, Entity &$face) {
+	private function hipsterize(OCP_Image &$image, Face &$face) {
 		$imgResource = $image->resource();
 
 		$landmarks = json_decode($face->getLandmarks(), true);
+		if (!is_array($landmarks)) {
+			return;
+		}
 		if (count($landmarks) === 5) {
 			$eyesX1 = $landmarks[2]['x'];
 			$eyesY1 = $landmarks[2]['y'];
@@ -326,6 +331,11 @@ class FaceController extends Controller {
 		$eyesH = $eyesY2 - $eyesY1;
 
 		$eyesL = sqrt(pow($eyesW, 2) + pow($eyesH, 2));
+		// Degenerate landmarks would divide by zero when rotating and sizing
+		// the glasses and the moustache.
+		if ($eyesW == 0 || $eyesL <= 0) {
+			return;
+		}
 		$angle = rad2deg(atan(-$eyesH/$eyesW));
 
 		$glassesGd = imagecreatefrompng($this->appManager->getAppPath('facerecognition') . '/img/glasses.png');

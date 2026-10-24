@@ -57,8 +57,15 @@ class FaceRect {
 		$areaB = ($rightB - $leftB) * ($bottomB - $topB);
 		$overlapArea = ($rightO - $leftO) * ($bottomO - $topO);
 
+		// A degenerate rectangle (a model can return one) has no area to
+		// compare, and dividing by zero would abort the whole analysis.
+		$unionArea = $areaA + $areaB - $overlapArea;
+		if ($unionArea <= 0) {
+			return 0.0;
+		}
+
 		// Calculate and return the overlay percent.
-		return floatval($overlapArea / ($areaA + $areaB - $overlapArea));
+		return floatval($overlapArea / $unionArea);
 	}
 
 	/**

@@ -73,23 +73,37 @@ class CompressionService {
 			throw new \Exception('Could not open the file to write: ' . $outputFile);
 		}
 
-		while (true) {
-			// A read error gives false and the end of the file an empty string.
-			// Looping on the buffer being truthy cannot tell one from the
-			// other, and takes a read error for a clean end of file.
-			$buffer = bzread ($in_file, 4096);
-			if ($buffer === false)
-				throw new \Exception('Read problem: ' . bzerrstr($in_file));
-			if (bzerrno($in_file) !== 0)
-				throw new \Exception('Compression problem: '. bzerrstr($in_file));
-			if ($buffer === '')
-				break;
+		$error = null;
+		try {
+			while (true) {
+				// A read error gives false and the end of the file an empty
+				// string. Looping on the buffer being truthy cannot tell one
+				// from the other, and takes a read error for a clean end.
+				$buffer = bzread ($in_file, 4096);
+				if ($buffer === false)
+					throw new \Exception('Read problem: ' . bzerrstr($in_file));
+				if (bzerrno($in_file) !== 0)
+					throw new \Exception('Compression problem: '. bzerrstr($in_file));
+				if ($buffer === '')
+					break;
 
-			fwrite ($out_file, $buffer);
+				if (fwrite ($out_file, $buffer) === false) {
+					throw new \Exception('Could not write the decompressed file: ' . $outputFile);
+				}
+			}
+		} catch (\Throwable $e) {
+			$error = $e;
+		} finally {
+			bzclose ($in_file);
+			fclose ($out_file);
 		}
 
-		bzclose ($in_file);
-		fclose ($out_file);
+		if ($error !== null) {
+			// A partial model file would look installed to isInstalled(), and
+			// would fail later with a confusing error.
+			@unlink($outputFile);
+			throw $error;
+		}
 	}
 
 }

@@ -145,6 +145,8 @@ class ExternalModel implements IModel {
 
 		curl_setopt($ch, CURLOPT_URL, $this->modelUrl . '/open');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ' . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 600);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
@@ -178,6 +180,8 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ' . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 600);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);
@@ -219,6 +223,8 @@ class ExternalModel implements IModel {
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key:' . $this->modelApiKey]);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 600);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$response = curl_exec($ch);

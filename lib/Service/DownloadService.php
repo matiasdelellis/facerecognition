@@ -47,7 +47,13 @@ class DownloadService {
 	 */
 	public function downloadFile(string $fileUrl): string {
 		$tempFolder = $this->tempManager->getTemporaryFolder('/facerecognition/');
-		$tempFile = $tempFolder . basename($fileUrl);
+		if ($tempFolder === false) {
+			throw new \Exception('Could not create the temporary folder for the download');
+		}
+
+		$path = parse_url($fileUrl, PHP_URL_PATH);
+		$name = is_string($path) ? basename($path) : basename($fileUrl);
+		$tempFile = $tempFolder . $name;
 
 		$fp = fopen($tempFile, 'w+');
 		if ($fp === false) {
@@ -56,22 +62,34 @@ class DownloadService {
 
 		$ch = curl_init($fileUrl);
 		if ($ch === false) {
+			fclose($fp);
+			@unlink($tempFile);
 			throw new \Exception('Curl error: unable to initialize curl');
 		}
 
 		curl_setopt_array($ch, [
 			CURLOPT_FILE => $fp,
 			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_SSL_VERIFYPEER => false,
-			CURLOPT_SSL_VERIFYHOST => 0,
+			// The model files are the executable weights of the application,
+			// so the certificate has to be verified.
+			CURLOPT_SSL_VERIFYPEER => true,
+			CURLOPT_SSL_VERIFYHOST => 2,
+			CURLOPT_CONNECTTIMEOUT => 30,
+			CURLOPT_TIMEOUT => 600,
 			CURLOPT_USERAGENT => 'Nextcloud-Face-Recognition-Service',
 		]);
 
-		if (curl_exec($ch) === false) {
-			throw new \Exception('Curl error: ' . curl_error($ch));
+		$downloaded = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$curlError = curl_error($ch);
+		curl_close($ch);
+		fclose($fp);
+
+		if ($downloaded === false) {
+			@unlink($tempFile);
+			throw new \Exception('Curl error: ' . $curlError);
 		}
 
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		if ($httpCode !== 200) {
 			$statusCodes = [
 				400 => 'Bad request',
@@ -91,17 +109,14 @@ class DownloadService {
 				$message .= ' - HTTP status code: ' . $httpCode;
 			}
 
-			$curlErrorMessage = curl_error($ch);
-			if(!empty($curlErrorMessage)) {
-				$message .= ' - curl error message: ' . $curlErrorMessage;
+			if(!empty($curlError)) {
+				$message .= ' - curl error message: ' . $curlError;
 			}
 			$message .= ' - URL: ' . htmlentities($fileUrl);
 
+			@unlink($tempFile);
 			throw new \Exception($message);
 		}
-
-		curl_close($ch);
-		fclose($fp);
 
 		return $tempFile;
 	}

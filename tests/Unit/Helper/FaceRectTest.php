@@ -56,6 +56,13 @@ class FaceRectTest extends TestCase {
 		$this->assertEqualsWithDelta(FaceRect::overlapPercent($rectA, $rectB), 0.33, 0.01);
 	}
 
+	public function testDegenerateRectHasNoOverlap() {
+		$rectA = ['left' => 10, 'right' => 10, 'top' => 10, 'bottom' => 10];
+		$rectB = ['left' => 10, 'right' => 20, 'top' => 10, 'bottom' => 20];
+
+		$this->assertEquals(0.0, FaceRect::overlapPercent($rectA, $rectB));
+	}
+
 	private function oldFace($id, $left, $top, $width, $height, $cluster, $groupable = true) {
 		return [
 			'left' => $left,

@@ -47,29 +47,44 @@ class Imaginary {
 	}
 
 	public function isEnabled(): bool {
-		$imaginaryUrl = $this->config->getSystemValueString(self::SYSTEM_URL, 'invalid');
-		return ($imaginaryUrl !== 'invalid');
+		return !is_null($this->getUrl());
 	}
 
 	public function getUrl(): ?string {
-		$imaginaryUrl = $this->config->getSystemValueString(self::SYSTEM_URL, 'invalid');
-		if ($imaginaryUrl === 'invalid')
+		$imaginaryUrl = trim($this->config->getSystemValueString(self::SYSTEM_URL, 'invalid'));
+		if ($imaginaryUrl === '' || $imaginaryUrl === 'invalid')
 			return null;
 
 		return rtrim($imaginaryUrl, '/');
 	}
 
 	public function hasKey(): bool {
-		$imaginaryKey = $this->config->getSystemValueString(self::SYSTEM_KEY, 'invalid');
-		return ($imaginaryKey !== 'invalid');
+		return !is_null($this->getKey());
 	}
 
 	public function getKey(): ?string {
-		$imaginaryKey = $this->config->getSystemValueString(self::SYSTEM_KEY, 'invalid');
-		if ($imaginaryKey === 'invalid')
+		$imaginaryKey = trim($this->config->getSystemValueString(self::SYSTEM_KEY, 'invalid'));
+		if ($imaginaryKey === '' || $imaginaryKey === 'invalid')
 			return null;
-               
+
 		return $imaginaryKey;
+	}
+
+	/**
+	 * Message of an error answer of the service.
+	 *
+	 * The body is decoded as an array on purpose: decoding it as an object and
+	 * then asking for ['message'] throws an Error, which the callers of this
+	 * helper do not catch.
+	 */
+	private function errorMessage($response): string {
+		$body = (string)$response->getBody();
+		$decoded = json_decode($body, true);
+		if (is_array($decoded) && isset($decoded['message'])) {
+			return (string)$decoded['message'];
+		}
+
+		return $body;
 	}
 
 	/**
@@ -84,7 +99,12 @@ class Imaginary {
 		$httpClient = $this->service->newClient();
 
 		try {
-			$options = [];
+			$options = [
+				'timeout' => 60,
+				// Imaginary is normally a local service, and Nextcloud blocks
+				// local addresses unless the client is explicitly told not to.
+				'nextcloud' => ['allow_local_address' => true],
+			];
 			if ($this->hasKey()) {
 				$options['query'] = [
 					'key' => $this->getKey(),
@@ -101,7 +121,7 @@ class Imaginary {
 
 		$info = json_decode($response->getBody(), true);
 
-		return $info['imaginary'];
+		return is_array($info) ? ($info['imaginary'] ?? null) : null;
 	}
 
 	/**
@@ -115,10 +135,18 @@ class Imaginary {
 
 		$httpClient = $this->service->newClient();
 
-		$options = [];
+		$contents = @file_get_contents($filepath);
+		if ($contents === false) {
+			throw new \RuntimeException('Could not read the image to send to Imaginary: ' . $filepath);
+		}
+
+		$options = [
+			'timeout' => 60,
+			'nextcloud' => ['allow_local_address' => true],
+		];
 		$options['multipart'] = [[
 			'name' => 'file',
-			'contents' => file_get_contents($filepath),
+			'contents' => $contents,
 			'filename' => basename($filepath),
 		]];
 
@@ -131,21 +159,27 @@ class Imaginary {
 		$response = $httpClient->post($imaginaryUrl . '/info', $options);
 
 		if ($response->getStatusCode() !== 200) {
-			throw new \RuntimeException('Error getting image information in Imaginary: ' . json_decode($response->getBody())['message']);
+			throw new \RuntimeException('Error getting image information in Imaginary: ' . $this->errorMessage($response));
 		}
 
 		$info = json_decode($response->getBody(), true);
+		if (!is_array($info) || !isset($info['width'], $info['height'])) {
+			throw new \RuntimeException('Imaginary answered the image information with an invalid body.');
+		}
 
-		$type = $info['type'];
-		//NOTE: Imaginary has problems rorating heic images. Issue #662
-		$autorotate = ($info['orientation'] > 4 && $type != 'heif');
+		$type = (string)($info['type'] ?? '');
+		$orientation = (int)($info['orientation'] ?? 1);
+		$width = (int)$info['width'];
+		$height = (int)$info['height'];
+		//NOTE: Imaginary has problems rotating HEIC/HEIF images. Issue #662
+		$autorotate = ($orientation > 4 && $type !== 'heif' && $type !== 'heic');
 
 		return [
 			'type'   => $type,
 			'autorotate' => $autorotate,
 			// Rotates the size, since it is important and Imaginary do not do that.
-			'width'  => $autorotate ? $info['height'] : $info['width'],
-			'height' => $autorotate ? $info['width'] :  $info['height']
+			'width'  => $autorotate ? $height : $width,
+			'height' => $autorotate ? $width : $height
 		];
 	}
 
@@ -195,19 +229,25 @@ class Imaginary {
 			$query['key'] = $this->getKey();
 		}
 
+		$contents = @file_get_contents($filepath);
+		if ($contents === false) {
+			throw new \RuntimeException('Could not read the image to send to Imaginary: ' . $filepath);
+		}
+
 		$response = $httpClient->post(
 			$imaginaryUrl . '/pipeline', [
 				'query' => $query,
-				'body' => file_get_contents($filepath),
+				'body' => $contents,
+				'timeout' => 60,
 				'nextcloud' => ['allow_local_address' => true],
 			]);
 
 		if ($response->getStatusCode() !== 200) {
-			throw new \RuntimeException('Error generating temporary image in Imaginary: ' . json_decode($response->getBody())['message']);
+			throw new \RuntimeException('Error generating temporary image in Imaginary: ' . $this->errorMessage($response));
 		}
 
 		$body = $response->getBody();
-		if ($body === null) {
+		if ($body === null || $body === '') {
 			throw new \RuntimeException('Imaginary answered the resize with an empty body.');
 		}
 

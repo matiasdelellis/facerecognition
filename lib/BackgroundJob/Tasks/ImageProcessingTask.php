@@ -167,6 +167,10 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$this->model = $this->modelManager->getCurrentModel();
 		}
 
+		if (is_null($this->model)) {
+			throw new \RuntimeException('No face model is configured. Run occ face:setup --model MODEL_ID first.');
+		}
+
 		// Open model.
 		$this->model->open();
 
@@ -187,6 +191,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$lockAcquired = true;
 
 				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
+				if (is_null($dbImage)) {
+					// The row was removed while this image was waiting for its
+					// turn, for example because the file was deleted. There is
+					// nothing to update any more.
+					$this->logInfo('Image will be skipped because its row was removed');
+					continue;
+				}
 
 				// An image is done when it was processed, and in the refinement
 				// pass it also has to have been refined. The images that were
@@ -391,9 +402,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$face['right'] = intval(round($rawFace['right']*$ratio));
 		$face['top'] = intval(round($rawFace['top']*$ratio));
 		$face['bottom'] = intval(round($rawFace['bottom']*$ratio));
-		$face['detection_confidence'] = $rawFace['detection_confidence'];
-		$face['landmarks'] = $this->getNormalizedLandmarks($rawFace['landmarks'], $ratio);
-		$face['descriptor'] = $rawFace['descriptor'];
+		$face['detection_confidence'] = $rawFace['detection_confidence'] ?? 0.0;
+		$face['landmarks'] = $this->getNormalizedLandmarks($rawFace['landmarks'] ?? [], $ratio);
+		$face['descriptor'] = $rawFace['descriptor'] ?? [];
 		return $face;
 	}
 

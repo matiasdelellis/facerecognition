@@ -73,7 +73,13 @@ jobs:
         run: |
           sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev libpng-dev libbz2-dev
           sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
-          sudo sh -c 'echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`'
+          php_ini="$(php --ini | sed -n 's/^Loaded Configuration File:[[:space:]]*//p' | head -1)"
+          if [ -z "$php_ini" ] || [ "$php_ini" = "(none)" ]; then
+            php_ini="$(php -r 'echo PHP_CONFIG_FILE_PATH;')/php.ini"
+          fi
+          sudo mkdir -p "$(dirname "$php_ini")"
+          echo "extension=pdlib.so" | sudo tee -a "$php_ini" >/dev/null
+          php -m | grep -qx pdlib
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}

@@ -71,6 +71,10 @@ jobs:
           export DB_PORT=4444
           mkdir data
           ./occ maintenance:install --verbose --database=${{ matrix.databases }} --database-name=nextcloud --database-host=127.0.0.1 --database-port=$DB_PORT --database-user=root --database-pass=rootpassword --admin-user admin --admin-pass admin
+          # files_external is disabled by default, but its mount provider is
+          # still queried when the test framework prepares a user. Enabling it
+          # installs its tables (oc_external_mounts among them).
+          ./occ app:enable --force files_external
           ./occ app:enable --force ${{ env.APP_NAME }}
           php -S localhost:8080 &
 

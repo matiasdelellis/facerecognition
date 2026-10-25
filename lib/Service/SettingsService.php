@@ -26,10 +26,12 @@ namespace OCA\FaceRecognition\Service;
 
 use OCA\FaceRecognition\AppInfo\Application;
 
+use OCA\FaceRecognition\Helper\Distance;
 use OCA\FaceRecognition\Helper\Imaginary;
 use OCA\FaceRecognition\Helper\Requirements;
 
 use OCA\FaceRecognition\Model\ModelManager;
+use OCA\FaceRecognition\Model\ExternalModel\ExternalModel;
 
 use OCP\IConfig;
 
@@ -133,6 +135,17 @@ class SettingsService {
 	 */
 	const LINK_SUGGESTION_SENSITIVITY_KEY = 'link_suggestion_sensitivity';
 	const DEFAULT_LINK_SUGGESTION_SENSITIVITY = '0.55';
+
+	/**
+	 * How the descriptors of the external model are compared: an identifier of
+	 * the descriptors, the metric and the range of the thresholds, and the range
+	 * of the confidence of its detections, as reported
+	 * by its service, since it can run any model. The dlib models use the
+	 * defaults above.
+	 */
+	const DESCRIPTOR_PROFILE_KEY = 'descriptor_profile';
+	/** The descriptors of the dlib models, and of an external service that does not report its own */
+	const DEFAULT_DESCRIPTOR = 'dlib_face_recognition_resnet_model_v1';
 
 	/** How many faces of each cluster are compared to look for those. */
 	const LINK_SUGGESTION_SAMPLES_KEY = 'link_suggestion_samples';
@@ -402,16 +415,168 @@ class SettingsService {
 		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
 	}
 
+	/**
+	 * The threshold of the clustering. A value saved for another profile, out of
+	 * the range of the current one, falls back to its default.
+	 */
 	public function getSensitivity(): float {
-		return floatval($this->config->getAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, self::DEFAULT_SENSITIVITY));
+		$sensitivity = $this->config->getAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, '');
+		if (!is_numeric($sensitivity) ||
+		    floatval($sensitivity) < $this->getMinimumSensitivity() ||
+		    floatval($sensitivity) > $this->getMaximumSensitivity()) {
+			return $this->getDefaultSensitivity();
+		}
+		return floatval($sensitivity);
+	}
+
+	public function getMinimumSensitivity(): float {
+		return $this->getDescriptorProfile()['sensitivity']['min'];
+	}
+
+	public function getDefaultSensitivity(): float {
+		return $this->getDescriptorProfile()['sensitivity']['default'];
+	}
+
+	public function getMaximumSensitivity(): float {
+		return $this->getDescriptorProfile()['sensitivity']['max'];
+	}
+
+	/**
+	 * Metric used to compare the descriptors, one of the Distance constants.
+	 */
+	public function getDistanceMetric(): string {
+		return $this->getDescriptorProfile()['distance'];
+	}
+
+	/**
+	 * Profile of the descriptors of the current model.
+	 *
+	 * @return array ['descriptor' => string, 'distance' => string,
+	 *  'sensitivity' => ['min' => float, 'default' => float, 'max' => float],
+	 *  'link_suggestion_sensitivity' => float,
+	 *  'confidence' => ['min' => float, 'default' => float, 'max' => float]]
+	 */
+	public function getDescriptorProfile(): array {
+		if ($this->getCurrentFaceModel() === ExternalModel::FACE_MODEL_ID) {
+			$profile = $this->getExternalDescriptorProfile();
+			if (!is_null($profile)) {
+				return $profile;
+			}
+		}
+		return self::normalizeDescriptorProfile([]);
+	}
+
+	/**
+	 * Profile the service of the external model reported the last time, or null
+	 * if it was never used or its service did not report one.
+	 */
+	public function getExternalDescriptorProfile(): ?array {
+		$saved = json_decode($this->config->getAppValue(Application::APP_NAME, self::DESCRIPTOR_PROFILE_KEY, ''), true);
+		if (!is_array($saved)) {
+			return null;
+		}
+		try {
+			return self::normalizeDescriptorProfile($saved);
+		} catch (\InvalidArgumentException $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Save the profile the service of the external model reported.
+	 */
+	public function setExternalDescriptorProfile(array $profile): void {
+		$before = $this->getDescriptorProfile();
+		$this->config->setAppValue(Application::APP_NAME, self::DESCRIPTOR_PROFILE_KEY, json_encode(self::normalizeDescriptorProfile($profile)));
+		$this->resetThresholdsIfChanged($before);
+	}
+
+	/**
+	 * The thresholds saved by the administrator are distances of a metric and
+	 * of some descriptors, or scores of a detector, so they are forgotten when
+	 * the current profile is not the one in $before any more.
+	 */
+	public function resetThresholdsIfChanged(array $before): void {
+		$after = $this->getDescriptorProfile();
+		if ($after['descriptor'] !== $before['descriptor'] ||
+		    $after['distance'] !== $before['distance'] ||
+		    $after['sensitivity'] !== $before['sensitivity']) {
+			$this->config->deleteAppValue(Application::APP_NAME, self::SENSITIVITY_KEY);
+			$this->config->deleteAppValue(Application::APP_NAME, self::LINK_SUGGESTION_SENSITIVITY_KEY);
+		}
+		// The confidence is a score of the detector, that can change without
+		// changing the descriptors.
+		if ($after['confidence'] !== $before['confidence']) {
+			$this->config->deleteAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY);
+		}
+	}
+
+	/**
+	 * Fill a profile, as reported by a model, with the defaults of the dlib
+	 * models, refusing what cannot be used.
+	 */
+	public static function normalizeDescriptorProfile(array $profile): array {
+		$distance = $profile['distance'] ?? Distance::EUCLIDEAN;
+		if (!is_string($distance) || !Distance::isValid($distance)) {
+			throw new \InvalidArgumentException('Unknown distance metric of the descriptors: ' . json_encode($distance));
+		}
+
+		$range = $profile['sensitivity'] ?? [];
+		$min = floatval($range['min'] ?? self::MINIMUM_SENSITIVITY);
+		$max = floatval($range['max'] ?? self::MAXIMUM_SENSITIVITY);
+		$default = floatval($range['default'] ?? self::DEFAULT_SENSITIVITY);
+		if ($min <= 0.0 || $min > $default || $default > $max) {
+			throw new \InvalidArgumentException('Invalid sensitivity range of the descriptors: ' . json_encode($range));
+		}
+
+		$link = floatval($profile['link_suggestion_sensitivity'] ?? self::DEFAULT_LINK_SUGGESTION_SENSITIVITY);
+
+		$range = $profile['confidence'] ?? [];
+		$confidence = [
+			'min' => floatval($range['min'] ?? self::MINIMUM_MINIMUM_CONFIDENCE),
+			'default' => floatval($range['default'] ?? self::DEFAULT_MINIMUM_CONFIDENCE),
+			'max' => floatval($range['max'] ?? self::MAXIMUM_MINIMUM_CONFIDENCE),
+		];
+		if ($confidence['min'] > $confidence['default'] || $confidence['default'] > $confidence['max']) {
+			throw new \InvalidArgumentException('Invalid confidence range of the detections: ' . json_encode($range));
+		}
+
+		return [
+			'descriptor' => strval($profile['descriptor'] ?? self::DEFAULT_DESCRIPTOR),
+			'distance' => $distance,
+			'sensitivity' => ['min' => $min, 'default' => $default, 'max' => $max],
+			'link_suggestion_sensitivity' => $link,
+			'confidence' => $confidence,
+		];
 	}
 
 	public function setSensitivity($sensitivity): void {
 		$this->config->setAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, $sensitivity);
 	}
 
+	/**
+	 * The minimum confidence of a detection to group the face. Each detector has
+	 * its own scale, so a value saved for another profile, out of the range of
+	 * the current one, falls back to its default.
+	 */
 	public function getMinimumConfidence(): float {
-		return floatval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, self::DEFAULT_MINIMUM_CONFIDENCE));
+		$confidence = $this->config->getAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, '');
+		$range = $this->getMinimumConfidenceRange();
+		if (!is_numeric($confidence) ||
+		    floatval($confidence) < $range['min'] ||
+		    floatval($confidence) > $range['max']) {
+			return $range['default'];
+		}
+		return floatval($confidence);
+	}
+
+	/**
+	 * Range of the minimum confidence for the detector of the current model.
+	 *
+	 * @return array ['min' => float, 'default' => float, 'max' => float]
+	 */
+	public function getMinimumConfidenceRange(): array {
+		return $this->getDescriptorProfile()['confidence'];
 	}
 
 	public function setMinimumConfidence($confidence): void {
@@ -461,9 +626,11 @@ class SettingsService {
 	 * Distance up to which two clusters are proposed as being one person.
 	 */
 	public function getLinkSuggestionSensitivity(): float {
-		return floatval($this->config->getAppValue(Application::APP_NAME,
-		                                           self::LINK_SUGGESTION_SENSITIVITY_KEY,
-		                                           self::DEFAULT_LINK_SUGGESTION_SENSITIVITY));
+		$sensitivity = $this->config->getAppValue(Application::APP_NAME, self::LINK_SUGGESTION_SENSITIVITY_KEY, '');
+		if (!is_numeric($sensitivity)) {
+			return $this->getDescriptorProfile()['link_suggestion_sensitivity'];
+		}
+		return floatval($sensitivity);
 	}
 
 	/**

@@ -156,6 +156,8 @@ class ModelManager {
 	 * Set default model to use
 	 * @param int $version model version
 	 * @return bool true if successful. False otherwise
+	 * @throws \OCA\FaceRecognition\Model\Exceptions\IncompatibleModelException if the
+	 *  external model computes other descriptors than the faces analyzed so far
 	 */
 	public function setDefault(int $version): bool {
 		$error_message = '';
@@ -163,8 +165,16 @@ class ModelManager {
 		if (is_null($model) || !$model->isInstalled() || !$model->meetDependencies($error_message))
 			return false;
 
+		// The external model learns here which descriptors its service computes,
+		// and refuses one that cannot be compared with the faces analyzed so far.
+		if ($model instanceof ExternalModel) {
+			$model->open();
+		}
+
 		if ($this->settingsService->getCurrentFaceModel() !== $model->getId()) {
+			$before = $this->settingsService->getDescriptorProfile();
 			$this->settingsService->setCurrentFaceModel($model->getId());
+			$this->settingsService->resetThresholdsIfChanged($before);
 		}
 		$this->userManager->callForAllUsers(function (IUser $user) {
 			$this->settingsService->setUserFullScanDone(false, $user->getUID());

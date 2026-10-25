@@ -33,6 +33,7 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Helper\Distance;
 use OCA\FaceRecognition\Helper\Euclidean;
 use OCA\FaceRecognition\Helper\Requirements;
 
@@ -374,8 +375,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * @return array Face IDs of each group found
 	 */
 	private function getNewClusters(array $faces): array {
-		// Clustering parameters
-		$sensitivity = $this->settingsService->getSensitivity();
+		// Clustering parameters. The descriptors are compared with the Euclidean
+		// distance, translating the threshold of the metric of the model.
+		$metric = $this->settingsService->getDistanceMetric();
+		$sensitivity = Distance::toEuclidean($this->settingsService->getSensitivity(), $metric);
+		if ($metric !== Distance::EUCLIDEAN) {
+			foreach ($faces as $i => $face) {
+				$faces[$i]['descriptor'] = Distance::prepare($face['descriptor'], $metric);
+			}
+		}
 
 		if (Requirements::pdlibLoaded()) {
 			// Create edges (neighbors) for Chinese Whispers

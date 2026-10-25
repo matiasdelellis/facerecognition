@@ -191,11 +191,14 @@ class SettingsController extends Controller {
 				}
 				break;
 			case SettingsService::SENSITIVITY_KEY:
+				// The range depends on the metric of the descriptors of the model.
+				$minSensitivity = $this->settingsService->getMinimumSensitivity();
+				$maxSensitivity = $this->settingsService->getMaximumSensitivity();
 				if (!is_numeric($value) ||
-				    (float)$value < (float)SettingsService::MINIMUM_SENSITIVITY ||
-				    (float)$value > (float)SettingsService::MAXIMUM_SENSITIVITY) {
+				    (float)$value < $minSensitivity ||
+				    (float)$value > $maxSensitivity) {
 					$status = self::STATE_ERROR;
-					$message = $this->l10n->t("The threshold must be between %s and %s.", [SettingsService::MINIMUM_SENSITIVITY, SettingsService::MAXIMUM_SENSITIVITY]);
+					$message = $this->l10n->t("The threshold must be between %s and %s.", [strval($minSensitivity), strval($maxSensitivity)]);
 					break;
 				}
 				$this->settingsService->setSensitivity($value);
@@ -204,11 +207,13 @@ class SettingsController extends Controller {
 				});
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
+				// The range depends on the scale of the scores of the detector of the model.
+				$confidenceRange = $this->settingsService->getMinimumConfidenceRange();
 				if (!is_numeric($value) ||
-				    (float)$value < (float)SettingsService::MINIMUM_MINIMUM_CONFIDENCE ||
-				    (float)$value > (float)SettingsService::MAXIMUM_MINIMUM_CONFIDENCE) {
+				    (float)$value < $confidenceRange['min'] ||
+				    (float)$value > $confidenceRange['max']) {
 					$status = self::STATE_ERROR;
-					$message = $this->l10n->t("The minimum confidence must be between %s and %s.", [SettingsService::MINIMUM_MINIMUM_CONFIDENCE, SettingsService::MAXIMUM_MINIMUM_CONFIDENCE]);
+					$message = $this->l10n->t("The minimum confidence must be between %s and %s.", [strval($confidenceRange['min']), strval($confidenceRange['max'])]);
 					break;
 				}
 				$this->settingsService->setMinimumConfidence($value);

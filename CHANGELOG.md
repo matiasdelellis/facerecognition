@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- The service of the external model reports in `/open` which descriptors it
+  computes, how they are compared (Euclidean or cosine distance), the range
+  of the clustering threshold and the range of the confidence of its
+  detections, since each detector has its own scale. The app compares them
+  with that metric, adapts both sliders to those ranges, and refuses to analyze with a service
+  whose descriptors changed since the images were analyzed, since they cannot
+  be compared. A service that does not report it is taken as dlib.
 - The fast pass uses the current model with a `fast` hint instead of the HOG
   model. Any model can have a fast pass without installing model 3, and the
   descriptors and the comparison metric stay the same between both passes.

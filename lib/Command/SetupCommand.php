@@ -28,6 +28,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Model\Exceptions\IncompatibleModelException;
 use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\ModelManager;
@@ -250,18 +251,27 @@ class SetupCommand extends Command {
 
 		if ($model->isInstalled()) {
 			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
-			$this->modelManager->setDefault($modelId);
-			$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
-
-			return 0;
+			return $this->setDefaultModel($modelId, $modelDescription);
 		}
 
 		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 		$model->install();
 		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
 
-		$this->modelManager->setDefault($modelId);
+		return $this->setDefaultModel($modelId, $modelDescription);
+	}
+
+	private function setDefaultModel (int $modelId, string $modelDescription): int {
+		try {
+			$this->modelManager->setDefault($modelId);
+		} catch (IncompatibleModelException $e) {
+			$this->logger->writeln($e->getMessage());
+			return 1;
+		}
 		$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
+
+		$profile = $this->settingsService->getDescriptorProfile();
+		$this->logger->writeln('Its descriptors are ' . $profile['descriptor'] . ', compared with the ' . $profile['distance'] . ' distance');
 
 		return 0;
 	}

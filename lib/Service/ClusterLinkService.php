@@ -26,6 +26,7 @@ use OCA\FaceRecognition\Db\ClusterMapper;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Helper\Distance;
 use OCA\FaceRecognition\Helper\Euclidean;
 use OCA\FaceRecognition\Helper\Requirements;
 
@@ -84,7 +85,10 @@ class ClusterLinkService {
 		$minFaceSize = $this->settingsService->getMinimumFaceSize();
 		$minConfidence = $this->settingsService->getMinimumConfidence();
 		$samples = $this->settingsService->getLinkSuggestionSamples();
-		$sensitivity = $this->settingsService->getLinkSuggestionSensitivity();
+		// Compared with the Euclidean distance, translating the threshold and the
+		// distances answered from and to the metric of the model.
+		$metric = $this->settingsService->getDistanceMetric();
+		$sensitivity = Distance::toEuclidean($this->settingsService->getLinkSuggestionSensitivity(), $metric);
 
 		list($sampleOf, $sizes) = $this->faceMapper->findClusterSamples(
 			$userId, $modelId, $minFaceSize, $minConfidence, $samples);
@@ -96,7 +100,7 @@ class ClusterLinkService {
 			return [];
 		}
 
-		$own = $this->descriptorsOf($ownFaces);
+		$own = $this->descriptorsOf($ownFaces, $metric);
 		if (empty($own)) {
 			return [];
 		}
@@ -121,7 +125,7 @@ class ClusterLinkService {
 				}
 			}
 
-			foreach ($this->descriptorsOf($faceIds) as $faceId => $descriptor) {
+			foreach ($this->descriptorsOf($faceIds, $metric) as $faceId => $descriptor) {
 				$cluster = $ownerOf[$faceId];
 				$distance = $this->closestDistance($descriptor, $own);
 				if ($distance >= $sensitivity) {
@@ -166,7 +170,7 @@ class ClusterLinkService {
 				'person' => $person,
 				'name' => is_null($person) ? null : $this->nameOf($userId, $person),
 				'count' => $sizes[$cluster] ?? 0,
-				'distance' => round($distance, 4),
+				'distance' => round(Distance::fromEuclidean($distance, $metric), 4),
 			];
 
 			if (count($result) >= $limit) {
@@ -179,17 +183,18 @@ class ClusterLinkService {
 
 	/**
 	 * @param int[] $faceIds
+	 * @param string $metric Metric of the model, the descriptors are prepared for it
 	 *
 	 * @return array [faceId => descriptor]
 	 */
-	private function descriptorsOf(array $faceIds): array {
+	private function descriptorsOf(array $faceIds, string $metric): array {
 		$descriptors = [];
 		foreach ($this->faceMapper->findDescriptorsBathed($faceIds) as $face) {
 			if (!is_array($face)) {
 				// The face was deleted in the meantime.
 				continue;
 			}
-			$descriptors[(int) $face['id']] = $face['descriptor'];
+			$descriptors[(int) $face['id']] = Distance::prepare($face['descriptor'], $metric);
 		}
 
 		return $descriptors;

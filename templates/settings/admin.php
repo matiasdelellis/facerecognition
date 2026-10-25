@@ -34,7 +34,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="sensitivity-range"><?php p($l->t('Small threshold'));?></label>
-			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<span><input type="range" id="sensitivity-range" min="<?php p($_['sensitivity-min']);?>" max="<?php p($_['sensitivity-max']);?>" value="<?php p($_['sensitivity-default']);?>" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="sensitivity-range"><?php p($l->t('Higher threshold'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -49,7 +49,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="min-confidence-range"><?php p($l->t('Lower minimum confidence'));?></label>
-			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<span><input type="range" id="min-confidence-range" min="<?php p($_['confidence-range']['min']);?>" max="<?php p($_['confidence-range']['max']);?>" value="<?php p($_['confidence-range']['default']);?>" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="min-confidence-range"><?php p($l->t('Higher minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>

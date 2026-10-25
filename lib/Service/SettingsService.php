@@ -67,6 +67,18 @@ class SettingsService {
 	const MAXIMUM_ANALYSIS_IMAGE_AREA = 3840*2160;
 
 	/**
+	 * How the image area is used: 'fixed' takes every image to that area,
+	 * enlarging the smaller ones, which keeps the memory and the time of the
+	 * dlib models the same for every image. 'maximum' only reduces the bigger
+	 * images, for models whose cost is low enough, and that find the faces as
+	 * well or better on the original image.
+	 */
+	const ANALYSIS_IMAGE_AREA_MODE_KEY = 'analysis_image_area_mode';
+	const ANALYSIS_IMAGE_AREA_FIXED = 'fixed';
+	const ANALYSIS_IMAGE_AREA_MAXIMUM = 'maximum';
+	const DEFAULT_ANALYSIS_IMAGE_AREA_MODE = self::ANALYSIS_IMAGE_AREA_FIXED;
+
+	/**
 	 * Image area used by the fast, first pass of the analysis. Its minimum is
 	 * lower than the one of the analysis area: the point of the fast pass is to
 	 * go over the library quickly, and the faces it misses on a small image are
@@ -413,6 +425,18 @@ class SettingsService {
 
 	public function setAnalysisImageArea(int $imageArea): void {
 		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
+	}
+
+	/**
+	 * One of ANALYSIS_IMAGE_AREA_FIXED or ANALYSIS_IMAGE_AREA_MAXIMUM.
+	 */
+	public function getAnalysisImageAreaMode(): string {
+		$mode = $this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_MODE_KEY, self::DEFAULT_ANALYSIS_IMAGE_AREA_MODE);
+		return ($mode === self::ANALYSIS_IMAGE_AREA_MAXIMUM) ? $mode : self::ANALYSIS_IMAGE_AREA_FIXED;
+	}
+
+	public function setAnalysisImageAreaMode(string $mode): void {
+		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_MODE_KEY, $mode);
 	}
 
 	/**

@@ -192,6 +192,39 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
     }
 
     /*
+     * Image area mode: fixed size, or only a maximum
+     */
+    function getImageAreaMode() {
+        getJson(OC.generateUrl('apps/facerecognition/getappvalue'), {
+            type: 'analysis_image_area_mode',
+        }).then((data) => {
+            const checkbox = $('#image-area-maximum');
+            if (checkbox && data.status === state.OK) {
+                checkbox.checked = (data.value === 'maximum');
+            }
+        }).catch(() => { /* ignore */ });
+    }
+
+    function bindImageAreaMode() {
+        const checkbox = $('#image-area-maximum');
+        if (!checkbox) return;
+
+        checkbox.addEventListener('change', () => {
+            postForm(OC.generateUrl('apps/facerecognition/setappvalue'), {
+                type: 'analysis_image_area_mode',
+                value: checkbox.checked ? 'maximum' : 'fixed',
+            }).then((data) => {
+                if (data.status === state.SUCCESS) {
+                    showSuccess(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                } else {
+                    showError(t('facerecognition', 'The change could not be applied.') + ' - ' + data.message);
+                    getImageAreaMode();
+                }
+            }).catch(() => { /* ignore */ });
+        });
+    }
+
+    /*
      * Sensitivity
      */
     function getSensitivity() {
@@ -373,11 +406,13 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
      */
     function init() {
         bindImageArea();
+        bindImageAreaMode();
         bindSensitivity();
         bindMinConfidence();
         bindMinFacesInCluster();
 
         getImageArea();
+        getImageAreaMode();
         getSensitivity();
         getMinConfidence();
         getMinFacesInCluster();

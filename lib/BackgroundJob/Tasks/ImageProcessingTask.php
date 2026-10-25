@@ -315,10 +315,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$this->logInfo('Processing image ' . $imagePath);
 
+		$enlarge = $this->settingsService->getAnalysisImageAreaMode() === SettingsService::ANALYSIS_IMAGE_AREA_FIXED;
 		$tempImage = new TempImage($imagePath,
 		                           $this->model->getPreferredMimeType(),
 		                           $this->getMaxImageArea(),
-		                           $this->settingsService->getMinimumImageSize());
+		                           $this->settingsService->getMinimumImageSize(),
+		                           $enlarge);
 
 		return $tempImage;
 	}

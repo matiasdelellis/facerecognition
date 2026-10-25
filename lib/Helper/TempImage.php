@@ -57,10 +57,14 @@ class TempImage extends Image {
 	/** @var bool */
 	private $skipped = false;
 
+	/** @var bool Whether the images smaller than the area are enlarged to reach it */
+	private $enlarge;
+
 	public function __construct(string $imagePath,
 	                            string $preferredMimeType,
 	                            int    $maxImageArea,
-	                            int    $minImageSide)
+	                            int    $minImageSide,
+	                            bool   $enlarge = true)
 	{
 		parent::__construct();
 
@@ -68,6 +72,7 @@ class TempImage extends Image {
 		$this->preferredMimeType = $preferredMimeType;
 		$this->maxImageArea      = $maxImageArea;
 		$this->minImageSide      = $minImageSide;
+		$this->enlarge           = $enlarge;
 
 		$this->tempManager       = \OC::$server->get(ITempManager::class);
 		$this->imaginary         = new Imaginary();
@@ -210,7 +215,8 @@ class TempImage extends Image {
 	}
 
 	/**
-	 * Resizes the image to reach max image area, but preserving ratio.
+	 * Resizes the image to reach max image area, but preserving ratio. Smaller
+	 * images are only enlarged when asked to.
 	 *
 	 * @param int $widthOrig width of the source image
 	 * @param int $heightOrig height of the source image
@@ -244,8 +250,17 @@ class TempImage extends Image {
 	 * @return float scale factor to apply to the image
 	 */
 	private function getResizeRatio($widthOrig, $heightOrig): float {
-		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
-		return sqrt($areaRatio);
+		return self::scaleFactor($widthOrig, $heightOrig, $this->maxImageArea, $this->enlarge);
+	}
+
+	/**
+	 * Scale factor that takes an image of $width x $height to $area, keeping
+	 * its ratio. Without $enlarge the area is only a maximum: a smaller image
+	 * keeps its size.
+	 */
+	public static function scaleFactor(int $width, int $height, int $area, bool $enlarge): float {
+		$scaleFactor = sqrt($area / ($width * $height));
+		return $enlarge ? $scaleFactor : min(1.0, $scaleFactor);
 	}
 
 }

@@ -24,6 +24,11 @@
 			<a id="restore-image-area" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-image-area" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
 		</p>
+		<p>
+			<input type="checkbox" id="image-area-maximum" class="checkbox" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>>
+			<label for="image-area-maximum"><?php p($l->t('Use the area only as a maximum: smaller images are analyzed at their own size instead of being enlarged'));?></label>
+		</p>
+		<p class="settings-hint"><?php p($l->t('The dlib models need every image at the same size to keep their memory under control. Newer models, as some external ones, need much less memory and find the faces as well or better on the original image.'));?></p>
 		<br>
 		<h3>
 			<?php p($l->t('Clustering threshold'));?>

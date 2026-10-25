@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- The image area of the analysis can be used only as a maximum, from the admin
+  settings: bigger images are reduced to it, and smaller ones are analyzed at
+  their own size instead of being enlarged. The default is still a fixed size,
+  that keeps the memory of the dlib models the same for every image.
 - The service of the external model reports in `/open` which descriptors it
   computes, how they are compared (Euclidean or cosine distance), the range
   of the clustering threshold and the range of the confidence of its

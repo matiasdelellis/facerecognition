@@ -146,6 +146,14 @@ class SettingsController extends Controller {
 		$message = "";
 
 		switch ($type) {
+			case SettingsService::ANALYSIS_IMAGE_AREA_MODE_KEY:
+				if (!in_array($value, [SettingsService::ANALYSIS_IMAGE_AREA_FIXED, SettingsService::ANALYSIS_IMAGE_AREA_MAXIMUM], true)) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The format seems to be incorrect.");
+					break;
+				}
+				$this->settingsService->setAnalysisImageAreaMode($value);
+				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				if (!is_numeric($value) || (int)$value <= 0) {
 					$status = self::STATE_ERROR;
@@ -266,6 +274,9 @@ class SettingsController extends Controller {
 				break;
 			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
 				$value = $this->settingsService->getMinimumFacesInCluster();
+				break;
+			case SettingsService::ANALYSIS_IMAGE_AREA_MODE_KEY:
+				$value = $this->settingsService->getAnalysisImageAreaMode();
 				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();

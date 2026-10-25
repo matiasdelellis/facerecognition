@@ -337,6 +337,64 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
     }
 
     /*
+     * Minimum face size
+     */
+    function getMinFaceSize() {
+        getJson(OC.generateUrl('apps/facerecognition/getappvalue'), {
+            type: 'min_face_size',
+        }).then((data) => {
+            if (data.status === state.OK) {
+                const size = parseInt(data.value, 10);
+                const rangeEl = $('#min-face-size-range');
+                const valueEl = $('#min-face-size-value');
+                if (rangeEl) rangeEl.value = size;
+                setText(valueEl, size + ' px');
+            }
+        }).catch(() => { /* ignore */ });
+    }
+
+    function bindMinFaceSize() {
+        const range = $('#min-face-size-range');
+        const value = $('#min-face-size-value');
+        const restore = $('#restore-min-face-size');
+        const save = $('#save-min-face-size');
+        if (!range) return;
+
+        range.addEventListener('input', () => {
+            setText(value, range.value + ' px');
+            show(restore);
+            show(save);
+        });
+
+        if (restore) {
+            restore.addEventListener('click', (event) => {
+                event.preventDefault();
+                getMinFaceSize();
+                hide(restore);
+                hide(save);
+            });
+        }
+
+        if (save) {
+            save.addEventListener('click', (event) => {
+                event.preventDefault();
+                postForm(OC.generateUrl('apps/facerecognition/setappvalue'), {
+                    type: 'min_face_size',
+                    value: range.value.toString(),
+                }).then((data) => {
+                    if (data.status === state.SUCCESS) {
+                        showSuccess(t('facerecognition', 'The changes were saved. It will be taken into account in the next analysis.'));
+                        hide(restore);
+                        hide(save);
+                    } else {
+                        showError(t('facerecognition', 'The change could not be applied.') + ' - ' + data.message);
+                    }
+                }).catch(() => { /* ignore */ });
+            });
+        }
+    }
+
+    /*
      * Min Cluster Size
      */
     function getMinFacesInCluster() {
@@ -409,12 +467,14 @@ import { showError, showSuccess } from '@nextcloud/dialogs';
         bindImageAreaMode();
         bindSensitivity();
         bindMinConfidence();
+        bindMinFaceSize();
         bindMinFacesInCluster();
 
         getImageArea();
         getImageAreaMode();
         getSensitivity();
         getMinConfidence();
+        getMinFaceSize();
         getMinFacesInCluster();
 
         checkProgress();

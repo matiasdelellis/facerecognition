@@ -229,6 +229,21 @@ class SettingsController extends Controller {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
+			case SettingsService::MINIMUM_FACE_SIZE_KEY:
+				// The range is the one suggested by the model.
+				$faceSizeRange = $this->settingsService->getMinimumFaceSizeRange();
+				if (!is_numeric($value) ||
+				    (int)$value < $faceSizeRange['min'] ||
+				    (int)$value > $faceSizeRange['max']) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The minimum face size must be between %s and %s.", [strval($faceSizeRange['min']), strval($faceSizeRange['max'])]);
+					break;
+				}
+				$this->settingsService->setMinimumFaceSize(strval((int)$value));
+				$this->userManager->callForSeenUsers(function(IUser $user) {
+					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
+				});
+				break;
 			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
 				if (!is_numeric($value) ||
 				    (int)$value < (int)SettingsService::MINIMUM_MINIMUM_FACES_IN_CLUSTER ||
@@ -271,6 +286,9 @@ class SettingsController extends Controller {
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
+				break;
+			case SettingsService::MINIMUM_FACE_SIZE_KEY:
+				$value = $this->settingsService->getMinimumFaceSize();
 				break;
 			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
 				$value = $this->settingsService->getMinimumFacesInCluster();

@@ -62,6 +62,19 @@
 		</p>
 		<br>
 		<h3>
+			<?php p($l->t('Minimum face size'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('Faces smaller than this size, in pixels of the original image, are not grouped. The smallest faces give less reliable descriptors and are more easily confused with other persons.'));?></p>
+		<p class="settings-ranged">
+			<label for="min-face-size-range"><?php p($l->t('Smaller faces'));?></label>
+			<span><input type="range" id="min-face-size-range" min="<?php p($_['face-size-range']['min']);?>" max="<?php p($_['face-size-range']['max']);?>" value="<?php p($_['face-size-range']['default']);?>" step="1" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<label for="min-face-size-range"><?php p($l->t('Larger faces'));?></label>
+			<span id="min-face-size-value"class="span-highlighted">...</span>
+			<a id="restore-min-face-size" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-min-face-size" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
 			<?php p($l->t('Minimum of faces in cluster'));?>
 		</h3>
 		<p class="settings-hint"><?php p($l->t('The minimum number of faces that a cluster must have to display it to the user.'));?></p>

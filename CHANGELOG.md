@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
   with that metric, adapts both sliders to those ranges, and refuses to analyze with a service
   whose descriptors changed since the images were analyzed, since they cannot
   be compared. A service that does not report it is taken as dlib.
+- The minimum face size to group a face can be configured from the admin
+  settings, and the service of the external model can suggest its range and
+  default in `/open`, as the descriptors of each recognizer lose reliability at
+  a different size. A size chosen by the administrator is kept when the model
+  changes, only limited to the range of the new one.
 - The fast pass uses the current model with a `fast` hint instead of the HOG
   model. Any model can have a fast pass without installing model 3, and the
   descriptors and the comparison metric stay the same between both passes.

@@ -271,6 +271,43 @@ class SettingsServiceTest extends TestCase {
 		$this->assertEquals(Distance::EUCLIDEAN, $profile['distance']);
 		$this->assertEquals(['min' => 0.2, 'default' => 0.4, 'max' => 0.6], $profile['sensitivity']);
 		$this->assertEquals(['min' => 0.0, 'default' => 0.99, 'max' => 1.1], $profile['confidence']);
+		$this->assertEquals(['min' => 0, 'default' => 40, 'max' => 250], $profile['min_face_size']);
+	}
+
+	/**
+	 * The model suggests the minimum face size. Pixels mean the same for every
+	 * model, so what the administrator chose is kept, only limited to the range.
+	 */
+	public function testMinimumFaceSizeSuggestedByTheModel() {
+		$config = $this->makeAppConfig([SettingsService::CURRENT_MODEL_KEY => strval(ExternalModel::FACE_MODEL_ID)]);
+		$service = new SettingsService($config, null);
+		$this->assertEquals(40, $service->getMinimumFaceSize());
+
+		$profile = $this->cosineProfile();
+		$profile['min_face_size'] = ['min' => 20, 'default' => 30, 'max' => 200];
+		$service->setExternalDescriptorProfile($profile);
+		$this->assertEquals(['min' => 20, 'default' => 30, 'max' => 200], $service->getMinimumFaceSizeRange());
+		$this->assertEquals(30, $service->getMinimumFaceSize());
+
+		$service->setMinimumFaceSize('50');
+		$this->assertEquals(50, $service->getMinimumFaceSize());
+
+		// Another profile keeps it, inside of its range.
+		$profile['min_face_size'] = ['min' => 10, 'default' => 24, 'max' => 45];
+		$service->setExternalDescriptorProfile($profile);
+		$this->assertEquals(45, $service->getMinimumFaceSize());
+		$service->setMinimumFaceSize('5');
+		$this->assertEquals(10, $service->getMinimumFaceSize());
+
+		// Back to dlib, with its own suggestion.
+		$service->setCurrentFaceModel(1);
+		$config->deleteAppValue('facerecognition', SettingsService::MINIMUM_FACE_SIZE_KEY);
+		$this->assertEquals(40, $service->getMinimumFaceSize());
+	}
+
+	public function testInvalidMinimumFaceSizeRangeIsRefused() {
+		$this->expectException(\InvalidArgumentException::class);
+		SettingsService::normalizeDescriptorProfile(['min_face_size' => ['min' => 50, 'default' => 40, 'max' => 250]]);
 	}
 
 	public function testUnknownMetricIsRefused() {

@@ -108,6 +108,7 @@ class Admin implements ISettings {
 			'sensitivity-max' => $this->settingsService->getMaximumSensitivity(),
 			'sensitivity-default' => $this->settingsService->getDefaultSensitivity(),
 			'confidence-range' => $this->settingsService->getMinimumConfidenceRange(),
+			'face-size-range' => $this->settingsService->getMinimumFaceSizeRange(),
 			'resume' => $resume,
 		];
 

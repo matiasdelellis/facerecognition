@@ -104,7 +104,7 @@ class SettingsService {
 	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
 	const MAXIMUM_MINIMUM_CONFIDENCE = '1.1';
 
-	/** Minimum face size used to try to clustring faces */
+	/** Minimum face size used to try to clustring faces. Models can suggest another range. */
 	const MINIMUM_FACE_SIZE_KEY = 'min_face_size';
 	const MINIMUM_MINIMUM_FACE_SIZE = '0';
 	const DEFAULT_MINIMUM_FACE_SIZE = '40';
@@ -565,12 +565,23 @@ class SettingsService {
 			throw new \InvalidArgumentException('Invalid confidence range of the detections: ' . json_encode($range));
 		}
 
+		$range = $profile['min_face_size'] ?? [];
+		$faceSize = [
+			'min' => intval($range['min'] ?? self::MINIMUM_MINIMUM_FACE_SIZE),
+			'default' => intval($range['default'] ?? self::DEFAULT_MINIMUM_FACE_SIZE),
+			'max' => intval($range['max'] ?? self::MAXIMUM_MINIMUM_FACE_SIZE),
+		];
+		if ($faceSize['min'] < 0 || $faceSize['min'] > $faceSize['default'] || $faceSize['default'] > $faceSize['max']) {
+			throw new \InvalidArgumentException('Invalid range of the minimum face size: ' . json_encode($range));
+		}
+
 		return [
 			'descriptor' => strval($profile['descriptor'] ?? self::DEFAULT_DESCRIPTOR),
 			'distance' => $distance,
 			'sensitivity' => ['min' => $min, 'default' => $default, 'max' => $max],
 			'link_suggestion_sensitivity' => $link,
 			'confidence' => $confidence,
+			'min_face_size' => $faceSize,
 		];
 	}
 
@@ -685,11 +696,31 @@ class SettingsService {
 		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_IMAGE_SIZE_KEY, self::DEFAULT_MINIMUM_IMAGE_SIZE));
 	}
 
+	/**
+	 * The minimum size of a face, in pixels of the original image, to group it.
+	 * Pixels mean the same for every model, so a value saved for another
+	 * profile is kept, only limited to the range of the current one.
+	 */
 	public function getMinimumFaceSize(): int {
-		$minFaceSize = intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
-		$minFaceSize = max(self::MINIMUM_MINIMUM_FACE_SIZE, $minFaceSize);
-		$minFaceSize = min($minFaceSize, self::MAXIMUM_MINIMUM_FACE_SIZE);
-		return intval($minFaceSize);
+		$range = $this->getMinimumFaceSizeRange();
+		$minFaceSize = $this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, '');
+		if (!is_numeric($minFaceSize)) {
+			return $range['default'];
+		}
+		return min(max(intval($minFaceSize), $range['min']), $range['max']);
+	}
+
+	/**
+	 * Range of the minimum face size suggested by the current model.
+	 *
+	 * @return array ['min' => int, 'default' => int, 'max' => int]
+	 */
+	public function getMinimumFaceSizeRange(): array {
+		return $this->getDescriptorProfile()['min_face_size'];
+	}
+
+	public function setMinimumFaceSize($minFaceSize): void {
+		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, $minFaceSize);
 	}
 
 	public function getMaximumImageArea(): int {

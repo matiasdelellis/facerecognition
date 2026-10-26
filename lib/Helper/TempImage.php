@@ -154,7 +154,7 @@ class TempImage extends Image {
 		}
 
 		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
-		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
+		[$newWidth, $newHeight] = self::targetSize($widthOrig, $heightOrig, $scaleFactor);
 
 		$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $fileInfo['autorotate'], $this->preferredMimeType);
 		$this->loadFromData($resizedResource);
@@ -203,14 +203,15 @@ class TempImage extends Image {
 
 	/**
 	 * Size the image must have to reach the maximum image area, preserving
-	 * the ratio.
+	 * the ratio. The sides are rounded down, since rounding them up can give
+	 * an area a little larger than the maximum, which the model rejects.
 	 *
 	 * @return int[] width and height of the resized image
 	 */
-	private function getTargetSize(int $width, int $height, float $scaleFactor): array {
+	public static function targetSize(int $width, int $height, float $scaleFactor): array {
 		return [
-			intval(round($width * $scaleFactor)),
-			intval(round($height * $scaleFactor)),
+			max(1, intval(floor($width * $scaleFactor))),
+			max(1, intval(floor($height * $scaleFactor))),
 		];
 	}
 
@@ -229,7 +230,7 @@ class TempImage extends Image {
 		}
 
 		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
-		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
+		[$newWidth, $newHeight] = self::targetSize($widthOrig, $heightOrig, $scaleFactor);
 
 		// The decoding may have already downscaled it to about this same size,
 		// in which case there is nothing left to resize.

@@ -118,4 +118,13 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(0.5, TempImage::scaleFactor(400, 400, 40000, false));
 	}
 
+	public function testTargetSizeNotOverArea() {
+		// A 4:3 photo reduced to the largest area of the models: rounding the
+		// sides to the nearest would give 3326x2494, over the area.
+		$area = 3840 * 2160;
+		[$width, $height] = TempImage::targetSize(4000, 3000, TempImage::scaleFactor(4000, 3000, $area, false));
+		$this->assertEquals([3325, 2494], [$width, $height]);
+		$this->assertLessThanOrEqual($area, $width * $height);
+	}
+
 }

@@ -369,6 +369,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$area = $fastMode ? min($area, $commandArea) : $commandArea;
 		}
 
+		// The overrides are not checked against the model, which rejects any
+		// image larger than its maximum.
+		//
+		$area = min($area, $this->model->getMaximumArea());
+
 		$this->maxImageAreaCached = $area;
 
 		return $this->maxImageAreaCached;

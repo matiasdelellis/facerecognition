@@ -57,10 +57,14 @@ class TempImage extends Image {
 	/** @var bool */
 	private $skipped = false;
 
+	/** @var bool Whether the images smaller than the area are enlarged to reach it */
+	private $enlarge;
+
 	public function __construct(string $imagePath,
 	                            string $preferredMimeType,
 	                            int    $maxImageArea,
-	                            int    $minImageSide)
+	                            int    $minImageSide,
+	                            bool   $enlarge = true)
 	{
 		parent::__construct();
 
@@ -68,6 +72,7 @@ class TempImage extends Image {
 		$this->preferredMimeType = $preferredMimeType;
 		$this->maxImageArea      = $maxImageArea;
 		$this->minImageSide      = $minImageSide;
+		$this->enlarge           = $enlarge;
 
 		$this->tempManager       = \OC::$server->get(ITempManager::class);
 		$this->imaginary         = new Imaginary();
@@ -123,8 +128,16 @@ class TempImage extends Image {
 			return;
 		}
 
-		$this->tempPath = $this->tempManager->getTemporaryFile();
-		$this->save($this->tempPath, $this->preferredMimeType);
+		$tempPath = $this->tempManager->getTemporaryFile();
+		if ($tempPath === false) {
+			throw new \RuntimeException('Could not create the temporary image file. Check the permissions of the temporary directory.');
+		}
+
+		if (!$this->save($tempPath, $this->preferredMimeType)) {
+			throw new \RuntimeException('Could not write the temporary image to ' . $tempPath);
+		}
+
+		$this->tempPath = $tempPath;
 	}
 
 	/**
@@ -141,7 +154,7 @@ class TempImage extends Image {
 		}
 
 		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
-		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
+		[$newWidth, $newHeight] = self::targetSize($widthOrig, $heightOrig, $scaleFactor);
 
 		$resizedResource = $this->imaginary->getResized($this->imagePath, $newWidth, $newHeight, $fileInfo['autorotate'], $this->preferredMimeType);
 		$this->loadFromData($resizedResource);
@@ -190,19 +203,21 @@ class TempImage extends Image {
 
 	/**
 	 * Size the image must have to reach the maximum image area, preserving
-	 * the ratio.
+	 * the ratio. The sides are rounded down, since rounding them up can give
+	 * an area a little larger than the maximum, which the model rejects.
 	 *
 	 * @return int[] width and height of the resized image
 	 */
-	private function getTargetSize(int $width, int $height, float $scaleFactor): array {
+	public static function targetSize(int $width, int $height, float $scaleFactor): array {
 		return [
-			intval(round($width * $scaleFactor)),
-			intval(round($height * $scaleFactor)),
+			max(1, intval(floor($width * $scaleFactor))),
+			max(1, intval(floor($height * $scaleFactor))),
 		];
 	}
 
 	/**
-	 * Resizes the image to reach max image area, but preserving ratio.
+	 * Resizes the image to reach max image area, but preserving ratio. Smaller
+	 * images are only enlarged when asked to.
 	 *
 	 * @param int $widthOrig width of the source image
 	 * @param int $heightOrig height of the source image
@@ -215,7 +230,7 @@ class TempImage extends Image {
 		}
 
 		$scaleFactor = $this->getResizeRatio($widthOrig, $heightOrig);
-		[$newWidth, $newHeight] = $this->getTargetSize($widthOrig, $heightOrig, $scaleFactor);
+		[$newWidth, $newHeight] = self::targetSize($widthOrig, $heightOrig, $scaleFactor);
 
 		// The decoding may have already downscaled it to about this same size,
 		// in which case there is nothing left to resize.
@@ -236,8 +251,17 @@ class TempImage extends Image {
 	 * @return float scale factor to apply to the image
 	 */
 	private function getResizeRatio($widthOrig, $heightOrig): float {
-		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
-		return sqrt($areaRatio);
+		return self::scaleFactor($widthOrig, $heightOrig, $this->maxImageArea, $this->enlarge);
+	}
+
+	/**
+	 * Scale factor that takes an image of $width x $height to $area, keeping
+	 * its ratio. Without $enlarge the area is only a maximum: a smaller image
+	 * keeps its size.
+	 */
+	public static function scaleFactor(int $width, int $height, int $area, bool $enlarge): float {
+		$scaleFactor = sqrt($area / ($width * $height));
+		return $enlarge ? $scaleFactor : min(1.0, $scaleFactor);
 	}
 
 }

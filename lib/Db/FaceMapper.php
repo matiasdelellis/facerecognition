@@ -49,6 +49,29 @@ class FaceMapper extends QBMapper {
 		}
 	}
 
+	/**
+	 * Finds a face only if it belongs to one of the images of the given user.
+	 *
+	 * The id of a face comes from the client in some endpoints, and nothing
+	 * says that it belongs to the user that is asking, so the ownership check
+	 * has to be part of the query and not a later comparison.
+	 *
+	 * @return Face|null
+	 */
+	public function findForUser(string $userId, int $faceId): ?Face {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.id', 'f.image', 'f.cluster', 'f.x', 'f.y', 'f.width', 'f.height', 'f.landmarks', 'f.descriptor', 'f.confidence')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('f.id', $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)));
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+
 	public function findDescriptorsBathed (array $faceIds): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('id', 'descriptor')
@@ -416,6 +439,7 @@ class FaceMapper extends QBMapper {
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($personId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
 			->orderBy('i.file', 'DESC');
 
 		$qb->setMaxResults($limit);

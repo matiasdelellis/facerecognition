@@ -125,7 +125,7 @@ class Image extends Entity implements JsonSerializable {
 		$this->addType('isRefined', 'boolean');
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): mixed {
 		return [
 			'id' => $this->id,
 			'user' => $this->user,

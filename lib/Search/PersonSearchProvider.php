@@ -105,7 +105,7 @@ class PersonSearchProvider implements IProvider {
 	 */
 	public function getOrder(string $route, array $routeParameters): int {
 		if ($route === 'settings.PersonalSettings.index' &&
-		    $routeParameters["section"] === 'facerecognition') {
+		    ($routeParameters['section'] ?? '') === 'facerecognition') {
 			return 0;
 		}
 		if ($route === 'memories.Page.main') {
@@ -121,6 +121,13 @@ class PersonSearchProvider implements IProvider {
 	public function search(IUser $user, ISearchQuery $query) : SearchResult {
 		$page = $query->getCursor() ?? 0;
 		$limit = $query->getLimit();
+
+		// The people found are only meaningful for a user that enabled the
+		// analysis, and the rest of the endpoints hide them when it is off.
+		if (!$this->settingsService->getUserEnabled($user->getUID())) {
+			return SearchResult::paginated($this->l10n->t('Face Recognition'), [], $page);
+		}
+
 		return SearchResult::paginated(
 			$this->l10n->t('Face Recognition'),
 			array_map(function (Person $result) {

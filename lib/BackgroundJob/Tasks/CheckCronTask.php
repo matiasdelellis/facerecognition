@@ -44,12 +44,15 @@ class CheckCronTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 
 		$isCommand = $context->isRunningThroughCommand();
-		$isBackgroundJobModeAjax = $context->config->getAppValue('core', 'backgroundjobs_mode', 'ajax') === 'ajax';
-		if ($isCommand === false && $isBackgroundJobModeAjax === false) {
+		$backgroundJobMode = $context->config->getAppValue('core', 'backgroundjobs_mode', 'ajax');
+		// Ajax runs inside a web request and can be interrupted by the request
+		// timeout, so the analysis is only allowed from the command line or
+		// from cron/webcron.
+		if ($isCommand === false && $backgroundJobMode === 'ajax') {
 			$message =
 				"Face recognition background service can only run with cron/webcron.\n" .
 				"For details, take a look at " .
-				"https://docs.nextcloud.com/server/14/admin_manual/configuration_server/background_jobs_configuration.html";
+				"https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/background_jobs_configuration.html";
 			$this->logInfo($message);
 			return false;
 		}

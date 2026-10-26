@@ -113,8 +113,13 @@ class FileService {
 	 * @return Node | null
 	 */
 	public function getFileByPath($fullpath, $userId = null): ?Node {
-		$file = $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
-		return $file;
+		try {
+			return $this->rootFolder->getUserFolder($this->userId ?? $userId)->get($fullpath);
+		} catch (NotFoundException $e) {
+			// The path can perfectly point to a file that was already deleted
+			// or renamed, so it is just missing, and not an error.
+			return null;
+		}
 	}
 
 	/**
@@ -296,12 +301,22 @@ class FileService {
 	 * @return array List of all images and folders to continue recursive crawling
 	 */
 	public function getPicturesFromFolder(Folder $folder, $results = array()) {
+		// The method is called with the user folder to crawl the whole library,
+		// and the checks of the children are not enough for it: a .nomedia or a
+		// .facerecognition.json in the folder itself, including the root of the
+		// user, has to stop the crawl before it starts.
+		if (!$this->getDescendantDetection($folder)) {
+			return $results;
+		}
+
 		$nodes = $folder->getDirectoryListing();
 		foreach ($nodes as $node) {
 			if (!$this->isAllowedNode($node)) {
 				continue;
 			}
-			if ($node instanceof Folder && $this->getDescendantDetection($node)) {
+			if ($node instanceof Folder) {
+				// The recursive call checks the folder itself, including its
+				// .nomedia and .facerecognition.json, before crawling it.
 				$results = $this->getPicturesFromFolder($node, $results);
 			}
 			else if ($node instanceof File) {
@@ -311,6 +326,41 @@ class FileService {
 			}
 		}
 		return $results;
+	}
+
+	/**
+	 * Return all images under a path of the user folder, that can be a folder,
+	 * and is then crawled recursively, or a single image.
+	 *
+	 * The settings that disable the analysis of a folder are honored just the
+	 * same when the path is named explicitly, so that asking for a path never
+	 * analyzes what the rest of the application deliberately leaves out.
+	 *
+	 * @param string $path path of the folder or the image, relative to the
+	 *                     files folder of the user
+	 * @param string|null $userId user the path belongs to
+	 * @return File[]|null the images found, or null when the path does not exist
+	 */
+	public function getPicturesFromPath(string $path, $userId = null): ?array {
+		$node = $this->getFileByPath($path, $userId);
+		if (is_null($node)) {
+			return null;
+		}
+
+		if (!$this->isAllowedNode($node) || $this->isUnderNoDetection($node)) {
+			return array();
+		}
+
+		if ($node instanceof Folder) {
+			return $this->getDescendantDetection($node) ? $this->getPicturesFromFolder($node) : array();
+		}
+
+		if (($node instanceof File) &&
+		    $this->settingsService->isAllowedMimetype($node->getMimeType())) {
+			return array($node);
+		}
+
+		return array();
 	}
 
 	/**

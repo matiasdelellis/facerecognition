@@ -146,8 +146,16 @@ class SettingsController extends Controller {
 		$message = "";
 
 		switch ($type) {
+			case SettingsService::ANALYSIS_IMAGE_AREA_MODE_KEY:
+				if (!in_array($value, [SettingsService::ANALYSIS_IMAGE_AREA_FIXED, SettingsService::ANALYSIS_IMAGE_AREA_MAXIMUM], true)) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The format seems to be incorrect.");
+					break;
+				}
+				$this->settingsService->setAnalysisImageAreaMode($value);
+				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
-				if (!is_numeric ($value)) {
+				if (!is_numeric($value) || (int)$value <= 0) {
 					$status = self::STATE_ERROR;
 					$message = $this->l10n->t("The format seems to be incorrect.");
 					$value = '-1';
@@ -170,8 +178,15 @@ class SettingsController extends Controller {
 					$message = $this->l10n->t("The maximum recommended area is %s", $this->getFourByThreeRelation($value));
 					$status = self::STATE_ERROR;
 				}
-				$model->open();
-				$maxImageArea = $model->getMaximumArea();
+				try {
+					$model->open();
+					$maxImageArea = $model->getMaximumArea();
+				} catch (\Exception $e) {
+					$status = self::STATE_ERROR;
+					$message = $e->getMessage();
+					$value = '-1';
+					break;
+				}
 				if ($value > $maxImageArea) {
 					$value = $maxImageArea;
 					$message = $this->l10n->t("The model does not recommend an area greater than %s", $this->getFourByThreeRelation($value));
@@ -184,18 +199,59 @@ class SettingsController extends Controller {
 				}
 				break;
 			case SettingsService::SENSITIVITY_KEY:
+				// The range depends on the metric of the descriptors of the model.
+				$minSensitivity = $this->settingsService->getMinimumSensitivity();
+				$maxSensitivity = $this->settingsService->getMaximumSensitivity();
+				if (!is_numeric($value) ||
+				    (float)$value < $minSensitivity ||
+				    (float)$value > $maxSensitivity) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The threshold must be between %s and %s.", [strval($minSensitivity), strval($maxSensitivity)]);
+					break;
+				}
 				$this->settingsService->setSensitivity($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
+				// The range depends on the scale of the scores of the detector of the model.
+				$confidenceRange = $this->settingsService->getMinimumConfidenceRange();
+				if (!is_numeric($value) ||
+				    (float)$value < $confidenceRange['min'] ||
+				    (float)$value > $confidenceRange['max']) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The minimum confidence must be between %s and %s.", [strval($confidenceRange['min']), strval($confidenceRange['max'])]);
+					break;
+				}
 				$this->settingsService->setMinimumConfidence($value);
 				$this->userManager->callForSeenUsers(function(IUser $user) {
 					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
 				});
 				break;
+			case SettingsService::MINIMUM_FACE_SIZE_KEY:
+				// The range is the one suggested by the model.
+				$faceSizeRange = $this->settingsService->getMinimumFaceSizeRange();
+				if (!is_numeric($value) ||
+				    (int)$value < $faceSizeRange['min'] ||
+				    (int)$value > $faceSizeRange['max']) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The minimum face size must be between %s and %s.", [strval($faceSizeRange['min']), strval($faceSizeRange['max'])]);
+					break;
+				}
+				$this->settingsService->setMinimumFaceSize(strval((int)$value));
+				$this->userManager->callForSeenUsers(function(IUser $user) {
+					$this->settingsService->setNeedRecreateClusters(true, $user->getUID());
+				});
+				break;
 			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
+				if (!is_numeric($value) ||
+				    (int)$value < (int)SettingsService::MINIMUM_MINIMUM_FACES_IN_CLUSTER ||
+				    (int)$value > (int)SettingsService::MAXIMUM_MINIMUM_FACES_IN_CLUSTER) {
+					$status = self::STATE_ERROR;
+					$message = $this->l10n->t("The minimum number of faces must be between %s and %s.", [SettingsService::MINIMUM_MINIMUM_FACES_IN_CLUSTER, SettingsService::MAXIMUM_MINIMUM_FACES_IN_CLUSTER]);
+					break;
+				}
 				$this->settingsService->setMinimumFacesInCluster($value);
 				break;
 			case SettingsService::OBFUSCATE_FACE_THUMBS_KEY:
@@ -231,8 +287,14 @@ class SettingsController extends Controller {
 			case SettingsService::MINIMUM_CONFIDENCE_KEY:
 				$value = $this->settingsService->getMinimumConfidence();
 				break;
+			case SettingsService::MINIMUM_FACE_SIZE_KEY:
+				$value = $this->settingsService->getMinimumFaceSize();
+				break;
 			case SettingsService::MINIMUM_FACES_IN_CLUSTER_KEY:
 				$value = $this->settingsService->getMinimumFacesInCluster();
+				break;
+			case SettingsService::ANALYSIS_IMAGE_AREA_MODE_KEY:
+				$value = $this->settingsService->getAnalysisImageAreaMode();
 				break;
 			case SettingsService::ANALYSIS_IMAGE_AREA_KEY:
 				$value = $this->settingsService->getAnalysisImageArea();

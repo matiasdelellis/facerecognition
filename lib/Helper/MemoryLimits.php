@@ -71,7 +71,7 @@ class MemoryLimits {
 		} catch (\Exception $e) {
 			$availableMemory = -1;
 		}
-		return $availableMemory;
+		return (float)$availableMemory;
 	}
 
 	/**
@@ -80,8 +80,10 @@ class MemoryLimits {
 	 * Only linux and FreeBSD are currently supported.
 	 */
 	public static function getSystemMemory(): float {
-		if (php_uname("s") == "FreeBSD")
-			return str_replace('hw.physmem: ', '', exec('sysctl hw.physmem') ?: '-2');
+		if (php_uname("s") == "FreeBSD") {
+			$mem = trim(str_replace('hw.physmem: ', '', exec('sysctl hw.physmem') ?: '-2'));
+			return (float)$mem;
+		}
 
 		if (php_uname("s") !== "Linux")
 			return -1;
@@ -115,7 +117,7 @@ class MemoryLimits {
 		}
 		fclose($fh);
 
-		return $mem * 1024;
+		return (float)($mem * 1024);
 	}
 
 	/**

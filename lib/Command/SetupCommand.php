@@ -28,6 +28,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use OCA\FaceRecognition\Model\Exceptions\IncompatibleModelException;
 use OCA\FaceRecognition\Model\IModel;
 
 use OCA\FaceRecognition\Model\ModelManager;
@@ -83,6 +84,20 @@ class SetupCommand extends Command {
 				InputOption::VALUE_REQUIRED,
 				'The identifier number of the model to install',
 				-1
+			)
+			->addOption(
+				'external_model_url',
+				null,
+				InputOption::VALUE_REQUIRED,
+				'The url of the service that runs the external model, as "http://localhost:5000". Only used by that model.',
+				null
+			)
+			->addOption(
+				'external_model_api_key',
+				null,
+				InputOption::VALUE_REQUIRED,
+				'The api key to access the service that runs the external model. Only used by that model.',
+				null
 			);
 	}
 
@@ -96,8 +111,11 @@ class SetupCommand extends Command {
 
 		$assignMemory = $input->getOption('memory');
 		$modelId = $input->getOption('model');
+		$externalModelUrl = $input->getOption('external_model_url');
+		$externalModelApiKey = $input->getOption('external_model_api_key');
 
-		if ($assignMemory < 0 && $modelId < 0) {
+		if ($assignMemory < 0 && $modelId < 0 &&
+		    is_null($externalModelUrl) && is_null($externalModelApiKey)) {
 			$this->dumpCurrentSetup();
 			return 0;
 		}
@@ -112,6 +130,25 @@ class SetupCommand extends Command {
 
 		if ($assignMemory > 0) {
 			$ret = $this->setupAssignedMemory(OCP_Util::computerFileSize($assignMemory));
+			if ($ret > 0) {
+				CommandLock::Unlock($lock);
+				return $ret;
+			}
+		}
+
+		// The external model needs these settings to meet its dependencies, so
+		// they are configured before installing any model, and both things can
+		// be done with a single command.
+		if (!is_null($externalModelUrl)) {
+			$ret = $this->setupExternalModelUrl($externalModelUrl);
+			if ($ret > 0) {
+				CommandLock::Unlock($lock);
+				return $ret;
+			}
+		}
+
+		if (!is_null($externalModelApiKey)) {
+			$ret = $this->setupExternalModelApiKey($externalModelApiKey);
 			if ($ret > 0) {
 				CommandLock::Unlock($lock);
 				return $ret;
@@ -161,6 +198,38 @@ class SetupCommand extends Command {
 		return 0;
 	}
 
+	private function setupExternalModelUrl (string $modelUrl): int {
+		$modelUrl = rtrim(trim($modelUrl), '/');
+		if ($modelUrl === '') {
+			$this->logger->writeln("You must indicate the url of the service that runs the external model...");
+			return 1;
+		}
+
+		// It is used as the base of the requests to the service, so anything
+		// that is not an absolute url would fail later, when analyzing.
+		if (filter_var($modelUrl, FILTER_VALIDATE_URL) === false) {
+			$this->logger->writeln("The url of the external model is not valid. It must be as \"http://localhost:5000\"...");
+			return 1;
+		}
+
+		$this->settingsService->setExternalModelUrl($modelUrl);
+		$this->logger->writeln("Url of the external model configured: " . $modelUrl);
+
+		return 0;
+	}
+
+	private function setupExternalModelApiKey (string $apiKey): int {
+		if (trim($apiKey) === '') {
+			$this->logger->writeln("You must indicate the api key to access the external model...");
+			return 1;
+		}
+
+		$this->settingsService->setExternalModelApiKey($apiKey);
+		$this->logger->writeln("Api key of the external model configured");
+
+		return 0;
+	}
+
 	private function setupModel (int $modelId): int {
 		$this->logger->writeln("");
 
@@ -182,18 +251,27 @@ class SetupCommand extends Command {
 
 		if ($model->isInstalled()) {
 			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
-			$this->modelManager->setDefault($modelId);
-			$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
-
-			return 0;
+			return $this->setDefaultModel($modelId, $modelDescription);
 		}
 
 		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
 		$model->install();
 		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
 
-		$this->modelManager->setDefault($modelId);
+		return $this->setDefaultModel($modelId, $modelDescription);
+	}
+
+	private function setDefaultModel (int $modelId, string $modelDescription): int {
+		try {
+			$this->modelManager->setDefault($modelId);
+		} catch (IncompatibleModelException $e) {
+			$this->logger->writeln($e->getMessage());
+			return 1;
+		}
 		$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
+
+		$profile = $this->settingsService->getDescriptorProfile();
+		$this->logger->writeln('Its descriptors are ' . $profile['descriptor'] . ', compared with the ' . $profile['distance'] . ' distance');
 
 		return 0;
 	}
@@ -206,6 +284,14 @@ class SetupCommand extends Command {
 		$this->logger->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
 		$assignedMemory = $this->settingsService->getAssignedMemory();
 		$this->logger->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
+
+		$this->logger->writeln('');
+		$externalModelUrl = $this->settingsService->getExternalModelUrl();
+		$this->logger->writeln("Url of the external model...................: " . ($externalModelUrl ?? "Pending configuration"));
+		// The api key is not printed, since it is a secret that has no reason
+		// to end up in a log or in a screenshot of a bug report.
+		$externalModelApiKey = $this->settingsService->getExternalModelApiKey();
+		$this->logger->writeln("Api key of the external model...............: " . (!is_null($externalModelApiKey) ? "Configured" : "Pending configuration"));
 
 		$this->logger->writeln('');
 		$this->logger->writeln("Available models:");

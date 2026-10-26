@@ -91,6 +91,40 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(-1.0, $tempImage->getRatio());
 		$this->assertEquals(158, imagesx($tempImage->resource()));
 		$this->assertEquals(158, imagesy($tempImage->resource()));
+
+		// The area as a maximum does not enlarge it
+		$tempImage = new TempImage($this->testFile,
+		                           'image/png',
+		                           158*158*4,
+		                           100,
+		                           false);
+
+		$this->assertFalse($tempImage->getSkipped());
+		$this->assertEquals(1, $tempImage->getRatio());
+
+		$image = new OCP_Image();
+		$image->loadFromFile($tempImage->getTempPath());
+		$this->assertEquals(158, imagesx($image->resource()));
+		$this->assertEquals(158, imagesy($image->resource()));
+		$tempImage->clean();
+	}
+
+	public function testScaleFactor() {
+		// A fixed area enlarges and reduces.
+		$this->assertEquals(2.0, TempImage::scaleFactor(100, 100, 40000, true));
+		$this->assertEquals(0.5, TempImage::scaleFactor(400, 400, 40000, true));
+		// As a maximum, it only reduces.
+		$this->assertEquals(1.0, TempImage::scaleFactor(100, 100, 40000, false));
+		$this->assertEquals(0.5, TempImage::scaleFactor(400, 400, 40000, false));
+	}
+
+	public function testTargetSizeNotOverArea() {
+		// A 4:3 photo reduced to the largest area of the models: rounding the
+		// sides to the nearest would give 3326x2494, over the area.
+		$area = 3840 * 2160;
+		[$width, $height] = TempImage::targetSize(4000, 3000, TempImage::scaleFactor(4000, 3000, $area, false));
+		$this->assertEquals([3325, 2494], [$width, $height]);
+		$this->assertLessThanOrEqual($area, $width * $height);
 	}
 
 }

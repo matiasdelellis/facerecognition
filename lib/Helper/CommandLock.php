@@ -34,13 +34,24 @@ class CommandLock {
 	}
 
 	/**
-	 * @return string
+	 * @return string Description of the running command, or empty when there
+	 *                is no lock file or it cannot be read.
 	 */
 	public static function IsLockedBy(): string {
-		$fp = fopen(self::LockFile(), 'r');
-		$lockDescription = fread($fp, filesize(self::LockFile()));
-		//fclose($fp);
-		return $lockDescription;
+		$lockFile = self::LockFile();
+		if (!is_file($lockFile)) {
+			return '';
+		}
+
+		$fp = fopen($lockFile, 'r');
+		if ($fp === false) {
+			return '';
+		}
+
+		$lockDescription = stream_get_contents($fp);
+		fclose($fp);
+
+		return $lockDescription === false ? '' : $lockDescription;
 	}
 
 	public static function lock(string $lockDescription) {
@@ -52,13 +63,20 @@ class CommandLock {
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;
 		}
+		// The file is not truncated on open, so the text of a previous lock may
+		// still be there. It is replaced only after the lock is acquired.
+		ftruncate($fp, 0);
+		rewind($fp);
 		fwrite($fp, $lockDescription);
 		return $fp;
 	}
 
 	public static function unlock($lockFile): void {
+		// The file is deliberately not removed: unlinking a locked file lets
+		// another process create a new file and take a lock that is not the
+		// same one. The next lock truncates and rewrites the description.
 		flock($lockFile, LOCK_UN);
-		unlink(self::LockFile());
+		fclose($lockFile);
 	}
 
 }

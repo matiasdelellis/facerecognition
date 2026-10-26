@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 
 use Test\TestCase;
 
-class LockTaskTest extends TestCase {
+class LockUnlockTaskTest extends TestCase {
 	/**
 	 * {@inheritDoc}
 	 */

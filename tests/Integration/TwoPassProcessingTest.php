@@ -41,7 +41,6 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
-use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\SettingsService;
@@ -49,8 +48,8 @@ use OCA\FaceRecognition\Service\SettingsService;
 use Test\TestCase;
 
 /**
- * The analysis happens in two passes: a fast one with the HOG model on a small
- * image, and a refinement with the current model at maximum quality that
+ * The analysis happens in two passes: a fast one with the current model on a
+ * small image, and a refinement with the same model at maximum quality that
  * replaces the faces of each image. The faces found again in the same place
  * keep their cluster, so a person is never lost.
  *
@@ -68,9 +67,8 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 		$this->config->setAppValue('facerecognition', 'min_image_size', 1);
 		$this->config->setAppValue('facerecognition', 'max_image_area', 200 * 200);
 
-		// Install the models needed: HOG for the fast pass, CNN for the refinement.
+		// Both passes use the current model, so only that model is needed.
 		$modelManager = $this->container->query(ModelManager::class);
-		$modelManager->getModel(DlibHogModel::FACE_MODEL_ID)->install();
 		$modelManager->getModel(DlibCnn5Model::FACE_MODEL_ID)->install();
 
 		// The current model is what the refinement pass uses.
@@ -88,7 +86,7 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 		$clusterMapper = $this->container->query(ClusterMapper::class);
 		$personMapper = $this->container->query(PersonMapper::class);
 
-		// Fast pass: HOG on a small image, and cluster the found face.
+		// Fast pass: the current model on a small image, then cluster the face.
 		$image = $this->doImageProcessing(true);
 		$this->assertFalse($image->getIsRefined());
 		$faces = $faceMapper->getFaces($this->user->getUID(), self::MODEL_ID);
@@ -170,7 +168,7 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 		$clusterId = $faces[0]->getCluster();
 
 		// The user detaches the face from its cluster.
-		$clusterMapper->detachFace($clusterId, $faces[0]->getId());
+		$clusterMapper->detachFace($this->user->getUID(), $clusterId, $faces[0]->getId());
 
 		// The refinement replaces the face, keeping the cluster and the
 		// non-groupable state.
@@ -258,7 +256,7 @@ class TwoPassProcessingTest extends IntegrationTestCase {
 
 		if (!$fastPass) {
 			// The refinement takes the images that the fast pass left behind.
-			$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper);
+			$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper, $fileService);
 			$generator = $enumerateTask->execute($this->context);
 			foreach ($generator as $_) {
 			}

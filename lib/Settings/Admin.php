@@ -103,6 +103,12 @@ class Admin implements ISettings {
 			'model-version' => is_null($model) ? $this->l10n->t("Not installed") : $model->getId(),
 			'assigned-memory' => $assignedMemory > 0 ? OCP_Util::humanFileSize($assignedMemory) : $this->l10n->t("Not configured."),
 			'max-image-range' => $maxImageRange,
+			// After opening the model, that is when the external one reports its range.
+			'sensitivity-min' => $this->settingsService->getMinimumSensitivity(),
+			'sensitivity-max' => $this->settingsService->getMaximumSensitivity(),
+			'sensitivity-default' => $this->settingsService->getDefaultSensitivity(),
+			'confidence-range' => $this->settingsService->getMinimumConfidenceRange(),
+			'face-size-range' => $this->settingsService->getMinimumFaceSizeRange(),
 			'resume' => $resume,
 		];
 

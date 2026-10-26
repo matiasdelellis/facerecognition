@@ -2,6 +2,47 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- The image area of the analysis can be used only as a maximum, from the admin
+  settings: bigger images are reduced to it, and smaller ones are analyzed at
+  their own size instead of being enlarged. The default is still a fixed size,
+  that keeps the memory of the dlib models the same for every image.
+- The service of the external model reports in `/open` which descriptors it
+  computes, how they are compared (Euclidean or cosine distance), the range
+  of the clustering threshold and the range of the confidence of its
+  detections, since each detector has its own scale. The app compares them
+  with that metric, adapts both sliders to those ranges, and refuses to analyze with a service
+  whose descriptors changed since the images were analyzed, since they cannot
+  be compared. A service that does not report it is taken as dlib.
+- The minimum face size to group a face can be configured from the admin
+  settings, and the service of the external model can suggest its range and
+  default in `/open`, as the descriptors of each recognizer lose reliability at
+  a different size. A size chosen by the administrator is kept when the model
+  changes, only limited to the range of the new one.
+- The fast pass uses the current model with a `fast` hint instead of the HOG
+  model. Any model can have a fast pass without installing model 3, and the
+  descriptors and the comparison metric stay the same between both passes.
+- Fix cross-user access to faces and clusters: `detachFace` and
+  `setVisibility` now check that the cluster and the face belong to the user,
+  and the queries that list the photos of a person filter by the owner of the
+  image. A person with two clusters that have faces in the same photo is no
+  longer listed once per face.
+- Changing the clustering settings, or running `face:reset --clustering`,
+  deletes the clusters of the current model only. The data of another model,
+  kept after `face:migrate`, no longer points at deleted clusters.
+- A `.nomedia` or a `.facerecognition.json` in the root of the files of a user
+  now stops the full scan, instead of letting the scan re-add the whole library.
+- The capabilities report the analysis as disabled for users that disabled it,
+  and the autocomplete used by the sidebar returns names, not objects.
+- Fix several requests that answered 500 instead of 404 for unknown people,
+  clusters, faces or paths, and keep the analysis running when an image row
+  disappears while it is waiting to be processed.
+- A local Imaginary service works again: the requests now allow local addresses
+  and the error bodies are parsed as arrays. Model downloads verify the TLS
+  certificate, have timeouts and do not leave a partial file that looks
+  installed.
+- The stylelint configuration lints Vue and CSS instead of trying to parse JS,
+  and the ESLint configuration is present again. The npm package is aligned
+  with the version of the app.
 - Support images in HEIC/HEIF, TIFF and AVIF out of the box. Each format is only
   enabled when the active image backend can actually decode it, so no file is
   indexed just to fail later: locally they need the Imagick extension with the

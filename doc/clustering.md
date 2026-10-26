@@ -152,26 +152,23 @@ the samples, so comparing samples against samples does not find it.
 ## Two passes: fast, then refined
 
 Since 0.9.95 the same run can be asked for twice. `face:background_job --fast-mode`
-runs the whole pipeline with the HOG model on a small image (see
-`fast_pass_image_area`), to get groupings and persons quickly. The default mode
-refines: it re-processes every image that was processed but not refined yet, with
-the current model on a full-size image. See `is_refined` in
+runs the whole pipeline with the current model on a small image (see
+`fast_pass_image_area`), asking the model for its fast detection path. The default
+mode refines: it re-processes every image that was processed but not refined yet,
+with the same model on a full-size image. See `is_refined` in
 [data-model.md](data-model.md).
 
-Both passes write in the rows of the current model, so their descriptors must be
-comparable. The fast pass uses the HOG model only when it computes the descriptors
-the same way as the current model (`Model::getDescriptorType()`): that holds for
-models 1 and 4, which align with the 5-point predictor and use the same network.
-Model 2 aligns with the 68-point predictor, and model 6 uses a different network,
-so with either of them the fast pass falls back to the current model: slower, but
-the fast-pass faces stay comparable with the refined ones.
+Both passes write in the rows of the current model, and both use the same model,
+so their descriptors are comparable by construction. The `fast` flag only asks
+the model for a faster detector; the landmarks and the descriptor are still
+computed by that model. A model that has no faster detector may ignore the flag
+and simply run normally on the smaller image of the fast pass, which is still
+faster than the full-size pass.
 
-The model the fast pass ends up using has to be installed. The files of each model
-live in their own folder, so having the current model installed does not install
-the HOG one: with models 1 and 4 the fast pass also needs `occ face:setup -m 3`.
-It is not downloaded on the fly, the run stops with that message instead. The
-requirements checked are still those of the current model, so `--fast-mode` does
-not run where the default mode cannot: both write in the same rows.
+No second model is needed for the fast pass: the HOG model is no longer installed
+just to analyze the first pass. The requirements checked are those of the current
+model, so `--fast-mode` does not run where the default mode cannot: both write in
+the same rows.
 
 The refinement keeps the work of the fast pass. A face is replaced by the one the
 second pass finds in the same image, and the new face inherits the cluster of the

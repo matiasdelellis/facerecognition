@@ -7,7 +7,7 @@
 #     docker compose -f docker/compose.yaml up -d --build
 
 ARG NEXTCLOUD_VERSION=34
-ARG NODE_VERSION=20
+ARG NODE_VERSION=24
 
 
 ##
@@ -31,7 +31,6 @@ RUN npm run build && \
     mkdir -p js/vendor && \
     cp node_modules/handlebars/dist/handlebars.js js/vendor/handlebars.js && \
     cp node_modules/lozad/dist/lozad.js js/vendor/lozad.js && \
-    cp src/dialogs.js js/facerecognition-dialogs.js && \
     node_modules/handlebars/bin/handlebars src/templates -f js/facerecognition-templates.js && \
     curl -fsSL https://raw.githubusercontent.com/realsuayip/autocomplete/master/dist/autocomplete.js \
          -o js/vendor/autocomplete.js && \

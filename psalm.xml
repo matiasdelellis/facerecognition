@@ -2,6 +2,12 @@
 <psalm
 	errorLevel="4"
 	resolveFromConfigFile="true"
+	findUnusedCode="false"
+	findUnusedVariablesAndParams="false"
+	findUnusedBaselineEntry="false"
+	findUnusedIssueHandlerSuppression="false"
+	ensureOverrideAttribute="false"
+	strictBinaryOperands="false"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns="https://getpsalm.org/schema/config"
 	xsi:schemaLocation="https://getpsalm.org/schema/config"
@@ -17,6 +23,11 @@
 		<directory name="vendor" />
 	</extraFiles>
 	<issueHandlers>
+		<!-- The OCP stubs are generic, and the app classes are referenced by the
+		     configuration XML and by dependency injection, so those checks do
+		     not describe real problems here. -->
+		<MissingTemplateParam errorLevel="suppress" />
+		<MissingDependency errorLevel="suppress" />
 		<UndefinedClass>
 			<errorLevel type="suppress">
 				<referencedClass name="CnnFaceDetection" />

@@ -118,11 +118,87 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * Test that a scan restricted to a path only finds the images under it
+	 */
+	public function testCrawlPath() {
+		$this->loginAsUser($this->user->getUID());
+		$view = new View('/' . $this->user->getUID() . '/files');
+		$view->file_put_contents("foo1.jpg", "content");
+		$view->mkdir('dir');
+		$view->file_put_contents("dir/foo2.jpg", "content");
+		$view->file_put_contents("dir/foo3.png", "content");
+		$view->file_put_contents("dir/foo4.txt", "content");
+
+		$this->doMissingImageScan($this->user, 'dir');
+
+		// Only the two images of 'dir' are found. foo1.jpg is outside of it.
+		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(2, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
+
+		// The full scan is not done, since the rest of the images of the user
+		// were not even looked at.
+		$fullImageScanDone = $this->config->getUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		$this->assertEquals('false', $fullImageScanDone);
+	}
+
+	/**
+	 * Test that the path of a scan can be a single image
+	 */
+	public function testCrawlSingleFile() {
+		$this->loginAsUser($this->user->getUID());
+		$view = new View('/' . $this->user->getUID() . '/files');
+		$view->file_put_contents("foo1.jpg", "content");
+		$view->file_put_contents("foo2.jpg", "content");
+
+		$this->doMissingImageScan($this->user, 'foo2.jpg');
+
+		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$this->assertEquals(1, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(1, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
+	}
+
+	/**
+	 * Test that a path that does not exist finds nothing, and does not fail
+	 */
+	public function testCrawlMissingPath() {
+		$this->loginAsUser($this->user->getUID());
+		$view = new View('/' . $this->user->getUID() . '/files');
+		$view->file_put_contents("foo1.jpg", "content");
+
+		$this->doMissingImageScan($this->user, 'dir');
+
+		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
+	}
+
+	/**
+	 * Test that a scan of a path where the analysis is disabled finds nothing
+	 */
+	public function testCrawlPathWithNoMedia() {
+		$this->loginAsUser($this->user->getUID());
+		$view = new View('/' . $this->user->getUID() . '/files');
+		$view->mkdir('dir_nomedia');
+		$view->file_put_contents("dir_nomedia/.nomedia", "content");
+		$view->file_put_contents("dir_nomedia/foo1.jpg", "content");
+
+		$this->doMissingImageScan($this->user, 'dir_nomedia');
+
+		// Naming the path explicitly does not analyze what the rest of the
+		// application deliberately leaves out.
+		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
+	}
+
+	/**
 	 * Helper method to set up and do scanning
 	 *
 	 * @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
+	 * @param string|null $path Optional path to restrict the scan to, relative to the files folder of the user.
 	 */
-	private function doMissingImageScan($contextUser = null) {
+	private function doMissingImageScan($contextUser = null, $path = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 
@@ -134,6 +210,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 		// Set user for which to do scanning, if any
 		$this->context->user = $contextUser;
+		$this->context->propertyBag['path'] = $path;
 
 		// Since this task returns generator, iterate until it is done
 		$generator = $addMissingImagesTask->execute($this->context);

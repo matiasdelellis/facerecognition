@@ -21,12 +21,16 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\EnumerateImagesMissingFacesTask;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
+use OCP\Files\File;
 use OCP\IConfig;
+use OCP\IUser;
 use OCP\IUserManager;
 
 use Test\TestCase;
@@ -39,6 +43,9 @@ class EnumerateImagesMissingFacesTaskTest extends TestCase {
 	/** @var ImageMapper|\PHPUnit\Framework\MockObject\MockObject */
 	private $imageMapper;
 
+	/** @var FileService|\PHPUnit\Framework\MockObject\MockObject */
+	private $fileService;
+
 	public function setUp(): void {
 		parent::setUp();
 
@@ -47,27 +54,47 @@ class EnumerateImagesMissingFacesTaskTest extends TestCase {
 		$this->settingsService->method('getRefinementEnabled')->willReturn(false);
 
 		$this->imageMapper = $this->createMock(ImageMapper::class);
+		$this->fileService = $this->createMock(FileService::class);
 	}
 
 	/**
 	 * @return FaceRecognitionContext
 	 */
-	private function makeContext(array $propertyBag = []): FaceRecognitionContext {
+	private function makeContext(array $propertyBag = [], ?string $userId = null): FaceRecognitionContext {
 		$userManager = $this->createMock(IUserManager::class);
 		$config = $this->createMock(IConfig::class);
 		$context = new FaceRecognitionContext($userManager, $config);
 		$context->propertyBag = $propertyBag;
+		$context->logger = $this->createMock(FaceRecognitionLogger::class);
+
+		if (!is_null($userId)) {
+			$user = $this->createMock(IUser::class);
+			$user->method('getUID')->willReturn($userId);
+			$context->user = $user;
+		}
+
 		return $context;
 	}
 
-	private function makeImage(int $id): Image {
+	private function makeImage(int $id, ?int $fileId = null): Image {
 		$image = new Image();
 		$image->setId($id);
+		$image->setFile($fileId ?? $id);
 		return $image;
 	}
 
+	/**
+	 * A file of the user, that only has to answer which id it has, since that
+	 * is what relates it to the row of an image.
+	 */
+	private function makeFile(int $fileId): File {
+		$file = $this->createMock(File::class);
+		$file->method('getId')->willReturn($fileId);
+		return $file;
+	}
+
 	private function runTask(FaceRecognitionContext $context): array {
-		$task = new EnumerateImagesMissingFacesTask($this->settingsService, $this->imageMapper);
+		$task = new EnumerateImagesMissingFacesTask($this->settingsService, $this->imageMapper, $this->fileService);
 		$generator = $task->execute($context);
 		foreach ($generator as $_) {
 		}
@@ -136,5 +163,63 @@ class EnumerateImagesMissingFacesTaskTest extends TestCase {
 		// Every image is assigned to exactly one worker: no duplicates, none lost
 		sort($all);
 		$this->assertEquals(range(0, 99), $all);
+	}
+
+	public function testPathTakesOnlyTheImagesUnderIt() {
+		$images = [];
+		for ($i = 0; $i < 10; $i++) {
+			$images[] = $this->makeImage($i);
+		}
+		$this->imageMapper->method('findImagesWithoutFaces')->willReturn($images);
+
+		// Of the whole library of the user, only these three files are under
+		// the path that was asked for.
+		$this->fileService->method('getPicturesFromPath')->willReturn([
+			$this->makeFile(2), $this->makeFile(5), $this->makeFile(7),
+		]);
+
+		$assigned = $this->runTask($this->makeContext(['path' => 'Photos/Vacations'], 'user0'));
+		$ids = $this->imageIds($assigned);
+		sort($ids);
+		$this->assertEquals([2, 5, 7], $ids);
+	}
+
+	public function testMissingPathTakesNoImages() {
+		$images = [];
+		for ($i = 0; $i < 10; $i++) {
+			$images[] = $this->makeImage($i);
+		}
+		$this->imageMapper->method('findImagesWithoutFaces')->willReturn($images);
+
+		// The path does not exist for the user, which is not the same as a
+		// path that exists and has no images: nothing is analyzed either way.
+		$this->fileService->method('getPicturesFromPath')->willReturn(null);
+
+		$assigned = $this->runTask($this->makeContext(['path' => 'Photos/Typo'], 'user0'));
+		$this->assertEmpty($assigned);
+	}
+
+	public function testPathAndWorkersTakeTheirShareOfIt() {
+		$images = [];
+		for ($i = 0; $i < 10; $i++) {
+			$images[] = $this->makeImage($i);
+		}
+		$this->imageMapper->method('findImagesWithoutFaces')->willReturn($images);
+
+		$this->fileService->method('getPicturesFromPath')->willReturn([
+			$this->makeFile(1), $this->makeFile(2), $this->makeFile(3), $this->makeFile(4),
+		]);
+
+		// The images under the path are still partitioned between the workers,
+		// so worker 1 of 2 only takes the odd ones of them.
+		$assigned = $this->runTask($this->makeContext([
+			'path' => 'Photos/Vacations',
+			'run_mode' => 'default-mode',
+			'worker_index' => 1,
+			'worker_count' => 2,
+		], 'user0'));
+		$ids = $this->imageIds($assigned);
+		sort($ids);
+		$this->assertEquals([1, 3], $ids);
 	}
 }

@@ -125,8 +125,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	 *
 	 * @param string $userId ID of the user for which to remove stale images for
 	 * @param int $model Used model
-	 * @return \Generator|int Returns generator during yielding and finally returns int,
-	 * which represent number of stale images removed
+	 * @return \Generator<mixed, mixed, mixed, int> Returns a generator while
+	 * yielding, and the number of removed stale images as its return value.
 	 */
 	private function staleImagesRemovalForUser(string $userId, int $model) {
 

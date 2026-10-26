@@ -24,6 +24,11 @@
 			<a id="restore-image-area" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-image-area" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
 		</p>
+		<p>
+			<input type="checkbox" id="image-area-maximum" class="checkbox" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>>
+			<label for="image-area-maximum"><?php p($l->t('Use the area only as a maximum: smaller images are analyzed at their own size instead of being enlarged'));?></label>
+		</p>
+		<p class="settings-hint"><?php p($l->t('The dlib models need every image at the same size to keep their memory under control. Newer models, as some external ones, need much less memory and find the faces as well or better on the original image.'));?></p>
 		<br>
 		<h3>
 			<?php p($l->t('Clustering threshold'));?>
@@ -34,7 +39,7 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="sensitivity-range"><?php p($l->t('Small threshold'));?></label>
-			<span><input type="range" id="sensitivity-range" min="0.2" max="0.6" value="0.4" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<span><input type="range" id="sensitivity-range" min="<?php p($_['sensitivity-min']);?>" max="<?php p($_['sensitivity-max']);?>" value="<?php p($_['sensitivity-default']);?>" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="sensitivity-range"><?php p($l->t('Higher threshold'));?></label>
 			<span id="sensitivity-value"class="span-highlighted">...</span>
 			<a id="restore-sensitivity" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
@@ -49,11 +54,24 @@
 		</p>
 		<p class="settings-ranged">
 			<label for="min-confidence-range"><?php p($l->t('Lower minimum confidence'));?></label>
-			<span><input type="range" id="min-confidence-range" min="0.0" max="1.1" value="0.99" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<span><input type="range" id="min-confidence-range" min="<?php p($_['confidence-range']['min']);?>" max="<?php p($_['confidence-range']['max']);?>" value="<?php p($_['confidence-range']['default']);?>" step="0.01" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
 			<label for="min-confidence-range"><?php p($l->t('Higher minimum confidence'));?></label>
 			<span id="min-confidence-value"class="span-highlighted">...</span>
 			<a id="restore-min-confidence" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
 			<a id="save-min-confidence" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
+		</p>
+		<br>
+		<h3>
+			<?php p($l->t('Minimum face size'));?>
+		</h3>
+		<p class="settings-hint"><?php p($l->t('Faces smaller than this size, in pixels of the original image, are not grouped. The smallest faces give less reliable descriptors and are more easily confused with other persons.'));?></p>
+		<p class="settings-ranged">
+			<label for="min-face-size-range"><?php p($l->t('Smaller faces'));?></label>
+			<span><input type="range" id="min-face-size-range" min="<?php p($_['face-size-range']['min']);?>" max="<?php p($_['face-size-range']['max']);?>" value="<?php p($_['face-size-range']['default']);?>" step="1" class="ui-slider" <?php if(!($_['is-configured'])):?>disabled<?php endif;?>></span>
+			<label for="min-face-size-range"><?php p($l->t('Larger faces'));?></label>
+			<span id="min-face-size-value"class="span-highlighted">...</span>
+			<a id="restore-min-face-size" class="icon-align icon-history" style="display: none;" title="<?php p($l->t('Restore'));?>" href="#"></a>
+			<a id="save-min-face-size" class="icon-align icon-edit" style="display: none;" title="<?php p($l->t('Save'));?>" href="#"></a>
 		</p>
 		<br>
 		<h3>

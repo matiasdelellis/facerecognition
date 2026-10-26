@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
       - name: Download schema
         run: wget https://apps.nextcloud.com/schema/apps/info.xsd
       - name: Lint info.xml
@@ -28,9 +28,9 @@ jobs:
     name: php${{ matrix.php-versions }} lint
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
       - name: Set up php${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@master
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           coverage: none

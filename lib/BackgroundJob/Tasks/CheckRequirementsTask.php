@@ -36,6 +36,7 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
+use OCA\FaceRecognition\Model\Exceptions\IncompatibleModelException;
 use OCA\FaceRecognition\Model\Exceptions\UnavailableException;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -163,6 +164,9 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 			$model->open();
 		} catch (UnavailableException $e) {
 			$this->logInfo("Error accessing the model to get required information: " . $e->getMessage());
+			return false;
+		} catch (IncompatibleModelException $e) {
+			$this->logInfo($e->getMessage());
 			return false;
 		}
 

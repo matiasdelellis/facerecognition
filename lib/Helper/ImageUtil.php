@@ -25,6 +25,9 @@ use OCP\Image;
 
 /**
  * Small helpers to open image files.
+ *
+ * @psalm-suppress UndefinedMethod OCP\Image extends the private OC\Image,
+ * whose methods are not part of the public stubs used by Psalm.
  */
 class ImageUtil {
 

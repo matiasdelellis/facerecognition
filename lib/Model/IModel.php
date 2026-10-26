@@ -97,10 +97,16 @@ interface IModel {
 	 *
 	 * @param string $imagePath Image path to analyze
 	 * @param bool $compute (optional) variable that indicates if must obtain the landmarks and the descriptor.
+	 * @param bool $fast (optional) ask the model for its fast detection path. The
+	 *                         descriptors and landmarks are still the ones of this
+	 *                         model, so the faces of the fast pass are comparable
+	 *                         with the ones of the refinement. A model that has no
+	 *                         faster detector may ignore it and simply run normally
+	 *                         on the smaller image of the fast pass.
 	 * @return array where values are assoc arrays with "top", "bottom", "left", "right" of each face rect,
 	 * "detection_confidence", and optionally the "landmarks", and "descriptor" according to the compute parameter.
 	 */
-	public function detectFaces(string $imagePath, bool $compute = true): array;
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array;
 
 	/**
 	 * Detect landmarks and compute descriptor of an face over an image.

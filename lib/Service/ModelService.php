@@ -105,8 +105,8 @@ class ModelService {
 	 */
 	private function makeModelFolder(int $modelId) {
 		$modelFolder = $this->modelsFolder . '/' . $modelId;
-		if (!is_dir($modelFolder)) {
-			mkdir($modelFolder, 0770, true);
+		if (!is_dir($modelFolder) && !mkdir($modelFolder, 0770, true) && !is_dir($modelFolder)) {
+			throw new \RuntimeException('Could not create the model folder: ' . $modelFolder);
 		}
 	}
 
@@ -117,8 +117,8 @@ class ModelService {
 		// Custum folder
 		$customFolder = $this->settingsService->getSystemModelPath();
 		if (!is_null($customFolder)) {
-			if (!is_dir($customFolder)) {
-				mkdir($customFolder, 0770, true);
+			if (!is_dir($customFolder) && !mkdir($customFolder, 0770, true) && !is_dir($customFolder)) {
+				throw new \RuntimeException('Could not create the model folder: ' . $customFolder);
 			}
 			return $customFolder;
 		}

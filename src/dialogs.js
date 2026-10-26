@@ -75,25 +75,78 @@
         return img;
     }
 
+    /**
+     * Ask the server for the names that match a query.
+     * Returns null when the request fails, so the caller can tell an empty
+     * answer from one that never arrived.
+     *
+     * @param {string} query
+     * @returns {Promise<Array|null>}
+     */
     function getAutocomplete(query) {
         return fetch(OC.generateUrl('/apps/facerecognition/autocomplete/' + encodeURIComponent(query)), {
             headers: { 'OCS-APIRequest': 'true', 'requesttoken': OC.requestToken },
             credentials: 'same-origin',
         }).then((response) => {
             if (!response.ok) {
-                return [];
+                return null;
             }
             return response.json();
-        }).catch(() => []);
+        }).catch(() => null);
+    }
+
+    /**
+     * Build the lookup function of a dialog, that remembers the names it
+     * already asked for and only shows the answer of the newest request.
+     *
+     * The requests are resolved in whatever order the server answers them, so
+     * a slow one for a query that was already erased can arrive after a newer
+     * one, and end up showing names that no longer match what is typed.
+     *
+     * @returns {function(string): Promise<Array>}
+     */
+    function createAutocompleteLookup() {
+        const cache = new Map();
+        let lastRequest = 0;
+        let lastNames = [];
+
+        return function (query) {
+            const request = ++lastRequest;
+
+            // Typing and erasing again is common enough to be worth not asking
+            // the server twice for the same thing.
+            if (cache.has(query)) {
+                lastNames = cache.get(query);
+                return Promise.resolve(lastNames);
+            }
+
+            return getAutocomplete(query).then((names) => {
+                // A failed request is not remembered, so the next keystroke
+                // tries again instead of showing nothing until the dialog is
+                // closed.
+                if (names === null) {
+                    return request < lastRequest ? lastNames : [];
+                }
+
+                cache.set(query, names);
+
+                // Somebody already asked for something newer, so leave on
+                // screen what that one showed.
+                if (request < lastRequest) {
+                    return lastNames;
+                }
+
+                lastNames = names;
+                return names;
+            });
+        };
     }
 
     function attachAutocomplete(input) {
         if (typeof window.AutoComplete !== 'function') return;
         new window.AutoComplete({
             input: input,
-            lookup(query) {
-                return getAutocomplete(query);
-            },
+            lookup: createAutocompleteLookup(),
             silent: true,
             highlight: false,
         });

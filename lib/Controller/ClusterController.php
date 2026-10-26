@@ -31,6 +31,7 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 use OCA\FaceRecognition\Db\Face;
 use OCA\FaceRecognition\Db\FaceMapper;
@@ -104,7 +105,10 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function find(int $id): DataResponse {
-		$cluster = $this->clusterMapper->find($this->userId, $id);
+		$cluster = $this->findCluster($id);
+		if (is_null($cluster)) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		$resp = [];
 		$faces = [];
@@ -289,8 +293,9 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function findSimilar(int $id): DataResponse {
-		// Throws if the cluster is not from this user.
-		$this->clusterMapper->find($this->userId, $id);
+		if (is_null($this->findCluster($id))) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
@@ -317,9 +322,18 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function setVisibility (int $id, bool $visible): DataResponse {
-		$resp = array();
+		if (is_null($this->findCluster($id))) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
 		$this->clusterMapper->setVisibility($id, $visible);
-		return new DataResponse($resp);
+		// Hiding a cluster forgets its person, which may leave it without any
+		// cluster. Clean it now, as the other endpoints that change a person do.
+		if (!$visible) {
+			$this->personMapper->deleteOrphaned($this->userId);
+		}
+
+		return new DataResponse([]);
 	}
 
 	/**
@@ -332,14 +346,30 @@ class ClusterController extends Controller {
 	 * @return DataResponse
 	 */
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
-		$cluster = $this->clusterMapper->find($this->userId, $id);
+		$cluster = $this->findCluster($id);
+		if (is_null($cluster)) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
 
+		// Check both ids before creating a person, so a wrong face does not
+		// leave an orphan person behind.
+		$faceEntity = $this->faceMapper->findForUser($this->userId, $face);
+		if (is_null($faceEntity) || $faceEntity->getCluster() !== $id) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		$name = is_null($name) ? null : trim($name);
 		$personId = null;
 		if (!is_null($name) && $name !== '') {
 			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
 		}
 
-		$detached = $this->clusterMapper->detachFace($cluster->getId(), $face, $personId);
+		try {
+			$detached = $this->clusterMapper->detachFace($this->userId, $cluster->getId(), $face, $personId);
+		} catch (DoesNotExistException $e) {
+			$this->personMapper->deleteOrphaned($this->userId);
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
 
 		return new DataResponse($this->describe($detached));
 	}
@@ -354,25 +384,53 @@ class ClusterController extends Controller {
 	 * @return DataResponse new person with that update.
 	 */
 	public function updateName($id, $name, $face_id = null): DataResponse {
-		$cluster = $this->clusterMapper->find($this->userId, $id);
+		$cluster = $this->findCluster((int) $id);
+		if (is_null($cluster)) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		if (!is_null($face_id)) {
+			$faceEntity = $this->faceMapper->findForUser($this->userId, (int) $face_id);
+			if (is_null($faceEntity) || $faceEntity->getCluster() !== (int) $id) {
+				return new DataResponse([], Http::STATUS_NOT_FOUND);
+			}
+		}
 
 		// Naming a cluster is saying which person it is one of the looks of.
+		$name = is_null($name) ? null : trim($name);
 		$personId = null;
 		if (!is_null($name) && $name !== '') {
 			$personId = $this->personMapper->findOrCreateByName($this->userId, $name)->getId();
 		}
 
-		if (is_null($face_id)) {
-			$this->clusterMapper->setPerson($cluster->getId(), $personId);
-			$cluster = $this->clusterMapper->find($this->userId, $id);
-		} else {
-			$cluster = $this->clusterMapper->detachFace($cluster->getId(), $face_id, $personId);
+		try {
+			if (is_null($face_id)) {
+				$this->clusterMapper->setPerson($cluster->getId(), $personId);
+				$cluster = $this->clusterMapper->find($this->userId, (int) $id);
+			} else {
+				$cluster = $this->clusterMapper->detachFace($this->userId, $cluster->getId(), (int) $face_id, $personId);
+			}
+		} catch (DoesNotExistException $e) {
+			$this->personMapper->deleteOrphaned($this->userId);
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
 		}
 
 		// A person nobody points at any more is not a person.
 		$this->personMapper->deleteOrphaned($this->userId);
 
 		return new DataResponse($this->describe($cluster));
+	}
+
+	/**
+	 * The cluster of the current user, or null when it does not exist or
+	 * belongs to somebody else.
+	 */
+	private function findCluster(int $clusterId): ?Cluster {
+		try {
+			return $this->clusterMapper->find($this->userId, $clusterId);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
 	}
 
 	/**

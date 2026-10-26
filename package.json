@@ -1,6 +1,6 @@
 {
 	"name": "facerecognition",
-	"version": "0.6.0",
+	"version": "0.9.95",
 	"author": "Matias De lellis <mati86dl@gmail.com>",
 	"license": "AGPL-3.0-or-later",
 	"description": "FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing and aggregating face data in users images, and providing additional functionalities on top of these information, all with built-in privacy of Nextcloud",
@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@nextcloud/axios": "^2.3.0",
 		"@nextcloud/dialogs": "^3.2.0",
+		"@nextcloud/event-bus": "^3.3.3",
 		"@nextcloud/files": "^4.0.0",
 		"@nextcloud/l10n": "^3.0.0",
 		"@nextcloud/router": "^2.0.1",
@@ -42,8 +43,8 @@
 		"watch": "webpack --node-env development --progress --watch",
 		"lint": "eslint --ext .js,.vue src",
 		"lint:fix": "eslint --ext .js,.vue src --fix",
-		"stylelint": "stylelint src",
-		"stylelint:fix": "stylelint src --fix"
+		"stylelint": "stylelint \"src/**/*.{vue,css,scss}\"",
+		"stylelint:fix": "stylelint \"src/**/*.{vue,css,scss}\" --fix"
 	},
 	"repository": {
 		"type": "git",

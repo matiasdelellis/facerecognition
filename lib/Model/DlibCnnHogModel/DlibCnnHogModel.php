@@ -83,7 +83,10 @@ class DlibCnnHogModel implements IModel {
 			$error_message = "This Model depend on Model 1 and must install it.";
 			return false;
 		}
-		return true;
+
+		// The CNN part is the model 1 itself, so its dependencies are also
+		// ours: pdlib, the assigned memory and the system memory.
+		return $this->dlibCnn5Model->meetDependencies($error_message);
 	}
 
 	public function getMaximumArea(): int {
@@ -108,10 +111,16 @@ class DlibCnnHogModel implements IModel {
 		$this->dlibCnn5Model->open();
 	}
 
-	public function detectFaces(string $imagePath, bool $compute = true): array {
+	public function detectFaces(string $imagePath, bool $compute = true, bool $fast = false): array {
+		if ($fast) {
+			// The fast path of model 1 already uses HOG to propose the faces,
+			// so asking HOG again to validate them would be redundant.
+			return $this->dlibCnn5Model->detectFaces($imagePath, $compute, true);
+		}
+
 		$detectedFaces = [];
 
-		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath);
+		$cnnFaces = $this->dlibCnn5Model->detectFaces($imagePath, $compute);
 		if (count($cnnFaces) === 0) {
 			return $detectedFaces;
 		}

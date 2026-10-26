@@ -41,7 +41,6 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Helper\FaceRect;
 use OCA\FaceRecognition\Helper\TempImage;
 
-use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
@@ -129,46 +128,31 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$this->logInfo('NOTE: Starting face recognition. If you experience random crashes after this point, please look FAQ at https://github.com/matiasdelellis/facerecognition/wiki/FAQ');
 
-		// The fast pass uses the HOG model on a small image, the refinement pass
-		// the current model at maximum quality.
-		if ($this->context->isRunningInFastMode()) {
-			$fastModel = $this->modelManager->getModel(DlibHogModel::FACE_MODEL_ID);
-			$currentModel = $this->modelManager->getCurrentModel();
+		// Both passes use the current model. The fast one asks the model for
+		// its faster detection path and works on a smaller image, while the
+		// refinement asks for the full-quality path. The descriptors are always
+		// from the current model, so the faces of the fast pass are comparable
+		// with the refined ones, whatever the model is.
+		$this->model = $this->modelManager->getCurrentModel();
 
-			// The fast pass writes its faces in the rows of the current model,
-			// and the refinement replaces them with the faces of that model, so
-			// both passes must produce comparable descriptors. The HOG model
-			// agrees with the models that align the face and compute the
-			// descriptor the same way (models 1 and 4), but not with the ones
-			// that align it with the 68-point predictor (model 2) or use
-			// another network (model 6). With a current model that is not
-			// comparable, the fast pass falls back to it: slower, but the
-			// fast-pass faces stay comparable with the refined ones.
-			$fastPassUsesHog = !is_null($currentModel) &&
-			                   ($currentModel->getDescriptorType() === $fastModel->getDescriptorType());
-			$this->model = $fastPassUsesHog ? $fastModel : ($currentModel ?? $fastModel);
-			if (!$fastPassUsesHog && !is_null($currentModel)) {
-				$this->logInfo('Fast pass: the HOG descriptors are not comparable with the ones of the ' . $this->model->getName() . ' model, using the current model for the fast pass');
-			}
+		if (is_null($this->model)) {
+			throw new \RuntimeException('No face model is configured. Run occ face:setup --model MODEL_ID first.');
+		}
 
-			// The model of the fast pass must be installed and usable. The files
-			// of each model live in their own folder, so having another model
-			// installed does not install this one, and the fast pass is not the
-			// place to download it: the admin does that with face:setup.
-			$modelError = '';
-			if (!$this->model->isInstalled()) {
-				throw new \RuntimeException('The fast pass cannot run: the ' . $this->model->getName() . ' model is not installed. Install it with the occ face:setup -m ' . $this->model->getId() . ' command.');
-			}
-			if (!$this->model->meetDependencies($modelError)) {
-				throw new \RuntimeException('The fast pass cannot run: ' . $modelError);
-			}
-			$this->logInfo('Fast pass: using the ' . $this->model->getName() . ' model on a small image');
-		} else {
-			$this->model = $this->modelManager->getCurrentModel();
+		$modelError = '';
+		if (!$this->model->isInstalled()) {
+			throw new \RuntimeException('The analysis cannot run: the ' . $this->model->getName() . ' model is not installed. Install it with the occ face:setup -m ' . $this->model->getId() . ' command.');
+		}
+		if (!$this->model->meetDependencies($modelError)) {
+			throw new \RuntimeException('The analysis cannot run: ' . $modelError);
 		}
 
 		// Open model.
 		$this->model->open();
+
+		if ($this->context->isRunningInFastMode()) {
+			$this->logInfo('Fast pass: using the ' . $this->model->getName() . ' model on a small image');
+		}
 
 		$refined = !$this->context->isRunningInFastMode();
 		$images = $context->propertyBag['images'];
@@ -187,6 +171,13 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$lockAcquired = true;
 
 				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
+				if (is_null($dbImage)) {
+					// The row was removed while this image was waiting for its
+					// turn, for example because the file was deleted. There is
+					// nothing to update any more.
+					$this->logInfo('Image will be skipped because its row was removed');
+					continue;
+				}
 
 				// An image is done when it was processed, and in the refinement
 				// pass it also has to have been refined. The images that were
@@ -244,7 +235,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				// Get faces in the temporary image
 				$tempImagePath = $tempImage->getTempPath();
-				$rawFaces = $this->model->detectFaces($tempImagePath);
+				$rawFaces = $this->model->detectFaces($tempImagePath, true, $this->context->isRunningInFastMode());
 
 				$this->logInfo('Faces found: ' . count($rawFaces));
 
@@ -324,10 +315,12 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 		$this->logInfo('Processing image ' . $imagePath);
 
+		$enlarge = $this->settingsService->getAnalysisImageAreaMode() === SettingsService::ANALYSIS_IMAGE_AREA_FIXED;
 		$tempImage = new TempImage($imagePath,
 		                           $this->model->getPreferredMimeType(),
 		                           $this->getMaxImageArea(),
-		                           $this->settingsService->getMinimumImageSize());
+		                           $this->settingsService->getMinimumImageSize(),
+		                           $enlarge);
 
 		return $tempImage;
 	}
@@ -376,6 +369,11 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 			$area = $fastMode ? min($area, $commandArea) : $commandArea;
 		}
 
+		// The overrides are not checked against the model, which rejects any
+		// image larger than its maximum.
+		//
+		$area = min($area, $this->model->getMaximumArea());
+
 		$this->maxImageAreaCached = $area;
 
 		return $this->maxImageAreaCached;
@@ -391,9 +389,9 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 		$face['right'] = intval(round($rawFace['right']*$ratio));
 		$face['top'] = intval(round($rawFace['top']*$ratio));
 		$face['bottom'] = intval(round($rawFace['bottom']*$ratio));
-		$face['detection_confidence'] = $rawFace['detection_confidence'];
-		$face['landmarks'] = $this->getNormalizedLandmarks($rawFace['landmarks'], $ratio);
-		$face['descriptor'] = $rawFace['descriptor'];
+		$face['detection_confidence'] = $rawFace['detection_confidence'] ?? 0.0;
+		$face['landmarks'] = $this->getNormalizedLandmarks($rawFace['landmarks'] ?? [], $ratio);
+		$face['descriptor'] = $rawFace['descriptor'] ?? [];
 		return $face;
 	}
 

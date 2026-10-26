@@ -382,6 +382,7 @@ class ImageMapper extends QBMapper {
 			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
 
@@ -396,12 +397,16 @@ class ImageMapper extends QBMapper {
 
 	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.file')
+		// A person can have several clusters, and two of them can have a face
+		// in the same photo. The person is in the photo once, so duplicate
+		// rows are removed by selecting distinct file ids.
+		$qb->selectDistinct('i.file')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('f.cluster', 'c.id'))
 			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)))
@@ -415,12 +420,13 @@ class ImageMapper extends QBMapper {
 
 	public function countFromPerson(string $userId, int $modelId, string $name): int {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*'))
+		$qb->select($qb->createFunction('COUNT(DISTINCT ' . $qb->getColumnName('i.id') . ')'))
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('f.cluster', 'c.id'))
 			->innerJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('c.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));

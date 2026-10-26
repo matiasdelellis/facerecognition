@@ -12,7 +12,7 @@ env:
 
 jobs:
   integration:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout server
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
@@ -56,7 +56,7 @@ jobs:
           git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       - name: Checkout app
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: apps/${{ env.APP_NAME }}
           fetch-depth: 2
@@ -66,14 +66,20 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
-          extensions: zip, gd, mbstring, iconv, fileinfo, intl, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql, pcntl
+          extensions: zip, gd, mbstring, iconv, fileinfo, intl, bz2, sqlite, pdo_sqlite, mysql, pdo_mysql, pgsql, pdo_pgsql, pcntl
           coverage: none
 
       - name: Install pdlib
         run: |
-          sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev
+          sudo apt update -y && sudo apt install -y libopenblas-dev liblapack-dev libpng-dev libbz2-dev
           sudo pecl install https://services.delellis.com.ar/data/facerecognition/pdlib-1.1.0.tgz
-          sudo sh -c 'echo "extension=pdlib.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`'
+          php_ini="$(php --ini | sed -n 's/^Loaded Configuration File:[[:space:]]*//p' | head -1)"
+          if [ -z "$php_ini" ] || [ "$php_ini" = "(none)" ]; then
+            php_ini="$(php -r 'echo PHP_CONFIG_FILE_PATH;')/php.ini"
+          fi
+          sudo mkdir -p "$(dirname "$php_ini")"
+          echo "extension=pdlib.so" | sudo tee -a "$php_ini" >/dev/null
+          php -m | grep -qx pdlib
 
       - name: Set up PHPUnit
         working-directory: apps/${{ env.APP_NAME }}
@@ -88,6 +94,10 @@ jobs:
           fi
           mkdir data
           ./occ maintenance:install --verbose --database=${{ matrix.databases }} --database-name=nextcloud --database-host=127.0.0.1 --database-port=$DB_PORT --database-user=root --database-pass=rootpassword --admin-user admin --admin-pass admin
+          # files_external is disabled by default, but its mount provider is
+          # still queried when the test framework prepares a user. Enabling it
+          # installs its tables (oc_external_mounts among them).
+          ./occ app:enable --force files_external
           ./occ app:enable --force ${{ env.APP_NAME }}
           php -S localhost:8080 &
 
@@ -95,6 +105,5 @@ jobs:
         working-directory: apps/${{ env.APP_NAME }}
         run: |
           ../../occ face:setup --memory 1G
-          ../../occ face:setup --model 3 || true
           ../../occ face:setup --model 1
           make test

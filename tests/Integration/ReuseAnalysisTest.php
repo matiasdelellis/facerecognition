@@ -36,8 +36,8 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Model\DlibCnnModel\DlibCnn5Model;
-use OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel;
 use OCA\FaceRecognition\Model\ModelManager;
+use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 /**
@@ -63,9 +63,8 @@ class ReuseAnalysisTest extends IntegrationTestCase {
 		$this->config->setAppValue('facerecognition', 'min_image_size', 1);
 		$this->config->setAppValue('facerecognition', 'max_image_area', 200 * 200);
 
-		// Install the models needed: HOG for the fast pass, CNN for the refinement.
+		// Both passes use the current model, so only that model is needed.
 		$modelManager = $this->container->query(ModelManager::class);
-		$modelManager->getModel(DlibHogModel::FACE_MODEL_ID)->install();
 		$modelManager->getModel(DlibCnn5Model::FACE_MODEL_ID)->install();
 
 		// The current model is what the refinement pass uses.
@@ -233,7 +232,8 @@ class ReuseAnalysisTest extends IntegrationTestCase {
 	private function refineOwner(): Image {
 		$imageMapper = $this->container->query(ImageMapper::class);
 		$settingsService = $this->container->query(SettingsService::class);
-		$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper);
+		$fileService = $this->container->query(FileService::class);
+		$enumerateTask = new EnumerateImagesMissingFacesTask($settingsService, $imageMapper, $fileService);
 
 		$this->context->user = $this->user;
 		$this->context->propertyBag['run_mode'] = 'default-mode';

@@ -7,42 +7,42 @@
 ![Downloads](https://img.shields.io/github/downloads/matiasdelellis/facerecognition/total)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
-Nextcloud app that implement a basic facial recognition system.
+A Nextcloud app that implements a basic facial recognition system.
 
 FaceRecognition is a Nextcloud application with a goal of recognizing, analyzing
-and aggregating face data in users images, and providing additional
-functionalities on top of these information, all with built-in privacy of
+and aggregating face data in the images of the users, and providing additional
+functionality on top of that information, all with the built-in privacy of
 Nextcloud. Imagine Google Photos, but only for faces (not detecting objects…)
-and in such way that your images never leave your Nextcloud instance. :smiley:
+and in such a way that your images never leave your Nextcloud instance. :smiley:
 
 The application listens to the creation of new image files, and queues them for
-later analysis. A scheduled task (Or admin on demand) take this queue, and
-analyze the images for looking faces and if possible identify them grouping by
-similarity.
+later analysis. A scheduled task (or an admin on demand) takes this queue, and
+analyzes the images looking for faces and, if possible, identifies them by
+grouping them by similarity.
 
 ![App screenshots](https://matiasdelellis.github.io/img/facerecognition/facerecognition-persons-view-small.jpeg "App screenshots")
 
 ## How to use it?
 
 The administrator must properly configure the application, and once it is
-working, the user must accept that he wants to allow the analysis of his images
-to discover his friends.
-Finally the user can use the application in three ways
+working, each user must allow the analysis of their images to discover their
+friends.
+Then the user can use the application in four ways
 
  1. In the user settings there is a 'Face Recognition' panel where first of all
     each user must enable the analysis. Once enabled, you will progressively see
     the discovery of your friends, and you can assign them names.
- 2. In the file application the user can search by typing your friend's name,
+ 2. In the file application the user can search by typing the name of a friend,
     and it will show all the photos.
  3. In the side panel of the file application, a 'Persons' tab is added where
     you can see a list of your friends in the photo, and rename them. Also you can
     select the folders you want to ignore for the process.
- 3. In the side panel of the Photos application, a 'Persons' tab is added where
+ 4. In the side panel of the Photos application, a 'Persons' tab is added where
     you can see a list of your friends in the photo, and rename them.
 
 ## Donate
 
-If you'd like to support the creation and maintenance of this software, consider donating.
+If you'd like to support the continued development and maintenance of this software, consider donating.
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue)](https://github.com/matiasdelellis/facerecognition/wiki/Donate)
 [![Donate](https://img.shields.io/badge/Donate-Bitcoin-orange)](https://github.com/matiasdelellis/facerecognition/wiki/Donate)
@@ -93,7 +93,7 @@ Note: After making frontend changes, you may need to run `make vendor-deps` and 
 #### Configuration
 
 Before proceeding to analyze the images, you must indicate how much memory you
-want to assigns to image processing and then must properly install and configure
+want to assign to image processing and then must properly install and configure
 the pretrained models using the `occ face:setup` command. For details and
 advanced information read the documentation about [models](https://github.com/matiasdelellis/facerecognition/wiki/Models#install-models).
 
@@ -124,8 +124,8 @@ mimetype, GIF and WebP among them, add it to the
 
 #### Test the application
 
-We recommend test the application intensively before proceeding to analyze the
-real data of the users. For this you can create a new user in your Nextcloud
+We recommend testing the application intensively before proceeding to analyze
+the real data of the users. For this you can create a new user in your Nextcloud
 instance and upload some photos from the internet. Then you must run the
 `occ face:background_job -u new_user -t 900` command for this user and evaluate
 the result. For details and advanced information read the [documentation of this
@@ -144,8 +144,8 @@ See [docker/README.md](docker/README.md) for details.
 
 #### Schedule background job
 
-The application is designed to run as a scheduled task. This allows analyze the
-photos and showing the results to the user progressively. You can read about
+The application is designed to run as a scheduled task. This allows analyzing
+the photos and showing the results to the user progressively. You can read about
 some ways to configure it within our documentation about [Schedule Background Task](https://github.com/matiasdelellis/facerecognition/wiki/Schedule-Background-Task).
 
 To speed up the analysis on machines with several cores, the image analysis can

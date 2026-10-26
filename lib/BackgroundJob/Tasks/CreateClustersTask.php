@@ -33,6 +33,7 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\PersonMapper;
 
+use OCA\FaceRecognition\Helper\Distance;
 use OCA\FaceRecognition\Helper\Euclidean;
 use OCA\FaceRecognition\Helper\Requirements;
 
@@ -131,10 +132,13 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			// The clustering settings changed, so what is in the database was
 			// obtained with other parameters and has to be built again. Note
 			// that this loses the names, exactly as `face:reset --clustering`.
-			$this->logInfo('The clustering settings changed: discarding the clusters of ' . $userId);
+			$this->logInfo('The clustering settings changed: discarding the clusters of ' . $userId . ' for the model ' . $modelId);
 			$this->faceMapper->unsetClustersRelationForUser($userId, $modelId);
-			$this->clusterMapper->deleteUserClusters($userId);
-			$this->personMapper->deleteUserPersons($userId);
+			// Only the clusters of this model are discarded. The faces and
+			// clusters of another model must stay as they are, or they would
+			// be left pointing at rows that no longer exist.
+			$this->clusterMapper->deleteUserModel($userId, $modelId);
+			$this->personMapper->deleteOrphaned($userId);
 			$this->settingsService->setNeedRecreateClusters(false, $userId);
 		}
 
@@ -371,8 +375,15 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	 * @return array Face IDs of each group found
 	 */
 	private function getNewClusters(array $faces): array {
-		// Clustering parameters
-		$sensitivity = $this->settingsService->getSensitivity();
+		// Clustering parameters. The descriptors are compared with the Euclidean
+		// distance, translating the threshold of the metric of the model.
+		$metric = $this->settingsService->getDistanceMetric();
+		$sensitivity = Distance::toEuclidean($this->settingsService->getSensitivity(), $metric);
+		if ($metric !== Distance::EUCLIDEAN) {
+			foreach ($faces as $i => $face) {
+				$faces[$i]['descriptor'] = Distance::prepare($face['descriptor'], $metric);
+			}
+		}
 
 		if (Requirements::pdlibLoaded()) {
 			// Create edges (neighbors) for Chinese Whispers
